@@ -1,1 +1,10 @@
 project_id = "onufuxczpqlxxkgyltlz"
+
+[functions.check-subscription]
+verify_jwt = false
+
+[functions.track-usage]
+verify_jwt = false
+
+[functions.activate-test-plan]
+verify_jwt = false
