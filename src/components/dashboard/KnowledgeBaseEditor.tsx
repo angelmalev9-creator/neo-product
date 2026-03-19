@@ -67,74 +67,66 @@ const KnowledgeBaseEditor = ({ userId, currentSession, onSessionUpdate, onCompan
       if (sessionError) throw sessionError;
       sessionStorage.setItem(`neo_session_${session.id}`, session.session_token);
 
-      // Start the crawl
-      const startResponse = await supabase.functions.invoke('scrape-website', {
+      // Start the crawl (fire-and-forget — the edge function does everything)
+      supabase.functions.invoke('scrape-website', {
         body: { url: normalizedUrl, sessionId: session.id, sessionToken: session.session_token },
-      });
+      }).catch(err => console.error('scrape-website invoke error:', err));
 
-      if (startResponse.error || !startResponse.data?.success) {
-        const errMsg = startResponse.data?.error || startResponse.error?.message || 'Грешка при стартиране';
-        throw new Error(errMsg);
-      }
-
-      const crawlId = startResponse.data.crawlId;
-      if (!crawlId) {
-        throw new Error('Не се получи crawlId');
-      }
-
-      // Poll for status - wait up to 5 minutes
+      // Poll demo_sessions table for status updates
       let attempts = 0;
       const maxAttempts = 150;
-      
+
       while (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 2000)); // 2 sec interval
+        await new Promise(resolve => setTimeout(resolve, 2000));
         attempts++;
-        
-        const statusResponse = await supabase.functions.invoke('scrape-website', {
-          body: { action: 'check-status', crawlId, sessionId: session.id, sessionToken: session.session_token },
-        });
 
-        if (statusResponse.error) {
-          console.error('Status check error:', statusResponse.error);
-          continue;
+        const { data: row, error: pollErr } = await supabase
+          .from('demo_sessions')
+          .select('id, url, summary, language, status, company_name, scraped_content')
+          .eq('id', session.id)
+          .single();
+
+        if (pollErr || !row) continue;
+
+        // Estimate progress from status
+        if (row.status === 'scraping') {
+          setProgress(Math.min(30 + attempts, 60));
+        } else if (row.status === 'processing') {
+          setProgress(80);
+          setStatus('processing');
         }
 
-        const data = statusResponse.data;
-        
-        if (data.progress !== undefined) {
-          setProgress(data.progress);
-        }
-        if (data.pagesScraped !== undefined) {
-          setPagesScraped(data.pagesScraped);
+        // Count pages from scraped_content
+        if (row.scraped_content && Array.isArray(row.scraped_content)) {
+          setPagesScraped(row.scraped_content.length);
         }
 
-        if (data.status === 'ready') {
+        if (row.status === 'ready') {
+          const pageCount = Array.isArray(row.scraped_content) ? row.scraped_content.length : 0;
           setProgress(100);
-          setPagesScraped(data.pagesScraped || 0);
+          setPagesScraped(pageCount);
           setStatus('processing');
           await new Promise(resolve => setTimeout(resolve, 500));
           setStatus('ready');
-          
-          // Fetch the updated session data
-          const { data: updatedSession } = await supabase
-            .from('demo_sessions')
-            .select('id, url, summary, language, status, company_name')
-            .eq('id', session.id)
-            .single();
-          
-          if (updatedSession) {
-            onSessionUpdate(updatedSession);
-            if (updatedSession.company_name && onCompanyNameExtracted) {
-              onCompanyNameExtracted(updatedSession.company_name);
-            }
+
+          onSessionUpdate({
+            id: row.id,
+            url: row.url,
+            summary: row.summary,
+            language: row.language,
+            status: row.status,
+            company_name: row.company_name,
+          });
+          if (row.company_name && onCompanyNameExtracted) {
+            onCompanyNameExtracted(row.company_name);
           }
-          
-          toast({ title: "База знания обновена!", description: `Обучен с ${data.pagesScraped || 0} страници` });
+
+          toast({ title: "База знания обновена!", description: `Обучен с ${pageCount} страници` });
           return;
         }
 
-        if (!data.success && data.error) {
-          throw new Error(data.error);
+        if (row.status === 'error') {
+          throw new Error('Грешка при обхождане на сайта');
         }
       }
 
