@@ -2769,6 +2769,7 @@ export const useGeminiVoice = ({
     clearSilenceWatchdog();
     silenceNudgeSentRef.current = false;
     silenceNudgeCountRef.current = 0;
+    flushInterruptedAssistantTurn();
 
     if (dgKeepAliveRef.current) {
       clearInterval(dgKeepAliveRef.current);
