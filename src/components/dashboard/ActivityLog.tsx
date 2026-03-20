@@ -120,9 +120,16 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
     if (messages[conversationId]) return;
     setLoadingMessages(conversationId);
     try {
-      const { data } = await supabase.from('conversation_messages').select('*')
-        .eq('conversation_id', conversationId).order('created_at', { ascending: true });
-      setMessages(prev => ({ ...prev, [conversationId]: data || [] }));
+      const [msgsRes, emailsRes] = await Promise.all([
+        supabase.from('conversation_messages').select('*')
+          .eq('conversation_id', conversationId).order('created_at', { ascending: true }),
+        supabase.from('email_logs').select('*')
+          .eq('conversation_id', conversationId).order('created_at', { ascending: false }),
+      ]);
+      setMessages(prev => ({ ...prev, [conversationId]: msgsRes.data || [] }));
+      if (emailsRes.data && emailsRes.data.length > 0) {
+        setEmails(prev => ({ ...prev, [conversationId]: emailsRes.data as EmailLog[] }));
+      }
     } catch {} finally { setLoadingMessages(null); }
   };
 
