@@ -187,7 +187,13 @@ serve(async (req) => {
     }
 
     // ── Extract & save client data from transcript ──
-    const cleanNull = (v: any) => (v && v !== "null" && v !== "none" && v !== "няма") ? String(v).trim() : null;
+    const cleanNull = (v: any) => {
+      if (!v) return null;
+      const s = String(v).trim();
+      const lower = s.toLowerCase();
+      if (!s || lower === "null" || lower === "none" || lower === "няма" || lower === "не" || lower === "n/a" || lower === "не е споменат" || lower === "не е споменато" || lower === "неизвестен" || lower === "неизвестно" || lower === "undefined") return null;
+      return s;
+    };
     const cName = cleanNull(analysis.client_name);
     const cEmail = cleanNull(analysis.client_email);
     const cPhone = cleanNull(analysis.client_phone);
