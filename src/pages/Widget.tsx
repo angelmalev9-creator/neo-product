@@ -68,6 +68,12 @@ const Widget = () => {
 
   const handleError = useCallback((err: string) => {
     console.error('Voice error:', err);
+    // Soniox STT errors are non-fatal — don't block the widget UI
+    const lower = (err || '').toLowerCase();
+    if (lower.includes('soniox') || lower.includes('stt') || lower.includes('vite_soniox')) {
+      console.warn('[Widget] Ignoring non-fatal STT error:', err);
+      return;
+    }
     setError(err);
   }, []);
 
