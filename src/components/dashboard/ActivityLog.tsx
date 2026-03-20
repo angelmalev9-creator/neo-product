@@ -47,6 +47,18 @@ interface CapturedLead {
   conversation_id: string | null;
 }
 
+interface EmailLog {
+  id: string;
+  conversation_id: string | null;
+  recipient_email: string;
+  subject: string;
+  body: string;
+  status: string | null;
+  intent: string | null;
+  sent_at: string | null;
+  created_at: string;
+}
+
 interface ActivityLogProps {
   userId: string;
 }
