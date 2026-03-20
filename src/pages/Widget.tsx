@@ -68,6 +68,8 @@ const Widget = () => {
 
   const handleError = useCallback((err: string) => {
     console.error('Voice error:', err);
+    // Soniox STT errors are non-fatal — STT will auto-reconnect
+    if (/soniox/i.test(err) || /stt/i.test(err)) return;
     setError(err);
   }, []);
 
