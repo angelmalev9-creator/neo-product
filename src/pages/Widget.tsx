@@ -40,7 +40,6 @@ const Widget = () => {
   const [leadSubmitted, setLeadSubmitted] = useState<boolean>(false);
   const [liveTranscript, setLiveTranscript] = useState<string>('');
   const [liveAssistantTranscript, setLiveAssistantTranscript] = useState<string>('');
-  const liveAssistantTranscriptRef = useRef<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<Message[]>([]);
   
@@ -57,7 +56,6 @@ const Widget = () => {
     }
     if (message.role === 'assistant') {
       setLiveAssistantTranscript('');
-      liveAssistantTranscriptRef.current = '';
     }
     setMessages(prev => {
       const next = [...prev, message];
@@ -88,11 +86,9 @@ const Widget = () => {
 
       if (!isFinal) {
         setLiveAssistantTranscript(normalized);
-        liveAssistantTranscriptRef.current = normalized;
       }
       if (isFinal) {
         setLiveAssistantTranscript('');
-        liveAssistantTranscriptRef.current = '';
         void persistTranscriptMessage('assistant', normalized);
       }
     },
@@ -205,12 +201,11 @@ const Widget = () => {
   }, [userId, fetchWidgetData]);
 
   const startCall = useCallback(async () => {
-    if (!systemPrompt || !userId || isConnected || isConnecting) return;
+    if (!systemPrompt || !userId) return;
     initAudioContext();
     setMessages([]);
     setLiveTranscript('');
     setLiveAssistantTranscript('');
-    liveAssistantTranscriptRef.current = '';
     persistedTranscriptKeysRef.current.clear();
     let micGranted = false;
     try {
@@ -228,18 +223,17 @@ const Widget = () => {
     playConnectSound();
     if (micGranted) startAmbient();
     await connect(systemPrompt, companyName, sessionId || undefined, !micGranted);
-  }, [systemPrompt, companyName, sessionId, connect, userId, isConnected, isConnecting, trackConversation, initAudioContext, playConnectSound, startAmbient, preWarmMicrophone]);
+  }, [systemPrompt, companyName, sessionId, connect, userId, trackConversation, initAudioContext, playConnectSound, startAmbient, preWarmMicrophone]);
 
   const endCall = useCallback(async () => {
-    // Capture pending assistant transcript from ref BEFORE disconnect clears state
-    const pendingAssistant = liveAssistantTranscriptRef.current.trim();
-    
     stopAmbient();
     playDisconnectSound();
     disconnect();
     setLiveTranscript('');
-    
+    // Keep liveAssistantTranscript visible briefly, then commit it as a message
+    const pendingAssistant = liveAssistantTranscript.trim();
     if (pendingAssistant) {
+      // Commit the partial assistant transcript as a full message so it doesn't vanish
       setMessages(prev => {
         const next = [...prev, { role: 'assistant' as const, content: pendingAssistant }];
         messagesRef.current = next;
@@ -248,9 +242,9 @@ const Widget = () => {
       void persistTranscriptMessage('assistant', pendingAssistant);
     }
     setLiveAssistantTranscript('');
-    liveAssistantTranscriptRef.current = '';
     if (!leadSubmitted) setShowLeadModal(true);
     if (conversationId) {
+      // Persist any unsaved messages from state before ending
       const currentMessages = messagesRef.current;
       for (const msg of currentMessages) {
         const key = `${conversationId}:${msg.role}:${msg.content.replace(/\s+/g, ' ').trim()}`;
@@ -267,7 +261,8 @@ const Widget = () => {
       callStartTimeRef.current = null;
       lastTrackedTimeRef.current = 0;
     }
-  }, [disconnect, conversationId, trackConversation, leadSubmitted, stopAmbient, playDisconnectSound, persistTranscriptMessage]);
+    // DON'T clear messages - keep them visible after disconnect
+  }, [disconnect, conversationId, trackConversation, leadSubmitted, stopAmbient, playDisconnectSound, liveAssistantTranscript, persistTranscriptMessage]);
 
   const handleLeadSubmit = useCallback(async (data: LeadData) => {
     const { error } = await supabase.functions.invoke('widget-capture-lead', {
@@ -416,7 +411,7 @@ const Widget = () => {
             </div>
           </div>
         )}
-        {liveAssistantTranscript && (
+        {liveAssistantTranscript && isSpeaking && (
           <div className="flex gap-2 justify-start">
             <AvatarIcon size="sm" />
             <div className="max-w-[80%] px-3.5 py-2.5 text-xs leading-relaxed rounded-2xl rounded-tl-md bg-card/80 border border-border/20 text-foreground/70 italic break-words">

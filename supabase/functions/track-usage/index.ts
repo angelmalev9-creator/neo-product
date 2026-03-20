@@ -192,9 +192,8 @@ serve(async (req) => {
     }
 
     if (action === 'add_usage' && minutes !== undefined) {
-      const durationMin = Math.max(0, parseFloat(minutes) || 0);
-      const newUsedMinutes = Math.min(planLimit, currentUsed + durationMin);
-      const addedMinutes = Math.max(0, newUsedMinutes - currentUsed);
+      const durationMin = parseFloat(minutes) || 0;
+      const newUsedMinutes = currentUsed + durationMin;
 
       await supabase
         .from('profiles')
@@ -204,19 +203,17 @@ serve(async (req) => {
         })
         .eq('user_id', userId);
 
-      logStep("Usage added", {
-        addedMinutes: addedMinutes.toFixed(2),
+      logStep("Usage added", { 
+        addedMinutes: durationMin.toFixed(2),
         newTotal: newUsedMinutes.toFixed(2)
       });
 
       return new Response(
-        JSON.stringify({
-          success: true,
+        JSON.stringify({ 
+          success: true, 
           used_minutes: newUsedMinutes,
-          added_minutes: addedMinutes,
           plan_limit: planLimit,
           remaining_minutes: Math.max(0, planLimit - newUsedMinutes),
-          limit_reached: newUsedMinutes >= planLimit,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
