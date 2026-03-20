@@ -48,9 +48,9 @@ const AUDIO_SAMPLE_RATE_OUT = 24000;
 const AUDIO_SAMPLE_RATE_IN = 16000;
 
 const ECHO_GUARD_MS = 80;
-const ANTI_BARGE_IN_MS = 700;
-const MIN_BARGE_IN_CHARS = 4;
-const MIN_BARGE_IN_WORDS = 2;
+const ANTI_BARGE_IN_MS = 1200;
+const MIN_BARGE_IN_CHARS = 8;
+const MIN_BARGE_IN_WORDS = 3;
 const BARGE_IN_COMMANDS = ["стоп", "спри", "изчакай", "чакай", "момент", "секунда", "стига", "почакай"];
 const UTTERANCE_DEBOUNCE_MS = 350;
 const SPEECH_FINAL_MIN_MS = 280;
@@ -73,21 +73,21 @@ const SENSITIVE_MODE_EXTRA_WAIT_MS: Record<SensitiveInputMode, number> = {
   email: 2400,
   contact: 2800,
 };
-// VAD-based barge-in: very conservative — only interrupt on clear, sustained speech.
-const VAD_BARGE_IN_FRAMES_REQUIRED = 16;
+// VAD-based barge-in: extremely conservative — only interrupt on very clear, sustained speech.
+const VAD_BARGE_IN_FRAMES_REQUIRED = 30;
 
 // VAD (client-side) is only a fallback safety layer.
 // Server-final tokens should end the turn first.
 const VAD_SILENCE_MS = 3000;
 const VAD_NOISE_PROFILE_MS = 2500;
-const VAD_MIN_SPEECH_THRESHOLD = 0.014;
-const VAD_MAX_SPEECH_THRESHOLD = 0.05;
-const VAD_THRESHOLD_MULTIPLIER = 5.0;
-const NOISE_GATE_FLOOR = 0.008;
+const VAD_MIN_SPEECH_THRESHOLD = 0.02;
+const VAD_MAX_SPEECH_THRESHOLD = 0.06;
+const VAD_THRESHOLD_MULTIPLIER = 6.0;
+const NOISE_GATE_FLOOR = 0.012;
 const TRANSIENT_CLICK_RMS_MAX = 0.018;
 const TRANSIENT_CLICK_PEAK_MIN = 0.16;
 const TRANSIENT_CLICK_CREST_MIN = 14;
-const VAD_SPEECH_FRAMES_REQUIRED = 7;
+const VAD_SPEECH_FRAMES_REQUIRED = 12;
 
 const clampInstruction = (text: string, maxChars: number) => {
   const t = String(text || "").trim();
@@ -958,8 +958,11 @@ function shouldAllowBargeIn(text: string): boolean {
   if (norm.length < MIN_BARGE_IN_CHARS) return false;
   const words = norm.split(" ").filter(Boolean);
   if (words.length < MIN_BARGE_IN_WORDS) return false;
-  // Short single or two-letter words are likely noise artifacts
-  if (words.length <= 2 && norm.length <= 6) return false;
+  // Short words are likely noise artifacts — need substantial text
+  if (words.length <= 3 && norm.length <= 12) return false;
+  // Filter out common noise-like single-syllable patterns
+  const avgWordLen = norm.length / words.length;
+  if (avgWordLen < 2.5 && words.length < 4) return false;
   return true;
 }
 
@@ -1769,7 +1772,7 @@ export const useGeminiVoice = ({
         lastSpeechStartedAtRef.current = Date.now();
 
         if (isPlayingRef.current && Date.now() - speakStartRef.current > ANTI_BARGE_IN_MS) {
-          const hasSpeechEvidence = (hasNonFinal || hasFinal) && minConfidence >= 0.6;
+          const hasSpeechEvidence = (hasNonFinal || hasFinal) && minConfidence >= 0.75;
           if (hasSpeechEvidence && shouldAllowBargeIn(transcript)) {
             performEarlyBargeIn();
           }
@@ -2624,7 +2627,7 @@ export const useGeminiVoice = ({
             .join(" ")
             .replace(/\s+/g, " ")
             .trim();
-          const loudEnough = rms > Math.max(vadThresholdRef.current * 2.2, NOISE_GATE_FLOOR * 3);
+          const loudEnough = rms > Math.max(vadThresholdRef.current * 3.0, NOISE_GATE_FLOOR * 4);
           const hasSpeechEvidence = shouldAllowBargeIn(transcriptPreview);
           vadBargeInFramesRef.current += 1;
           if (hasSpeechEvidence && loudEnough && vadBargeInFramesRef.current >= VAD_BARGE_IN_FRAMES_REQUIRED) {
