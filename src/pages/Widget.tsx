@@ -32,6 +32,7 @@ const Widget = () => {
   const [config, setConfig] = useState<WidgetConfig | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [textInput, setTextInput] = useState<string>('');
   const [isSendingText, setIsSendingText] = useState<boolean>(false);
@@ -124,8 +125,11 @@ const Widget = () => {
       setCompanyName(data.companyName || companyParam || 'компанията');
       setConfig(data.widgetConfig);
       setLogoUrl(data.logoUrl || null);
+      if (data.sessionId) setSessionId(data.sessionId);
       setIsReady(true);
-      if (!isReady) prepareSession(data.systemPrompt, data.companyName || 'компанията').catch(console.error);
+      if (!isReady) {
+        prepareSession(data.systemPrompt, data.companyName || 'компанията', data.sessionId || undefined).catch(console.error);
+      }
     } catch { setError('Грешка при зареждане'); }
   }, [userId, companyParam, prepareSession, isReady]);
 
@@ -159,8 +163,8 @@ const Widget = () => {
     try { const s = await navigator.mediaDevices.getUserMedia({ audio: true }); s.getTracks().forEach(t => t.stop()); micGranted = true; } catch {}
     playConnectSound();
     if (micGranted) startAmbient();
-    await connect(systemPrompt, companyName, undefined, !micGranted);
-  }, [systemPrompt, companyName, connect, userId, trackConversation, initAudioContext, playConnectSound, startAmbient]);
+    await connect(systemPrompt, companyName, sessionId || undefined, !micGranted);
+  }, [systemPrompt, companyName, sessionId, connect, userId, trackConversation, initAudioContext, playConnectSound, startAmbient]);
 
   const endCall = useCallback(async () => {
     stopAmbient();
