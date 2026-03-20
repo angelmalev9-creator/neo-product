@@ -63,6 +63,7 @@ serve(async (req) => {
   var config = ${JSON.stringify(config)};
   var btnSize = ${buttonSize};
   var isOpen = false;
+  var mustOpenStandalone = !window.isSecureContext;
 
   // Create button
   var btn = document.createElement('div');
@@ -108,6 +109,10 @@ serve(async (req) => {
   container.appendChild(closeBtn);
 
   btn.onclick = function() {
+    if (mustOpenStandalone) {
+      window.open('${widgetPageUrl}', '_blank', 'noopener,noreferrer');
+      return;
+    }
     if (isOpen) {
       container.style.display = 'none';
       btn.style.display = 'flex';

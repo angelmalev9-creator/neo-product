@@ -38,6 +38,7 @@ const Widget = () => {
   const [isSendingText, setIsSendingText] = useState<boolean>(false);
   const [showLeadModal, setShowLeadModal] = useState<boolean>(false);
   const [leadSubmitted, setLeadSubmitted] = useState<boolean>(false);
+  const [liveTranscript, setLiveTranscript] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -58,6 +59,14 @@ const Widget = () => {
   const { isConnected, isConnecting, isSpeaking, isListening, connect, disconnect, prepareSession, sendText } = useGeminiVoice({
     onMessage: handleMessage,
     onError: handleError,
+    onTranscript: (transcript, isFinal, role) => {
+      if (role !== 'user') return;
+      if (isFinal) {
+        setLiveTranscript('');
+        return;
+      }
+      setLiveTranscript(transcript);
+    },
   });
 
   const trackConversation = useCallback(async (action: string, data: Record<string, unknown> = {}) => {
@@ -116,6 +125,12 @@ const Widget = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  useEffect(() => {
+    if (!isListening) {
+      setLiveTranscript('');
+    }
+  }, [isListening]);
+
   const fetchWidgetData = useCallback(async () => {
     if (!userId) return;
     try {
@@ -152,6 +167,7 @@ const Widget = () => {
     if (!systemPrompt || !userId) return;
     initAudioContext();
     setMessages([]);
+    setLiveTranscript('');
     const result = await trackConversation('start');
     if (result?.conversationId) {
       setConversationId(result.conversationId);
@@ -163,13 +179,14 @@ const Widget = () => {
     try { const s = await navigator.mediaDevices.getUserMedia({ audio: true }); s.getTracks().forEach(t => t.stop()); micGranted = true; } catch {}
     playConnectSound();
     if (micGranted) startAmbient();
-    await connect(systemPrompt, companyName, sessionId || undefined, !micGranted);
+    await connect(systemPrompt, companyName, sessionId || undefined, false);
   }, [systemPrompt, companyName, sessionId, connect, userId, trackConversation, initAudioContext, playConnectSound, startAmbient]);
 
   const endCall = useCallback(async () => {
     stopAmbient();
     playDisconnectSound();
     disconnect();
+    setLiveTranscript('');
     if (!leadSubmitted) setShowLeadModal(true);
     if (conversationId) {
       await trackConversation('end', { conversationId });
@@ -318,6 +335,13 @@ const Widget = () => {
             </div>
           </div>
         ))}
+        {liveTranscript && isListening && (
+          <div className="flex justify-end">
+            <div className="max-w-[80%] px-3.5 py-2.5 text-xs leading-relaxed rounded-2xl rounded-tr-md bg-muted/50 border border-border/20 text-muted-foreground italic break-words">
+              {liveTranscript}
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
