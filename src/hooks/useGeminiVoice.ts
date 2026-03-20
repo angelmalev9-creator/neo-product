@@ -48,7 +48,7 @@ const AUDIO_SAMPLE_RATE_OUT = 24000;
 const AUDIO_SAMPLE_RATE_IN = 16000;
 
 const ECHO_GUARD_MS = 80;
-const ANTI_BARGE_IN_MS = 350;
+const ANTI_BARGE_IN_MS = 500;
 const MIN_BARGE_IN_CHARS = 2;
 const MIN_BARGE_IN_WORDS = 2;
 const BARGE_IN_COMMANDS = ["стоп", "спри", "изчакай", "чакай", "момент", "секунда", "стига", "почакай"];
@@ -73,9 +73,8 @@ const SENSITIVE_MODE_EXTRA_WAIT_MS: Record<SensitiveInputMode, number> = {
   email: 2400,
   contact: 2800,
 };
-// VAD-based barge-in: number of consecutive speech frames needed to interrupt NEO
-// Higher = less false positives from noise/echo.
-const VAD_BARGE_IN_FRAMES_REQUIRED = 5;
+// VAD-based barge-in: keep it conservative and only interrupt on sustained real speech.
+const VAD_BARGE_IN_FRAMES_REQUIRED = 10;
 
 // VAD (client-side) is only a fallback safety layer.
 // Server-final tokens should end the turn first.
@@ -1444,6 +1443,26 @@ export const useGeminiVoice = ({
     }
   }, []);
 
+  const flushInterruptedAssistantTurn = useCallback(() => {
+    const partial = currentResponseTextRef.current.replace(/\s+/g, " ").trim();
+    if (!partial) return;
+
+    const looksLikeAction =
+      partial.startsWith("{") ||
+      partial.includes('"type":"action_request"') ||
+      partial.includes('"type": "action_request"') ||
+      partial.includes('"action":"make_reservation"') ||
+      partial.includes('"action": "make_reservation"') ||
+      partial.includes('"action":"submit_form"') ||
+      partial.includes('"action": "submit_form"');
+
+    if (looksLikeAction) return;
+
+    onMessage?.({ role: "assistant", content: partial });
+    onTranscript?.(partial, true, "assistant");
+    currentResponseTextRef.current = "";
+  }, [onMessage, onTranscript]);
+
   /** Immediately stop assistant playback + mark turn canceled (speech-only barge-in) */
   const performEarlyBargeIn = useCallback(() => {
     if (!isPlayingRef.current) return;
@@ -1466,7 +1485,8 @@ export const useGeminiVoice = ({
     isPlayingRef.current = false;
     nextPlayTimeRef.current = 0;
     updateSpeaking(false);
-  }, [updateSpeaking]);
+    flushInterruptedAssistantTurn();
+  }, [flushInterruptedAssistantTurn, updateSpeaking]);
 
   const buildStableTranscriptFromBuffers = useCallback(() => {
     const finalJoined = finalChunksRef.current.join(" ").trim();
@@ -1749,7 +1769,8 @@ export const useGeminiVoice = ({
         lastSpeechStartedAtRef.current = Date.now();
 
         if (isPlayingRef.current && Date.now() - speakStartRef.current > ANTI_BARGE_IN_MS) {
-          if (shouldAllowBargeIn(transcript)) {
+          const hasSpeechEvidence = (hasNonFinal || hasFinal) && minConfidence >= 0.6;
+          if (hasSpeechEvidence && shouldAllowBargeIn(transcript)) {
             performEarlyBargeIn();
           }
         }
@@ -2598,9 +2619,16 @@ export const useGeminiVoice = ({
         }
 
         if (isPlayingRef.current && Date.now() - speakStartRef.current > ANTI_BARGE_IN_MS) {
+          const transcriptPreview = [finalChunksRef.current.join(" "), lastInterimTranscriptRef.current]
+            .filter(Boolean)
+            .join(" ")
+            .replace(/\s+/g, " ")
+            .trim();
+          const loudEnough = rms > Math.max(vadThresholdRef.current * 1.6, NOISE_GATE_FLOOR * 2);
+          const hasSpeechEvidence = shouldAllowBargeIn(transcriptPreview);
           vadBargeInFramesRef.current += 1;
-          if (vadBargeInFramesRef.current >= VAD_BARGE_IN_FRAMES_REQUIRED && rms > vadThresholdRef.current * 1.2) {
-            console.log("[VAD BARGE-IN] ⚡ Speech detected → interrupt", { rms, frames: vadBargeInFramesRef.current });
+          if (hasSpeechEvidence && loudEnough && vadBargeInFramesRef.current >= VAD_BARGE_IN_FRAMES_REQUIRED) {
+            console.log("[VAD BARGE-IN] ⚡ Confirmed speech detected → interrupt", { rms, frames: vadBargeInFramesRef.current });
             performEarlyBargeIn();
             vadBargeInFramesRef.current = 0;
           }
@@ -2741,6 +2769,7 @@ export const useGeminiVoice = ({
     clearSilenceWatchdog();
     silenceNudgeSentRef.current = false;
     silenceNudgeCountRef.current = 0;
+    flushInterruptedAssistantTurn();
 
     if (dgKeepAliveRef.current) {
       clearInterval(dgKeepAliveRef.current);
@@ -2877,7 +2906,7 @@ export const useGeminiVoice = ({
     setIsConnecting(false);
     setIsSpeaking(false);
     setIsListening(false);
-  }, [clearSilenceWatchdog]);
+  }, [clearSilenceWatchdog, flushInterruptedAssistantTurn]);
 
   // ✅ FE → Edge proxy (no secrets in FE)
   const maybeExecuteActionFromGemini = useCallback(

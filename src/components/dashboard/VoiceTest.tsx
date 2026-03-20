@@ -143,10 +143,9 @@ const VoiceTest = ({
           setCallDuration(elapsed);
 
           const currentSessionMinutes = elapsed / 60;
-          const totalUsedMinutes = usedMinutes + currentSessionMinutes;
+          const totalUsedMinutes = Math.min(planLimit, usedMinutes + currentSessionMinutes);
           setLocalUsedMinutes(totalUsedMinutes);
 
-          // Track every 30s
           if (elapsed > 0 && elapsed % 30 === 0) {
             const minutesToTrack = currentSessionMinutes - lastTrackedMinutesRef.current;
             if (minutesToTrack > 0) {
@@ -154,7 +153,11 @@ const VoiceTest = ({
               supabase.functions.invoke('track-usage', {
                 body: { action: 'add_usage', minutes: minutesToTrack },
               }).then(({ data, error }) => {
-                if (data && !error) console.log('[USAGE] Tracked:', data.used_minutes);
+                if (data && !error) {
+                  setLocalUsedMinutes(data.used_minutes);
+                  onUsageUpdate(data.used_minutes);
+                  if (data.limit_reached) handleEndCall();
+                }
               }).catch(console.error);
             }
           }
@@ -258,6 +261,8 @@ const VoiceTest = ({
             setLocalUsedMinutes(data.used_minutes);
           }
         }).catch(console.error);
+      } else {
+        setLocalUsedMinutes(Math.min(planLimit, usedMinutes));
       }
     }
   }, [disconnect, onUsageUpdate, playDisconnectSound, stopAmbient]);
