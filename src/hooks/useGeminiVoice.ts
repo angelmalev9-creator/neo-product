@@ -48,9 +48,9 @@ const AUDIO_SAMPLE_RATE_OUT = 24000;
 const AUDIO_SAMPLE_RATE_IN = 16000;
 
 const ECHO_GUARD_MS = 80;
-const ANTI_BARGE_IN_MS = 1200;
-const MIN_BARGE_IN_CHARS = 8;
-const MIN_BARGE_IN_WORDS = 3;
+const ANTI_BARGE_IN_MS = 700;
+const MIN_BARGE_IN_CHARS = 4;
+const MIN_BARGE_IN_WORDS = 2;
 const BARGE_IN_COMMANDS = ["стоп", "спри", "изчакай", "чакай", "момент", "секунда", "стига", "почакай"];
 const UTTERANCE_DEBOUNCE_MS = 350;
 const SPEECH_FINAL_MIN_MS = 280;
@@ -73,21 +73,21 @@ const SENSITIVE_MODE_EXTRA_WAIT_MS: Record<SensitiveInputMode, number> = {
   email: 2400,
   contact: 2800,
 };
-// VAD-based barge-in: extremely conservative — only interrupt on very clear, sustained speech.
-const VAD_BARGE_IN_FRAMES_REQUIRED = 30;
+// VAD-based barge-in: very conservative — only interrupt on clear, sustained speech.
+const VAD_BARGE_IN_FRAMES_REQUIRED = 16;
 
 // VAD (client-side) is only a fallback safety layer.
 // Server-final tokens should end the turn first.
 const VAD_SILENCE_MS = 3000;
 const VAD_NOISE_PROFILE_MS = 2500;
-const VAD_MIN_SPEECH_THRESHOLD = 0.02;
-const VAD_MAX_SPEECH_THRESHOLD = 0.06;
-const VAD_THRESHOLD_MULTIPLIER = 6.0;
-const NOISE_GATE_FLOOR = 0.012;
+const VAD_MIN_SPEECH_THRESHOLD = 0.014;
+const VAD_MAX_SPEECH_THRESHOLD = 0.05;
+const VAD_THRESHOLD_MULTIPLIER = 5.0;
+const NOISE_GATE_FLOOR = 0.008;
 const TRANSIENT_CLICK_RMS_MAX = 0.018;
 const TRANSIENT_CLICK_PEAK_MIN = 0.16;
 const TRANSIENT_CLICK_CREST_MIN = 14;
-const VAD_SPEECH_FRAMES_REQUIRED = 12;
+const VAD_SPEECH_FRAMES_REQUIRED = 7;
 
 const clampInstruction = (text: string, maxChars: number) => {
   const t = String(text || "").trim();
@@ -958,11 +958,8 @@ function shouldAllowBargeIn(text: string): boolean {
   if (norm.length < MIN_BARGE_IN_CHARS) return false;
   const words = norm.split(" ").filter(Boolean);
   if (words.length < MIN_BARGE_IN_WORDS) return false;
-  // Short words are likely noise artifacts — need substantial text
-  if (words.length <= 3 && norm.length <= 12) return false;
-  // Filter out common noise-like single-syllable patterns
-  const avgWordLen = norm.length / words.length;
-  if (avgWordLen < 2.5 && words.length < 4) return false;
+  // Short single or two-letter words are likely noise artifacts
+  if (words.length <= 2 && norm.length <= 6) return false;
   return true;
 }
 
@@ -1338,7 +1335,6 @@ export const useGeminiVoice = ({
   const speakStartRef = useRef<number>(0);
   const recentUtterancesRef = useRef<Array<{ text: string; ts: number }>>([]);
   const dgKeepAliveRef = useRef<number | null>(null);
-  const lastSttPacketSentAtRef = useRef<number>(0);
   const currentResponseTextRef = useRef("");
   const dgSTTRef = useRef<DgSTTState>({ ws: null, isReady: false });
   const utteranceBufferRef = useRef<string[]>([]);
@@ -1702,20 +1698,17 @@ export const useGeminiVoice = ({
         );
         stt.isReady = true;
         console.log("[STT] ✅ Soniox socket open; start message sent");
-        // Keepalive: prevent Soniox timeout during long assistant replies or silence.
-        // If we haven't sent any mic/STT packet recently, send a tiny silent frame.
+        // Keepalive: prevent Soniox 408 timeout while NEO is speaking
+        // Send a fresh 20 ms silent frame every 8 s — but ONLY when NOT speaking,
+        // so we never inject silence mid-utterance (which would garble phone numbers).
         if (dgKeepAliveRef.current) clearInterval(dgKeepAliveRef.current);
-        lastSttPacketSentAtRef.current = Date.now();
         dgKeepAliveRef.current = window.setInterval(() => {
-          if (!stt.ws || stt.ws.readyState !== WebSocket.OPEN || !stt.isReady) return;
-          const idleForMs = Date.now() - lastSttPacketSentAtRef.current;
-          const userActivelySpeaking = vadIsSpeakingRef.current && !isPlayingRef.current;
-          if (idleForMs < 2500 || userActivelySpeaking) return;
-          try {
-            stt.ws.send(new Int16Array(320).buffer);
-            lastSttPacketSentAtRef.current = Date.now();
-          } catch {}
-        }, 2000) as unknown as number;
+          if (stt.ws && stt.ws.readyState === WebSocket.OPEN && stt.isReady && !vadIsSpeakingRef.current) {
+            try {
+              stt.ws.send(new Int16Array(320).buffer);
+            } catch {} // fresh buffer every call — avoids detachment
+          }
+        }, 8000) as unknown as number;
       } catch (e) {
         console.error("[STT] Soniox start message failed", e);
         onError?.("Soniox STT старт грешка");
@@ -1776,7 +1769,7 @@ export const useGeminiVoice = ({
         lastSpeechStartedAtRef.current = Date.now();
 
         if (isPlayingRef.current && Date.now() - speakStartRef.current > ANTI_BARGE_IN_MS) {
-          const hasSpeechEvidence = (hasNonFinal || hasFinal) && minConfidence >= 0.75;
+          const hasSpeechEvidence = (hasNonFinal || hasFinal) && minConfidence >= 0.6;
           if (hasSpeechEvidence && shouldAllowBargeIn(transcript)) {
             performEarlyBargeIn();
           }
@@ -1936,9 +1929,7 @@ export const useGeminiVoice = ({
       }
     };
 
-    ws.onerror = () => {
-      console.warn("[STT] Soniox websocket error — waiting for auto-reconnect");
-    };
+    ws.onerror = () => onError?.("Soniox STT грешка");
     ws.onclose = (ev) => {
       console.log("[STT] Closed:", ev.code, ev.reason);
       stt.isReady = false;
@@ -1949,7 +1940,7 @@ export const useGeminiVoice = ({
         console.log(`[STT] Auto-reconnect after code ${ev.code}`);
         window.setTimeout(() => {
           if (isConnectedRef.current) connectSTT();
-        }, 350);
+        }, 600);
       }
     };
   }, [
@@ -2557,7 +2548,6 @@ export const useGeminiVoice = ({
 
       try {
         stt.ws.send(float32ToInt16Buffer(resampleTo16k(inputData, actualSampleRateRef.current)));
-        lastSttPacketSentAtRef.current = Date.now();
       } catch {}
     };
 
@@ -2634,7 +2624,7 @@ export const useGeminiVoice = ({
             .join(" ")
             .replace(/\s+/g, " ")
             .trim();
-          const loudEnough = rms > Math.max(vadThresholdRef.current * 3.0, NOISE_GATE_FLOOR * 4);
+          const loudEnough = rms > Math.max(vadThresholdRef.current * 2.2, NOISE_GATE_FLOOR * 3);
           const hasSpeechEvidence = shouldAllowBargeIn(transcriptPreview);
           vadBargeInFramesRef.current += 1;
           if (hasSpeechEvidence && loudEnough && vadBargeInFramesRef.current >= VAD_BARGE_IN_FRAMES_REQUIRED) {
