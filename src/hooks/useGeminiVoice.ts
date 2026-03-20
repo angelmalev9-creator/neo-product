@@ -1673,7 +1673,7 @@ export const useGeminiVoice = ({
   const connectSTT = useCallback(() => {
     const sonioxApiKey = import.meta.env.VITE_SONIOX_API_KEY as string | undefined;
     if (!sonioxApiKey || sonioxApiKey.trim() === "" || sonioxApiKey === "undefined") {
-      onError?.("Липсва VITE_SONIOX_API_KEY");
+      console.warn("[STT] Missing VITE_SONIOX_API_KEY — STT disabled");
       return;
     }
 
@@ -1713,7 +1713,7 @@ export const useGeminiVoice = ({
         }, 8000) as unknown as number;
       } catch (e) {
         console.error("[STT] Soniox start message failed", e);
-        onError?.("Soniox STT старт грешка");
+        console.warn("[STT] Soniox start message failed", e);
       }
     };
 
@@ -1740,7 +1740,7 @@ export const useGeminiVoice = ({
             ws.close();
             return;
           }
-          onError?.(`Soniox STT грешка: ${data.error_message}`);
+          console.warn(`[STT] Soniox error: ${data.error_message}`);
           return;
         }
 
@@ -1933,25 +1933,28 @@ export const useGeminiVoice = ({
       }
     };
 
-    ws.onerror = () => onError?.("Soniox STT грешка");
+    ws.onerror = () => console.warn("[STT] Soniox WebSocket error (non-fatal)");
+    let sttReconnects = 0;
     ws.onclose = (ev) => {
       console.log("[STT] Closed:", ev.code, ev.reason);
       stt.isReady = false;
       // disconnect() sets stt.ws = null before closing — use that as the intentional-close signal
       if (stt.ws === null) return;
       stt.ws = null;
-      if (isConnectedRef.current) {
-        console.log(`[STT] Auto-reconnect after code ${ev.code}`);
+      sttReconnects++;
+      if (isConnectedRef.current && sttReconnects < 5) {
+        console.log(`[STT] Auto-reconnect ${sttReconnects}/5 after code ${ev.code}`);
         window.setTimeout(() => {
           if (isConnectedRef.current) connectSTT();
-        }, 600);
+        }, 600 * sttReconnects);
+      } else if (sttReconnects >= 5) {
+        console.warn("[STT] Max reconnect attempts reached — STT disabled for this session");
       }
     };
   }, [
     buildStableTranscriptFromBuffers,
     cancelAllPendingFlushes,
     flushBufferedUtterance,
-    onError,
     onTranscript,
     performEarlyBargeIn,
     scheduleBufferedFlush,
