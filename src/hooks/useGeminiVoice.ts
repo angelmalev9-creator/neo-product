@@ -1713,7 +1713,7 @@ export const useGeminiVoice = ({
         }, 8000) as unknown as number;
       } catch (e) {
         console.error("[STT] Soniox start message failed", e);
-        onError?.("Soniox STT старт грешка");
+        console.warn("[STT] Soniox start message failed", e);
       }
     };
 
