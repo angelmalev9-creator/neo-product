@@ -95,10 +95,13 @@ serve(async (req) => {
   "outcome": "Какъв е резултатът от разговора (1 изречение)",
   "sentiment": "positive" | "neutral" | "negative",
   "tags": ["масив", "от", "ключови", "теми"],
-  "action_items": ["масив от следващи стъпки ако има такива"]
+  "action_items": ["масив от следващи стъпки ако има такива"],
+  "client_name": "Пълното име на клиента ако е споменато в разговора, иначе null",
+  "client_email": "Имейлът на клиента ако е споменат, иначе null",
+  "client_phone": "Телефонният номер на клиента ако е споменат (само цифри), иначе null"
 }
 
-Пиши на български. Бъди кратък и конкретен.`,
+Пиши на български. Бъди кратък и конкретен. Извличай данните на клиента директно от транскрипцията — ако клиентът е казал името си, имейла или телефона, задължително ги включи.`,
             },
             {
               role: "user",
@@ -120,6 +123,9 @@ serve(async (req) => {
                     sentiment: { type: "string", enum: ["positive", "neutral", "negative"] },
                     tags: { type: "array", items: { type: "string" }, description: "Key topics" },
                     action_items: { type: "array", items: { type: "string" }, description: "Next steps if any" },
+                    client_name: { type: "string", description: "Client full name if mentioned, null otherwise" },
+                    client_email: { type: "string", description: "Client email if mentioned, null otherwise" },
+                    client_phone: { type: "string", description: "Client phone number (digits only) if mentioned, null otherwise" },
                   },
                   required: ["summary", "client_intent", "outcome", "sentiment", "tags"],
                 },
@@ -181,6 +187,48 @@ serve(async (req) => {
 
     if (updateError) {
       console.error("[SUMMARIZE] Update error:", updateError);
+    }
+
+    // ── Extract & save client data from transcript ──
+    const cleanNull = (v: any) => (v && v !== "null" && v !== "none" && v !== "няма") ? String(v).trim() : null;
+    const cName = cleanNull(analysis.client_name);
+    const cEmail = cleanNull(analysis.client_email);
+    const cPhone = cleanNull(analysis.client_phone);
+    const hasClientData = cName || cEmail || cPhone;
+    if (hasClientData && !lead) {
+      const nameParts = (cName || "").split(/\s+/);
+      const firstName = nameParts[0] || null;
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : null;
+
+      const { error: leadErr } = await supabase.from("captured_leads").insert({
+        user_id: convoRes.data.user_id,
+        conversation_id: conversationId,
+        first_name: firstName,
+        last_name: lastName,
+        name: cName,
+        email: cEmail,
+        phone: cPhone,
+        source: "ai_extraction",
+      });
+      if (leadErr) console.error("[SUMMARIZE] Lead insert error:", leadErr);
+      else {
+        await supabase.from("conversations").update({ lead_captured: true }).eq("id", conversationId);
+        console.log("[SUMMARIZE] Extracted lead:", { name: analysis.client_name, email: analysis.client_email, phone: analysis.client_phone });
+      }
+    } else if (hasClientData && lead) {
+      // Update existing lead with any new data
+      const updates: Record<string, string> = {};
+      if (analysis.client_name && !lead.name && !lead.first_name) {
+        const nameParts = analysis.client_name.trim().split(/\s+/);
+        updates.first_name = nameParts[0];
+        if (nameParts.length > 1) updates.last_name = nameParts.slice(1).join(" ");
+        updates.name = analysis.client_name;
+      }
+      if (analysis.client_email && !lead.email) updates.email = analysis.client_email;
+      if (analysis.client_phone && !lead.phone) updates.phone = analysis.client_phone;
+      if (Object.keys(updates).length > 0) {
+        await supabase.from("captured_leads").update(updates).eq("conversation_id", conversationId);
+      }
     }
 
     return new Response(
