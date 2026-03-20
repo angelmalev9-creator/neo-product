@@ -41,6 +41,7 @@ const Widget = () => {
   const [liveTranscript, setLiveTranscript] = useState<string>('');
   const [liveAssistantTranscript, setLiveAssistantTranscript] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<Message[]>([]);
   
   const [conversationId, setConversationId] = useState<string | null>(null);
   const callStartTimeRef = useRef<number | null>(null);
