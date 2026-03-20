@@ -1673,7 +1673,7 @@ export const useGeminiVoice = ({
   const connectSTT = useCallback(() => {
     const sonioxApiKey = import.meta.env.VITE_SONIOX_API_KEY as string | undefined;
     if (!sonioxApiKey || sonioxApiKey.trim() === "" || sonioxApiKey === "undefined") {
-      onError?.("Липсва VITE_SONIOX_API_KEY");
+      console.warn("[STT] Missing VITE_SONIOX_API_KEY — STT disabled");
       return;
     }
 
