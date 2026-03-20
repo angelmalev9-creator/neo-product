@@ -416,7 +416,7 @@ const Widget = () => {
             </div>
           </div>
         )}
-        {liveAssistantTranscript && isSpeaking && (
+        {liveAssistantTranscript && (
           <div className="flex gap-2 justify-start">
             <AvatarIcon size="sm" />
             <div className="max-w-[80%] px-3.5 py-2.5 text-xs leading-relaxed rounded-2xl rounded-tl-md bg-card/80 border border-border/20 text-foreground/70 italic break-words">
