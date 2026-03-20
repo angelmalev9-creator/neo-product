@@ -1,11 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Phone, PhoneOff, Clock, Send, MessageSquare, Mic } from 'lucide-react';
+import { Phone, PhoneOff, Clock, Send, MessageSquare, Mic, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useGeminiVoice } from '@/hooks/useGeminiVoice';
+import { useAgentCore } from '@/hooks/useAgentCore';
+import { useAudioEffects } from '@/hooks/useAudioEffects';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -27,6 +31,17 @@ interface VoiceTestProps {
   onUsageUpdate: (newUsedMinutes: number) => void;
 }
 
+type EmailLog = {
+  id: string;
+  created_at: string;
+  sent_at: string | null;
+  recipient_email: string;
+  subject: string;
+  body: string;
+  status: string | null;
+  intent: string | null;
+};
+
 const VoiceTest = ({
   companyName,
   customPrompt,
@@ -43,12 +58,39 @@ const VoiceTest = ({
   const [localUsedMinutes, setLocalUsedMinutes] = useState<number>(usedMinutes);
   const [textInput, setTextInput] = useState<string>('');
   const [isSendingText, setIsSendingText] = useState<boolean>(false);
+  const [textOnlyMode, setTextOnlyMode] = useState(false);
+  const [latestEmailLog, setLatestEmailLog] = useState<EmailLog | null>(null);
+  const [emailLogOpen, setEmailLogOpen] = useState(false);
+  const [actionsTaken, setActionsTaken] = useState<string[]>([]);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const lastTrackedMinutesRef = useRef<number>(0);
   const isDisconnectingRef = useRef<boolean>(false);
+
+  // Refs for stable callbacks
+  const sendTextRef = useRef<((text: string, asUser?: boolean) => void) | null>(null);
+  const getStateRef = useRef<(() => any) | null>(null);
+  const processMessageRef = useRef<((msg: string) => Promise<string | null>) | null>(null);
+  const initPromiseRef = useRef<Promise<string | null> | null>(null);
+  const lastInitSessionIdRef = useRef<string | null>(null);
+  const greetingShownRef = useRef(false);
+  const skipCleanForTypedRef = useRef<string | null>(null);
+  const typedMessageAddedRef = useRef<string | null>(null);
+  const typedSendLockRef = useRef(false);
+  const lastTypedSendRef = useRef<{ text: string; ts: number } | null>(null);
+
   const { toast } = useToast();
+
+  const {
+    playConnectSound,
+    playDisconnectSound,
+    startAmbient,
+    stopAmbient,
+    initAudioContext,
+  } = useAudioEffects({ ambientVolume: 0.06, effectsVolume: 0.25 });
 
   // Sync local state with prop
   useEffect(() => {
@@ -58,16 +100,119 @@ const VoiceTest = ({
   const remainingMinutes = Math.max(0, planLimit - localUsedMinutes);
   const usagePercent = planLimit > 0 ? (localUsedMinutes / planLimit) * 100 : 0;
 
-  const handleMessage = useCallback((message: Message) => {
-    setMessages(prev => [...prev, message]);
+  // ── Email log fetching ──
+  const fetchLatestEmailLog = useCallback(async () => {
+    if (!demoSession?.id) return;
+    const sessionToken = sessionStorage.getItem(`neo_session_${demoSession.id}`);
+    if (!sessionToken) return;
+
+    const { data, error } = await supabase.functions.invoke('demo-email-log', {
+      body: { sessionId: demoSession.id, sessionToken },
+    });
+    if (error) {
+      console.error('[Dashboard] demo-email-log error:', error);
+      return;
+    }
+    const email = (data as any)?.email as EmailLog | null | undefined;
+    if (email) setLatestEmailLog(email);
+  }, [demoSession?.id]);
+
+  // ── Agent Core (same as demo) ──
+  const handleAgentError = useCallback((error: string) => {
+    console.error('[Dashboard] Agent error:', error);
   }, []);
+
+  const handleAgentAction = useCallback(
+    (action: string) => {
+      console.log('[Dashboard] Agent action:', action);
+      setActionsTaken((prev) => [...prev, action]);
+
+      const safeSend = sendTextRef.current;
+      const stateGetter = getStateRef.current;
+      const agentState = stateGetter?.();
+
+      if (action === 'booking_created') {
+        console.log('[Dashboard] ✅ Booking completed');
+        toast({
+          title: '✅ Час запазен!',
+          description: 'Изпратено е потвърждение на имейла.',
+        });
+        safeSend?.(
+          '[SYSTEM: Резервацията беше направена успешно. Потвърди на клиента, че часът е запазен и имейлът е изпратен.]',
+          false,
+        );
+      } else if (action === 'email_sent') {
+        toast({
+          title: '📧 Имейл изпратен!',
+          description: 'Проверете пощата си.',
+        });
+        fetchLatestEmailLog();
+        setEmailLogOpen(true);
+        safeSend?.('[SYSTEM: Имейлът беше изпратен успешно. Потвърди на клиента да провери пощата си.]', false);
+      } else if (action === 'calculation_done') {
+        if (agentState?.calculation_result) {
+          toast({
+            title: '🧮 Изчисление готово!',
+            description: `Обща сума: ${agentState.calculation_result} ${agentState.calculation_unit || ''}`,
+          });
+          safeSend?.(
+            `[SYSTEM: Изчислението е готово. Резултат: ${agentState.calculation_breakdown} ${agentState.calculation_unit}. Обща сума: ${agentState.calculation_result} ${agentState.calculation_unit}. Обясни на клиента и попитай дали иска имейл с офертата.]`,
+            false,
+          );
+        }
+      } else if (action === 'availability_checked') {
+        console.log('[Dashboard] ✅ Availability check completed');
+      }
+    },
+    [fetchLatestEmailLog, toast],
+  );
+
+  const {
+    initialize: initAgent,
+    processMessage,
+    getState,
+    reset: resetAgent,
+  } = useAgentCore({
+    onAction: handleAgentAction,
+    onError: handleAgentError,
+  });
+
+  // Keep refs up to date
+  useEffect(() => {
+    getStateRef.current = getState as any;
+    processMessageRef.current = processMessage;
+  }, [getState, processMessage]);
+
+  // ── Message handler (same approach as demo) ──
+  const handleMessage = useCallback(
+    async (message: Message) => {
+      let content = message.content;
+
+      if (!content || content.trim().length < 2) return;
+
+      // Skip duplicate typed user messages
+      if (message.role === 'user' && typedMessageAddedRef.current === content) {
+        typedMessageAddedRef.current = null;
+        return;
+      }
+
+      // Skip duplicate greeting
+      if (message.role === 'assistant') {
+        const isGreeting = content.toLowerCase().startsWith('здравейте');
+        if (isGreeting && greetingShownRef.current) return;
+      }
+
+      setMessages((prev) => [...prev, { role: message.role, content }]);
+    },
+    [],
+  );
 
   const handleError = useCallback((error: string) => {
     console.error('Voice error:', error);
     toast({
-      title: "Грешка",
+      title: 'Грешка',
       description: error,
-      variant: "destructive",
+      variant: 'destructive',
     });
   }, [toast]);
 
@@ -86,19 +231,26 @@ const VoiceTest = ({
     onError: handleError,
   });
 
-  // Pre-warm microphone on mount for instant connection
+  // Keep sendText ref current
+  useEffect(() => {
+    sendTextRef.current = sendText;
+  }, [sendText]);
+
+  // Pre-warm microphone on mount
   useEffect(() => {
     preWarmMicrophone();
   }, [preWarmMicrophone]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   }, [messages]);
 
-  // Timer and REAL-TIME usage tracking every 30 seconds
+  // Timer and usage tracking
   useEffect(() => {
-    if (isConnected) {
+    if (isConnected || textOnlyMode) {
       startTimeRef.current = Date.now();
       lastTrackedMinutesRef.current = 0;
       isDisconnectingRef.current = false;
@@ -110,28 +262,22 @@ const VoiceTest = ({
 
           const currentSessionMinutes = elapsed / 60;
           const totalUsedMinutes = usedMinutes + currentSessionMinutes;
-          
-          // Update local display in real-time
           setLocalUsedMinutes(totalUsedMinutes);
 
-          // Track to backend every 30 seconds
           if (elapsed > 0 && elapsed % 30 === 0) {
             const minutesToTrack = currentSessionMinutes - lastTrackedMinutesRef.current;
             if (minutesToTrack > 0) {
-              console.log('[USAGE] Tracking', minutesToTrack.toFixed(2), 'minutes');
               lastTrackedMinutesRef.current = currentSessionMinutes;
-              
               supabase.functions.invoke('track-usage', {
                 body: { action: 'add_usage', minutes: minutesToTrack },
               }).then(({ data, error }) => {
                 if (data && !error) {
-                  console.log('[USAGE] Tracked successfully:', data.used_minutes);
+                  console.log('[USAGE] Tracked:', data.used_minutes);
                 }
               }).catch(console.error);
             }
           }
 
-          // Check if limit exceeded
           if (totalUsedMinutes >= planLimit) {
             toast({
               title: 'Лимит достигнат',
@@ -145,102 +291,46 @@ const VoiceTest = ({
     }
 
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isConnected, usedMinutes, planLimit, toast]);
+  }, [isConnected, textOnlyMode, usedMinutes, planLimit, toast]);
 
-  // Build system prompt when data changes
+  // Build system prompt and prepare session + agent core
   useEffect(() => {
     if (!demoSession) return;
 
-    let contextInfo = '';
-    if (demoSession.summary) {
-      contextInfo = demoSession.summary;
-    }
-
-    const templatePrompts: Record<string, string> = {
-      sales: `Ти си ТОП ПРОДАВАЧ с 20 години опит!
-
-СЛЕД ВСЕКИ ОТГОВОР ЗАДЪЛЖИТЕЛНО:
-1. Отговори на въпроса КОНКРЕТНО (2-3 изречения)
-2. Добави СТОЙНОСТ - още една полза или предимство
-3. Завърши с ВЪПРОС ЗА ДЕЙСТВИЕ:
-   - "Искате ли да Ви изпратим оферта?"
-   - "Кога Ви е удобно да започнем?"
-   - "Да уговорим среща за консултация?"
-   - "Какво Ви спира да се възползвате още днес?"
-
-ТЕХНИКИ (използвай активно):
-• FOMO: "Тази оферта е валидна само до..."
-• SOCIAL PROOF: "Повечето ни клиенти избират..."
-• VALUE STACKING: "Получавате не само X, но и Y и Z"
-• URGENCY: "В момента имаме свободен капацитет"
-
-ТОНЪТ ТИ е: Уверен, ентусиазиран, убедителен!`,
-
-      support: `Ти си ТЪРПЕЛИВ И ГРИЖОВЕН консултант!
-
-ПРИ ВСЕКИ ПРОБЛЕМ:
-1. Изрази РАЗБИРАНЕ: "Разбирам притеснението Ви..."
-2. Дай ЯСНО решение стъпка по стъпка
-3. ПРОВЕРИ: "Това помогна ли? Има ли още нещо?"
-
-ПРАВИЛА:
-• НИКОГА не звучи нетърпеливо
-• Обясни сложните неща с прости думи
-• Бъди емпатичен - клиентът може да е разстроен
-
-ТОНЪТ ТИ е: Спокоен, разбиращ, търпелив!`,
-
-      info: `Ти си ТОЧЕН И ОБЕКТИВЕН информатор!
-
-ДАВАЙ:
-1. ФАКТИ - без емоционални украси
-2. КРАТКИ отговори - максимум 2-3 изречения
-3. Допълнителна информация САМО ако помолят
-
-ТОНЪТ ТИ е: Обективен, информативен, професионален!`,
-    };
-
-    const baseTemplate = templatePrompts[promptTemplate] || templatePrompts.sales;
+    const sessionId = demoSession.id;
     const company = companyName || 'компанията';
 
-    const prompt = `Ти си НЕО – елитен виртуален консултант на ${company}. 
-Ти си ГЛАСОВ И ТЕКСТОВ асистент 2-в-1!
-
-${baseTemplate}
-
-ЗНАНИЯ ЗА КОМПАНИЯТА:
-${contextInfo}
-
-${customPrompt ? `ДОПЪЛНИТЕЛНИ ИНСТРУКЦИИ:\n${customPrompt}\n` : ''}
-
-ПРАВИЛА:
-1. Отговаряй САМО с информация от горните знания
-2. Отговори: 2-3 изречения максимум
-3. Бъди директен и конкретен
-4. НИКОГА не казвай "ще се свържем" или "обадете се по-късно"
-5. НИКОГА не казвай че нямаш информация - ако клиентът пита, значи информацията Е в знанията ти!
-6. Използвай учтива форма (Вие, Вас, Ви)
-
-Говори САМО на ЧИСТ БЪЛГАРСКИ!`;
-
+    // ★ Gemini is TTS-only — agent-core handles knowledge
+    const prompt = `TTS for ${company}`;
     setSystemPrompt(prompt);
 
-    // Prepare session in advance with voice speed (sessionId is undefined for dashboard)
-    prepareSession(prompt, company).catch((err) => {
+    // Prepare Gemini session
+    prepareSession(prompt, company, sessionId).catch((err) => {
       console.error('Prepare session error:', err);
     });
-  }, [demoSession, companyName, customPrompt, promptTemplate, voiceSpeed, prepareSession]);
+
+    // Initialize agent-core (same as demo)
+    if (lastInitSessionIdRef.current !== sessionId) {
+      lastInitSessionIdRef.current = sessionId;
+      initPromiseRef.current = initAgent(sessionId);
+    }
+  }, [demoSession, companyName, prepareSession, initAgent]);
+
+  // Fetch email logs when session changes
+  useEffect(() => {
+    setLatestEmailLog(null);
+    setEmailLogOpen(false);
+    if (demoSession?.id) fetchLatestEmailLog();
+  }, [demoSession?.id, fetchLatestEmailLog]);
 
   const handleStartCall = useCallback(async () => {
     if (!demoSession || !systemPrompt) {
       toast({
-        title: "Грешка",
-        description: "Моля, първо заредете база знания (обучете NEO с Вашия сайт)",
-        variant: "destructive",
+        title: 'Грешка',
+        description: 'Моля, първо заредете база знания (обучете NEO с Вашия сайт)',
+        variant: 'destructive',
       });
       return;
     }
@@ -254,6 +344,21 @@ ${customPrompt ? `ДОПЪЛНИТЕЛНИ ИНСТРУКЦИИ:\n${customPrompt
       return;
     }
 
+    // Ensure agent-core is initialized
+    try {
+      resetAgent();
+      const sessionId = demoSession.id;
+      if (lastInitSessionIdRef.current !== sessionId || !initPromiseRef.current) {
+        lastInitSessionIdRef.current = sessionId;
+        initPromiseRef.current = initAgent(sessionId);
+      }
+      await initPromiseRef.current;
+    } catch (e) {
+      console.error('[Dashboard] initAgent failed', e);
+    }
+
+    initAudioContext();
+
     // Check mic permission
     let micGranted = false;
     try {
@@ -264,78 +369,118 @@ ${customPrompt ? `ДОПЪЛНИТЕЛНИ ИНСТРУКЦИИ:\n${customPrompt
       micGranted = false;
     }
 
-    if (!micGranted) {
-      toast({
-        title: "🎤 Микрофонът не е разрешен",
-        description: "НЕО ще ви отговаря с глас, а вие пишете.",
-      });
-    }
-
-    setMessages([]);
+    // Instant greeting
+    const instantGreeting = `Здравейте! Аз съм НЕО от ${companyName || 'компанията'}. Какво ви интересува?`;
+    setMessages([{ role: 'assistant', content: instantGreeting }]);
+    greetingShownRef.current = true;
     setCallDuration(0);
-    await connect(systemPrompt, companyName || 'компанията', undefined, !micGranted);
-  }, [demoSession, systemPrompt, companyName, connect, toast, remainingMinutes]);
+    setActionsTaken([]);
+
+    if (micGranted) {
+      setTextOnlyMode(false);
+      playConnectSound();
+      startAmbient();
+      await connect(systemPrompt, companyName || 'компанията', demoSession.id, false);
+    } else {
+      setTextOnlyMode(true);
+      playConnectSound();
+      toast({
+        title: '🎤 Микрофонът не е разрешен',
+        description: 'НЕО ще ви отговаря с глас, а вие пишете.',
+      });
+      await connect(systemPrompt, companyName || 'компанията', demoSession.id, true);
+    }
+  }, [demoSession, systemPrompt, companyName, connect, toast, remainingMinutes, resetAgent, initAgent, initAudioContext, playConnectSound, startAmbient]);
 
   const handleEndCall = useCallback(() => {
     console.log('[CALL] End call requested');
+    isDisconnectingRef.current = true;
     
-    // ВЕДНАГА прекъсни връзката - без проверки
+    playDisconnectSound();
+    stopAmbient();
     disconnect();
-    
-    // Изчисти таймера ВЕДНАГА
+    setTextOnlyMode(false);
+
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
-    
-    // Запази стойности преди да ги нулираме
+
     const startTime = startTimeRef.current;
     const lastTracked = lastTrackedMinutesRef.current;
-    
-    // Нулирай refs ВЕДНАГА
     startTimeRef.current = null;
     lastTrackedMinutesRef.current = 0;
     setCallDuration(0);
-    
-    // Async tracking в background - няма да блокира UI
+
     if (startTime) {
       const totalMinutes = (Date.now() - startTime) / 1000 / 60;
       const untrackedMinutes = totalMinutes - lastTracked;
-      
-      console.log('[CALL] Total:', totalMinutes.toFixed(2), 'min, untracked:', untrackedMinutes.toFixed(2), 'min');
-      
       if (untrackedMinutes > 0.01) {
         supabase.functions.invoke('track-usage', {
           body: { action: 'add_usage', minutes: untrackedMinutes },
         }).then(({ data }) => {
           if (data) {
-            console.log('[CALL] Final tracked:', data.used_minutes);
             onUsageUpdate(data.used_minutes);
             setLocalUsedMinutes(data.used_minutes);
           }
         }).catch(console.error);
       }
     }
-  }, [disconnect, onUsageUpdate]);
+  }, [disconnect, onUsageUpdate, playDisconnectSound, stopAmbient]);
 
-  // Handle sending text message
+  // Parse explicit name/email commands from typed text
+  const parseExplicitCommands = useCallback((text: string) => {
+    const nameMatch = text.match(/(?:име|name)\s*[:：]\s*([А-Яа-яA-Za-z\s]+?)(?:\.|,|$|\s+(?:имейл|email))/i);
+    const emailMatch = text.match(/(?:имейл|email|e-mail)\s*[:：]\s*([\w.+-]+@[\w.-]+\.[a-z]{2,})/i);
+    const standaloneEmail = !emailMatch ? text.match(/^[\w.+-]+@[\w.-]+\.[a-z]{2,}$/i) : null;
+    return {
+      name: nameMatch?.[1]?.trim() || null,
+      email: (emailMatch?.[1] || standaloneEmail?.[0])?.toLowerCase().trim() || null,
+      hasExplicitData: !!(nameMatch || emailMatch || standaloneEmail),
+    };
+  }, []);
+
+  // Handle sending text message (same flow as demo)
   const handleSendText = useCallback(async () => {
-    if (!textInput.trim() || !isConnected) return;
+    const trimmed = textInput.trim();
+    if (!trimmed || (!isConnected && !textOnlyMode)) return;
 
-    const userMessage = textInput.trim();
+    if (typedSendLockRef.current) return;
+    const now = Date.now();
+    const last = lastTypedSendRef.current;
+    if (last && last.text === trimmed && now - last.ts < 700) return;
+
+    typedSendLockRef.current = true;
+    lastTypedSendRef.current = { text: trimmed, ts: now };
     setTextInput('');
-    setIsSendingText(true);
 
-    // Add user message to chat
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    const parsed = parseExplicitCommands(trimmed);
+    let messageForAgent = trimmed;
 
-    // Send to Gemini
-    sendText(userMessage);
+    if (parsed.hasExplicitData) {
+      const parts: string[] = [];
+      if (parsed.name) parts.push(`Казвам се ${parsed.name}.`);
+      if (parsed.email) parts.push(`Имейлът ми е ${parsed.email}.`);
+      const remainingText = trimmed
+        .replace(/(?:име|name)\s*[:：]\s*[А-Яа-яA-Za-z\s]+/gi, '')
+        .replace(/(?:имейл|email|e-mail)\s*[:：]\s*[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi, '')
+        .trim();
+      if (remainingText && remainingText.length > 3) parts.push(remainingText);
+      messageForAgent = parts.join(' ').trim() || trimmed;
+    }
 
-    setIsSendingText(false);
-  }, [textInput, isConnected, sendText]);
+    if (isConnected) {
+      skipCleanForTypedRef.current = messageForAgent;
+      typedMessageAddedRef.current = messageForAgent;
+      setMessages((prev) => [...prev, { role: 'user', content: trimmed }]);
+      sendText(messageForAgent);
+      typedSendLockRef.current = false;
+      return;
+    }
 
-  // Handle Enter key in text input
+    typedSendLockRef.current = false;
+  }, [textInput, isConnected, textOnlyMode, sendText, parseExplicitCommands]);
+
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -343,7 +488,6 @@ ${customPrompt ? `ДОПЪЛНИТЕЛНИ ИНСТРУКЦИИ:\n${customPrompt
     }
   }, [handleSendText]);
 
-  // Format time as MM:SS
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -385,16 +529,58 @@ ${customPrompt ? `ДОПЪЛНИТЕЛНИ ИНСТРУКЦИИ:\n${customPrompt
         <span className="text-primary font-medium">2-в-1</span>
       </div>
 
+      {/* Actions taken indicator */}
+      {actionsTaken.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 justify-center">
+          {actionsTaken.map((action, i) => (
+            <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+              {action === 'booking_created' ? '✅ Резервация' :
+               action === 'email_sent' ? '📧 Имейл' :
+               action === 'calculation_done' ? '🧮 Изчисление' :
+               action === 'availability_checked' ? '📅 Наличност' : action}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Email log button */}
+      {latestEmailLog && (
+        <Dialog open={emailLogOpen} onOpenChange={setEmailLogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="w-full gap-2">
+              <Mail className="w-3.5 h-3.5" />
+              Виж последния изпратен имейл
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Последен имейл</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2 text-sm">
+              <div className="text-muted-foreground">
+                <div><span className="font-medium text-foreground">До:</span> {latestEmailLog.recipient_email}</div>
+                <div><span className="font-medium text-foreground">Тема:</span> {latestEmailLog.subject}</div>
+                <div><span className="font-medium text-foreground">Статус:</span> {latestEmailLog.status || 'unknown'}</div>
+              </div>
+              <div className="rounded-md border border-border/40 bg-background/50">
+                <ScrollArea className="h-[50vh] p-3">
+                  <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: latestEmailLog.body }} />
+                </ScrollArea>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
       {/* Call interface */}
       <div className="text-center py-4">
-        {/* Call button */}
         <div className="relative inline-block mb-4">
           <button
-            onClick={isConnected ? handleEndCall : handleStartCall}
-            disabled={isConnecting || (!canStartCall && !isConnected)}
+            onClick={isConnected || textOnlyMode ? handleEndCall : handleStartCall}
+            disabled={isConnecting || (!canStartCall && !isConnected && !textOnlyMode)}
             className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 ${
-              isConnected 
-                ? 'bg-destructive' 
+              isConnected || textOnlyMode
+                ? 'bg-destructive'
                 : isConnecting
                 ? 'bg-primary/50 cursor-wait'
                 : canStartCall
@@ -402,20 +588,20 @@ ${customPrompt ? `ДОПЪЛНИТЕЛНИ ИНСТРУКЦИИ:\n${customPrompt
                 : 'bg-muted cursor-not-allowed'
             }`}
           >
-            {isConnected ? (
+            {isConnected || textOnlyMode ? (
               <PhoneOff className="w-8 h-8 text-white" />
             ) : (
               <Phone className="w-8 h-8 text-white" />
             )}
           </button>
-          
-          {isConnected && (
+
+          {(isConnected || textOnlyMode) && (
             <div className="absolute inset-0 rounded-full border-2 border-primary/40 animate-ping" />
           )}
         </div>
 
         {/* Timer */}
-        {isConnected && (
+        {(isConnected || textOnlyMode) && (
           <div className="flex items-center justify-center gap-1.5 mb-3 text-primary">
             <Clock className="w-4 h-4" />
             <span className="font-mono font-bold text-sm">{formatTime(callDuration)}</span>
@@ -424,7 +610,9 @@ ${customPrompt ? `ДОПЪЛНИТЕЛНИ ИНСТРУКЦИИ:\n${customPrompt
 
         {/* Status */}
         <div className="text-sm mb-3 h-5">
-          {isConnecting ? (
+          {textOnlyMode ? (
+            <span className="text-primary font-medium">💬 Текстов режим — пишете съобщение</span>
+          ) : isConnecting ? (
             <span className="text-primary font-medium animate-pulse">Свързване с NEO...</span>
           ) : isSpeaking ? (
             <span className="text-primary font-medium">NEO говори...</span>
@@ -443,7 +631,10 @@ ${customPrompt ? `ДОПЪЛНИТЕЛНИ ИНСТРУКЦИИ:\n${customPrompt
 
         {/* Messages */}
         {messages.length > 0 && (
-          <div className="mt-4 max-h-48 overflow-y-auto space-y-2 text-left">
+          <div
+            ref={messagesContainerRef}
+            className="mt-4 max-h-48 overflow-y-auto space-y-2 text-left"
+          >
             {messages.map((msg, i) => (
               <div
                 key={i}
@@ -463,8 +654,8 @@ ${customPrompt ? `ДОПЪЛНИТЕЛНИ ИНСТРУКЦИИ:\n${customPrompt
           </div>
         )}
 
-        {/* Text input - only when connected */}
-        {isConnected && (
+        {/* Text input */}
+        {(isConnected || textOnlyMode) && (
           <div className="mt-4 flex gap-2">
             <Input
               value={textInput}
@@ -485,11 +676,6 @@ ${customPrompt ? `ДОПЪЛНИТЕЛНИ ИНСТРУКЦИИ:\n${customPrompt
           </div>
         )}
       </div>
-
-      {/* Info */}
-      <p className="text-center text-xs text-muted-foreground">
-        Гласов + текстов разговор в реално време • Минутите се броят от плана Ви
-      </p>
     </div>
   );
 };
