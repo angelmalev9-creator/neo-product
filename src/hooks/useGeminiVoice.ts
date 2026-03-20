@@ -48,9 +48,11 @@ const AUDIO_SAMPLE_RATE_OUT = 24000;
 const AUDIO_SAMPLE_RATE_IN = 16000;
 
 const ECHO_GUARD_MS = 80;
-const ANTI_BARGE_IN_MS = 500;
+const ANTI_BARGE_IN_MS = 900;
 const MIN_BARGE_IN_CHARS = 2;
 const MIN_BARGE_IN_WORDS = 2;
+const MIN_STRONG_BARGE_IN_CHARS = 7;
+const MIN_STRONG_BARGE_IN_WORDS = 2;
 const BARGE_IN_COMMANDS = ["стоп", "спри", "изчакай", "чакай", "момент", "секунда", "стига", "почакай"];
 const UTTERANCE_DEBOUNCE_MS = 350;
 const SPEECH_FINAL_MIN_MS = 280;
@@ -73,21 +75,20 @@ const SENSITIVE_MODE_EXTRA_WAIT_MS: Record<SensitiveInputMode, number> = {
   email: 2400,
   contact: 2800,
 };
-// VAD-based barge-in: keep it conservative and only interrupt on sustained real speech.
-const VAD_BARGE_IN_FRAMES_REQUIRED = 10;
+// Barge-in should happen only on real recognized speech, not on raw VAD/noise.
+const STRONG_BARGE_IN_MIN_CONFIDENCE = 0.78;
 
-// VAD (client-side) is only a fallback safety layer.
-// Server-final tokens should end the turn first.
+// VAD is used only for silence / speech detection, not for interrupting NEO.
 const VAD_SILENCE_MS = 3000;
 const VAD_NOISE_PROFILE_MS = 2500;
 const VAD_MIN_SPEECH_THRESHOLD = 0.009;
 const VAD_MAX_SPEECH_THRESHOLD = 0.036;
-const VAD_THRESHOLD_MULTIPLIER = 4.2;
-const NOISE_GATE_FLOOR = 0.005;
-const TRANSIENT_CLICK_RMS_MAX = 0.014;
-const TRANSIENT_CLICK_PEAK_MIN = 0.16;
-const TRANSIENT_CLICK_CREST_MIN = 14;
-const VAD_SPEECH_FRAMES_REQUIRED = 5;
+const VAD_THRESHOLD_MULTIPLIER = 4.6;
+const NOISE_GATE_FLOOR = 0.0065;
+const TRANSIENT_CLICK_RMS_MAX = 0.012;
+const TRANSIENT_CLICK_PEAK_MIN = 0.18;
+const TRANSIENT_CLICK_CREST_MIN = 16;
+const VAD_SPEECH_FRAMES_REQUIRED = 7;
 
 const clampInstruction = (text: string, maxChars: number) => {
   const t = String(text || "").trim();
@@ -952,14 +953,15 @@ function combineSensitiveFragments(existing: string, incoming: string, mode: Sen
 function shouldAllowBargeIn(text: string): boolean {
   const norm = normalizeBgText(text);
   if (!norm) return false;
-  // Always allow explicit stop commands
   if (BARGE_IN_COMMANDS.some((w) => norm.includes(w))) return true;
-  // Require meaningful speech to interrupt — not just noise fragments
-  if (norm.length < MIN_BARGE_IN_CHARS) return false;
+
   const words = norm.split(" ").filter(Boolean);
-  if (words.length < MIN_BARGE_IN_WORDS) return false;
-  // Extra: very short single-syllable words are likely noise
-  if (words.length === 1 && norm.length <= 4) return false;
+  if (norm.length < MIN_STRONG_BARGE_IN_CHARS) return false;
+  if (words.length < MIN_STRONG_BARGE_IN_WORDS) return false;
+
+  const hasLetterWord = words.some((word) => /\p{L}{2,}/u.test(word));
+  if (!hasLetterWord) return false;
+
   return true;
 }
 
@@ -1769,8 +1771,10 @@ export const useGeminiVoice = ({
         lastSpeechStartedAtRef.current = Date.now();
 
         if (isPlayingRef.current && Date.now() - speakStartRef.current > ANTI_BARGE_IN_MS) {
-          const hasSpeechEvidence = (hasNonFinal || hasFinal) && minConfidence >= 0.6;
-          if (hasSpeechEvidence && shouldAllowBargeIn(transcript)) {
+          const hasSpeechEvidence = (hasNonFinal || hasFinal) && minConfidence >= STRONG_BARGE_IN_MIN_CONFIDENCE;
+          const transcriptWords = transcript.split(/\s+/).filter(Boolean);
+          const isStrongUtterance = transcript.length >= MIN_STRONG_BARGE_IN_CHARS && transcriptWords.length >= MIN_STRONG_BARGE_IN_WORDS;
+          if (hasSpeechEvidence && isStrongUtterance && shouldAllowBargeIn(transcript)) {
             performEarlyBargeIn();
           }
         }
@@ -2618,20 +2622,10 @@ export const useGeminiVoice = ({
           }
         }
 
+        // Never interrupt NEO from raw VAD/noise alone.
+        // Real barge-in is handled only from recognized STT speech above.
         if (isPlayingRef.current && Date.now() - speakStartRef.current > ANTI_BARGE_IN_MS) {
-          const transcriptPreview = [finalChunksRef.current.join(" "), lastInterimTranscriptRef.current]
-            .filter(Boolean)
-            .join(" ")
-            .replace(/\s+/g, " ")
-            .trim();
-          const loudEnough = rms > Math.max(vadThresholdRef.current * 1.6, NOISE_GATE_FLOOR * 2);
-          const hasSpeechEvidence = shouldAllowBargeIn(transcriptPreview);
-          vadBargeInFramesRef.current += 1;
-          if (hasSpeechEvidence && loudEnough && vadBargeInFramesRef.current >= VAD_BARGE_IN_FRAMES_REQUIRED) {
-            console.log("[VAD BARGE-IN] ⚡ Confirmed speech detected → interrupt", { rms, frames: vadBargeInFramesRef.current });
-            performEarlyBargeIn();
-            vadBargeInFramesRef.current = 0;
-          }
+          vadBargeInFramesRef.current = 0;
         } else {
           vadBargeInFramesRef.current = 0;
         }
