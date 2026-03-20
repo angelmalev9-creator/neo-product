@@ -958,8 +958,8 @@ function shouldAllowBargeIn(text: string): boolean {
   if (norm.length < MIN_BARGE_IN_CHARS) return false;
   const words = norm.split(" ").filter(Boolean);
   if (words.length < MIN_BARGE_IN_WORDS) return false;
-  // Extra: very short single-syllable words are likely noise
-  if (words.length === 1 && norm.length <= 4) return false;
+  // Short single or two-letter words are likely noise artifacts
+  if (words.length <= 2 && norm.length <= 6) return false;
   return true;
 }
 
