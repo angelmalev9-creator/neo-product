@@ -7,6 +7,7 @@ import { useAudioEffects } from '@/hooks/useAudioEffects';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import LeadCaptureModal, { LeadData } from '@/components/widget/LeadCaptureModal';
+import { cleanTranscriptForStorage } from '@/utils/transcriptCleanup';
 
 interface Message {
   role: 'user' | 'assistant';
