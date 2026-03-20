@@ -93,7 +93,8 @@ serve(async (req) => {
   var iframe = document.createElement('iframe');
   iframe.src = '${widgetPageUrl}';
   iframe.style.cssText = 'width:100%;height:100%;border:none;';
-  iframe.setAttribute('allow', 'microphone; autoplay; clipboard-write');
+  iframe.setAttribute('allow', 'microphone *; autoplay *; clipboard-write *');
+  iframe.setAttribute('allowusermedia', 'true');
   container.appendChild(iframe);
 
   // Close button on container
