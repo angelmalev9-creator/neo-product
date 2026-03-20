@@ -189,6 +189,44 @@ serve(async (req) => {
       console.error("[SUMMARIZE] Update error:", updateError);
     }
 
+    // ── Extract & save client data from transcript ──
+    const hasClientData = analysis.client_name || analysis.client_email || analysis.client_phone;
+    if (hasClientData && !lead) {
+      const nameParts = (analysis.client_name || "").trim().split(/\s+/);
+      const firstName = nameParts[0] || null;
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : null;
+
+      const { error: leadErr } = await supabase.from("captured_leads").insert({
+        user_id: convoRes.data.user_id,
+        conversation_id: conversationId,
+        first_name: firstName,
+        last_name: lastName,
+        name: analysis.client_name || null,
+        email: analysis.client_email || null,
+        phone: analysis.client_phone || null,
+        source: "ai_extraction",
+      });
+      if (leadErr) console.error("[SUMMARIZE] Lead insert error:", leadErr);
+      else {
+        await supabase.from("conversations").update({ lead_captured: true }).eq("id", conversationId);
+        console.log("[SUMMARIZE] Extracted lead:", { name: analysis.client_name, email: analysis.client_email, phone: analysis.client_phone });
+      }
+    } else if (hasClientData && lead) {
+      // Update existing lead with any new data
+      const updates: Record<string, string> = {};
+      if (analysis.client_name && !lead.name && !lead.first_name) {
+        const nameParts = analysis.client_name.trim().split(/\s+/);
+        updates.first_name = nameParts[0];
+        if (nameParts.length > 1) updates.last_name = nameParts.slice(1).join(" ");
+        updates.name = analysis.client_name;
+      }
+      if (analysis.client_email && !lead.email) updates.email = analysis.client_email;
+      if (analysis.client_phone && !lead.phone) updates.phone = analysis.client_phone;
+      if (Object.keys(updates).length > 0) {
+        await supabase.from("captured_leads").update(updates).eq("conversation_id", conversationId);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
