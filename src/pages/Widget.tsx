@@ -40,6 +40,7 @@ const Widget = () => {
   const [leadSubmitted, setLeadSubmitted] = useState<boolean>(false);
   const [liveTranscript, setLiveTranscript] = useState<string>('');
   const [liveAssistantTranscript, setLiveAssistantTranscript] = useState<string>('');
+  const liveAssistantTranscriptRef = useRef<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<Message[]>([]);
   
