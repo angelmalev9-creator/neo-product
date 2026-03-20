@@ -2619,20 +2619,10 @@ export const useGeminiVoice = ({
           }
         }
 
+        // Never interrupt NEO from raw VAD/noise alone.
+        // Real barge-in is handled only from recognized STT speech above.
         if (isPlayingRef.current && Date.now() - speakStartRef.current > ANTI_BARGE_IN_MS) {
-          const transcriptPreview = [finalChunksRef.current.join(" "), lastInterimTranscriptRef.current]
-            .filter(Boolean)
-            .join(" ")
-            .replace(/\s+/g, " ")
-            .trim();
-          const loudEnough = rms > Math.max(vadThresholdRef.current * 1.6, NOISE_GATE_FLOOR * 2);
-          const hasSpeechEvidence = shouldAllowBargeIn(transcriptPreview);
-          vadBargeInFramesRef.current += 1;
-          if (hasSpeechEvidence && loudEnough && vadBargeInFramesRef.current >= VAD_BARGE_IN_FRAMES_REQUIRED) {
-            console.log("[VAD BARGE-IN] ⚡ Confirmed speech detected → interrupt", { rms, frames: vadBargeInFramesRef.current });
-            performEarlyBargeIn();
-            vadBargeInFramesRef.current = 0;
-          }
+          vadBargeInFramesRef.current = 0;
         } else {
           vadBargeInFramesRef.current = 0;
         }
