@@ -205,11 +205,12 @@ const Widget = () => {
   }, [userId, fetchWidgetData]);
 
   const startCall = useCallback(async () => {
-    if (!systemPrompt || !userId) return;
+    if (!systemPrompt || !userId || isConnected || isConnecting) return;
     initAudioContext();
     setMessages([]);
     setLiveTranscript('');
     setLiveAssistantTranscript('');
+    liveAssistantTranscriptRef.current = '';
     persistedTranscriptKeysRef.current.clear();
     let micGranted = false;
     try {
@@ -227,7 +228,7 @@ const Widget = () => {
     playConnectSound();
     if (micGranted) startAmbient();
     await connect(systemPrompt, companyName, sessionId || undefined, !micGranted);
-  }, [systemPrompt, companyName, sessionId, connect, userId, trackConversation, initAudioContext, playConnectSound, startAmbient, preWarmMicrophone]);
+  }, [systemPrompt, companyName, sessionId, connect, userId, isConnected, isConnecting, trackConversation, initAudioContext, playConnectSound, startAmbient, preWarmMicrophone]);
 
   const endCall = useCallback(async () => {
     stopAmbient();
