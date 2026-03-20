@@ -1936,7 +1936,9 @@ export const useGeminiVoice = ({
       }
     };
 
-    ws.onerror = () => onError?.("Soniox STT грешка");
+    ws.onerror = () => {
+      console.warn("[STT] Soniox websocket error — waiting for auto-reconnect");
+    };
     ws.onclose = (ev) => {
       console.log("[STT] Closed:", ev.code, ev.reason);
       stt.isReady = false;
@@ -1947,7 +1949,7 @@ export const useGeminiVoice = ({
         console.log(`[STT] Auto-reconnect after code ${ev.code}`);
         window.setTimeout(() => {
           if (isConnectedRef.current) connectSTT();
-        }, 600);
+        }, 350);
       }
     };
   }, [
