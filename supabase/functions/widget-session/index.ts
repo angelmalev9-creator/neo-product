@@ -51,8 +51,35 @@ serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
-    // Build system prompt
-    const companyName = profile.company_name || demoSession?.company_name || "компанията";
+    // Resolve company name from multiple sources
+    let companyName = profile.company_name || demoSession?.company_name || "";
+    
+    // Try to extract from structured_data
+    if (!companyName && demoSession?.structured_data) {
+      const sd = typeof demoSession.structured_data === 'string' 
+        ? JSON.parse(demoSession.structured_data) 
+        : demoSession.structured_data;
+      companyName = sd?.company_name || sd?.companyName || sd?.name || "";
+    }
+    
+    // Try to extract from summary (first line often has the site name)
+    if (!companyName && demoSession?.summary) {
+      const titleMatch = demoSession.summary.match(/===\s*(.+?)(?:\s*[-—|]|===)/);
+      if (titleMatch) {
+        companyName = titleMatch[1].trim();
+      }
+    }
+    
+    // Fallback to domain name
+    if (!companyName && demoSession?.url) {
+      try {
+        const domain = new URL(demoSession.url).hostname.replace(/^www\./, '');
+        companyName = domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1);
+      } catch {}
+    }
+    
+    if (!companyName) companyName = "компанията";
+
     let systemPrompt = profile.custom_system_prompt || profile.prompt_template || "";
 
     // If no custom prompt, build a default one
