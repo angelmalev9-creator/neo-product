@@ -953,14 +953,15 @@ function combineSensitiveFragments(existing: string, incoming: string, mode: Sen
 function shouldAllowBargeIn(text: string): boolean {
   const norm = normalizeBgText(text);
   if (!norm) return false;
-  // Always allow explicit stop commands
   if (BARGE_IN_COMMANDS.some((w) => norm.includes(w))) return true;
-  // Require meaningful speech to interrupt — not just noise fragments
-  if (norm.length < MIN_BARGE_IN_CHARS) return false;
+
   const words = norm.split(" ").filter(Boolean);
-  if (words.length < MIN_BARGE_IN_WORDS) return false;
-  // Extra: very short single-syllable words are likely noise
-  if (words.length === 1 && norm.length <= 4) return false;
+  if (norm.length < MIN_STRONG_BARGE_IN_CHARS) return false;
+  if (words.length < MIN_STRONG_BARGE_IN_WORDS) return false;
+
+  const hasLetterWord = words.some((word) => /\p{L}{2,}/u.test(word));
+  if (!hasLetterWord) return false;
+
   return true;
 }
 
