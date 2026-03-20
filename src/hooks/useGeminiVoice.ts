@@ -1671,7 +1671,7 @@ export const useGeminiVoice = ({
   const connectSTT = useCallback(() => {
     const sonioxApiKey = import.meta.env.VITE_SONIOX_API_KEY as string | undefined;
     if (!sonioxApiKey || sonioxApiKey.trim() === "" || sonioxApiKey === "undefined") {
-      onError?.("Липсва VITE_SONIOX_API_KEY");
+      console.warn("[STT] Missing VITE_SONIOX_API_KEY — skipping Soniox");
       return;
     }
 
@@ -1711,7 +1711,7 @@ export const useGeminiVoice = ({
         }, 8000) as unknown as number;
       } catch (e) {
         console.error("[STT] Soniox start message failed", e);
-        onError?.("Soniox STT старт грешка");
+        console.error("[STT] Soniox start message failed", e);
       }
     };
 
@@ -1738,7 +1738,7 @@ export const useGeminiVoice = ({
             ws.close();
             return;
           }
-          onError?.(`Soniox STT грешка: ${data.error_message}`);
+          console.error("[STT] Soniox error:", data.error_message);
           return;
         }
 
@@ -1929,7 +1929,7 @@ export const useGeminiVoice = ({
       }
     };
 
-    ws.onerror = () => onError?.("Soniox STT грешка");
+    ws.onerror = () => console.error("[STT] Soniox WebSocket error");
     ws.onclose = (ev) => {
       console.log("[STT] Closed:", ev.code, ev.reason);
       stt.isReady = false;
