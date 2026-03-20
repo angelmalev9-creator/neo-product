@@ -1738,7 +1738,7 @@ export const useGeminiVoice = ({
             ws.close();
             return;
           }
-          onError?.(`Soniox STT грешка: ${data.error_message}`);
+          console.error("[STT] Soniox error:", data.error_message);
           return;
         }
 
