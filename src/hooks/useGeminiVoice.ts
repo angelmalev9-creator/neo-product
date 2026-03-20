@@ -1929,7 +1929,7 @@ export const useGeminiVoice = ({
       }
     };
 
-    ws.onerror = () => onError?.("Soniox STT грешка");
+    ws.onerror = () => console.error("[STT] Soniox WebSocket error");
     ws.onclose = (ev) => {
       console.log("[STT] Closed:", ev.code, ev.reason);
       stt.isReady = false;
