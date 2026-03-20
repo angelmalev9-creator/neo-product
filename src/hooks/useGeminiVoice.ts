@@ -1338,6 +1338,7 @@ export const useGeminiVoice = ({
   const speakStartRef = useRef<number>(0);
   const recentUtterancesRef = useRef<Array<{ text: string; ts: number }>>([]);
   const dgKeepAliveRef = useRef<number | null>(null);
+  const lastSttPacketSentAtRef = useRef<number>(0);
   const currentResponseTextRef = useRef("");
   const dgSTTRef = useRef<DgSTTState>({ ws: null, isReady: false });
   const utteranceBufferRef = useRef<string[]>([]);
