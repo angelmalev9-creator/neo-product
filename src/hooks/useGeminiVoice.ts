@@ -2557,6 +2557,7 @@ export const useGeminiVoice = ({
 
       try {
         stt.ws.send(float32ToInt16Buffer(resampleTo16k(inputData, actualSampleRateRef.current)));
+        lastSttPacketSentAtRef.current = Date.now();
       } catch {}
     };
 
