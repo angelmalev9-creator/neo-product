@@ -163,8 +163,8 @@ const Widget = () => {
     try { const s = await navigator.mediaDevices.getUserMedia({ audio: true }); s.getTracks().forEach(t => t.stop()); micGranted = true; } catch {}
     playConnectSound();
     if (micGranted) startAmbient();
-    await connect(systemPrompt, companyName, undefined, !micGranted);
-  }, [systemPrompt, companyName, connect, userId, trackConversation, initAudioContext, playConnectSound, startAmbient]);
+    await connect(systemPrompt, companyName, sessionId || undefined, !micGranted);
+  }, [systemPrompt, companyName, sessionId, connect, userId, trackConversation, initAudioContext, playConnectSound, startAmbient]);
 
   const endCall = useCallback(async () => {
     stopAmbient();
