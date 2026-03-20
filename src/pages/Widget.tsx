@@ -32,6 +32,7 @@ const Widget = () => {
   const [config, setConfig] = useState<WidgetConfig | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [textInput, setTextInput] = useState<string>('');
   const [isSendingText, setIsSendingText] = useState<boolean>(false);
