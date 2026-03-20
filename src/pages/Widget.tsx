@@ -231,14 +231,15 @@ const Widget = () => {
   }, [systemPrompt, companyName, sessionId, connect, userId, isConnected, isConnecting, trackConversation, initAudioContext, playConnectSound, startAmbient, preWarmMicrophone]);
 
   const endCall = useCallback(async () => {
+    // Capture pending assistant transcript from ref BEFORE disconnect clears state
+    const pendingAssistant = liveAssistantTranscriptRef.current.trim();
+    
     stopAmbient();
     playDisconnectSound();
     disconnect();
     setLiveTranscript('');
-    // Keep liveAssistantTranscript visible briefly, then commit it as a message
-    const pendingAssistant = liveAssistantTranscript.trim();
+    
     if (pendingAssistant) {
-      // Commit the partial assistant transcript as a full message so it doesn't vanish
       setMessages(prev => {
         const next = [...prev, { role: 'assistant' as const, content: pendingAssistant }];
         messagesRef.current = next;
@@ -247,9 +248,9 @@ const Widget = () => {
       void persistTranscriptMessage('assistant', pendingAssistant);
     }
     setLiveAssistantTranscript('');
+    liveAssistantTranscriptRef.current = '';
     if (!leadSubmitted) setShowLeadModal(true);
     if (conversationId) {
-      // Persist any unsaved messages from state before ending
       const currentMessages = messagesRef.current;
       for (const msg of currentMessages) {
         const key = `${conversationId}:${msg.role}:${msg.content.replace(/\s+/g, ' ').trim()}`;
@@ -266,8 +267,7 @@ const Widget = () => {
       callStartTimeRef.current = null;
       lastTrackedTimeRef.current = 0;
     }
-    // DON'T clear messages - keep them visible after disconnect
-  }, [disconnect, conversationId, trackConversation, leadSubmitted, stopAmbient, playDisconnectSound, liveAssistantTranscript, persistTranscriptMessage]);
+  }, [disconnect, conversationId, trackConversation, leadSubmitted, stopAmbient, playDisconnectSound, persistTranscriptMessage]);
 
   const handleLeadSubmit = useCallback(async (data: LeadData) => {
     const { error } = await supabase.functions.invoke('widget-capture-lead', {
