@@ -1771,8 +1771,10 @@ export const useGeminiVoice = ({
         lastSpeechStartedAtRef.current = Date.now();
 
         if (isPlayingRef.current && Date.now() - speakStartRef.current > ANTI_BARGE_IN_MS) {
-          const hasSpeechEvidence = (hasNonFinal || hasFinal) && minConfidence >= 0.6;
-          if (hasSpeechEvidence && shouldAllowBargeIn(transcript)) {
+          const hasSpeechEvidence = (hasNonFinal || hasFinal) && minConfidence >= STRONG_BARGE_IN_MIN_CONFIDENCE;
+          const transcriptWords = transcript.split(/\s+/).filter(Boolean);
+          const isStrongUtterance = transcript.length >= MIN_STRONG_BARGE_IN_CHARS && transcriptWords.length >= MIN_STRONG_BARGE_IN_WORDS;
+          if (hasSpeechEvidence && isStrongUtterance && shouldAllowBargeIn(transcript)) {
             performEarlyBargeIn();
           }
         }
