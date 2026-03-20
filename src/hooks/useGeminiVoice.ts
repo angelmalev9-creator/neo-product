@@ -2627,7 +2627,7 @@ export const useGeminiVoice = ({
             .join(" ")
             .replace(/\s+/g, " ")
             .trim();
-          const loudEnough = rms > Math.max(vadThresholdRef.current * 2.2, NOISE_GATE_FLOOR * 3);
+          const loudEnough = rms > Math.max(vadThresholdRef.current * 3.0, NOISE_GATE_FLOOR * 4);
           const hasSpeechEvidence = shouldAllowBargeIn(transcriptPreview);
           vadBargeInFramesRef.current += 1;
           if (hasSpeechEvidence && loudEnough && vadBargeInFramesRef.current >= VAD_BARGE_IN_FRAMES_REQUIRED) {
