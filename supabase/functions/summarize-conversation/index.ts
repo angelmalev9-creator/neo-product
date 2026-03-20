@@ -87,16 +87,16 @@ serve(async (req) => {
           messages: [
             {
               role: "system",
-              content: `Ти си бизнес анализатор. Анализирай разговор между AI асистент (NEO) и клиент.
+              content: `Ти си бизнес анализатор. Анализирай разговор между AI асистент (NEO) и клиент. Отговори САМО с валиден JSON обект (без markdown, без \`\`\`), съдържащ:
 
-КРИТИЧНО ВАЖНО за извличане на данни за клиента:
-- Извличай ТОЧНО каквото клиентът е КАЗАЛ — без интерпретации, без промени.
-- Ако клиентът е казал "Казвам се Иван Петров" → client_name = "Иван Петров"
-- Ако клиентът е казал телефонен номер (дори с букви/думи) → запиши го ТОЧНО както е казан, само цифрите
-- Ако клиентът е казал имейл → запиши го ТОЧНО
-- Ако NEO е потвърдил/повторил данните на клиента, те са верни
-- Ако данните НЕ са споменати в разговора, върни null (не измисляй!)
-- Търси данните в ЦЕЛИЯ разговор, не само в началото
+{
+  "summary": "Кратко обобщение (2-3 изречения) — какво е искал клиентът и какъв е резултатът",
+  "client_intent": "Какво точно е искал клиентът (1 изречение)",
+  "outcome": "Какъв е резултатът от разговора (1 изречение)",
+  "sentiment": "positive" | "neutral" | "negative",
+  "tags": ["масив", "от", "ключови", "теми"],
+  "action_items": ["масив от следващи стъпки ако има такива"]
+}
 
 Пиши на български. Бъди кратък и конкретен.`,
             },
@@ -120,9 +120,6 @@ serve(async (req) => {
                     sentiment: { type: "string", enum: ["positive", "neutral", "negative"] },
                     tags: { type: "array", items: { type: "string" }, description: "Key topics" },
                     action_items: { type: "array", items: { type: "string" }, description: "Next steps if any" },
-                    client_name: { type: "string", description: "Client full name if mentioned, null otherwise" },
-                    client_email: { type: "string", description: "Client email if mentioned, null otherwise" },
-                    client_phone: { type: "string", description: "Client phone number (digits only) if mentioned, null otherwise" },
                   },
                   required: ["summary", "client_intent", "outcome", "sentiment", "tags"],
                 },
@@ -184,54 +181,6 @@ serve(async (req) => {
 
     if (updateError) {
       console.error("[SUMMARIZE] Update error:", updateError);
-    }
-
-    // ── Extract & save client data from transcript ──
-    const cleanNull = (v: any) => {
-      if (!v) return null;
-      const s = String(v).trim();
-      const lower = s.toLowerCase();
-      if (!s || lower === "null" || lower === "none" || lower === "няма" || lower === "не" || lower === "n/a" || lower === "не е споменат" || lower === "не е споменато" || lower === "неизвестен" || lower === "неизвестно" || lower === "undefined") return null;
-      return s;
-    };
-    const cName = cleanNull(analysis.client_name);
-    const cEmail = cleanNull(analysis.client_email);
-    const cPhone = cleanNull(analysis.client_phone);
-    const hasClientData = cName || cEmail || cPhone;
-    if (hasClientData && !lead) {
-      const nameParts = (cName || "").split(/\s+/);
-      const firstName = nameParts[0] || null;
-      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : null;
-
-      const { error: leadErr } = await supabase.from("captured_leads").insert({
-        user_id: convoRes.data.user_id,
-        conversation_id: conversationId,
-        first_name: firstName,
-        last_name: lastName,
-        name: cName,
-        email: cEmail,
-        phone: cPhone,
-        source: "ai_extraction",
-      });
-      if (leadErr) console.error("[SUMMARIZE] Lead insert error:", leadErr);
-      else {
-        await supabase.from("conversations").update({ lead_captured: true }).eq("id", conversationId);
-        console.log("[SUMMARIZE] Extracted lead:", { name: analysis.client_name, email: analysis.client_email, phone: analysis.client_phone });
-      }
-    } else if (hasClientData && lead) {
-      // Update existing lead with any new data
-      const updates: Record<string, string> = {};
-      if (analysis.client_name && !lead.name && !lead.first_name) {
-        const nameParts = analysis.client_name.trim().split(/\s+/);
-        updates.first_name = nameParts[0];
-        if (nameParts.length > 1) updates.last_name = nameParts.slice(1).join(" ");
-        updates.name = analysis.client_name;
-      }
-      if (analysis.client_email && !lead.email) updates.email = analysis.client_email;
-      if (analysis.client_phone && !lead.phone) updates.phone = analysis.client_phone;
-      if (Object.keys(updates).length > 0) {
-        await supabase.from("captured_leads").update(updates).eq("conversation_id", conversationId);
-      }
     }
 
     return new Response(
