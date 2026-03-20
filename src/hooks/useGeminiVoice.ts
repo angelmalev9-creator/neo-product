@@ -48,7 +48,7 @@ const AUDIO_SAMPLE_RATE_OUT = 24000;
 const AUDIO_SAMPLE_RATE_IN = 16000;
 
 const ECHO_GUARD_MS = 80;
-const ANTI_BARGE_IN_MS = 350;
+const ANTI_BARGE_IN_MS = 500;
 const MIN_BARGE_IN_CHARS = 2;
 const MIN_BARGE_IN_WORDS = 2;
 const BARGE_IN_COMMANDS = ["стоп", "спри", "изчакай", "чакай", "момент", "секунда", "стига", "почакай"];
@@ -73,9 +73,8 @@ const SENSITIVE_MODE_EXTRA_WAIT_MS: Record<SensitiveInputMode, number> = {
   email: 2400,
   contact: 2800,
 };
-// VAD-based barge-in: number of consecutive speech frames needed to interrupt NEO
-// Higher = less false positives from noise/echo.
-const VAD_BARGE_IN_FRAMES_REQUIRED = 5;
+// VAD-based barge-in: keep it conservative and only interrupt on sustained real speech.
+const VAD_BARGE_IN_FRAMES_REQUIRED = 10;
 
 // VAD (client-side) is only a fallback safety layer.
 // Server-final tokens should end the turn first.
