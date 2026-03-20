@@ -44,10 +44,14 @@ const Widget = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const callStartTimeRef = useRef<number | null>(null);
   const lastTrackedTimeRef = useRef<number>(0);
+  const persistedTranscriptKeysRef = useRef<Set<string>>(new Set());
   
   const { playConnectSound, playDisconnectSound, startAmbient, stopAmbient, initAudioContext } = useAudioEffects({ ambientVolume: 0.04, effectsVolume: 0.2 });
 
   const handleMessage = useCallback((message: Message) => {
+    if (message.role === 'user') {
+      setLiveTranscript('');
+    }
     setMessages(prev => [...prev, message]);
   }, []);
 
@@ -60,12 +64,20 @@ const Widget = () => {
     onMessage: handleMessage,
     onError: handleError,
     onTranscript: (transcript, isFinal, role) => {
-      if (role !== 'user') return;
-      if (isFinal) {
-        setLiveTranscript('');
+      const normalized = transcript.replace(/\s+/g, ' ').trim();
+      if (!normalized) return;
+
+      if (role === 'user') {
+        setLiveTranscript(normalized);
+        if (isFinal) {
+          void persistTranscriptMessage('user', normalized);
+        }
         return;
       }
-      setLiveTranscript(transcript);
+
+      if (isFinal) {
+        void persistTranscriptMessage('assistant', normalized);
+      }
     },
   });
 
@@ -80,24 +92,36 @@ const Widget = () => {
     } catch { return null; }
   }, [userId, conversationId]);
 
+  const persistTranscriptMessage = useCallback(async (role: Message['role'], content: string) => {
+    const normalized = content.replace(/\s+/g, ' ').trim();
+    if (!conversationId || !normalized) return;
+
+    const key = `${conversationId}:${role}:${normalized}`;
+    if (persistedTranscriptKeysRef.current.has(key)) return;
+    persistedTranscriptKeysRef.current.add(key);
+
+    const result = await trackConversation('message', role === 'user'
+      ? { userMessage: normalized }
+      : { assistantMessage: normalized }
+    );
+
+    if (!result) {
+      persistedTranscriptKeysRef.current.delete(key);
+    }
+  }, [conversationId, trackConversation]);
+
   const interestKeywords = ['час', 'запазим', 'резервация', 'консултация', 'оферта', 'цена', 'свържем', 'формуляр', 'контакт', 'запиша', 'попълнете', 'данни', 'обадим', 'изпратим'];
 
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
-    if (!lastMessage || !conversationId) return;
-    const msgData: Record<string, string> = {};
-    if (lastMessage.role === 'user') { msgData.userMessage = lastMessage.content; }
-    else {
-      msgData.assistantMessage = lastMessage.content;
-      if (!leadSubmitted && !showLeadModal && isConnected) {
-        const txt = lastMessage.content.toLowerCase();
-        if (interestKeywords.some(k => txt.includes(k))) {
-          setTimeout(() => setShowLeadModal(true), 1500);
-        }
+    if (!lastMessage || lastMessage.role !== 'assistant') return;
+    if (!leadSubmitted && !showLeadModal && isConnected) {
+      const txt = lastMessage.content.toLowerCase();
+      if (interestKeywords.some(k => txt.includes(k))) {
+        setTimeout(() => setShowLeadModal(true), 1500);
       }
     }
-    trackConversation('message', msgData);
-  }, [messages, conversationId]);
+  }, [messages, leadSubmitted, showLeadModal, isConnected]);
 
   useEffect(() => {
     if (!isConnected || !conversationId || !callStartTimeRef.current) return;
@@ -168,6 +192,7 @@ const Widget = () => {
     initAudioContext();
     setMessages([]);
     setLiveTranscript('');
+    persistedTranscriptKeysRef.current.clear();
     let micGranted = false;
     try {
       await preWarmMicrophone();
@@ -178,6 +203,7 @@ const Widget = () => {
       setConversationId(result.conversationId);
       callStartTimeRef.current = Date.now();
       lastTrackedTimeRef.current = 0;
+      persistedTranscriptKeysRef.current.clear();
     }
     if (window.parent !== window) window.parent.postMessage({ type: 'NEO_CONVERSATION_STARTED' }, '*');
     playConnectSound();
@@ -196,6 +222,7 @@ const Widget = () => {
       setConversationId(null);
       callStartTimeRef.current = null;
       lastTrackedTimeRef.current = 0;
+      persistedTranscriptKeysRef.current.clear();
     }
   }, [disconnect, conversationId, trackConversation, leadSubmitted, stopAmbient, playDisconnectSound]);
 
@@ -212,8 +239,9 @@ const Widget = () => {
     const msg = textInput.trim();
     setTextInput('');
     setMessages(prev => [...prev, { role: 'user', content: msg }]);
+    void persistTranscriptMessage('user', msg);
     sendText(msg);
-  }, [textInput, isConnected, sendText]);
+  }, [textInput, isConnected, sendText, persistTranscriptMessage]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendText(); }

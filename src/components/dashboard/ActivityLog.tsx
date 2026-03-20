@@ -81,8 +81,60 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
     const ch2 = supabase.channel('activity-leads')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'captured_leads', filter: `user_id=eq.${userId}` }, () => loadData())
       .subscribe();
-    return () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2); };
-  }, [userId]);
+    const ch3 = supabase.channel(`activity-messages-${userId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversation_messages' }, async (payload) => {
+        const row = (payload.new || payload.old) as Partial<ConversationMessage> | null;
+        const conversationId = row?.conversation_id;
+        if (!conversationId || !conversations.some((convo) => convo.id === conversationId)) return;
+
+        setMessages((prev) => {
+          const current = prev[conversationId];
+          if (!current) return prev;
+
+          if (payload.eventType === 'INSERT' && payload.new) {
+            const nextMessage = payload.new as ConversationMessage;
+            if (current.some((msg) => msg.id === nextMessage.id)) return prev;
+            return {
+              ...prev,
+              [conversationId]: [...current, nextMessage].sort((a, b) => a.created_at.localeCompare(b.created_at)),
+            };
+          }
+
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            const updatedMessage = payload.new as ConversationMessage;
+            return {
+              ...prev,
+              [conversationId]: current.map((msg) => msg.id === updatedMessage.id ? updatedMessage : msg),
+            };
+          }
+
+          if (payload.eventType === 'DELETE' && payload.old) {
+            const deletedMessage = payload.old as ConversationMessage;
+            return {
+              ...prev,
+              [conversationId]: current.filter((msg) => msg.id !== deletedMessage.id),
+            };
+          }
+
+          return prev;
+        });
+
+        setConversations((prev) => prev.map((convo) => {
+          if (convo.id !== conversationId) return convo;
+          const delta = payload.eventType === 'INSERT' ? 1 : payload.eventType === 'DELETE' ? -1 : 0;
+          return {
+            ...convo,
+            messages_count: Math.max(0, (convo.messages_count || 0) + delta),
+          };
+        }));
+
+        if (expandedId === conversationId && !messages[conversationId]) {
+          await loadMessages(conversationId);
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2); supabase.removeChannel(ch3); };
+  }, [userId, conversations, expandedId, messages]);
 
   const loadData = async () => {
     setLoading(true);
