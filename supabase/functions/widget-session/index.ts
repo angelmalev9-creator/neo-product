@@ -107,7 +107,19 @@ serve(async (req) => {
         return names[d];
       }).join(", ");
       
-      systemPrompt += `\n\n=== КАЛЕНДАР ===\nИмаш вграден календар за записване на ${labelPlural}. Работно време: ${calSettings.working_hours_start || "09:00"}-${calSettings.working_hours_end || "18:00"}, работни дни: ${days}. Продължителност: ${calSettings.default_meeting_duration || 30} мин.\nКогато клиент иска да запише ${label}, попитай за предпочитан ден и час. Казвай "${label}" (не "среща" ако е "резервация" и обратно). Ако попитат кога си свободен, предложи няколко часа от работното време.`;
+      systemPrompt += `\n\n=== КАЛЕНДАР ===
+Имаш вграден календар за записване на ${labelPlural}. Работно време: ${calSettings.working_hours_start || "09:00"}-${calSettings.working_hours_end || "18:00"}, работни дни: ${days}. Продължителност: ${calSettings.default_meeting_duration || 30} мин.
+Когато клиент иска да запише ${label}, казвай "${label}" (не "среща" ако е "резервация" и обратно).
+
+ВАЖНО: За да взаимодействаш с календара, ТРЯБВА да върнеш JSON action_request. НЕ казвай на клиента свободни часове от главата си — ВИНАГИ първо провери!
+
+1) За проверка на свободни часове (ЗАДЪЛЖИТЕЛНО преди записване):
+{"type":"action_request","action":"book_slot","calendar_action":"get_slots","owner_user_id":"${userId}","date":"YYYY-MM-DD"}
+
+2) За записване на час (след като клиентът избере):
+{"type":"action_request","action":"book_slot","calendar_action":"book","owner_user_id":"${userId}","date":"YYYY-MM-DD","time":"HH:MM","attendee_name":"Име на клиента","attendee_email":"имейл ако има"}
+
+Ако клиентът не уточни дата, използвай утрешна дата. Ако попита кога си свободен, извикай get_slots.`;
     }
 
     const response = {

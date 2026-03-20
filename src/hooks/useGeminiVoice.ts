@@ -3388,6 +3388,84 @@ export const useGeminiVoice = ({
           return true;
         }
 
+        // ── NEO CALENDAR: book_slot ─────────────────────────────────
+        if (parsed?.action === "book_slot") {
+          const calAction = String(parsed?.calendar_action || "get_slots");
+          const SUPABASE_BASE = "https://onufuxczpqlxxkgyltlz.supabase.co/functions/v1/widget-book-slot";
+
+          const calUserId = parsed?.owner_user_id ||
+            (sessionDataRef.current as any)?.userId ||
+            (sessionDataRef.current as any)?.user_id || "";
+
+          if (!calUserId) {
+            sendToGemini("CALENDAR_ERROR: Няма userId. Кажи на клиента учтиво, че календарът не е наличен в момента.");
+            return true;
+          }
+
+          try {
+            const calBody: any = {
+              action: calAction,
+              userId: calUserId,
+              date: parsed?.date || undefined,
+              time: parsed?.time || undefined,
+              attendeeName: parsed?.attendee_name || parsed?.client_name || undefined,
+              attendeeEmail: parsed?.attendee_email || parsed?.client_email || undefined,
+            };
+
+            console.log("[ACTION][BOOK_SLOT]", calAction, calBody);
+
+            const calRes = await fetch(SUPABASE_BASE, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", apikey: anonKey },
+              body: JSON.stringify(calBody),
+            });
+
+            const calResult = await calRes.json().catch(() => ({}));
+            console.log("[ACTION][BOOK_SLOT] result:", calResult);
+
+            if (calAction === "get_slots") {
+              sendToGemini(
+                [
+                  "CALENDAR_SLOTS_RESULT:",
+                  `date=${calResult?.date || parsed?.date || ""}`,
+                  `available=${calResult?.available}`,
+                  `bookingLabel=${calResult?.bookingLabel || ""}`,
+                  `message=${calResult?.message || ""}`,
+                  calResult?.nextAvailableDate ? `nextAvailableDate=${calResult.nextAvailableDate}` : "",
+                  calResult?.slots ? `slots=${calResult.slots.map((s: any) => s.display).join(", ")}` : "",
+                  "",
+                  "Предай тази информация на клиента по естествен начин.",
+                ].filter(Boolean).join("\n")
+              );
+            } else if (calAction === "book") {
+              if (calResult?.success) {
+                sendToGemini(
+                  [
+                    "CALENDAR_BOOKING_SUCCESS:",
+                    `message=${calResult?.message || ""}`,
+                    `bookingId=${calResult?.bookingId || ""}`,
+                    "",
+                    "Кажи на клиента, че записът е направен успешно. Предай детайлите.",
+                  ].join("\n")
+                );
+              } else {
+                sendToGemini(
+                  [
+                    "CALENDAR_BOOKING_FAILED:",
+                    `message=${calResult?.message || calResult?.error || "Грешка при записване"}`,
+                    "",
+                    "Кажи на клиента учтиво, че часът не е наличен и предложи алтернатива.",
+                  ].join("\n")
+                );
+              }
+            }
+          } catch (e) {
+            console.error("[BOOK_SLOT ERROR]", e);
+            sendToGemini("CALENDAR_ERROR: Технически проблем с календара. Кажи на клиента учтиво и предложи нов опит.");
+          }
+          return true;
+        }
+
         // ── СТАНДАРТНА ФОРМА (submit_form) ───────────────────────────
         if (parsed?.action !== "submit_form") return false;
 
