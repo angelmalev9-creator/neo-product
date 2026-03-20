@@ -5,12 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
 import {
-  MessageSquare, Clock, TrendingUp, Users, Phone, Mail, Building,
-  ChevronDown, ChevronUp, RefreshCw, User, Briefcase, FileText,
-  Sparkles, Target, CheckCircle2, Tag, ListChecks, Bot, UserCircle,
-  Calendar, Globe,
+  MessageSquare, Clock, Users, Phone, Mail,
+  ChevronDown, ChevronUp, RefreshCw, User, Briefcase,
+  Sparkles, Bot, UserCircle, Globe, TrendingUp,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -49,13 +47,6 @@ interface CapturedLead {
   conversation_id: string | null;
 }
 
-interface Stats {
-  totalConversations: number;
-  totalMinutes: number;
-  avgDuration: number;
-  leadsCapured: number;
-}
-
 interface ActivityLogProps {
   userId: string;
 }
@@ -66,13 +57,13 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [leads, setLeads] = useState<CapturedLead[]>([]);
   const [messages, setMessages] = useState<Record<string, ConversationMessage[]>>({});
-  const [stats, setStats] = useState<Stats>({ totalConversations: 0, totalMinutes: 0, avgDuration: 0, leadsCapured: 0 });
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loadingMessages, setLoadingMessages] = useState<string | null>(null);
   const [summarizing, setSummarizing] = useState<string | null>(null);
 
   useEffect(() => { if (userId) loadData(); }, [userId]);
 
+  // Realtime
   useEffect(() => {
     if (!userId) return;
     const ch1 = supabase.channel('activity-convos')
@@ -82,59 +73,21 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'captured_leads', filter: `user_id=eq.${userId}` }, () => loadData())
       .subscribe();
     const ch3 = supabase.channel(`activity-messages-${userId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversation_messages' }, async (payload) => {
-        const row = (payload.new || payload.old) as Partial<ConversationMessage> | null;
-        const conversationId = row?.conversation_id;
-        if (!conversationId || !conversations.some((convo) => convo.id === conversationId)) return;
-
-        setMessages((prev) => {
-          const current = prev[conversationId];
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'conversation_messages' }, (payload) => {
+        const row = payload.new as ConversationMessage;
+        if (!row?.conversation_id) return;
+        setMessages(prev => {
+          const current = prev[row.conversation_id];
           if (!current) return prev;
-
-          if (payload.eventType === 'INSERT' && payload.new) {
-            const nextMessage = payload.new as ConversationMessage;
-            if (current.some((msg) => msg.id === nextMessage.id)) return prev;
-            return {
-              ...prev,
-              [conversationId]: [...current, nextMessage].sort((a, b) => a.created_at.localeCompare(b.created_at)),
-            };
-          }
-
-          if (payload.eventType === 'UPDATE' && payload.new) {
-            const updatedMessage = payload.new as ConversationMessage;
-            return {
-              ...prev,
-              [conversationId]: current.map((msg) => msg.id === updatedMessage.id ? updatedMessage : msg),
-            };
-          }
-
-          if (payload.eventType === 'DELETE' && payload.old) {
-            const deletedMessage = payload.old as ConversationMessage;
-            return {
-              ...prev,
-              [conversationId]: current.filter((msg) => msg.id !== deletedMessage.id),
-            };
-          }
-
-          return prev;
+          if (current.some(m => m.id === row.id)) return prev;
+          return { ...prev, [row.conversation_id]: [...current, row].sort((a, b) => a.created_at.localeCompare(b.created_at)) };
         });
-
-        setConversations((prev) => prev.map((convo) => {
-          if (convo.id !== conversationId) return convo;
-          const delta = payload.eventType === 'INSERT' ? 1 : payload.eventType === 'DELETE' ? -1 : 0;
-          return {
-            ...convo,
-            messages_count: Math.max(0, (convo.messages_count || 0) + delta),
-          };
-        }));
-
-        if (expandedId === conversationId && !messages[conversationId]) {
-          await loadMessages(conversationId);
-        }
-      })
-      .subscribe();
+        setConversations(prev => prev.map(c =>
+          c.id === row.conversation_id ? { ...c, messages_count: (c.messages_count || 0) + 1 } : c
+        ));
+      }).subscribe();
     return () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2); supabase.removeChannel(ch3); };
-  }, [userId, conversations, expandedId, messages]);
+  }, [userId]);
 
   const loadData = async () => {
     setLoading(true);
@@ -143,345 +96,212 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
         supabase.from('conversations').select('*').eq('user_id', userId).order('started_at', { ascending: false }).limit(100),
         supabase.from('captured_leads').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(100),
       ]);
-      if (convosRes.error) throw convosRes.error;
-      if (leadsRes.error) throw leadsRes.error;
-
-      const convos = convosRes.data || [];
-      const leadsData = leadsRes.data || [];
-      setConversations(convos);
-      setLeads(leadsData);
-
-      const totalConvos = convos.length;
-      const totalSeconds = convos.reduce((a, c) => a + (c.duration_seconds || 0), 0);
-      setStats({
-        totalConversations: totalConvos,
-        totalMinutes: Math.round(totalSeconds / 60),
-        avgDuration: totalConvos > 0 ? Math.round(totalSeconds / totalConvos) : 0,
-        leadsCapured: convos.filter(c => c.lead_captured).length,
-      });
-    } catch (error) {
-      console.error('Error loading activity:', error);
+      setConversations(convosRes.data || []);
+      setLeads(leadsRes.data || []);
+    } catch {
       toast({ title: 'Грешка', description: 'Неуспешно зареждане', variant: 'destructive' });
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const loadMessages = async (conversationId: string) => {
     if (messages[conversationId]) return;
     setLoadingMessages(conversationId);
     try {
-      const { data, error } = await supabase
-        .from('conversation_messages').select('*')
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true });
-      if (error) throw error;
+      const { data } = await supabase.from('conversation_messages').select('*')
+        .eq('conversation_id', conversationId).order('created_at', { ascending: true });
       setMessages(prev => ({ ...prev, [conversationId]: data || [] }));
-    } catch (err) {
-      console.error('Error loading messages:', err);
-    } finally {
-      setLoadingMessages(null);
-    }
+    } catch {} finally { setLoadingMessages(null); }
   };
 
   const toggleExpand = (id: string) => {
-    if (expandedId === id) {
-      setExpandedId(null);
-    } else {
-      setExpandedId(id);
-      loadMessages(id);
-      // Auto-summarize if no summary yet
-      const convo = conversations.find(c => c.id === id);
-      if (convo && !convo.summary && (convo.messages_count || 0) > 0) {
-        summarizeConversation(id);
-      }
-    }
+    if (expandedId === id) { setExpandedId(null); return; }
+    setExpandedId(id);
+    loadMessages(id);
+    const convo = conversations.find(c => c.id === id);
+    if (convo && !convo.summary && (convo.messages_count || 0) > 0) summarizeConversation(id);
   };
 
   const summarizeConversation = async (conversationId: string) => {
     setSummarizing(conversationId);
     try {
       const { data, error } = await supabase.functions.invoke('summarize-conversation', { body: { conversationId } });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error || data?.error) throw new Error(data?.error || 'fail');
       loadData();
     } catch (e: any) {
-      console.error('Summarize error:', e);
-      toast({ title: 'Грешка', description: e?.message || 'Неуспешно обобщаване', variant: 'destructive' });
-    } finally {
-      setSummarizing(null);
-    }
+      toast({ title: 'Грешка', description: e?.message || 'Неуспешно', variant: 'destructive' });
+    } finally { setSummarizing(null); }
   };
 
   const getLeadForConversation = (convoId: string) => leads.find(l => l.conversation_id === convoId);
-
   const getLeadName = (lead: CapturedLead) => {
     if (lead.first_name || lead.last_name) return `${lead.first_name || ''} ${lead.last_name || ''}`.trim();
     return lead.name || 'Неизвестен';
   };
-
-  const formatDuration = (seconds: number | null) => {
-    if (!seconds) return '0с';
-    if (seconds < 60) return `${seconds}с`;
-    return `${Math.floor(seconds / 60)}м ${seconds % 60}с`;
+  const formatDuration = (s: number | null) => {
+    if (!s) return '0с';
+    return s < 60 ? `${s}с` : `${Math.floor(s / 60)}м ${s % 60}с`;
   };
 
-  const getSentimentStyle = (s: string | null) => {
-    if (s === 'positive') return { label: 'Позитивен', dot: 'bg-green-500', cls: 'bg-green-500/10 text-green-500 border-green-500/20' };
-    if (s === 'negative') return { label: 'Негативен', dot: 'bg-red-500', cls: 'bg-red-500/10 text-red-500 border-red-500/20' };
-    return { label: 'Неутрален', dot: 'bg-muted-foreground', cls: 'bg-muted text-muted-foreground border-border/30' };
-  };
-
-  /** Parse rich summary into structured parts */
   const parseSummary = (raw: string | null) => {
     if (!raw) return null;
     const lines = raw.split('\n').filter(Boolean);
-    const summary = lines[0] || '';
-    let intent = '', outcome = '', tags = '', actions = '';
+    let summary = lines[0] || '', intent = '', outcome = '', actions = '';
     for (const line of lines.slice(1)) {
       if (line.startsWith('🎯')) intent = line.replace(/^🎯\s*Намерение:\s*/, '');
       else if (line.startsWith('✅')) outcome = line.replace(/^✅\s*Резултат:\s*/, '');
-      else if (line.startsWith('🏷️')) tags = line.replace(/^🏷️\s*/, '');
       else if (line.startsWith('📋')) actions = line.replace(/^📋\s*Следващи стъпки:\s*/, '');
     }
-    return { summary, intent, outcome, tags, actions };
+    return { summary, intent, outcome, actions };
   };
 
-  const orphanLeads = leads.filter(l => !l.conversation_id || !conversations.some(c => c.id === l.conversation_id));
+  const totalConvos = conversations.length;
+  const totalMinutes = Math.round(conversations.reduce((a, c) => a + (c.duration_seconds || 0), 0) / 60);
+  const leadsCount = conversations.filter(c => c.lead_captured).length;
 
   if (loading) {
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
-        </div>
-        <Skeleton className="h-64 rounded-xl" />
-      </div>
-    );
+    return <div className="space-y-3">
+      {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
+    </div>;
   }
 
   return (
-    <div className="space-y-5">
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard icon={<MessageSquare className="w-4 h-4 text-primary" />} value={stats.totalConversations} label="Разговори" />
-        <StatCard icon={<Clock className="w-4 h-4 text-primary" />} value={stats.totalMinutes} label="Минути" />
-        <StatCard icon={<Users className="w-4 h-4 text-green-600" />} value={stats.leadsCapured} label="Клиенти" bgClass="bg-green-500/10" />
-        <StatCard icon={<TrendingUp className="w-4 h-4 text-primary" />} value={formatDuration(stats.avgDuration)} label="Ср. време" />
+    <div className="space-y-4">
+      {/* Compact stats row */}
+      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5 text-primary" /> {totalConvos} разговори</span>
+        <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-primary" /> {totalMinutes} мин</span>
+        <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5 text-green-500" /> {leadsCount} клиенти</span>
+        <div className="ml-auto">
+          <Button variant="ghost" size="sm" onClick={loadData} className="gap-1 text-xs h-7 px-2">
+            <RefreshCw className="w-3 h-3" /> Обнови
+          </Button>
+        </div>
       </div>
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <FileText className="w-4 h-4 text-primary" />
-          Дневник на дискусиите
-        </h4>
-        <Button variant="ghost" size="sm" onClick={loadData} className="gap-1 text-xs">
-          <RefreshCw className="w-3 h-3" /> Обнови
-        </Button>
-      </div>
-
-      {conversations.length === 0 && orphanLeads.length === 0 ? (
+      {conversations.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-30" />
           <p className="text-sm">Все още няма записани разговори</p>
         </div>
       ) : (
         <ScrollArea className="h-[560px]">
-          <div className="space-y-3 pr-3">
+          <div className="space-y-2 pr-2">
             {conversations.map((convo) => {
               const lead = getLeadForConversation(convo.id);
               const isExpanded = expandedId === convo.id;
               const convoMessages = messages[convo.id];
-              const sentimentStyle = getSentimentStyle(convo.sentiment);
               const parsed = parseSummary(convo.summary);
               const isSummarizing = summarizing === convo.id;
+              const date = new Date(convo.started_at);
 
               return (
-                <div key={convo.id} className="rounded-xl border border-border/30 bg-card/50 overflow-hidden transition-all hover:border-primary/20">
-                  {/* Row header */}
-                  <div className="p-3 sm:p-4 cursor-pointer flex items-start gap-3" onClick={() => toggleExpand(convo.id)}>
-                    {/* Date block */}
-                    <div className="shrink-0 w-14 text-center pt-0.5">
-                      <p className="text-lg font-bold text-foreground leading-none">{new Date(convo.started_at).getDate()}</p>
-                      <p className="text-[10px] text-muted-foreground uppercase">{new Date(convo.started_at).toLocaleDateString('bg-BG', { month: 'short' })}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(convo.started_at).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })}</p>
+                <div key={convo.id} className="rounded-xl border border-border/30 bg-card/50 overflow-hidden transition-colors hover:border-primary/20">
+                  {/* Collapsed row */}
+                  <div className="p-3 cursor-pointer flex items-center gap-3" onClick={() => toggleExpand(convo.id)}>
+                    {/* Time */}
+                    <div className="shrink-0 text-center w-12">
+                      <p className="text-sm font-bold text-foreground">{date.getDate()} {date.toLocaleDateString('bg-BG', { month: 'short' })}</p>
+                      <p className="text-[10px] text-muted-foreground">{date.toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })}</p>
                     </div>
 
-                    {/* Info */}
+                    {/* Name + short summary */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
                         {lead ? (
-                          <span className="font-medium text-sm text-foreground flex items-center gap-1.5">
-                            <UserCircle className="w-3.5 h-3.5 text-primary" />
-                            {getLeadName(lead)}
-                          </span>
+                          <span className="font-medium text-sm text-foreground truncate">{getLeadName(lead)}</span>
                         ) : (
-                          <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-                            <Globe className="w-3.5 h-3.5" />
-                            Анонимен посетител
-                          </span>
+                          <span className="text-sm text-muted-foreground">Посетител</span>
                         )}
-                        {convo.sentiment && (
-                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${sentimentStyle.cls}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${sentimentStyle.dot} inline-block mr-1`} />
-                            {sentimentStyle.label}
-                          </Badge>
-                        )}
-                        {convo.lead_captured && (
-                          <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-500 border-green-500/20 px-1.5 py-0">
-                            ✓ Клиент
-                          </Badge>
-                        )}
+                        <span className="text-[10px] text-muted-foreground">{convo.messages_count || 0} съобщ. · {formatDuration(convo.duration_seconds)}</span>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {convo.messages_count || 0} съобщения · {formatDuration(convo.duration_seconds)}
-                        {lead?.service && <> · <span className="text-primary">{lead.service}</span></>}
-                      </p>
-                      {/* Show summary preview (first line only) when collapsed */}
                       {!isExpanded && parsed?.summary && (
-                        <p className="text-xs text-muted-foreground/70 mt-1 line-clamp-1">{parsed.summary}</p>
+                        <p className="text-xs text-muted-foreground/70 mt-0.5 line-clamp-1">{parsed.summary}</p>
                       )}
                     </div>
 
-                    <div className="shrink-0 pt-1">
+                    {/* Badges */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {convo.lead_captured && <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-500 border-green-500/20 px-1.5 py-0">✓</Badge>}
                       {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                     </div>
                   </div>
 
-                  {/* Expanded detail panel */}
+                  {/* Expanded */}
                   {isExpanded && (
                     <div className="border-t border-border/20 bg-background/30">
-                      {/* AI Summary section */}
-                      <div className="px-4 py-3.5">
-                        {isSummarizing ? (
-                          <div className="flex items-center gap-2 text-xs text-primary">
-                            <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-                            <span>AI анализира разговора...</span>
-                          </div>
-                        ) : parsed ? (
-                          <div className="space-y-3">
-                            {/* Main summary */}
-                            <div>
-                              <p className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider mb-1.5 flex items-center gap-1">
-                                <Sparkles className="w-3 h-3 text-primary" /> AI Анализ
-                              </p>
-                              <p className="text-xs text-foreground leading-relaxed">{parsed.summary}</p>
+                      {/* Top section: Client data + Summary side by side */}
+                      <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Client data */}
+                        <div className="rounded-lg bg-muted/20 border border-border/20 p-3">
+                          <p className="text-[10px] uppercase font-semibold text-muted-foreground mb-2 flex items-center gap-1">
+                            <User className="w-3 h-3 text-primary" /> Данни
+                          </p>
+                          {lead ? (
+                            <div className="space-y-1.5 text-xs">
+                              <div className="flex items-center gap-1.5 text-foreground font-medium">
+                                <UserCircle className="w-3.5 h-3.5 text-primary" /> {getLeadName(lead)}
+                              </div>
+                              {lead.email && <div className="flex items-center gap-1.5 text-foreground"><Mail className="w-3.5 h-3.5 text-muted-foreground" /> {lead.email}</div>}
+                              {lead.phone && <div className="flex items-center gap-1.5 text-foreground"><Phone className="w-3.5 h-3.5 text-muted-foreground" /> {lead.phone}</div>}
+                              {lead.service && <div className="flex items-center gap-1.5 text-foreground"><Briefcase className="w-3.5 h-3.5 text-muted-foreground" /> {lead.service}</div>}
                             </div>
+                          ) : (
+                            <p className="text-xs text-muted-foreground italic">Няма данни за клиента</p>
+                          )}
+                        </div>
 
-                            {/* Intent + Outcome grid */}
-                            {(parsed.intent || parsed.outcome) && (
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {parsed.intent && (
-                                  <div className="rounded-lg bg-primary/5 border border-primary/10 px-3 py-2">
-                                    <p className="text-[10px] uppercase font-semibold text-primary/70 flex items-center gap-1 mb-0.5">
-                                      <Target className="w-3 h-3" /> Намерение
-                                    </p>
-                                    <p className="text-xs text-foreground">{parsed.intent}</p>
-                                  </div>
-                                )}
-                                {parsed.outcome && (
-                                  <div className="rounded-lg bg-green-500/5 border border-green-500/10 px-3 py-2">
-                                    <p className="text-[10px] uppercase font-semibold text-green-600/70 flex items-center gap-1 mb-0.5">
-                                      <CheckCircle2 className="w-3 h-3" /> Резултат
-                                    </p>
-                                    <p className="text-xs text-foreground">{parsed.outcome}</p>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-
-                            {/* Tags */}
-                            {parsed.tags && (
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <Tag className="w-3 h-3 text-muted-foreground shrink-0" />
-                                {parsed.tags.split(', ').map((tag, i) => (
-                                  <Badge key={i} variant="outline" className="text-[10px] px-1.5 py-0 bg-muted/50">{tag}</Badge>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Action items */}
-                            {parsed.actions && (
-                              <div className="rounded-lg bg-muted/30 border border-border/20 px-3 py-2">
-                                <p className="text-[10px] uppercase font-semibold text-muted-foreground flex items-center gap-1 mb-1">
-                                  <ListChecks className="w-3 h-3" /> Следващи стъпки
-                                </p>
-                                <p className="text-xs text-foreground">{parsed.actions}</p>
-                              </div>
-                            )}
-
-                            {/* Re-summarize button */}
-                            <Button
-                              size="sm" variant="ghost"
-                              onClick={(e) => { e.stopPropagation(); summarizeConversation(convo.id); }}
-                              className="text-[10px] h-6 px-2 text-muted-foreground hover:text-primary gap-1"
-                            >
-                              <RefreshCw className="w-2.5 h-2.5" /> Анализирай отново
+                        {/* AI Summary */}
+                        <div className="rounded-lg bg-muted/20 border border-border/20 p-3">
+                          <p className="text-[10px] uppercase font-semibold text-muted-foreground mb-2 flex items-center gap-1">
+                            <Sparkles className="w-3 h-3 text-primary" /> Резюме
+                          </p>
+                          {isSummarizing ? (
+                            <div className="flex items-center gap-2 text-xs text-primary">
+                              <Sparkles className="w-3 h-3 animate-pulse" /> Анализиране...
+                            </div>
+                          ) : parsed ? (
+                            <div className="space-y-1.5 text-xs">
+                              <p className="text-foreground leading-relaxed">{parsed.summary}</p>
+                              {parsed.intent && <p className="text-muted-foreground"><span className="text-primary font-medium">Намерение:</span> {parsed.intent}</p>}
+                              {parsed.outcome && <p className="text-muted-foreground"><span className="text-green-500 font-medium">Резултат:</span> {parsed.outcome}</p>}
+                              {parsed.actions && <p className="text-muted-foreground"><span className="font-medium">Стъпки:</span> {parsed.actions}</p>}
+                              <button onClick={(e) => { e.stopPropagation(); summarizeConversation(convo.id); }}
+                                className="text-[10px] text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 mt-1">
+                                <RefreshCw className="w-2.5 h-2.5" /> Преанализирай
+                              </button>
+                            </div>
+                          ) : (convo.messages_count || 0) > 0 ? (
+                            <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); summarizeConversation(convo.id); }} className="gap-1 text-xs h-7">
+                              <Sparkles className="w-3 h-3" /> Анализирай
                             </Button>
-                          </div>
-                        ) : (convo.messages_count || 0) > 0 ? (
-                          <Button
-                            size="sm" variant="outline"
-                            onClick={(e) => { e.stopPropagation(); summarizeConversation(convo.id); }}
-                            className="gap-1.5 text-xs"
-                          >
-                            <Sparkles className="w-3 h-3" /> Обобщи с AI
-                          </Button>
-                        ) : (
-                          <p className="text-xs text-muted-foreground italic">Няма достатъчно данни за анализ</p>
-                        )}
+                          ) : (
+                            <p className="text-xs text-muted-foreground italic">Няма данни</p>
+                          )}
+                        </div>
                       </div>
 
-                      <Separator className="opacity-20" />
-
-                      {/* Lead data panel */}
-                      {lead && (
-                        <>
-                          <div className="px-4 py-3">
-                            <p className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider mb-2 flex items-center gap-1">
-                              <User className="w-3 h-3 text-primary" /> Клиентски данни
-                            </p>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                              {(lead.first_name || lead.last_name || lead.name) && (
-                                <div className="flex items-center gap-1.5 text-foreground"><UserCircle className="w-3.5 h-3.5 text-primary" /> {getLeadName(lead)}</div>
-                              )}
-                              {lead.email && <div className="flex items-center gap-1.5 text-foreground"><Mail className="w-3.5 h-3.5 text-primary" /> {lead.email}</div>}
-                              {lead.phone && <div className="flex items-center gap-1.5 text-foreground"><Phone className="w-3.5 h-3.5 text-primary" /> {lead.phone}</div>}
-                              {lead.company && <div className="flex items-center gap-1.5 text-foreground"><Building className="w-3.5 h-3.5 text-primary" /> {lead.company}</div>}
-                              {lead.service && <div className="flex items-center gap-1.5 text-foreground"><Briefcase className="w-3.5 h-3.5 text-primary" /> {lead.service}</div>}
-                            </div>
-                            {lead.notes && <p className="text-xs text-muted-foreground mt-2 italic border-l-2 border-primary/20 pl-2">"{lead.notes}"</p>}
-                          </div>
-                          <Separator className="opacity-20" />
-                        </>
-                      )}
-
-                      {/* Transcription */}
-                      <div className="px-4 py-3">
-                        <p className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider mb-2 flex items-center gap-1">
+                      {/* Transcript */}
+                      <div className="px-3 pb-3">
+                        <p className="text-[10px] uppercase font-semibold text-muted-foreground mb-2 flex items-center gap-1">
                           <MessageSquare className="w-3 h-3 text-primary" /> Транскрипция
                         </p>
                         {loadingMessages === convo.id ? (
-                          <div className="space-y-2">
-                            <Skeleton className="h-4 w-3/4" /><Skeleton className="h-4 w-1/2" /><Skeleton className="h-4 w-2/3" />
-                          </div>
+                          <div className="space-y-2"><Skeleton className="h-4 w-3/4" /><Skeleton className="h-4 w-1/2" /></div>
                         ) : convoMessages && convoMessages.length > 0 ? (
-                          <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+                          <div className="space-y-1 max-h-64 overflow-y-auto rounded-lg bg-muted/10 border border-border/10 p-2">
                             {convoMessages.map((msg) => (
                               <div key={msg.id} className={`flex ${msg.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
-                                <div className={`rounded-xl px-3 py-2 max-w-[85%] text-xs leading-relaxed ${
+                                <div className={`rounded-lg px-2.5 py-1.5 max-w-[85%] text-xs leading-relaxed ${
                                   msg.role === 'assistant'
-                                    ? 'bg-primary/5 border border-primary/10 text-foreground rounded-tl-sm'
-                                    : 'bg-muted/60 text-foreground rounded-tr-sm'
+                                    ? 'bg-primary/5 text-foreground'
+                                    : 'bg-muted/60 text-foreground'
                                 }`}>
-                                  <span className="text-[10px] font-semibold text-muted-foreground flex items-center gap-1 mb-0.5">
-                                    {msg.role === 'assistant' ? <><Bot className="w-2.5 h-2.5" /> NEO</> : <><UserCircle className="w-2.5 h-2.5" /> Клиент</>}
-                                    <span className="text-[9px] font-normal ml-1 opacity-50">
-                                      {new Date(msg.created_at).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                                    </span>
+                                  <span className="text-[9px] font-medium text-muted-foreground">
+                                    {msg.role === 'assistant' ? 'NEO' : 'Клиент'}
+                                    {' · '}
+                                    {new Date(msg.created_at).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })}
                                   </span>
-                                  {msg.content}
+                                  <p className="mt-0.5">{msg.content}</p>
                                 </div>
                               </div>
                             ))}
@@ -495,59 +315,11 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                 </div>
               );
             })}
-
-            {/* Orphan leads */}
-            {orphanLeads.length > 0 && (
-              <>
-                <div className="pt-3">
-                  <p className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider px-1 mb-2 flex items-center gap-1">
-                    <Users className="w-3 h-3" /> Клиенти без разговор ({orphanLeads.length})
-                  </p>
-                </div>
-                {orphanLeads.map((lead) => (
-                  <div key={lead.id} className="rounded-xl border border-border/30 bg-card/50 p-3 sm:p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="shrink-0 w-14 text-center pt-0.5">
-                        <p className="text-lg font-bold text-foreground leading-none">{new Date(lead.created_at).getDate()}</p>
-                        <p className="text-[10px] text-muted-foreground uppercase">{new Date(lead.created_at).toLocaleDateString('bg-BG', { month: 'short' })}</p>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <UserCircle className="w-3.5 h-3.5 text-primary" />
-                          <span className="font-medium text-sm text-foreground">{getLeadName(lead)}</span>
-                          {lead.source && <Badge variant="outline" className="text-[10px] px-1.5 py-0">{lead.source === 'widget' ? 'Уиджет' : lead.source}</Badge>}
-                        </div>
-                        <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
-                          {lead.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{lead.email}</span>}
-                          {lead.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{lead.phone}</span>}
-                        </div>
-                        {lead.service && <p className="text-xs mt-1"><Briefcase className="w-3 h-3 inline mr-1 text-primary" />{lead.service}</p>}
-                        {lead.notes && <p className="text-xs text-muted-foreground mt-1 italic border-l-2 border-primary/20 pl-2">"{lead.notes}"</p>}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
           </div>
         </ScrollArea>
       )}
     </div>
   );
 };
-
-const StatCard = ({ icon, value, label, bgClass = 'bg-primary/10' }: { icon: React.ReactNode; value: string | number; label: string; bgClass?: string }) => (
-  <Card className="border-border/30 bg-card/50">
-    <CardContent className="p-3 sm:p-4">
-      <div className="flex items-center gap-2.5">
-        <div className={`p-1.5 rounded-lg ${bgClass}`}>{icon}</div>
-        <div>
-          <p className="text-xl font-bold text-foreground leading-tight">{value}</p>
-          <p className="text-[10px] sm:text-xs text-muted-foreground">{label}</p>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-);
 
 export default ActivityLog;
