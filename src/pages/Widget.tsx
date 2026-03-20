@@ -7,6 +7,7 @@ import { useAudioEffects } from '@/hooks/useAudioEffects';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import LeadCaptureModal, { LeadData } from '@/components/widget/LeadCaptureModal';
+import { cleanTranscriptForStorage } from '@/utils/transcriptCleanup';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -106,7 +107,8 @@ const Widget = () => {
   }, [userId, conversationId]);
 
   const persistTranscriptMessage = useCallback(async (role: Message['role'], content: string) => {
-    const normalized = content.replace(/\s+/g, ' ').trim();
+    const cleaned = cleanTranscriptForStorage(content);
+    const normalized = cleaned.replace(/\s+/g, ' ').trim();
     if (!conversationId || !normalized) return;
 
     const key = `${conversationId}:${role}:${normalized}`;

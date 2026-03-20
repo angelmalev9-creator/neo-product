@@ -47,6 +47,18 @@ interface CapturedLead {
   conversation_id: string | null;
 }
 
+interface EmailLog {
+  id: string;
+  conversation_id: string | null;
+  recipient_email: string;
+  subject: string;
+  body: string;
+  status: string | null;
+  intent: string | null;
+  sent_at: string | null;
+  created_at: string;
+}
+
 interface ActivityLogProps {
   userId: string;
 }
@@ -59,6 +71,7 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
   const [messages, setMessages] = useState<Record<string, ConversationMessage[]>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loadingMessages, setLoadingMessages] = useState<string | null>(null);
+  const [emails, setEmails] = useState<Record<string, EmailLog[]>>({});
   const [summarizing, setSummarizing] = useState<string | null>(null);
 
   useEffect(() => { if (userId) loadData(); }, [userId]);
@@ -107,9 +120,16 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
     if (messages[conversationId]) return;
     setLoadingMessages(conversationId);
     try {
-      const { data } = await supabase.from('conversation_messages').select('*')
-        .eq('conversation_id', conversationId).order('created_at', { ascending: true });
-      setMessages(prev => ({ ...prev, [conversationId]: data || [] }));
+      const [msgsRes, emailsRes] = await Promise.all([
+        supabase.from('conversation_messages').select('*')
+          .eq('conversation_id', conversationId).order('created_at', { ascending: true }),
+        supabase.from('email_logs').select('*')
+          .eq('conversation_id', conversationId).order('created_at', { ascending: false }),
+      ]);
+      setMessages(prev => ({ ...prev, [conversationId]: msgsRes.data || [] }));
+      if (emailsRes.data && emailsRes.data.length > 0) {
+        setEmails(prev => ({ ...prev, [conversationId]: emailsRes.data as EmailLog[] }));
+      }
     } catch {} finally { setLoadingMessages(null); }
   };
 
@@ -190,6 +210,7 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
               const lead = getLeadForConversation(convo.id);
               const isExpanded = expandedId === convo.id;
               const convoMessages = messages[convo.id];
+              const convoEmails = emails[convo.id];
               const parsed = parseSummary(convo.summary);
               const isSummarizing = summarizing === convo.id;
               const date = new Date(convo.started_at);
@@ -310,6 +331,36 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                           <p className="text-xs text-muted-foreground italic">Няма записана транскрипция</p>
                         )}
                       </div>
+
+                      {/* Emails sent */}
+                      {convoEmails && convoEmails.length > 0 && (
+                        <div className="px-3 pb-3">
+                          <p className="text-[10px] uppercase font-semibold text-muted-foreground mb-2 flex items-center gap-1">
+                            <Mail className="w-3 h-3 text-primary" /> Изпратени имейли
+                          </p>
+                          <div className="space-y-1.5">
+                            {convoEmails.map((email) => (
+                              <div key={email.id} className="rounded-lg bg-muted/20 border border-border/20 p-2.5">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${
+                                    email.status === 'sent' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                                    email.status === 'failed' ? 'bg-destructive/10 text-destructive border-destructive/20' :
+                                    'bg-muted text-muted-foreground border-border/20'
+                                  }`}>
+                                    {email.status === 'sent' ? 'Изпратен' : email.status === 'failed' ? 'Грешка' : email.status || 'Чакащ'}
+                                  </Badge>
+                                  <span className="text-[9px] text-muted-foreground">
+                                    {email.sent_at ? new Date(email.sent_at).toLocaleString('bg-BG', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+                                  </span>
+                                </div>
+                                <p className="text-xs font-medium text-foreground">{email.subject}</p>
+                                <p className="text-[10px] text-muted-foreground mt-0.5">До: {email.recipient_email}</p>
+                                {email.intent && <p className="text-[10px] text-muted-foreground/70 mt-0.5">Тип: {email.intent}</p>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
