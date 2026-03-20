@@ -57,7 +57,11 @@ const Widget = () => {
     if (message.role === 'assistant') {
       setLiveAssistantTranscript('');
     }
-    setMessages(prev => [...prev, message]);
+    setMessages(prev => {
+      const next = [...prev, message];
+      messagesRef.current = next;
+      return next;
+    });
   }, []);
 
   const handleError = useCallback((err: string) => {
