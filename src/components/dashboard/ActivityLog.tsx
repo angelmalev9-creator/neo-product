@@ -71,7 +71,7 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
   const [messages, setMessages] = useState<Record<string, ConversationMessage[]>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loadingMessages, setLoadingMessages] = useState<string | null>(null);
-  const [summarizing, setSummarizing] = useState<string | null>(null);
+  const [emails, setEmails] = useState<Record<string, EmailLog[]>>({});
 
   useEffect(() => { if (userId) loadData(); }, [userId]);
 
