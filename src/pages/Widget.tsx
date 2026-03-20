@@ -88,9 +88,11 @@ const Widget = () => {
 
       if (!isFinal) {
         setLiveAssistantTranscript(normalized);
+        liveAssistantTranscriptRef.current = normalized;
       }
       if (isFinal) {
         setLiveAssistantTranscript('');
+        liveAssistantTranscriptRef.current = '';
         void persistTranscriptMessage('assistant', normalized);
       }
     },
