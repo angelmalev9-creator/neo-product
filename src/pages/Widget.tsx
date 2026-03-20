@@ -228,11 +228,23 @@ const Widget = () => {
     setLiveAssistantTranscript('');
     if (!leadSubmitted) setShowLeadModal(true);
     if (conversationId) {
+      // Persist any unsaved messages from state before ending
+      const currentMessages = messagesRef.current;
+      for (const msg of currentMessages) {
+        const key = `${conversationId}:${msg.role}:${msg.content.replace(/\s+/g, ' ').trim()}`;
+        if (!persistedTranscriptKeysRef.current.has(key) && msg.content.trim()) {
+          persistedTranscriptKeysRef.current.add(key);
+          trackConversation('message', msg.role === 'user'
+            ? { userMessage: msg.content.trim() }
+            : { assistantMessage: msg.content.trim() }
+          ).catch(() => {});
+        }
+      }
       await trackConversation('end', { conversationId });
       setConversationId(null);
       callStartTimeRef.current = null;
       lastTrackedTimeRef.current = 0;
-      persistedTranscriptKeysRef.current.clear();
+      // Don't clear persisted keys until next call starts
     }
   }, [disconnect, conversationId, trackConversation, leadSubmitted, stopAmbient, playDisconnectSound]);
 
