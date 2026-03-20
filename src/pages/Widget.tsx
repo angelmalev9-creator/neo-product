@@ -125,8 +125,11 @@ const Widget = () => {
       setCompanyName(data.companyName || companyParam || 'компанията');
       setConfig(data.widgetConfig);
       setLogoUrl(data.logoUrl || null);
+      if (data.sessionId) setSessionId(data.sessionId);
       setIsReady(true);
-      if (!isReady) prepareSession(data.systemPrompt, data.companyName || 'компанията').catch(console.error);
+      if (!isReady) {
+        prepareSession(data.systemPrompt, data.companyName || 'компанията', data.sessionId || undefined).catch(console.error);
+      }
     } catch { setError('Грешка при зареждане'); }
   }, [userId, companyParam, prepareSession, isReady]);
 
