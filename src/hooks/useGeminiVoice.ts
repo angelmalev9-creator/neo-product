@@ -1443,6 +1443,26 @@ export const useGeminiVoice = ({
     }
   }, []);
 
+  const flushInterruptedAssistantTurn = useCallback(() => {
+    const partial = currentResponseTextRef.current.replace(/\s+/g, " ").trim();
+    if (!partial) return;
+
+    const looksLikeAction =
+      partial.startsWith("{") ||
+      partial.includes('"type":"action_request"') ||
+      partial.includes('"type": "action_request"') ||
+      partial.includes('"action":"make_reservation"') ||
+      partial.includes('"action": "make_reservation"') ||
+      partial.includes('"action":"submit_form"') ||
+      partial.includes('"action": "submit_form"');
+
+    if (looksLikeAction) return;
+
+    onMessage?.({ role: "assistant", content: partial });
+    onTranscript?.(partial, true, "assistant");
+    currentResponseTextRef.current = "";
+  }, [onMessage, onTranscript]);
+
   /** Immediately stop assistant playback + mark turn canceled (speech-only barge-in) */
   const performEarlyBargeIn = useCallback(() => {
     if (!isPlayingRef.current) return;
@@ -1465,7 +1485,8 @@ export const useGeminiVoice = ({
     isPlayingRef.current = false;
     nextPlayTimeRef.current = 0;
     updateSpeaking(false);
-  }, [updateSpeaking]);
+    flushInterruptedAssistantTurn();
+  }, [flushInterruptedAssistantTurn, updateSpeaking]);
 
   const buildStableTranscriptFromBuffers = useCallback(() => {
     const finalJoined = finalChunksRef.current.join(" ").trim();
