@@ -79,6 +79,28 @@ const CalendarAutomation = () => {
     loadBookings();
   }, [calendarMonth]);
 
+  // Real-time subscription for new bookings
+  useEffect(() => {
+    const setupRealtime = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const channel = supabase
+        .channel('calendar-bookings-realtime')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'calendar_bookings',
+          filter: `user_id=eq.${user.id}`,
+        }, () => {
+          loadBookings();
+        })
+        .subscribe();
+      return () => { supabase.removeChannel(channel); };
+    };
+    const cleanup = setupRealtime();
+    return () => { cleanup.then(fn => fn?.()); };
+  }, [calendarMonth]);
+
   const loadSettings = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
