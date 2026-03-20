@@ -57,6 +57,7 @@ const Widget = () => {
     }
     if (message.role === 'assistant') {
       setLiveAssistantTranscript('');
+      liveAssistantTranscriptRef.current = '';
     }
     setMessages(prev => {
       const next = [...prev, message];
