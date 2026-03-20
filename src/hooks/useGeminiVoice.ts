@@ -2906,7 +2906,7 @@ export const useGeminiVoice = ({
     setIsConnecting(false);
     setIsSpeaking(false);
     setIsListening(false);
-  }, [clearSilenceWatchdog]);
+  }, [clearSilenceWatchdog, flushInterruptedAssistantTurn]);
 
   // ✅ FE → Edge proxy (no secrets in FE)
   const maybeExecuteActionFromGemini = useCallback(
