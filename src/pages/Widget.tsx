@@ -230,6 +230,17 @@ const Widget = () => {
     playDisconnectSound();
     disconnect();
     setLiveTranscript('');
+    // Keep liveAssistantTranscript visible briefly, then commit it as a message
+    const pendingAssistant = liveAssistantTranscript.trim();
+    if (pendingAssistant) {
+      // Commit the partial assistant transcript as a full message so it doesn't vanish
+      setMessages(prev => {
+        const next = [...prev, { role: 'assistant' as const, content: pendingAssistant }];
+        messagesRef.current = next;
+        return next;
+      });
+      void persistTranscriptMessage('assistant', pendingAssistant);
+    }
     setLiveAssistantTranscript('');
     if (!leadSubmitted) setShowLeadModal(true);
     if (conversationId) {
@@ -249,9 +260,9 @@ const Widget = () => {
       setConversationId(null);
       callStartTimeRef.current = null;
       lastTrackedTimeRef.current = 0;
-      // Don't clear persisted keys until next call starts
     }
-  }, [disconnect, conversationId, trackConversation, leadSubmitted, stopAmbient, playDisconnectSound]);
+    // DON'T clear messages - keep them visible after disconnect
+  }, [disconnect, conversationId, trackConversation, leadSubmitted, stopAmbient, playDisconnectSound, liveAssistantTranscript, persistTranscriptMessage]);
 
   const handleLeadSubmit = useCallback(async (data: LeadData) => {
     const { error } = await supabase.functions.invoke('widget-capture-lead', {
