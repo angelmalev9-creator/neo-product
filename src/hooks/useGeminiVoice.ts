@@ -3731,7 +3731,9 @@ export const useGeminiVoice = ({
                     partText.includes('"action":"make_reservation"') ||
                     partText.includes('"action": "make_reservation"') ||
                     partText.includes('"action":"submit_form"') ||
-                    partText.includes('"action": "submit_form"');
+                    partText.includes('"action": "submit_form"') ||
+                    partText.includes('"action":"book_slot"') ||
+                    partText.includes('"action": "book_slot"');
 
                   if (looksLikeAction) {
                     currentResponseTextRef.current = partText;
