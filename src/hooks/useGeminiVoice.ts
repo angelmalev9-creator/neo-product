@@ -1338,6 +1338,7 @@ export const useGeminiVoice = ({
   const speakStartRef = useRef<number>(0);
   const recentUtterancesRef = useRef<Array<{ text: string; ts: number }>>([]);
   const dgKeepAliveRef = useRef<number | null>(null);
+  const lastSttPacketSentAtRef = useRef<number>(0);
   const currentResponseTextRef = useRef("");
   const dgSTTRef = useRef<DgSTTState>({ ws: null, isReady: false });
   const utteranceBufferRef = useRef<string[]>([]);
@@ -1701,17 +1702,20 @@ export const useGeminiVoice = ({
         );
         stt.isReady = true;
         console.log("[STT] ✅ Soniox socket open; start message sent");
-        // Keepalive: prevent Soniox 408 timeout while NEO is speaking
-        // Send a fresh 20 ms silent frame every 8 s — but ONLY when NOT speaking,
-        // so we never inject silence mid-utterance (which would garble phone numbers).
+        // Keepalive: prevent Soniox timeout during long assistant replies or silence.
+        // If we haven't sent any mic/STT packet recently, send a tiny silent frame.
         if (dgKeepAliveRef.current) clearInterval(dgKeepAliveRef.current);
+        lastSttPacketSentAtRef.current = Date.now();
         dgKeepAliveRef.current = window.setInterval(() => {
-          if (stt.ws && stt.ws.readyState === WebSocket.OPEN && stt.isReady && !vadIsSpeakingRef.current) {
-            try {
-              stt.ws.send(new Int16Array(320).buffer);
-            } catch {} // fresh buffer every call — avoids detachment
-          }
-        }, 8000) as unknown as number;
+          if (!stt.ws || stt.ws.readyState !== WebSocket.OPEN || !stt.isReady) return;
+          const idleForMs = Date.now() - lastSttPacketSentAtRef.current;
+          const userActivelySpeaking = vadIsSpeakingRef.current && !isPlayingRef.current;
+          if (idleForMs < 2500 || userActivelySpeaking) return;
+          try {
+            stt.ws.send(new Int16Array(320).buffer);
+            lastSttPacketSentAtRef.current = Date.now();
+          } catch {}
+        }, 2000) as unknown as number;
       } catch (e) {
         console.error("[STT] Soniox start message failed", e);
         onError?.("Soniox STT старт грешка");
@@ -1932,7 +1936,9 @@ export const useGeminiVoice = ({
       }
     };
 
-    ws.onerror = () => onError?.("Soniox STT грешка");
+    ws.onerror = () => {
+      console.warn("[STT] Soniox websocket error — waiting for auto-reconnect");
+    };
     ws.onclose = (ev) => {
       console.log("[STT] Closed:", ev.code, ev.reason);
       stt.isReady = false;
@@ -1943,7 +1949,7 @@ export const useGeminiVoice = ({
         console.log(`[STT] Auto-reconnect after code ${ev.code}`);
         window.setTimeout(() => {
           if (isConnectedRef.current) connectSTT();
-        }, 600);
+        }, 350);
       }
     };
   }, [
@@ -2551,6 +2557,7 @@ export const useGeminiVoice = ({
 
       try {
         stt.ws.send(float32ToInt16Buffer(resampleTo16k(inputData, actualSampleRateRef.current)));
+        lastSttPacketSentAtRef.current = Date.now();
       } catch {}
     };
 
