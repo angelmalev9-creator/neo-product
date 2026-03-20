@@ -51,6 +51,13 @@ serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
+    // Fetch calendar settings
+    const { data: calSettings } = await supabase
+      .from("calendar_settings")
+      .select("calendar_enabled, booking_type, default_meeting_duration, working_hours_start, working_hours_end, working_days, auto_book_after_conversation")
+      .eq("user_id", userId)
+      .maybeSingle();
+
     // Resolve company name from multiple sources
     let companyName = profile.company_name || demoSession?.company_name || "";
     
@@ -88,6 +95,19 @@ serve(async (req) => {
       if (demoSession?.summary) {
         systemPrompt += `\n\nИнформация за компанията:\n${demoSession.summary}`;
       }
+    }
+
+    // Add calendar instructions if enabled
+    if (calSettings?.calendar_enabled) {
+      const bt = calSettings.booking_type || "consultation";
+      const label = bt === "reservation" ? "резервация" : bt === "meeting" ? "среща" : "консултация";
+      const labelPlural = bt === "reservation" ? "резервации" : bt === "meeting" ? "срещи" : "консултации";
+      const days = (calSettings.working_days || [1,2,3,4,5]).map((d: number) => {
+        const names = ["неделя","понеделник","вторник","сряда","четвъртък","петък","събота"];
+        return names[d];
+      }).join(", ");
+      
+      systemPrompt += `\n\n=== КАЛЕНДАР ===\nИмаш вграден календар за записване на ${labelPlural}. Работно време: ${calSettings.working_hours_start || "09:00"}-${calSettings.working_hours_end || "18:00"}, работни дни: ${days}. Продължителност: ${calSettings.default_meeting_duration || 30} мин.\nКогато клиент иска да запише ${label}, попитай за предпочитан ден и час. Казвай "${label}" (не "среща" ако е "резервация" и обратно). Ако попитат кога си свободен, предложи няколко часа от работното време.`;
     }
 
     const response = {
