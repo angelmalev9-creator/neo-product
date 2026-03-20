@@ -261,6 +261,8 @@ const VoiceTest = ({
             setLocalUsedMinutes(data.used_minutes);
           }
         }).catch(console.error);
+      } else {
+        setLocalUsedMinutes(Math.min(planLimit, usedMinutes));
       }
     }
   }, [disconnect, onUsageUpdate, playDisconnectSound, stopAmbient]);
