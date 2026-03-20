@@ -95,3 +95,6 @@ verify_jwt = false
 
 [functions.activate-test-plan]
 verify_jwt = false
+
+[functions.demo-email-log]
+verify_jwt = false
