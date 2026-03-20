@@ -1933,7 +1933,7 @@ export const useGeminiVoice = ({
       }
     };
 
-    ws.onerror = () => onError?.("Soniox STT грешка");
+    ws.onerror = () => console.warn("[STT] Soniox WebSocket error (non-fatal)");
     ws.onclose = (ev) => {
       console.log("[STT] Closed:", ev.code, ev.reason);
       stt.isReady = false;
