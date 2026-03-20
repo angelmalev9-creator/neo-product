@@ -64,12 +64,20 @@ const Widget = () => {
     onMessage: handleMessage,
     onError: handleError,
     onTranscript: (transcript, isFinal, role) => {
-      if (role !== 'user') return;
-      if (isFinal) {
-        setLiveTranscript('');
+      const normalized = transcript.replace(/\s+/g, ' ').trim();
+      if (!normalized) return;
+
+      if (role === 'user') {
+        setLiveTranscript(normalized);
+        if (isFinal) {
+          void persistTranscriptMessage('user', normalized);
+        }
         return;
       }
-      setLiveTranscript(transcript);
+
+      if (isFinal) {
+        void persistTranscriptMessage('assistant', normalized);
+      }
     },
   });
 
@@ -106,20 +114,14 @@ const Widget = () => {
 
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
-    if (!lastMessage || !conversationId) return;
-    const msgData: Record<string, string> = {};
-    if (lastMessage.role === 'user') { msgData.userMessage = lastMessage.content; }
-    else {
-      msgData.assistantMessage = lastMessage.content;
-      if (!leadSubmitted && !showLeadModal && isConnected) {
-        const txt = lastMessage.content.toLowerCase();
-        if (interestKeywords.some(k => txt.includes(k))) {
-          setTimeout(() => setShowLeadModal(true), 1500);
-        }
+    if (!lastMessage || lastMessage.role !== 'assistant') return;
+    if (!leadSubmitted && !showLeadModal && isConnected) {
+      const txt = lastMessage.content.toLowerCase();
+      if (interestKeywords.some(k => txt.includes(k))) {
+        setTimeout(() => setShowLeadModal(true), 1500);
       }
     }
-    trackConversation('message', msgData);
-  }, [messages, conversationId]);
+  }, [messages, leadSubmitted, showLeadModal, isConnected]);
 
   useEffect(() => {
     if (!isConnected || !conversationId || !callStartTimeRef.current) return;
@@ -190,6 +192,7 @@ const Widget = () => {
     initAudioContext();
     setMessages([]);
     setLiveTranscript('');
+    persistedTranscriptKeysRef.current.clear();
     let micGranted = false;
     try {
       await preWarmMicrophone();
@@ -200,6 +203,7 @@ const Widget = () => {
       setConversationId(result.conversationId);
       callStartTimeRef.current = Date.now();
       lastTrackedTimeRef.current = 0;
+      persistedTranscriptKeysRef.current.clear();
     }
     if (window.parent !== window) window.parent.postMessage({ type: 'NEO_CONVERSATION_STARTED' }, '*');
     playConnectSound();
@@ -218,6 +222,7 @@ const Widget = () => {
       setConversationId(null);
       callStartTimeRef.current = null;
       lastTrackedTimeRef.current = 0;
+      persistedTranscriptKeysRef.current.clear();
     }
   }, [disconnect, conversationId, trackConversation, leadSubmitted, stopAmbient, playDisconnectSound]);
 
@@ -234,8 +239,9 @@ const Widget = () => {
     const msg = textInput.trim();
     setTextInput('');
     setMessages(prev => [...prev, { role: 'user', content: msg }]);
+    void persistTranscriptMessage('user', msg);
     sendText(msg);
-  }, [textInput, isConnected, sendText]);
+  }, [textInput, isConnected, sendText, persistTranscriptMessage]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendText(); }
