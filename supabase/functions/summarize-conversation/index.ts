@@ -196,7 +196,7 @@ serve(async (req) => {
     const cPhone = cleanNull(analysis.client_phone);
     const hasClientData = cName || cEmail || cPhone;
     if (hasClientData && !lead) {
-      const nameParts = (analysis.client_name || "").trim().split(/\s+/);
+      const nameParts = (cName || "").split(/\s+/);
       const firstName = nameParts[0] || null;
       const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : null;
 
@@ -205,9 +205,9 @@ serve(async (req) => {
         conversation_id: conversationId,
         first_name: firstName,
         last_name: lastName,
-        name: analysis.client_name || null,
-        email: analysis.client_email || null,
-        phone: analysis.client_phone || null,
+        name: cName,
+        email: cEmail,
+        phone: cPhone,
         source: "ai_extraction",
       });
       if (leadErr) console.error("[SUMMARIZE] Lead insert error:", leadErr);
