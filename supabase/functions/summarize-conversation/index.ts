@@ -190,7 +190,11 @@ serve(async (req) => {
     }
 
     // ── Extract & save client data from transcript ──
-    const hasClientData = analysis.client_name || analysis.client_email || analysis.client_phone;
+    const cleanNull = (v: any) => (v && v !== "null" && v !== "none" && v !== "няма") ? String(v).trim() : null;
+    const cName = cleanNull(analysis.client_name);
+    const cEmail = cleanNull(analysis.client_email);
+    const cPhone = cleanNull(analysis.client_phone);
+    const hasClientData = cName || cEmail || cPhone;
     if (hasClientData && !lead) {
       const nameParts = (analysis.client_name || "").trim().split(/\s+/);
       const firstName = nameParts[0] || null;
