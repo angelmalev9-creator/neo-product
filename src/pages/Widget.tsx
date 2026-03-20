@@ -123,18 +123,7 @@ const Widget = () => {
     }
   }, [conversationId, trackConversation]);
 
-  const interestKeywords = ['час', 'запазим', 'резервация', 'консултация', 'оферта', 'цена', 'свържем', 'формуляр', 'контакт', 'запиша', 'попълнете', 'данни', 'обадим', 'изпратим'];
-
-  useEffect(() => {
-    const lastMessage = messages[messages.length - 1];
-    if (!lastMessage || lastMessage.role !== 'assistant') return;
-    if (!leadSubmitted && !showLeadModal && isConnected) {
-      const txt = lastMessage.content.toLowerCase();
-      if (interestKeywords.some(k => txt.includes(k))) {
-        setTimeout(() => setShowLeadModal(true), 1500);
-      }
-    }
-  }, [messages, leadSubmitted, showLeadModal, isConnected]);
+  // Lead modal only shows on disconnect (endCall), not during conversation
 
   useEffect(() => {
     if (!isConnected || !conversationId || !callStartTimeRef.current) return;
