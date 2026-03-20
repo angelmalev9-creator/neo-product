@@ -56,7 +56,7 @@ const Widget = () => {
     setError(err);
   }, []);
 
-  const { isConnected, isConnecting, isSpeaking, isListening, connect, disconnect, prepareSession, sendText } = useGeminiVoice({
+  const { isConnected, isConnecting, isSpeaking, isListening, connect, disconnect, prepareSession, sendText, preWarmMicrophone } = useGeminiVoice({
     onMessage: handleMessage,
     onError: handleError,
     onTranscript: (transcript, isFinal, role) => {
@@ -168,6 +168,11 @@ const Widget = () => {
     initAudioContext();
     setMessages([]);
     setLiveTranscript('');
+    let micGranted = false;
+    try {
+      await preWarmMicrophone();
+      micGranted = true;
+    } catch {}
     const result = await trackConversation('start');
     if (result?.conversationId) {
       setConversationId(result.conversationId);
@@ -175,12 +180,10 @@ const Widget = () => {
       lastTrackedTimeRef.current = 0;
     }
     if (window.parent !== window) window.parent.postMessage({ type: 'NEO_CONVERSATION_STARTED' }, '*');
-    let micGranted = false;
-    try { const s = await navigator.mediaDevices.getUserMedia({ audio: true }); s.getTracks().forEach(t => t.stop()); micGranted = true; } catch {}
     playConnectSound();
     if (micGranted) startAmbient();
     await connect(systemPrompt, companyName, sessionId || undefined, !micGranted);
-  }, [systemPrompt, companyName, sessionId, connect, userId, trackConversation, initAudioContext, playConnectSound, startAmbient]);
+  }, [systemPrompt, companyName, sessionId, connect, userId, trackConversation, initAudioContext, playConnectSound, startAmbient, preWarmMicrophone]);
 
   const endCall = useCallback(async () => {
     stopAmbient();
