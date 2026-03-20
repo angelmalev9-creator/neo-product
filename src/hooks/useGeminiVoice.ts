@@ -1772,7 +1772,7 @@ export const useGeminiVoice = ({
         lastSpeechStartedAtRef.current = Date.now();
 
         if (isPlayingRef.current && Date.now() - speakStartRef.current > ANTI_BARGE_IN_MS) {
-          const hasSpeechEvidence = (hasNonFinal || hasFinal) && minConfidence >= 0.6;
+          const hasSpeechEvidence = (hasNonFinal || hasFinal) && minConfidence >= 0.75;
           if (hasSpeechEvidence && shouldAllowBargeIn(transcript)) {
             performEarlyBargeIn();
           }
