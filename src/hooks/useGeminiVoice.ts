@@ -1702,17 +1702,20 @@ export const useGeminiVoice = ({
         );
         stt.isReady = true;
         console.log("[STT] ✅ Soniox socket open; start message sent");
-        // Keepalive: prevent Soniox 408 timeout while NEO is speaking
-        // Send a fresh 20 ms silent frame every 8 s — but ONLY when NOT speaking,
-        // so we never inject silence mid-utterance (which would garble phone numbers).
+        // Keepalive: prevent Soniox timeout during long assistant replies or silence.
+        // If we haven't sent any mic/STT packet recently, send a tiny silent frame.
         if (dgKeepAliveRef.current) clearInterval(dgKeepAliveRef.current);
+        lastSttPacketSentAtRef.current = Date.now();
         dgKeepAliveRef.current = window.setInterval(() => {
-          if (stt.ws && stt.ws.readyState === WebSocket.OPEN && stt.isReady && !vadIsSpeakingRef.current) {
-            try {
-              stt.ws.send(new Int16Array(320).buffer);
-            } catch {} // fresh buffer every call — avoids detachment
-          }
-        }, 8000) as unknown as number;
+          if (!stt.ws || stt.ws.readyState !== WebSocket.OPEN || !stt.isReady) return;
+          const idleForMs = Date.now() - lastSttPacketSentAtRef.current;
+          const userActivelySpeaking = vadIsSpeakingRef.current && !isPlayingRef.current;
+          if (idleForMs < 2500 || userActivelySpeaking) return;
+          try {
+            stt.ws.send(new Int16Array(320).buffer);
+            lastSttPacketSentAtRef.current = Date.now();
+          } catch {}
+        }, 2000) as unknown as number;
       } catch (e) {
         console.error("[STT] Soniox start message failed", e);
         onError?.("Soniox STT старт грешка");
