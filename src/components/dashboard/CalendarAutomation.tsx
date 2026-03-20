@@ -6,15 +6,15 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Settings, CheckCircle, AlertCircle, Loader2, Clock, CalendarDays } from 'lucide-react';
+import { Calendar, Settings, CheckCircle, Loader2, Clock, CalendarDays, Trash2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 
 interface CalendarSettings {
   id?: string;
-  calendar_connected: boolean;
-  calendar_email: string | null;
   calendar_enabled: boolean;
+  booking_type: string;
   auto_book_after_conversation: boolean;
   default_meeting_duration: number;
   booking_buffer_minutes: number;
@@ -52,9 +52,8 @@ const CalendarAutomation = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<CalendarSettings>({
-    calendar_connected: false,
-    calendar_email: null,
     calendar_enabled: false,
+    booking_type: 'consultation',
     auto_book_after_conversation: true,
     default_meeting_duration: 30,
     booking_buffer_minutes: 15,
@@ -67,59 +66,9 @@ const CalendarAutomation = () => {
   const [bookings, setBookings] = useState<CalendarBooking[]>([]);
 
   useEffect(() => {
-    // Check for OAuth callback
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const calendarCallback = urlParams.get('calendar_callback');
-    
-    if (code && calendarCallback) {
-      handleOAuthCallback(code);
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else {
-      loadSettings();
-    }
+    loadSettings();
     loadBookings();
   }, []);
-
-  const handleOAuthCallback = async (code: string) => {
-    setLoading(true);
-    try {
-      const redirectUri = `${window.location.origin}/dashboard?calendar_callback=true`;
-      
-      const { data, error } = await supabase.functions.invoke('calendar-oauth', {
-        body: { 
-          action: 'exchange-code',
-          code,
-          redirectUri 
-        },
-      });
-
-      if (error) throw error;
-
-      if (data?.success) {
-        toast({
-          title: 'Google Calendar свързан успешно!',
-          description: `Акаунтът ${data.email} е свързан.`,
-        });
-        setSettings(prev => ({
-          ...prev,
-          calendar_connected: true,
-          calendar_email: data.email,
-        }));
-      }
-    } catch (error) {
-      console.error('OAuth callback error:', error);
-      toast({
-        title: 'Грешка',
-        description: 'Неуспешно свързване с Google Calendar.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-      loadSettings();
-    }
-  };
 
   const loadSettings = async () => {
     try {
@@ -140,9 +89,8 @@ const CalendarAutomation = () => {
       if (data) {
         setSettings({
           id: data.id,
-          calendar_connected: data.calendar_connected || false,
-          calendar_email: data.calendar_email,
           calendar_enabled: data.calendar_enabled || false,
+          booking_type: (data as any).booking_type || 'consultation',
           auto_book_after_conversation: data.auto_book_after_conversation ?? true,
           default_meeting_duration: data.default_meeting_duration || 30,
           booking_buffer_minutes: data.booking_buffer_minutes || 15,
@@ -169,15 +117,12 @@ const CalendarAutomation = () => {
         .from('calendar_bookings')
         .select('*')
         .eq('user_id', user.id)
-        .order('event_start', { ascending: false })
-        .limit(10);
+        .order('event_start', { ascending: true })
+        .limit(20);
 
-      if (error) {
-        console.error('Error loading bookings:', error);
-        return;
+      if (!error && data) {
+        setBookings(data as CalendarBooking[]);
       }
-
-      setBookings(data || []);
     } catch (error) {
       console.error('Error loading bookings:', error);
     }
@@ -189,11 +134,11 @@ const CalendarAutomation = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const settingsData = {
+      const { error } = await supabase.from('calendar_settings').upsert({
         user_id: user.id,
-        calendar_connected: settings.calendar_connected,
-        calendar_email: settings.calendar_email,
         calendar_enabled: settings.calendar_enabled,
+        booking_type: settings.booking_type,
+        calendar_connected: true, // Built-in calendar is always "connected"
         auto_book_after_conversation: settings.auto_book_after_conversation,
         default_meeting_duration: settings.default_meeting_duration,
         booking_buffer_minutes: settings.booking_buffer_minutes,
@@ -202,92 +147,31 @@ const CalendarAutomation = () => {
         working_days: settings.working_days,
         meeting_title_template: settings.meeting_title_template,
         meeting_description_template: settings.meeting_description_template,
-      };
-
-      const { error } = await supabase
-        .from('calendar_settings')
-        .upsert(settingsData, { onConflict: 'user_id' });
+      } as any, { onConflict: 'user_id' });
 
       if (error) throw error;
 
-      toast({
-        title: 'Настройките са запазени',
-        description: 'Календарната автоматизация е конфигурирана успешно.',
-      });
+      toast({ title: 'Настройките са запазени!' });
     } catch (error) {
-      console.error('Error saving settings:', error);
-      toast({
-        title: 'Грешка',
-        description: 'Неуспешно запазване на настройките.',
-        variant: 'destructive',
-      });
+      console.error('Save error:', error);
+      toast({ title: 'Грешка', description: 'Неуспешно запазване.', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
   };
 
-  const connectCalendar = async () => {
+  const cancelBooking = async (bookingId: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast({
-          title: 'Грешка',
-          description: 'Моля, влезте в акаунта си.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const redirectUri = `${window.location.origin}/dashboard?calendar_callback=true`;
-      
-      const { data, error } = await supabase.functions.invoke('calendar-oauth', {
-        body: { 
-          action: 'get-auth-url',
-          redirectUri 
-        },
-      });
+      const { error } = await supabase
+        .from('calendar_bookings')
+        .update({ status: 'cancelled' })
+        .eq('id', bookingId);
 
       if (error) throw error;
-
-      if (data?.authUrl) {
-        window.location.href = data.authUrl;
-      }
-    } catch (error) {
-      console.error('Error connecting Calendar:', error);
-      toast({
-        title: 'Грешка',
-        description: 'Неуспешно свързване с Google Calendar. Моля, опитайте отново.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const disconnectCalendar = async () => {
-    try {
-      const { error } = await supabase.functions.invoke('calendar-oauth', {
-        body: { action: 'disconnect' },
-      });
-
-      if (error) throw error;
-
-      setSettings(prev => ({
-        ...prev,
-        calendar_connected: false,
-        calendar_email: null,
-        calendar_enabled: false,
-      }));
-
-      toast({
-        title: 'Calendar изключен',
-        description: 'Връзката с Google Calendar е прекъсната.',
-      });
-    } catch (error) {
-      console.error('Error disconnecting Calendar:', error);
-      toast({
-        title: 'Грешка',
-        description: 'Неуспешно прекъсване на връзката.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Записът е отменен.' });
+      loadBookings();
+    } catch {
+      toast({ title: 'Грешка', variant: 'destructive' });
     }
   };
 
@@ -296,250 +180,222 @@ const CalendarAutomation = () => {
       ...prev,
       working_days: prev.working_days.includes(day)
         ? prev.working_days.filter(d => d !== day)
-        : [...prev.working_days, day].sort((a, b) => a - b),
+        : [...prev.working_days, day].sort(),
     }));
   };
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString('bg-BG', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+      day: 'numeric', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
     });
   };
+
+  const bookingLabel = settings.booking_type === 'reservation' ? 'Резервация' : settings.booking_type === 'meeting' ? 'Среща' : 'Консултация';
+  const bookingLabelPlural = settings.booking_type === 'reservation' ? 'Резервации' : settings.booking_type === 'meeting' ? 'Срещи' : 'Консултации';
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
+  const upcomingBookings = bookings.filter(b => b.status !== 'cancelled' && new Date(b.event_start) >= new Date());
+  const pastBookings = bookings.filter(b => b.status === 'cancelled' || new Date(b.event_start) < new Date());
+
   return (
     <div className="space-y-6">
-      {/* Calendar Connection */}
-      <Card className="neo-glass-subtle border-border/20">
+      {/* Enable Calendar */}
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-primary" />
-            Google Calendar акаунт
-          </CardTitle>
-          <CardDescription>
-            Свържете Google Calendar акаунта си, за да може NEO да записва срещи автоматично
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {settings.calendar_connected ? (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-neo-success" />
-                <div>
-                  <p className="font-medium">{settings.calendar_email}</p>
-                  <p className="text-sm text-muted-foreground">Свързан акаунт</p>
-                </div>
-              </div>
-              <Button variant="outline" onClick={disconnectCalendar}>
-                Прекъсни връзката
-              </Button>
-            </div>
-          ) : (
-            <Button onClick={connectCalendar} className="w-full sm:w-auto">
-              <Calendar className="w-4 h-4 mr-2" />
-              Свържи Google Calendar
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Automation Settings */}
-      <Card className="neo-glass-subtle border-border/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="w-5 h-5 text-primary" />
-            Настройки за автоматизация
-          </CardTitle>
-          <CardDescription>
-            Конфигурирайте как NEO да управлява календара ви
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Master Toggle */}
-          <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <CalendarDays className="w-5 h-5 text-neo-warning" />
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-primary" />
+              </div>
               <div>
-                <p className="font-medium">Активирай календарна автоматизация</p>
-                <p className="text-sm text-muted-foreground">Включете, за да може NEO да записва срещи</p>
+                <CardTitle className="text-base">Вграден календар</CardTitle>
+                <CardDescription className="text-xs">NEO автоматично записва {bookingLabelPlural.toLowerCase()} от разговори</CardDescription>
               </div>
             </div>
             <Switch
               checked={settings.calendar_enabled}
               onCheckedChange={(checked) => setSettings(prev => ({ ...prev, calendar_enabled: checked }))}
-              disabled={!settings.calendar_connected}
             />
           </div>
-
-          {!settings.calendar_connected && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-neo-warning/10 text-neo-warning text-sm">
-              <AlertCircle className="w-4 h-4" />
-              Първо свържете Google Calendar акаунта си, за да активирате автоматизацията
-            </div>
-          )}
-
-          {/* Auto-book Toggle */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Clock className="w-4 h-4 text-muted-foreground" />
-              <span>Автоматично записване след разговор</span>
-            </div>
-            <Switch
-              checked={settings.auto_book_after_conversation}
-              onCheckedChange={(checked) => setSettings(prev => ({ ...prev, auto_book_after_conversation: checked }))}
-              disabled={!settings.calendar_enabled}
-            />
-          </div>
-
-          {/* Meeting Duration */}
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <Label htmlFor="duration">Продължителност на срещата (минути)</Label>
-              <Input
-                id="duration"
-                type="number"
-                value={settings.default_meeting_duration}
-                onChange={(e) => setSettings(prev => ({ ...prev, default_meeting_duration: parseInt(e.target.value) || 30 }))}
-                min={15}
-                max={120}
-                disabled={!settings.calendar_enabled}
-              />
-            </div>
-            <div>
-              <Label htmlFor="buffer">Буфер между срещите (минути)</Label>
-              <Input
-                id="buffer"
-                type="number"
-                value={settings.booking_buffer_minutes}
-                onChange={(e) => setSettings(prev => ({ ...prev, booking_buffer_minutes: parseInt(e.target.value) || 15 }))}
-                min={0}
-                max={60}
-                disabled={!settings.calendar_enabled}
-              />
-            </div>
-          </div>
-
-          {/* Working Hours */}
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <Label htmlFor="start-time">Начало на работния ден</Label>
-              <Input
-                id="start-time"
-                type="time"
-                value={settings.working_hours_start}
-                onChange={(e) => setSettings(prev => ({ ...prev, working_hours_start: e.target.value }))}
-                disabled={!settings.calendar_enabled}
-              />
-            </div>
-            <div>
-              <Label htmlFor="end-time">Край на работния ден</Label>
-              <Input
-                id="end-time"
-                type="time"
-                value={settings.working_hours_end}
-                onChange={(e) => setSettings(prev => ({ ...prev, working_hours_end: e.target.value }))}
-                disabled={!settings.calendar_enabled}
-              />
-            </div>
-          </div>
-
-          {/* Working Days */}
-          <div>
-            <Label className="mb-3 block">Работни дни</Label>
-            <div className="flex flex-wrap gap-3">
-              {WEEKDAYS.map((day) => (
-                <label
-                  key={day.value}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <Checkbox
-                    checked={settings.working_days.includes(day.value)}
-                    onCheckedChange={() => toggleWorkingDay(day.value)}
-                    disabled={!settings.calendar_enabled}
-                  />
-                  <span className="text-sm">{day.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Templates */}
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="title-template">Заглавие на събитието</Label>
-              <Input
-                id="title-template"
-                value={settings.meeting_title_template}
-                onChange={(e) => setSettings(prev => ({ ...prev, meeting_title_template: e.target.value }))}
-                placeholder="Среща с {{lead_name}} - {{company_name}}"
-                disabled={!settings.calendar_enabled}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Използвайте {'{{lead_name}}'}, {'{{company_name}}'}, {'{{lead_email}}'} за персонализация
-              </p>
-            </div>
-          </div>
-
-          <Button onClick={saveSettings} disabled={saving} className="w-full">
-            {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-            Запази настройките
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Recent Bookings */}
-      <Card className="neo-glass-subtle border-border/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-primary" />
-            Последни записани срещи
-          </CardTitle>
         </CardHeader>
-        <CardContent>
-          {bookings.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">
-              Все още няма записани срещи
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {bookings.map((booking) => (
-                <div
-                  key={booking.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/20"
-                >
-                  <div>
-                    <p className="font-medium">{booking.event_title}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {booking.attendee_name || booking.attendee_email || 'Без участник'}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm">{formatDateTime(booking.event_start)}</p>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      booking.status === 'scheduled' 
-                        ? 'bg-neo-success/20 text-neo-success' 
-                        : 'bg-muted text-muted-foreground'
-                    }`}>
-                      {booking.status === 'scheduled' ? 'Планирана' : booking.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
       </Card>
+
+      {settings.calendar_enabled && (
+        <>
+          {/* Booking Type */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                Настройки
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Тип записване</Label>
+                <Select
+                  value={settings.booking_type}
+                  onValueChange={(v) => setSettings(prev => ({ ...prev, booking_type: v }))}
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="consultation">Консултация</SelectItem>
+                    <SelectItem value="reservation">Резервация</SelectItem>
+                    <SelectItem value="meeting">Среща</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground">NEO ще казва "{bookingLabel.toLowerCase()}" в разговорите</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Продължителност (мин)</Label>
+                  <Input
+                    type="number"
+                    value={settings.default_meeting_duration}
+                    onChange={(e) => setSettings(prev => ({ ...prev, default_meeting_duration: parseInt(e.target.value) || 30 }))}
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Буфер между записи (мин)</Label>
+                  <Input
+                    type="number"
+                    value={settings.booking_buffer_minutes}
+                    onChange={(e) => setSettings(prev => ({ ...prev, booking_buffer_minutes: parseInt(e.target.value) || 15 }))}
+                    className="h-9 text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Работно време от</Label>
+                  <Input
+                    type="time"
+                    value={settings.working_hours_start}
+                    onChange={(e) => setSettings(prev => ({ ...prev, working_hours_start: e.target.value }))}
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Работно време до</Label>
+                  <Input
+                    type="time"
+                    value={settings.working_hours_end}
+                    onChange={(e) => setSettings(prev => ({ ...prev, working_hours_end: e.target.value }))}
+                    className="h-9 text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs">Работни дни</Label>
+                <div className="flex flex-wrap gap-2">
+                  {WEEKDAYS.map(day => (
+                    <label
+                      key={day.value}
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border cursor-pointer transition-colors text-xs ${
+                        settings.working_days.includes(day.value)
+                          ? 'bg-primary/10 border-primary/30 text-primary'
+                          : 'border-border hover:bg-muted/50'
+                      }`}
+                    >
+                      <Checkbox
+                        checked={settings.working_days.includes(day.value)}
+                        onCheckedChange={() => toggleWorkingDay(day.value)}
+                        className="hidden"
+                      />
+                      {day.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <Label className="text-xs font-medium">Автоматично записване</Label>
+                  <p className="text-[10px] text-muted-foreground">NEO предлага часове по време на разговор</p>
+                </div>
+                <Switch
+                  checked={settings.auto_book_after_conversation}
+                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, auto_book_after_conversation: checked }))}
+                />
+              </div>
+
+              <Button onClick={saveSettings} disabled={saving} className="w-full">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle className="w-4 h-4 mr-2" />}
+                Запази настройки
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Upcoming Bookings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <CalendarDays className="w-4 h-4" />
+                Предстоящи {bookingLabelPlural.toLowerCase()} ({upcomingBookings.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {upcomingBookings.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">Няма предстоящи {bookingLabelPlural.toLowerCase()}</p>
+              ) : (
+                <div className="space-y-2">
+                  {upcomingBookings.map(b => (
+                    <div key={b.id} className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-card">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{b.event_title}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <Clock className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">{formatDateTime(b.event_start)}</span>
+                        </div>
+                        {b.attendee_name && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{b.attendee_name} {b.attendee_email ? `(${b.attendee_email})` : ''}</p>
+                        )}
+                      </div>
+                      <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 text-destructive hover:text-destructive" onClick={() => cancelBooking(b.id)}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Past/Cancelled */}
+          {pastBookings.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm text-muted-foreground">Минали / Отменени ({pastBookings.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-1.5">
+                  {pastBookings.slice(0, 5).map(b => (
+                    <div key={b.id} className="flex items-center gap-2 p-2 rounded-md text-xs text-muted-foreground">
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${b.status === 'cancelled' ? 'bg-destructive' : 'bg-muted-foreground/30'}`} />
+                      <span className="truncate flex-1">{b.event_title}</span>
+                      <span>{formatDateTime(b.event_start)}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
     </div>
   );
 };

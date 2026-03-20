@@ -111,6 +111,7 @@ export type Database = {
         Row: {
           auto_book_after_conversation: boolean | null
           booking_buffer_minutes: number | null
+          booking_type: string | null
           calendar_access_token: string | null
           calendar_connected: boolean | null
           calendar_email: string | null
@@ -131,6 +132,7 @@ export type Database = {
         Insert: {
           auto_book_after_conversation?: boolean | null
           booking_buffer_minutes?: number | null
+          booking_type?: string | null
           calendar_access_token?: string | null
           calendar_connected?: boolean | null
           calendar_email?: string | null
@@ -151,6 +153,7 @@ export type Database = {
         Update: {
           auto_book_after_conversation?: boolean | null
           booking_buffer_minutes?: number | null
+          booking_type?: string | null
           calendar_access_token?: string | null
           calendar_connected?: boolean | null
           calendar_email?: string | null
@@ -169,6 +172,47 @@ export type Database = {
           working_hours_start?: string | null
         }
         Relationships: []
+      }
+      calendar_time_slots: {
+        Row: {
+          booking_id: string | null
+          created_at: string | null
+          id: string
+          is_available: boolean | null
+          slot_date: string
+          slot_end: string
+          slot_start: string
+          user_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_available?: boolean | null
+          slot_date: string
+          slot_end: string
+          slot_start: string
+          user_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_available?: boolean | null
+          slot_date?: string
+          slot_end?: string
+          slot_start?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_time_slots_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       captured_leads: {
         Row: {
