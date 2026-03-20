@@ -39,6 +39,7 @@ const Widget = () => {
   const [showLeadModal, setShowLeadModal] = useState<boolean>(false);
   const [leadSubmitted, setLeadSubmitted] = useState<boolean>(false);
   const [liveTranscript, setLiveTranscript] = useState<string>('');
+  const [liveAssistantTranscript, setLiveAssistantTranscript] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -51,6 +52,9 @@ const Widget = () => {
   const handleMessage = useCallback((message: Message) => {
     if (message.role === 'user') {
       setLiveTranscript('');
+    }
+    if (message.role === 'assistant') {
+      setLiveAssistantTranscript('');
     }
     setMessages(prev => [...prev, message]);
   }, []);
@@ -75,7 +79,11 @@ const Widget = () => {
         return;
       }
 
+      if (!isFinal) {
+        setLiveAssistantTranscript(normalized);
+      }
       if (isFinal) {
+        setLiveAssistantTranscript('');
         void persistTranscriptMessage('assistant', normalized);
       }
     },
@@ -192,6 +200,7 @@ const Widget = () => {
     initAudioContext();
     setMessages([]);
     setLiveTranscript('');
+    setLiveAssistantTranscript('');
     persistedTranscriptKeysRef.current.clear();
     let micGranted = false;
     try {
@@ -216,6 +225,7 @@ const Widget = () => {
     playDisconnectSound();
     disconnect();
     setLiveTranscript('');
+    setLiveAssistantTranscript('');
     if (!leadSubmitted) setShowLeadModal(true);
     if (conversationId) {
       await trackConversation('end', { conversationId });
@@ -370,6 +380,14 @@ const Widget = () => {
           <div className="flex justify-end">
             <div className="max-w-[80%] px-3.5 py-2.5 text-xs leading-relaxed rounded-2xl rounded-tr-md bg-muted/50 border border-border/20 text-muted-foreground italic break-words">
               {liveTranscript}
+            </div>
+          </div>
+        )}
+        {liveAssistantTranscript && isSpeaking && (
+          <div className="flex gap-2 justify-start">
+            <AvatarIcon size="sm" />
+            <div className="max-w-[80%] px-3.5 py-2.5 text-xs leading-relaxed rounded-2xl rounded-tl-md bg-card/80 border border-border/20 text-foreground/70 italic break-words">
+              {liveAssistantTranscript}
             </div>
           </div>
         )}
