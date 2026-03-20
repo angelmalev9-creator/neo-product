@@ -3789,7 +3789,8 @@ export const useGeminiVoice = ({
                 responseText.startsWith("{") ||
                 responseText.includes("action_request") ||
                 responseText.includes("make_reservation") ||
-                responseText.includes("submit_form");
+                responseText.includes("submit_form") ||
+                responseText.includes("book_slot");
 
               if (looksLikeActionResponse) {
                 console.log("[TURN_COMPLETE] action JSON (wasCanceled=%s):", wasCanceled, responseText.slice(0, 200));
