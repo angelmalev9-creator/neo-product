@@ -210,6 +210,7 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
               const lead = getLeadForConversation(convo.id);
               const isExpanded = expandedId === convo.id;
               const convoMessages = messages[convo.id];
+              const convoEmails = emails[convo.id];
               const parsed = parseSummary(convo.summary);
               const isSummarizing = summarizing === convo.id;
               const date = new Date(convo.started_at);
