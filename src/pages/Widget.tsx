@@ -44,10 +44,14 @@ const Widget = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const callStartTimeRef = useRef<number | null>(null);
   const lastTrackedTimeRef = useRef<number>(0);
+  const persistedTranscriptKeysRef = useRef<Set<string>>(new Set());
   
   const { playConnectSound, playDisconnectSound, startAmbient, stopAmbient, initAudioContext } = useAudioEffects({ ambientVolume: 0.04, effectsVolume: 0.2 });
 
   const handleMessage = useCallback((message: Message) => {
+    if (message.role === 'user') {
+      setLiveTranscript('');
+    }
     setMessages(prev => [...prev, message]);
   }, []);
 
@@ -79,6 +83,24 @@ const Widget = () => {
       return result;
     } catch { return null; }
   }, [userId, conversationId]);
+
+  const persistTranscriptMessage = useCallback(async (role: Message['role'], content: string) => {
+    const normalized = content.replace(/\s+/g, ' ').trim();
+    if (!conversationId || !normalized) return;
+
+    const key = `${conversationId}:${role}:${normalized}`;
+    if (persistedTranscriptKeysRef.current.has(key)) return;
+    persistedTranscriptKeysRef.current.add(key);
+
+    const result = await trackConversation('message', role === 'user'
+      ? { userMessage: normalized }
+      : { assistantMessage: normalized }
+    );
+
+    if (!result) {
+      persistedTranscriptKeysRef.current.delete(key);
+    }
+  }, [conversationId, trackConversation]);
 
   const interestKeywords = ['час', 'запазим', 'резервация', 'консултация', 'оферта', 'цена', 'свържем', 'формуляр', 'контакт', 'запиша', 'попълнете', 'данни', 'обадим', 'изпратим'];
 
