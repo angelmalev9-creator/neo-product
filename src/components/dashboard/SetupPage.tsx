@@ -323,12 +323,11 @@ const EmailLogsSection = ({ emailConnected, userId }: { emailConnected: boolean;
                 </button>
                 {isExpanded && (
                   <div className="px-2.5 sm:px-4 pb-2.5 sm:pb-3 border-t border-border/10">
-                    <p className="mt-2 text-[10px] sm:text-xs text-foreground/70 leading-relaxed break-words line-clamp-4">
+                    <p className="mt-2 text-[10px] sm:text-xs text-foreground/70 leading-relaxed break-words">
                       {(() => {
                         if (!log.body) return 'Няма съдържание';
-                        // Strip HTML tags to show plain text summary
                         const text = log.body.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
-                        return text.length > 200 ? text.slice(0, 200) + '…' : text;
+                        return text;
                       })()}
                     </p>
                   </div>
