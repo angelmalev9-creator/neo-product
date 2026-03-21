@@ -254,8 +254,8 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                     {/* Name + short summary */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        {lead ? (
-                          <span className="font-medium text-sm text-foreground truncate">{getLeadName(lead)}</span>
+                        {clientName ? (
+                          <span className="font-medium text-sm text-foreground truncate">{clientName}</span>
                         ) : (
                           <span className="text-sm text-muted-foreground">Посетител</span>
                         )}
@@ -268,7 +268,8 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
 
                     {/* Badges */}
                     <div className="flex items-center gap-1.5 shrink-0">
-                      {convo.lead_captured && <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-500 border-green-500/20 px-1.5 py-0">✓</Badge>}
+                      {(convo.lead_captured || booking) && <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-500 border-green-500/20 px-1.5 py-0">✓</Badge>}
+                      {booking && <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20 px-1.5 py-0">📅</Badge>}
                       {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                     </div>
                   </div>
@@ -283,14 +284,23 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                           <p className="text-[10px] uppercase font-semibold text-muted-foreground mb-2 flex items-center gap-1">
                             <User className="w-3 h-3 text-primary" /> Данни
                           </p>
-                          {lead ? (
+                          {hasClientData ? (
                             <div className="space-y-1.5 text-xs">
-                              <div className="flex items-center gap-1.5 text-foreground font-medium">
-                                <UserCircle className="w-3.5 h-3.5 text-primary" /> {getLeadName(lead)}
-                              </div>
-                              {lead.email && <div className="flex items-center gap-1.5 text-foreground"><Mail className="w-3.5 h-3.5 text-muted-foreground" /> {lead.email}</div>}
-                              {lead.phone && <div className="flex items-center gap-1.5 text-foreground"><Phone className="w-3.5 h-3.5 text-muted-foreground" /> {lead.phone}</div>}
-                              {lead.service && <div className="flex items-center gap-1.5 text-foreground"><Briefcase className="w-3.5 h-3.5 text-muted-foreground" /> {lead.service}</div>}
+                              {clientName && (
+                                <div className="flex items-center gap-1.5 text-foreground font-medium">
+                                  <UserCircle className="w-3.5 h-3.5 text-primary" /> {clientName}
+                                </div>
+                              )}
+                              {clientEmail && <div className="flex items-center gap-1.5 text-foreground"><Mail className="w-3.5 h-3.5 text-muted-foreground" /> {clientEmail}</div>}
+                              {clientPhone && <div className="flex items-center gap-1.5 text-foreground"><Phone className="w-3.5 h-3.5 text-muted-foreground" /> {clientPhone}</div>}
+                              {clientService && <div className="flex items-center gap-1.5 text-foreground"><Briefcase className="w-3.5 h-3.5 text-muted-foreground" /> {clientService}</div>}
+                              {booking && (
+                                <div className="flex items-center gap-1.5 text-foreground mt-1 pt-1 border-t border-border/10">
+                                  <CalendarDays className="w-3.5 h-3.5 text-primary" />
+                                  <span>{booking.event_title} · {new Date(booking.event_start).toLocaleString('bg-BG', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                              )}
+                              {lead?.source && <div className="text-[10px] text-muted-foreground/60 mt-1">Източник: {lead.source}</div>}
                             </div>
                           ) : (
                             <p className="text-xs text-muted-foreground italic">Няма данни за клиента</p>
