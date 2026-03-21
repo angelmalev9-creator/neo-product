@@ -44,6 +44,7 @@ const VoiceTest = ({
   const [localUsedMinutes, setLocalUsedMinutes] = useState<number>(usedMinutes);
   const [textInput, setTextInput] = useState<string>('');
   const [textOnlyMode, setTextOnlyMode] = useState(false);
+  const [liveAssistantTranscript, setLiveAssistantTranscript] = useState<string>('');
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
