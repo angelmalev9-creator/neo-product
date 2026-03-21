@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Send, User, Mail } from 'lucide-react';
+import { Send, User, Mail, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
@@ -19,65 +19,64 @@ const EnterpriseContact = () => {
       toast({ title: t('contact.error'), description: t('contact.errorDesc'), variant: "destructive" });
       return;
     }
-
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('send-contact-email', {
-        body: {
-          name: formData.name,
-          email: formData.email,
-          message: formData.message || 'No message',
-        },
+      const { error } = await supabase.functions.invoke('send-contact-email', {
+        body: { name: formData.name, email: formData.email, message: formData.message || 'No message' },
       });
-
       if (error) throw error;
-      
       toast({ title: t('contact.success'), description: t('contact.successDesc') });
       setFormData({ name: '', email: '', message: '' });
     } catch (error) {
       console.error('Contact form error:', error);
       toast({ title: t('contact.error'), description: t('contact.tryAgain'), variant: "destructive" });
-    } finally {
-      setIsSubmitting(false);
-    }
+    } finally { setIsSubmitting(false); }
   };
+
   return (
     <section 
       ref={ref as React.RefObject<HTMLElement>}
       id="contact" 
-      className={`py-12 lg:py-20 bg-secondary/10 neo-section-zoom ${isVisible ? 'neo-section-visible' : ''}`}
+      className="py-16 lg:py-24 relative overflow-hidden"
     >
-      <div className="container mx-auto px-4 lg:px-8">
+      {/* Ambient glow */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/4 blur-[120px] rounded-full pointer-events-none" />
+      
+      <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8 lg:mb-12">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-black text-foreground leading-[1.1] tracking-wide">
+          <div className="text-center mb-10 lg:mb-14">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/8 border border-primary/15 text-primary text-sm font-medium mb-5">
+              <MessageSquare className="w-3.5 h-3.5" />
+              Контакт
+            </span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-black text-foreground leading-[1.1] tracking-wide">
               {t('contact.title1')}
               <br />
               <span className="neo-gradient-text">{t('contact.title2')}</span>
             </h2>
           </div>
 
-          <form onSubmit={handleSubmit} className="neo-glass-subtle border border-border/20 rounded-xl lg:rounded-2xl p-6 lg:p-10 space-y-4 lg:space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
+          <form onSubmit={handleSubmit} className="neo-glass-premium rounded-2xl lg:rounded-3xl p-6 lg:p-10 space-y-4 lg:space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-5">
               <div className="relative">
-                <User className="absolute left-3 lg:left-4 top-1/2 -translate-y-1/2 w-4 h-4 lg:w-5 lg:h-5 text-muted-foreground/50" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder={t('contact.namePlaceholder')}
-                  className="w-full bg-background/30 border border-border/30 rounded-xl py-3 lg:py-4 pl-10 lg:pl-12 pr-3 lg:pr-4 text-sm lg:text-base placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40"
+                  className="w-full bg-background/30 border border-border/20 rounded-xl py-3.5 lg:py-4 pl-11 pr-4 text-sm placeholder:text-muted-foreground/35 focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/15 transition-all"
                   required
                 />
               </div>
               <div className="relative">
-                <Mail className="absolute left-3 lg:left-4 top-1/2 -translate-y-1/2 w-4 h-4 lg:w-5 lg:h-5 text-muted-foreground/50" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder={t('contact.emailPlaceholder')}
-                  className="w-full bg-background/30 border border-border/30 rounded-xl py-3 lg:py-4 pl-10 lg:pl-12 pr-3 lg:pr-4 text-sm lg:text-base placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40"
+                  className="w-full bg-background/30 border border-border/20 rounded-xl py-3.5 lg:py-4 pl-11 pr-4 text-sm placeholder:text-muted-foreground/35 focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/15 transition-all"
                   required
                 />
               </div>
@@ -88,17 +87,17 @@ const EnterpriseContact = () => {
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
               placeholder={t('contact.messagePlaceholder')}
               rows={4}
-              className="w-full bg-background/30 border border-border/30 rounded-xl py-3 lg:py-4 px-3 lg:px-4 text-sm lg:text-base placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 resize-none"
+              className="w-full bg-background/30 border border-border/20 rounded-xl py-3.5 lg:py-4 px-4 text-sm placeholder:text-muted-foreground/35 focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/15 transition-all resize-none"
             />
 
             <Button
               type="submit"
               size="lg"
-              className="w-full bg-primary hover:bg-primary/90 text-sm lg:text-base py-3 lg:py-4"
+              className="w-full neo-btn-primary text-sm lg:text-base py-4 lg:py-5 rounded-xl"
               disabled={isSubmitting}
             >
               {isSubmitting ? t('contact.sending') : t('contact.submit')}
-              <Send className="ml-2 w-4 h-4 lg:w-5 lg:h-5" />
+              <Send className="ml-2 w-4 h-4" />
             </Button>
           </form>
         </div>

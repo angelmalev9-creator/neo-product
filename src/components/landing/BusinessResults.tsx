@@ -1,9 +1,10 @@
 import { 
   PhoneCall, UserPlus, CalendarCheck, Mail, TrendingUp, 
-  Clock, DollarSign, BarChart3, ArrowRight
+  Clock, DollarSign, BarChart3, ArrowRight, Sparkles
 } from 'lucide-react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
 
 const BusinessResults = () => {
   const { ref, isVisible } = useScrollAnimation();
@@ -14,32 +15,36 @@ const BusinessResults = () => {
       metric: '24/7',
       label: 'Обслужване без почивка',
       description: 'NEO отговаря мигновено на всеки клиент — дори в 3 сутринта.',
-      color: 'text-primary',
-      bgColor: 'bg-primary/10',
+      gradient: 'from-primary/20 to-primary/5',
+      iconColor: 'text-primary',
+      metricColor: 'text-primary',
     },
     {
       icon: UserPlus,
       metric: '+68%',
       label: 'Повече контакти',
       description: 'Събира имена, телефони и имейли автоматично по време на разговора.',
-      color: 'text-emerald-400',
-      bgColor: 'bg-emerald-400/10',
+      gradient: 'from-emerald-500/20 to-emerald-500/5',
+      iconColor: 'text-emerald-400',
+      metricColor: 'text-emerald-400',
     },
     {
       icon: DollarSign,
       metric: '40x',
       label: 'По-евтино от служител',
       description: 'Същото качество на обслужване за €25/мес вместо €1000/мес.',
-      color: 'text-amber-400',
-      bgColor: 'bg-amber-400/10',
+      gradient: 'from-amber-500/20 to-amber-500/5',
+      iconColor: 'text-amber-400',
+      metricColor: 'text-amber-400',
     },
     {
       icon: TrendingUp,
       metric: '+35%',
       label: 'Ръст в продажбите',
       description: 'Квалифицира клиенти и ги насочва към покупка — без натиск.',
-      color: 'text-cyan-400',
-      bgColor: 'bg-cyan-400/10',
+      gradient: 'from-cyan-500/20 to-cyan-500/5',
+      iconColor: 'text-cyan-400',
+      metricColor: 'text-cyan-400',
     },
   ];
 
@@ -66,16 +71,29 @@ const BusinessResults = () => {
     },
   ];
 
+  const containerVariants = {
+    hidden: {},
+    visible: {
+      transition: { staggerChildren: 0.1 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 24 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } },
+  };
+
   return (
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="results"
-      className={`py-20 sm:py-28 relative overflow-hidden neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
+      className="py-20 sm:py-28 relative overflow-hidden"
     >
       <div className="container mx-auto px-5 sm:px-4 lg:px-8 relative z-10">
         {/* Header */}
         <div className="text-center mb-14 sm:mb-20">
-          <span className="inline-block px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/8 border border-primary/15 text-primary text-sm font-medium mb-5">
+            <Sparkles className="w-3.5 h-3.5" />
             Какво може NEO
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-black text-foreground mb-5 leading-[1.08] tracking-wide max-w-4xl mx-auto">
@@ -88,21 +106,32 @@ const BusinessResults = () => {
         </div>
 
         {/* Outcome Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-16 sm:mb-24">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate={isVisible ? 'visible' : 'hidden'}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-16 sm:mb-24"
+        >
           {outcomes.map((item, idx) => (
-            <div
+            <motion.div
               key={idx}
-              className="group neo-glass-subtle p-6 rounded-2xl border border-border/30 hover:border-primary/30 transition-all duration-300 hover:scale-[1.02]"
+              variants={itemVariants}
+              className="group relative neo-glass-premium p-6 rounded-2xl hover:scale-[1.03] transition-transform duration-500"
             >
-              <div className={`w-12 h-12 rounded-xl ${item.bgColor} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                <item.icon className={`w-6 h-6 ${item.color}`} />
+              {/* Gradient overlay on hover */}
+              <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+              
+              <div className="relative z-10">
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                  <item.icon className={`w-6 h-6 ${item.iconColor}`} />
+                </div>
+                <p className={`text-3xl font-black ${item.metricColor} mb-1 tracking-tight`}>{item.metric}</p>
+                <h3 className="text-base font-bold text-foreground mb-2">{item.label}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
               </div>
-              <p className={`text-3xl font-black ${item.color} mb-1`}>{item.metric}</p>
-              <h3 className="text-base font-bold text-foreground mb-2">{item.label}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Dashboard Explanation */}
         <div className="max-w-5xl mx-auto">
@@ -116,25 +145,31 @@ const BusinessResults = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate={isVisible ? 'visible' : 'hidden'}
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          >
             {dashboardFeatures.map((feature, idx) => (
-              <div
+              <motion.div
                 key={idx}
-                className="flex gap-4 p-5 rounded-2xl neo-glass-subtle border border-border/20 hover:border-border/40 transition-all"
+                variants={itemVariants}
+                className="flex gap-4 p-5 rounded-2xl neo-glass-subtle border border-border/20 hover:border-primary/20 transition-all duration-300 group"
               >
-                <div className="shrink-0 w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
+                <div className="shrink-0 w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/15 group-hover:scale-105 transition-all duration-300">
                   <feature.icon className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <h4 className="font-semibold text-foreground mb-1">{feature.title}</h4>
                   <p className="text-sm text-muted-foreground leading-relaxed">{feature.desc}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           {/* CTA */}
-          <div className="text-center mt-10">
+          <div className="text-center mt-12">
             <Button
               size="lg"
               className="neo-btn-primary text-base px-8 py-6 rounded-full gap-2"
@@ -142,7 +177,7 @@ const BusinessResults = () => {
             >
               Опитайте безплатно <ArrowRight className="w-4 h-4" />
             </Button>
-            <p className="text-xs text-muted-foreground mt-3">
+            <p className="text-xs text-muted-foreground/50 mt-4 tracking-wide">
               Без регистрация • Без кредитна карта • Готово за 30 секунди
             </p>
           </div>
