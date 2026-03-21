@@ -2730,10 +2730,34 @@ export const useGeminiVoice = ({
         const data = await response.json();
         if (!data?.success) throw new Error(data?.error || "Session failed");
 
+        // Step 1: Read instruction from gemini-session (field may be "systemInstruction" or "instruction")
+        let resolvedInstruction = data.systemInstruction || data.instruction || "";
+
+        // Step 2: If the original systemPrompt contains calendar instructions, append them
+        // This ensures the calendar block from widget-session survives even if gemini-session discards it
+        const calendarMarkerIdx = systemPrompt.indexOf("##############################");
+        if (calendarMarkerIdx !== -1) {
+          const calendarBlock = systemPrompt.substring(calendarMarkerIdx);
+
+          // Step 3: Strip conflicting form instructions from gemini-session's prompt
+          resolvedInstruction = resolvedInstruction
+            .replace(/ФОРМИ\/ДЕЙСТВИЯ[^]*?(?=\n\n[A-ZА-Я]|\n\nEXECUTION|$)/g, "")
+            .replace(/ФОРМИ И ДЕЙСТВИЯ[^]*?(?=\n\n[A-ZА-Я]|\n\nEXECUTION|$)/g, "")
+            .replace(/ФОРМИ[^]*?(?=\n\n[A-ZА-Я]|\n\nEXECUTION|$)/g, "")
+            .replace(/can_submit_forms:\s*true/g, "can_submit_forms: false")
+            .replace(/submit_form/g, "(DISABLED)")
+            .replace(/контактна\s*форма/gi, "календар за записване")
+            .replace(/контактната\s*форма/gi, "календара за записване")
+            .replace(/форма(?:та)?\s+за\s+(?:контакт|запитване|връзка)/gi, "календар за записване");
+
+          resolvedInstruction = resolvedInstruction + "\n\n" + calendarBlock;
+          console.log("[SESSION] 📅 Calendar block appended to instruction (" + calendarBlock.length + " chars)");
+        }
+
         sessionDataRef.current = {
           apiKey: data.apiKey,
           model: data.model,
-          systemInstruction: clampInstruction(data.systemInstruction || "", MAX_SYSTEM_INSTRUCTION_CHARS),
+          systemInstruction: clampInstruction(resolvedInstruction, MAX_SYSTEM_INSTRUCTION_CHARS),
 
           // always keep a usable session id even if edge does not echo it back
           sessionId: data.sessionId || data.session_id || sessionId || "",
