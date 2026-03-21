@@ -102,6 +102,7 @@ serve(async (req) => {
 
   // Wrapper for button + pulse rings
   var wrapper = document.createElement('div');
+  wrapper.className = 'neo-widget-wrapper';
   wrapper.style.cssText = 'position:fixed;bottom:20px;${position}z-index:999999;display:flex;align-items:center;gap:0;cursor:pointer;';
 
   // Pill button: icon circle + text label
