@@ -1423,6 +1423,7 @@ export const useGeminiVoice = ({
   const vadBargeInFramesRef = useRef<number>(0);
   const lastCalendarCheckedDateRef = useRef("");
   const earlyActionFiredRef = useRef(false);
+  const calendarFallbackFiredAtRef = useRef(0);
   const lastCalendarNextAvailableDateRef = useRef("");
   const lastCalendarSlotsRef = useRef<string[]>([]);
 
