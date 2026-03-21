@@ -2649,7 +2649,7 @@ export const useGeminiVoice = ({
 
         if (isPlayingRef.current && Date.now() - speakStartRef.current > ANTI_BARGE_IN_MS) {
           vadBargeInFramesRef.current += 1;
-          if (vadBargeInFramesRef.current >= VAD_BARGE_IN_FRAMES_REQUIRED && rms > vadThresholdRef.current * 1.2) {
+          if (vadBargeInFramesRef.current >= VAD_BARGE_IN_FRAMES_REQUIRED && rms > vadThresholdRef.current * 2.5) {
             console.log("[VAD BARGE-IN] ⚡ Speech detected → interrupt", { rms, frames: vadBargeInFramesRef.current });
             performEarlyBargeIn();
             vadBargeInFramesRef.current = 0;
