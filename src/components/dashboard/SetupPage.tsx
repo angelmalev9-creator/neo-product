@@ -304,35 +304,37 @@ const EmailLogsSection = ({ emailConnected, userId }: { emailConnected: boolean;
               <div key={log.id} className="rounded-xl border border-border/10 bg-background/30 overflow-hidden">
                 <button
                   onClick={() => setExpandedId(isExpanded ? null : log.id)}
-                  className="w-full flex items-center gap-3 p-3 text-left hover:bg-muted/20 transition-colors"
+                  className="w-full flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-3 p-2.5 sm:p-3 text-left hover:bg-muted/20 transition-colors"
                 >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate">{log.subject}</p>
-                    <p className="text-[11px] text-muted-foreground truncate">
+                  <div className="flex-1 min-w-0 w-full">
+                    <p className="text-[11px] sm:text-xs font-medium text-foreground truncate">{log.subject}</p>
+                    <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
                       До: {log.recipient_name ? `${log.recipient_name} (${log.recipient_email})` : log.recipient_email}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {label && <span className="text-[10px] text-muted-foreground/70 bg-muted/30 px-1.5 py-0.5 rounded">{label}</span>}
+                  <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 w-full sm:w-auto">
+                    {label && <span className="text-[9px] sm:text-[10px] text-muted-foreground/70 bg-muted/30 px-1.5 py-0.5 rounded">{label}</span>}
                     {statusBadge(log.status)}
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-[9px] sm:text-[10px] text-muted-foreground">
                       {new Date(log.sent_at || log.created_at).toLocaleDateString('bg-BG', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                     </span>
-                    <ArrowRight className={`w-3 h-3 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                    <ArrowRight className={`w-3 h-3 text-muted-foreground transition-transform ml-auto sm:ml-0 ${isExpanded ? 'rotate-90' : ''}`} />
                   </div>
                 </button>
                 {isExpanded && (
-                  <div className="px-2 sm:px-4 pb-3 border-t border-border/10">
-                    {log.body && log.body.includes('<') ? (
-                      <div
-                        className="mt-2 rounded-lg bg-white p-2 sm:p-3 text-[10px] sm:text-xs text-gray-800 leading-relaxed max-h-40 sm:max-h-56 overflow-y-auto [&_table]:w-full [&_table]:text-[10px] [&_td]:p-1 [&_td]:sm:p-2 [&_a]:text-primary [&_a]:underline [&_h1]:text-sm [&_h1]:sm:text-base [&_h2]:text-xs [&_h2]:sm:text-sm [&_h3]:text-[11px] [&_p]:text-[10px] [&_p]:sm:text-xs [&_img]:max-w-full [&_img]:h-auto [&_img]:max-h-20 [&_img]:sm:max-h-32 scale-[0.85] sm:scale-100 origin-top-left w-[118%] sm:w-full"
-                        dangerouslySetInnerHTML={{ __html: log.body }}
-                      />
-                    ) : (
-                      <div className="mt-2 rounded-lg bg-background/50 p-2 sm:p-3 text-[10px] sm:text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed max-h-40 sm:max-h-56 overflow-y-auto">
-                        {log.body || 'Няма съдържание'}
-                      </div>
-                    )}
+                  <div className="px-2 sm:px-4 pb-2 sm:pb-3 border-t border-border/10">
+                    <div className="mt-2 rounded-lg overflow-hidden">
+                      {log.body && log.body.includes('<') ? (
+                        <div
+                          className="bg-white p-2 sm:p-3 text-[9px] sm:text-xs text-gray-800 leading-relaxed max-h-36 sm:max-h-52 overflow-y-auto overflow-x-hidden [&_*]:max-w-full [&_table]:w-full [&_table]:table-fixed [&_table]:text-[9px] [&_table]:sm:text-[10px] [&_td]:p-1 [&_a]:text-primary [&_a]:underline [&_a]:break-all [&_h1]:text-xs [&_h1]:sm:text-sm [&_h2]:text-[11px] [&_h2]:sm:text-xs [&_h3]:text-[10px] [&_p]:text-[9px] [&_p]:sm:text-xs [&_p]:break-words [&_img]:max-w-[120px] [&_img]:sm:max-w-[200px] [&_img]:h-auto [&_div]:max-w-full [&_div]:overflow-hidden [&_span]:break-words"
+                          dangerouslySetInnerHTML={{ __html: log.body }}
+                        />
+                      ) : (
+                        <div className="bg-background/50 p-2 sm:p-3 text-[10px] sm:text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed max-h-36 sm:max-h-52 overflow-y-auto break-words">
+                          {log.body || 'Няма съдържание'}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
