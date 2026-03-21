@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,6 +31,14 @@ const SetupPage = ({
   const [calendarConnected, setCalendarConnected] = useState(false);
   const [emailConnected, setEmailConnected] = useState(false);
   const [hasScraped, setHasScraped] = useState(!!demoSession);
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const activeTabRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (activeTabRef.current && tabsRef.current) {
+      activeTabRef.current.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  }, [section]);
 
   useEffect(() => {
     loadConnectionStatus();
@@ -86,7 +94,7 @@ const SetupPage = ({
       </div>
 
       {/* Section tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" ref={tabsRef}>
         {[
           { id: 'website', label: 'Уебсайт', icon: Globe },
           { id: 'calendar', label: 'Календар', icon: CalendarDays },
@@ -95,6 +103,7 @@ const SetupPage = ({
         ].map((tab) => (
           <button
             key={tab.id}
+            ref={activeSection === tab.id ? activeTabRef : undefined}
             onClick={() => onTabChange(`setup-${tab.id}`)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
               activeSection === tab.id
