@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   MessageSquare, Clock, Users, Phone, Mail,
   ChevronDown, ChevronUp, RefreshCw, User, Briefcase,
-  Sparkles, Bot, UserCircle, Globe, TrendingUp,
+  Sparkles, Bot, UserCircle, Globe, TrendingUp, CalendarDays,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
