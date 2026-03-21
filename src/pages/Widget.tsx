@@ -198,11 +198,15 @@ const Widget = () => {
     setLiveTranscript('');
     setLiveAssistantTranscript('');
     persistedTranscriptKeysRef.current.clear();
+    setError(null);
     let micGranted = false;
     try {
       await preWarmMicrophone();
       micGranted = true;
-    } catch {}
+    } catch (micErr) {
+      console.warn('[WIDGET] Mic unavailable, switching to text-only mode:', micErr);
+      micGranted = false;
+    }
     const result = await trackConversation('start');
     if (result?.conversationId) {
       setConversationId(result.conversationId);
