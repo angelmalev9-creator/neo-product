@@ -974,6 +974,42 @@ function hash32(s: string): string {
   return (h >>> 0).toString(16);
 }
 
+function extractCalendarOwnerUserId(systemInstruction: string): string {
+  const match = String(systemInstruction || "").match(/"owner_user_id"\s*:\s*"([a-f0-9-]{36})"/i);
+  return match?.[1] || "";
+}
+
+function extractCalendarDefaultDate(systemInstruction: string): string {
+  const match = String(systemInstruction || "").match(/"calendar_action":"get_slots"[^]*?"date":"(\d{4}-\d{2}-\d{2})"/i);
+  if (match?.[1]) return match[1];
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return tomorrow.toISOString().split("T")[0];
+}
+
+function shouldForceCalendarFallback(responseText: string, systemInstruction: string): boolean {
+  const response = String(responseText || "").toLowerCase();
+  const instruction = String(systemInstruction || "").toLowerCase();
+
+  const hasCalendar =
+    instruction.includes("календар — максимален приоритет") ||
+    instruction.includes("имаш вграден календар") ||
+    instruction.includes('"action":"book_slot"');
+
+  if (!hasCalendar) return false;
+  if (response.includes("action_request") || response.includes("book_slot")) return false;
+
+  const bookingIntent = /(консултац|резервац|срещ|запис|час)/i.test(response);
+  const refusal =
+    /нямаме\s+опц(?:ия|ии)\s+за\s+онлайн\s+записване/i.test(response) ||
+    /нямаме\s+онлайн\s+записване/i.test(response) ||
+    /не\s+мож(?:ем|а)\s+да\s+запиш/i.test(response) ||
+    /може\s+да\s+се\s+свържете\s+с\s+нас/i.test(response) ||
+    /в\s+работно\s+време/i.test(response);
+
+  return bookingIntent && refusal;
+}
+
 function parseBulgarianDateText(raw: string): string[] {
   const text = String(raw || "")
     .toLowerCase()
