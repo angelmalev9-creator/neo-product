@@ -179,6 +179,7 @@ const CalendarAutomation = () => {
         working_days: settings.working_days,
         meeting_title_template: settings.meeting_title_template,
         meeting_description_template: settings.meeting_description_template,
+        required_booking_fields: settings.required_booking_fields,
       } as any, { onConflict: 'user_id' });
       if (error) throw error;
       toast({ title: 'Настройките са запазени!' });
