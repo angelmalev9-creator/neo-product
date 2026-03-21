@@ -69,30 +69,20 @@ serve(async (req) => {
   // Inject keyframes
   var styleEl = document.createElement('style');
   styleEl.textContent = \`
-    @keyframes neo-pulse-ring {
-      0% { transform: scale(1); opacity: 0.5; }
-      70% { transform: scale(1.7); opacity: 0; }
-      100% { transform: scale(1.7); opacity: 0; }
-    }
-    @keyframes neo-pulse-ring2 {
-      0% { transform: scale(1); opacity: 0.35; }
-      70% { transform: scale(2); opacity: 0; }
-      100% { transform: scale(2); opacity: 0; }
+    @keyframes neo-glow {
+      0%, 100% { box-shadow: 0 0 20px \${color}33, 0 4px 16px rgba(0,0,0,0.15); }
+      50% { box-shadow: 0 0 32px \${color}55, 0 4px 20px rgba(0,0,0,0.2); }
     }
     @keyframes neo-float {
       0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-5px); }
+      50% { transform: translateY(-3px); }
     }
-    @keyframes neo-tooltip-in {
-      0% { opacity: 0; transform: translateY(8px) scale(0.95); }
-      100% { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    @keyframes neo-icon-breathe {
-      0%, 100% { transform: scale(1) rotate(0deg); }
-      50% { transform: scale(1.1) rotate(4deg); }
+    #neo-widget-btn {
+      animation: neo-float 4s ease-in-out infinite, neo-glow 3s ease-in-out infinite;
     }
     #neo-widget-btn:hover .neo-phone-icon {
-      animation: neo-icon-breathe 0.5s ease-in-out;
+      transition: transform 0.3s ease;
+      transform: scale(1.08);
     }
   \`;
   document.head.appendChild(styleEl);
