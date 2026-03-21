@@ -31,6 +31,14 @@ const SetupPage = ({
   const [calendarConnected, setCalendarConnected] = useState(false);
   const [emailConnected, setEmailConnected] = useState(false);
   const [hasScraped, setHasScraped] = useState(!!demoSession);
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const activeTabRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (activeTabRef.current && tabsRef.current) {
+      activeTabRef.current.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  }, [section]);
 
   useEffect(() => {
     loadConnectionStatus();
