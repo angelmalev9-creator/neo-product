@@ -228,12 +228,18 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
           <div className="space-y-2 pr-2">
             {conversations.map((convo) => {
               const lead = getLeadForConversation(convo.id);
+              const booking = getBookingForConversation(convo.id);
               const isExpanded = expandedId === convo.id;
               const convoMessages = messages[convo.id];
               const convoEmails = emails[convo.id];
               const parsed = parseSummary(convo.summary);
               const isSummarizing = summarizing === convo.id;
               const date = new Date(convo.started_at);
+              const clientName = lead ? getLeadName(lead) : booking?.attendee_name || null;
+              const clientEmail = lead?.email || booking?.attendee_email || null;
+              const clientPhone = lead?.phone || booking?.attendee_phone || null;
+              const clientService = lead?.service || booking?.service || null;
+              const hasClientData = !!(clientName || clientEmail || clientPhone);
 
               return (
                 <div key={convo.id} className="rounded-xl border border-border/30 bg-card/50 overflow-hidden transition-colors hover:border-primary/20">
