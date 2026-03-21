@@ -3853,8 +3853,8 @@ export const useGeminiVoice = ({
             }
           }
 
-          // ★ Suppress transcription output for canceled turns
-          if (!assistantTurnCanceledRef.current) {
+          // ★ Always accumulate transcription text (even during barge-in) so we don't lose context
+          {
             const transcription =
               content.outputTranscription ||
               content.output_transcription ||
@@ -3878,7 +3878,10 @@ export const useGeminiVoice = ({
                   currentResponseTextRef.current += " ";
                 }
                 currentResponseTextRef.current += txt;
-                onTranscript?.(currentResponseTextRef.current, false, "assistant");
+                // Only stream live transcript if not interrupted — but always accumulate
+                if (!assistantTurnCanceledRef.current) {
+                  onTranscript?.(currentResponseTextRef.current, false, "assistant");
+                }
               }
             }
           }
