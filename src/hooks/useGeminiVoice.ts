@@ -1418,6 +1418,7 @@ export const useGeminiVoice = ({
   const assistantTurnCanceledRef = useRef(false);
   const vadBargeInFramesRef = useRef<number>(0);
   const lastCalendarCheckedDateRef = useRef("");
+  const earlyActionFiredRef = useRef(false);
   const lastCalendarNextAvailableDateRef = useRef("");
   const lastCalendarSlotsRef = useRef<string[]>([]);
 
@@ -3842,6 +3843,12 @@ export const useGeminiVoice = ({
 
                   if (looksLikeAction) {
                     currentResponseTextRef.current = partText;
+                    // Fire book_slot actions immediately during streaming (don't wait for TURN_COMPLETE)
+                    if (partText.includes("book_slot") && !earlyActionFiredRef.current) {
+                      console.log("[EARLY ACTION] Firing book_slot during streaming");
+                      earlyActionFiredRef.current = true;
+                      void maybeExecuteActionFromGemini(partText);
+                    }
                   } else if (partText) {
                     if (currentResponseTextRef.current && !currentResponseTextRef.current.endsWith(" ")) {
                       currentResponseTextRef.current += " ";
@@ -3898,6 +3905,13 @@ export const useGeminiVoice = ({
                 responseText.includes("book_slot");
 
               if (looksLikeActionResponse) {
+                // Skip if already fired during streaming
+                if (earlyActionFiredRef.current) {
+                  console.log("[TURN_COMPLETE] action already fired during streaming, skipping");
+                  earlyActionFiredRef.current = false;
+                  currentResponseTextRef.current = "";
+                  return;
+                }
                 console.log("[TURN_COMPLETE] action JSON (wasCanceled=%s):", wasCanceled, responseText.slice(0, 200));
                 let handled = await maybeExecuteActionFromGemini(responseText);
                 if (!handled) {
