@@ -1,10 +1,12 @@
+import { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import {
   Crown, Globe, CalendarDays, Mic, MessageSquare, Users, CalendarCheck,
-  CheckCircle2, Circle, Zap, ArrowRight,
+  CheckCircle2, Circle, Zap, ArrowRight, TrendingUp,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DashboardHomeProps {
   subscribed: boolean;
@@ -18,16 +20,85 @@ interface DashboardHomeProps {
   websiteUrl: string;
   calendarConnected: boolean;
   hasTestedNeo: boolean;
+  userId: string;
 }
 
 const DashboardHome = ({
   subscribed, tierName, subscriptionEnd, usedMinutes, planLimit,
   onManageSubscription, portalLoading, onTabChange,
-  websiteUrl, calendarConnected, hasTestedNeo,
+  websiteUrl, calendarConnected, hasTestedNeo, userId,
 }: DashboardHomeProps) => {
   const navigate = useNavigate();
   const usagePercent = planLimit > 0 ? (usedMinutes / planLimit) * 100 : 0;
   const isActive = subscribed && websiteUrl;
+
+  const [todayConversations, setTodayConversations] = useState<number>(0);
+  const [todayLeads, setTodayLeads] = useState<number>(0);
+  const [todayBookings, setTodayBookings] = useState<number>(0);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  const getTodayStart = () => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return now.toISOString();
+  };
+
+  const fetchTodayStats = async () => {
+    if (!userId) return;
+    const todayStart = getTodayStart();
+
+    const [convRes, leadsRes, bookingsRes] = await Promise.all([
+      supabase
+        .from('conversations')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', todayStart),
+      supabase
+        .from('captured_leads')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', todayStart),
+      supabase
+        .from('calendar_bookings')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', todayStart),
+    ]);
+
+    setTodayConversations(convRes.count ?? 0);
+    setTodayLeads(leadsRes.count ?? 0);
+    setTodayBookings(bookingsRes.count ?? 0);
+    setStatsLoading(false);
+  };
+
+  useEffect(() => {
+    if (!userId || !subscribed) return;
+    fetchTodayStats();
+
+    // Real-time subscriptions for today's stats
+    const channel = supabase.channel('today-stats-realtime')
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'conversations',
+        filter: `user_id=eq.${userId}`,
+      }, () => {
+        setTodayConversations(prev => prev + 1);
+      })
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'captured_leads',
+        filter: `user_id=eq.${userId}`,
+      }, () => {
+        setTodayLeads(prev => prev + 1);
+      })
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'calendar_bookings',
+        filter: `user_id=eq.${userId}`,
+      }, () => {
+        setTodayBookings(prev => prev + 1);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [userId, subscribed]);
 
   if (!subscribed) {
     return (
@@ -121,13 +192,19 @@ const DashboardHome = ({
         </div>
       </div>
 
-      {/* Stats summary */}
+      {/* Stats summary - real-time */}
       <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3">Днешни резултати</h2>
+        <div className="flex items-center gap-2 mb-3">
+          <h2 className="text-sm font-semibold text-muted-foreground">Днешни резултати</h2>
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            <span className="text-[10px] text-primary font-medium">Live</span>
+          </div>
+        </div>
         <div className="grid grid-cols-3 gap-3">
-          <StatCard icon={MessageSquare} label="Разговори" value="—" />
-          <StatCard icon={Users} label="Нови клиенти" value="—" />
-          <StatCard icon={CalendarCheck} label="Резервации" value="—" />
+          <StatCard icon={MessageSquare} label="Разговори" value={statsLoading ? '...' : String(todayConversations)} />
+          <StatCard icon={Users} label="Нови клиенти" value={statsLoading ? '...' : String(todayLeads)} />
+          <StatCard icon={CalendarCheck} label="Резервации" value={statsLoading ? '...' : String(todayBookings)} />
         </div>
       </div>
     </div>
