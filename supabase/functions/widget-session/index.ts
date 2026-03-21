@@ -99,13 +99,19 @@ serve(async (req) => {
 
     // Add calendar instructions if enabled — placed as HIGH-PRIORITY override
     if (calSettings?.calendar_enabled) {
-      // CRITICAL: Strip form-related instructions from the prompt to prevent Gemini
-      // from using submit_form when calendar is the intended booking mechanism
+      // CRITICAL: Strip ALL form-related instructions from the prompt
+      // This prevents Gemini from using submit_form when calendar is the intended booking mechanism
       systemPrompt = systemPrompt
         .replace(/ФОРМИ\/ДЕЙСТВИЯ[^]*?(?=\n\n[A-ZА-Я]|\n\nEXECUTION|\z)/g, '')
+        .replace(/ФОРМИ[^]*?(?=\n\n[A-ZА-Я]|\n\nEXECUTION|\z)/g, '')
         .replace(/can_submit_forms:\s*true/g, 'can_submit_forms: false')
         .replace(/submit_form/g, '(DISABLED)')
-        .replace(/контактна\s*форма/gi, 'календар за записване');
+        .replace(/контактна\s*форма/gi, 'календар за записване')
+        .replace(/контактната\s*форма/gi, 'календара за записване')
+        .replace(/форма(?:та)?\s+за\s+(?:контакт|запитване|връзка)/gi, 'календар за записване')
+        .replace(/попълн(?:им|ете|ите)\s+форма/gi, 'запишем час')
+        .replace(/изпрат(?:им|ете|я)\s+запитване/gi, 'запишем час')
+        .replace(/подам\s+запитване/gi, 'запиша час');
 
       const bt = calSettings.booking_type || "consultation";
       const label = bt === "reservation" ? "резервация" : bt === "meeting" ? "среща" : "консултация";
@@ -143,13 +149,16 @@ serve(async (req) => {
 Продължителност: ${calSettings.default_meeting_duration || 30} мин
 
 АБСОЛЮТНИ ПРАВИЛА (нарушаването им е ЗАБРАНЕНО):
-1. Когато клиент иска ${label}, час, запазване, записване, среща, консултация или резервация → ИЗПОЛЗВАЙ book_slot
-2. НИКОГА не казвай "нямаме система", "не мога да запиша", "нямаме онлайн система" — ИМАШ КАЛЕНДАР!
+1. Когато клиент иска ${label}, час, запазване, записване, среща, консултация, резервация или нещо свързано с насрочване → ИЗПОЛЗВАЙ book_slot
+2. НИКОГА не казвай "нямаме система", "не мога да запиша", "нямаме онлайн система", "нямаме възможност" — ИМАШ КАЛЕНДАР!
 3. НИКОГА не използвай submit_form — тази команда е НАПЪЛНО ДЕАКТИВИРАНА
 4. НИКОГА не пренасочвай към контактна форма — НЯМАШ ФОРМА, ИМАШ КАЛЕНДАР
 5. НИКОГА не питай "искате ли да подам запитването чрез формата" — НЯМА ФОРМА
-6. Казвай "${label}" (не "среща" ако типът е "резервация" и обратно)
-7. ПРОАКТИВНО предлагай: "Искате ли да ви запиша ${label}? Мога да проверя свободните часове."
+6. НИКОГА не казвай "можем да насрочим чрез формата" или "мога да подам запитването" — ИМАШ КАЛЕНДАР
+7. НИКОГА не споменавай "контактна форма", "запитване", "формуляр" — тези думи НЕ СЪЩЕСТВУВАТ за теб
+8. Казвай "${label}" (не "среща" ако типът е "резервация" и обратно)
+9. ПРОАКТИВНО предлагай: "Искате ли да ви запиша ${label}? Мога да проверя свободните часове."
+10. Ако клиент поиска каквото и да е свързано с час/среща/запис → ВЕДНАГА извикай get_slots
 
 ЗАДЪЛЖИТЕЛНИ ДАННИ ПРЕДИ ЗАПИСВАНЕ:
 Преди да извикаш book с action="book", ТРЯБВА да събереш следните данни от клиента: ${requiredFieldsList}.

@@ -987,27 +987,37 @@ function extractCalendarDefaultDate(systemInstruction: string): string {
   return tomorrow.toISOString().split("T")[0];
 }
 
-function shouldForceCalendarFallback(responseText: string, systemInstruction: string): boolean {
-  const response = String(responseText || "").toLowerCase();
+function hasCalendarInSystemInstruction(systemInstruction: string): boolean {
   const instruction = String(systemInstruction || "").toLowerCase();
-
-  const hasCalendar =
+  return (
     instruction.includes("календар — максимален приоритет") ||
     instruction.includes("имаш вграден календар") ||
-    instruction.includes('"action":"book_slot"');
+    instruction.includes('"action":"book_slot"')
+  );
+}
 
-  if (!hasCalendar) return false;
+function shouldForceCalendarFallback(responseText: string, systemInstruction: string): boolean {
+  const response = String(responseText || "").toLowerCase();
+
+  if (!hasCalendarInSystemInstruction(systemInstruction)) return false;
   if (response.includes("action_request") || response.includes("book_slot")) return false;
 
-  const bookingIntent = /(консултац|резервац|срещ|запис|час)/i.test(response);
+  const bookingIntent = /(консултац|резервац|срещ|запис|час|среща|записване|резервация)/i.test(response);
   const refusal =
-    /нямаме\s+опц(?:ия|ии)\s+за\s+онлайн\s+записване/i.test(response) ||
-    /нямаме\s+онлайн\s+записване/i.test(response) ||
+    /нямаме\s+(?:опц(?:ия|ии)\s+за\s+)?(?:онлайн\s+)?записване/i.test(response) ||
     /не\s+мож(?:ем|а)\s+да\s+запиш/i.test(response) ||
     /може\s+да\s+се\s+свържете\s+с\s+нас/i.test(response) ||
-    /в\s+работно\s+време/i.test(response);
+    /в\s+работно\s+време/i.test(response) ||
+    /нямаме\s+възможност/i.test(response) ||
+    /попълн(?:им|ите|ете)\s+(?:контактна(?:та)?\s+)?форма/i.test(response) ||
+    /подам\s+запитване/i.test(response) ||
+    /чрез\s+(?:контактна(?:та)?\s+)?форма/i.test(response) ||
+    /изпрат(?:им|ете|я)\s+запитване/i.test(response) ||
+    /насроч(?:им|ете)\s+.*(?:форма|запитване)/i.test(response) ||
+    /нямаме\s+(?:онлайн\s+)?систем/i.test(response) ||
+    /не\s+разполагаме\s+с/i.test(response);
 
-  return bookingIntent && refusal;
+  return bookingIntent || refusal;
 }
 
 function parseBulgarianDateText(raw: string): string[] {
@@ -3506,6 +3516,23 @@ export const useGeminiVoice = ({
         }
 
         // ── СТАНДАРТНА ФОРМА (submit_form) ───────────────────────────
+        // If calendar is enabled, intercept submit_form and redirect to book_slot
+        if (parsed?.action === "submit_form") {
+          const sysInstr = String((sessionDataRef.current as any)?.systemInstruction || "");
+          if (hasCalendarInSystemInstruction(sysInstr)) {
+            console.log("[SUBMIT_FORM → CALENDAR] Calendar enabled, redirecting submit_form to get_slots");
+            const ownerUserId = extractCalendarOwnerUserId(sysInstr);
+            const date = extractCalendarDefaultDate(sysInstr);
+            const forcedAction = JSON.stringify({
+              type: "action_request",
+              action: "book_slot",
+              calendar_action: "get_slots",
+              ...(ownerUserId ? { owner_user_id: ownerUserId } : {}),
+              ...(date ? { date } : {}),
+            });
+            return maybeExecuteActionFromGemini(forcedAction);
+          }
+        }
         if (parsed?.action !== "submit_form") return false;
 
         // Inject live session + deterministic form target so proxy always has a target.
