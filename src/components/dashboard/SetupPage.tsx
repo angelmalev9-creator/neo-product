@@ -322,14 +322,14 @@ const EmailLogsSection = ({ emailConnected, userId }: { emailConnected: boolean;
                   </div>
                 </button>
                 {isExpanded && (
-                  <div className="px-4 pb-4 border-t border-border/10">
+                  <div className="px-2 sm:px-4 pb-3 border-t border-border/10">
                     {log.body && log.body.includes('<') ? (
                       <div
-                        className="mt-3 rounded-lg bg-white p-4 text-xs text-gray-800 leading-relaxed max-h-72 overflow-y-auto [&_table]:w-full [&_td]:p-2 [&_a]:text-primary [&_a]:underline"
+                        className="mt-2 rounded-lg bg-white p-2 sm:p-3 text-[10px] sm:text-xs text-gray-800 leading-relaxed max-h-40 sm:max-h-56 overflow-y-auto [&_table]:w-full [&_table]:text-[10px] [&_td]:p-1 [&_td]:sm:p-2 [&_a]:text-primary [&_a]:underline [&_h1]:text-sm [&_h1]:sm:text-base [&_h2]:text-xs [&_h2]:sm:text-sm [&_h3]:text-[11px] [&_p]:text-[10px] [&_p]:sm:text-xs [&_img]:max-w-full [&_img]:h-auto [&_img]:max-h-20 [&_img]:sm:max-h-32 scale-[0.85] sm:scale-100 origin-top-left w-[118%] sm:w-full"
                         dangerouslySetInnerHTML={{ __html: log.body }}
                       />
                     ) : (
-                      <div className="mt-3 rounded-lg bg-background/50 p-4 text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed max-h-72 overflow-y-auto">
+                      <div className="mt-2 rounded-lg bg-background/50 p-2 sm:p-3 text-[10px] sm:text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed max-h-40 sm:max-h-56 overflow-y-auto">
                         {log.body || 'Няма съдържание'}
                       </div>
                     )}
