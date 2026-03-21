@@ -86,9 +86,8 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
   const [latestEmailLog, setLatestEmailLog] = useState<DemoEmailLog | null>(null);
   const [emailLogOpen, setEmailLogOpen] = useState(false);
 
-  // ✅ REMOVED: Live preview transcripts - now using "Final clean only" approach
-  // const [liveUserTranscript, setLiveUserTranscript] = useState<string>("");
-  // const [liveNeoTranscript, setLiveNeoTranscript] = useState<string>("");
+  // Live streaming transcripts for real-time display
+  const [liveAssistantTranscript, setLiveAssistantTranscript] = useState<string>("");
 
   // Fallback manual contact capture (shown only when backend asks for it)
   const [contactName, setContactName] = useState("");
