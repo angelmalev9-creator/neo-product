@@ -3924,7 +3924,10 @@ export const useGeminiVoice = ({
 
                 if (!handled) {
                   const systemInstruction = String((sessionDataRef.current as any)?.systemInstruction || "");
-                  if (shouldForceCalendarFallback(responseText, systemInstruction)) {
+                  const now = Date.now();
+                  const fallbackCooldown = now - calendarFallbackFiredAtRef.current > 30000;
+                  if (fallbackCooldown && shouldForceCalendarFallback(responseText, systemInstruction)) {
+                    calendarFallbackFiredAtRef.current = now;
                     const ownerUserId = extractCalendarOwnerUserId(systemInstruction);
                     const date = extractCalendarDefaultDate(systemInstruction);
                     const forcedAction = JSON.stringify({
