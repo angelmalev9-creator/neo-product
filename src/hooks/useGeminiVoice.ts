@@ -3700,9 +3700,15 @@ export const useGeminiVoice = ({
 
         if (!textOnly) {
           if (!streamRef.current) {
-            streamRef.current = await navigator.mediaDevices.getUserMedia({
-              audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-            });
+            try {
+              streamRef.current = await navigator.mediaDevices.getUserMedia({
+                audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+              });
+            } catch (micErr) {
+              console.warn("[CONNECT] Mic failed, falling back to text-only:", micErr);
+              textOnly = true;
+              textOnlyRef.current = true;
+            }
           }
         }
 
