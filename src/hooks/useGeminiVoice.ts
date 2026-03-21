@@ -75,7 +75,7 @@ const SENSITIVE_MODE_EXTRA_WAIT_MS: Record<SensitiveInputMode, number> = {
 };
 // VAD-based barge-in: number of consecutive speech frames needed to interrupt NEO
 // Higher = less false positives from noise/echo.
-const VAD_BARGE_IN_FRAMES_REQUIRED = 5;
+const VAD_BARGE_IN_FRAMES_REQUIRED = 15;
 
 // VAD (client-side) is only a fallback safety layer.
 // Server-final tokens should end the turn first.
