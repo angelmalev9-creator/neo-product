@@ -3,10 +3,11 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import {
   Crown, Globe, CalendarDays, Mic, MessageSquare, Users, CalendarCheck,
-  CheckCircle2, Circle, Zap, ArrowRight, TrendingUp,
+  CheckCircle2, Circle, Zap, ArrowRight,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface DashboardHomeProps {
   subscribed: boolean;
@@ -23,6 +24,23 @@ interface DashboardHomeProps {
   userId: string;
 }
 
+const WEEKDAY_LABELS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
+
+function getLast7Days() {
+  const days: { date: string; label: string; dayStart: string; dayEnd: string }[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
+    const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).toISOString();
+    const dow = d.getDay(); // 0=Sun
+    const label = WEEKDAY_LABELS[dow === 0 ? 6 : dow - 1];
+    days.push({ date: dateStr, label, dayStart, dayEnd });
+  }
+  return days;
+}
+
 const DashboardHome = ({
   subscribed, tierName, subscriptionEnd, usedMinutes, planLimit,
   onManageSubscription, portalLoading, onTabChange,
@@ -32,10 +50,11 @@ const DashboardHome = ({
   const usagePercent = planLimit > 0 ? (usedMinutes / planLimit) * 100 : 0;
   const isActive = subscribed && websiteUrl;
 
-  const [todayConversations, setTodayConversations] = useState<number>(0);
-  const [todayLeads, setTodayLeads] = useState<number>(0);
-  const [todayBookings, setTodayBookings] = useState<number>(0);
+  const [todayConversations, setTodayConversations] = useState(0);
+  const [todayClients, setTodayClients] = useState(0);
+  const [todayBookings, setTodayBookings] = useState(0);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [weekData, setWeekData] = useState<{ label: string; conversations: number; clients: number }[]>([]);
 
   const getTodayStart = () => {
     const now = new Date();
@@ -65,17 +84,45 @@ const DashboardHome = ({
         .gte('created_at', todayStart),
     ]);
 
+    const leadsCount = leadsRes.count ?? 0;
+    const bookingsCount = bookingsRes.count ?? 0;
+
     setTodayConversations(convRes.count ?? 0);
-    setTodayLeads(leadsRes.count ?? 0);
-    setTodayBookings(bookingsRes.count ?? 0);
+    setTodayClients(leadsCount + bookingsCount);
+    setTodayBookings(bookingsCount);
     setStatsLoading(false);
+  };
+
+  const fetchWeeklyStats = async () => {
+    if (!userId) return;
+    const days = getLast7Days();
+    const weekStart = days[0].dayStart;
+
+    const [convRes, leadsRes, bookingsRes] = await Promise.all([
+      supabase.from('conversations').select('created_at').eq('user_id', userId).gte('created_at', weekStart),
+      supabase.from('captured_leads').select('created_at').eq('user_id', userId).gte('created_at', weekStart),
+      supabase.from('calendar_bookings').select('created_at').eq('user_id', userId).gte('created_at', weekStart),
+    ]);
+
+    const convos = convRes.data || [];
+    const leads = leadsRes.data || [];
+    const bookings = bookingsRes.data || [];
+
+    const result = days.map(day => {
+      const convCount = convos.filter(c => c.created_at >= day.dayStart && c.created_at < day.dayEnd).length;
+      const leadCount = leads.filter(l => l.created_at >= day.dayStart && l.created_at < day.dayEnd).length;
+      const bookCount = bookings.filter(b => b.created_at >= day.dayStart && b.created_at < day.dayEnd).length;
+      return { label: day.label, conversations: convCount, clients: leadCount + bookCount };
+    });
+
+    setWeekData(result);
   };
 
   useEffect(() => {
     if (!userId || !subscribed) return;
     fetchTodayStats();
+    fetchWeeklyStats();
 
-    // Real-time subscriptions for today's stats
     const channel = supabase.channel('today-stats-realtime')
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'conversations',
@@ -87,12 +134,13 @@ const DashboardHome = ({
         event: 'INSERT', schema: 'public', table: 'captured_leads',
         filter: `user_id=eq.${userId}`,
       }, () => {
-        setTodayLeads(prev => prev + 1);
+        setTodayClients(prev => prev + 1);
       })
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'calendar_bookings',
         filter: `user_id=eq.${userId}`,
       }, () => {
+        setTodayClients(prev => prev + 1);
         setTodayBookings(prev => prev + 1);
       })
       .subscribe();
@@ -168,27 +216,9 @@ const DashboardHome = ({
       <div>
         <h2 className="text-sm font-semibold text-muted-foreground mb-3">Бързи действия</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <ActionCard
-            icon={Globe}
-            title="Добави сайт"
-            description={websiteUrl ? `Свързан: ${websiteUrl}` : 'Въведи URL на сайта си'}
-            done={!!websiteUrl}
-            onClick={() => onTabChange('setup-website')}
-          />
-          <ActionCard
-            icon={CalendarDays}
-            title="Свържи календар"
-            description={calendarConnected ? 'Календарът е свързан' : 'Автоматични резервации'}
-            done={calendarConnected}
-            onClick={() => onTabChange('setup-calendar')}
-          />
-          <ActionCard
-            icon={Mic}
-            title="Тествай NEO"
-            description={hasTestedNeo ? 'Тестван е' : 'Чуй как звучи NEO'}
-            done={hasTestedNeo}
-            onClick={() => onTabChange('neo-test')}
-          />
+          <ActionCard icon={Globe} title="Добави сайт" description={websiteUrl ? `Свързан: ${websiteUrl}` : 'Въведи URL на сайта си'} done={!!websiteUrl} onClick={() => onTabChange('setup-website')} />
+          <ActionCard icon={CalendarDays} title="Свържи календар" description={calendarConnected ? 'Календарът е свързан' : 'Автоматични резервации'} done={calendarConnected} onClick={() => onTabChange('setup-calendar')} />
+          <ActionCard icon={Mic} title="Тествай NEO" description={hasTestedNeo ? 'Тестван е' : 'Чуй как звучи NEO'} done={hasTestedNeo} onClick={() => onTabChange('neo-test')} />
         </div>
       </div>
 
@@ -203,10 +233,40 @@ const DashboardHome = ({
         </div>
         <div className="grid grid-cols-3 gap-3">
           <StatCard icon={MessageSquare} label="Разговори" value={statsLoading ? '...' : String(todayConversations)} />
-          <StatCard icon={Users} label="Нови клиенти" value={statsLoading ? '...' : String(todayLeads)} />
+          <StatCard icon={Users} label="Нови клиенти" value={statsLoading ? '...' : String(todayClients)} subtitle="Запитвания + Резервации" />
           <StatCard icon={CalendarCheck} label="Резервации" value={statsLoading ? '...' : String(todayBookings)} />
         </div>
       </div>
+
+      {/* Weekly bar chart */}
+      {weekData.length > 0 && (
+        <div>
+          <h2 className="text-sm font-semibold text-muted-foreground mb-3">Седмичен преглед</h2>
+          <div className="rounded-2xl border border-border/10 bg-card/50 p-4">
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart data={weekData} barGap={2}>
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                <YAxis hide allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 12, fontSize: 12 }}
+                  labelStyle={{ color: 'hsl(var(--foreground))' }}
+                  formatter={(value: number, name: string) => [value, name === 'conversations' ? 'Разговори' : 'Нови клиенти']}
+                />
+                <Bar dataKey="conversations" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={24} />
+                <Bar dataKey="clients" fill="hsl(var(--neo-success, 142 71% 45%))" radius={[4, 4, 0, 0]} maxBarSize={24} />
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="flex items-center justify-center gap-4 mt-2">
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <div className="w-2.5 h-2.5 rounded-sm bg-primary" /> Разговори
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <div className="w-2.5 h-2.5 rounded-sm bg-[hsl(142,71%,45%)]" /> Нови клиенти
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -215,19 +275,13 @@ function ActionCard({ icon: Icon, title, description, done, onClick }: {
   icon: React.ElementType; title: string; description: string; done: boolean; onClick: () => void;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className="group rounded-2xl border border-border/10 bg-card/50 p-5 text-left hover:bg-card/80 hover:border-primary/20 transition-all duration-200 space-y-3"
-    >
+    <button onClick={onClick}
+      className="group rounded-2xl border border-border/10 bg-card/50 p-5 text-left hover:bg-card/80 hover:border-primary/20 transition-all duration-200 space-y-3">
       <div className="flex items-center justify-between">
         <div className="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center group-hover:bg-primary/15 transition-colors">
           <Icon className="w-5 h-5 text-primary" />
         </div>
-        {done ? (
-          <CheckCircle2 className="w-4 h-4 text-[hsl(var(--neo-success))]" />
-        ) : (
-          <Circle className="w-4 h-4 text-muted-foreground/30" />
-        )}
+        {done ? <CheckCircle2 className="w-4 h-4 text-[hsl(var(--neo-success))]" /> : <Circle className="w-4 h-4 text-muted-foreground/30" />}
       </div>
       <div>
         <h3 className="text-sm font-semibold text-foreground">{title}</h3>
@@ -237,12 +291,13 @@ function ActionCard({ icon: Icon, title, description, done, onClick }: {
   );
 }
 
-function StatCard({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+function StatCard({ icon: Icon, label, value, subtitle }: { icon: React.ElementType; label: string; value: string; subtitle?: string }) {
   return (
     <div className="rounded-2xl border border-border/10 bg-card/50 p-4 text-center space-y-1">
       <Icon className="w-4 h-4 text-muted-foreground mx-auto" />
       <p className="text-lg font-bold text-foreground">{value}</p>
       <p className="text-[11px] text-muted-foreground">{label}</p>
+      {subtitle && <p className="text-[9px] text-muted-foreground/60">{subtitle}</p>}
     </div>
   );
 }
