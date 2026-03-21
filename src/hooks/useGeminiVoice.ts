@@ -3905,6 +3905,13 @@ export const useGeminiVoice = ({
                 responseText.includes("book_slot");
 
               if (looksLikeActionResponse) {
+                // Skip if already fired during streaming
+                if (earlyActionFiredRef.current) {
+                  console.log("[TURN_COMPLETE] action already fired during streaming, skipping");
+                  earlyActionFiredRef.current = false;
+                  currentResponseTextRef.current = "";
+                  return;
+                }
                 console.log("[TURN_COMPLETE] action JSON (wasCanceled=%s):", wasCanceled, responseText.slice(0, 200));
                 let handled = await maybeExecuteActionFromGemini(responseText);
                 if (!handled) {
