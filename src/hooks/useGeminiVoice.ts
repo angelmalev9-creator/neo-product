@@ -2744,16 +2744,8 @@ export const useGeminiVoice = ({
         if (calendarMarkerIdx !== -1) {
           const calendarBlock = systemPrompt.substring(calendarMarkerIdx);
 
-          // Step 3: Strip conflicting form instructions from gemini-session's prompt
-          resolvedInstruction = resolvedInstruction
-            .replace(/ФОРМИ\/ДЕЙСТВИЯ[^]*?(?=\n\n[A-ZА-Я]|\n\nEXECUTION|$)/g, "")
-            .replace(/ФОРМИ И ДЕЙСТВИЯ[^]*?(?=\n\n[A-ZА-Я]|\n\nEXECUTION|$)/g, "")
-            .replace(/ФОРМИ[^]*?(?=\n\n[A-ZА-Я]|\n\nEXECUTION|$)/g, "")
-            .replace(/can_submit_forms:\s*true/g, "can_submit_forms: false")
-            .replace(/submit_form/g, "(DISABLED)")
-            .replace(/контактна\s*форма/gi, "календар за записване")
-            .replace(/контактната\s*форма/gi, "календара за записване")
-            .replace(/форма(?:та)?\s+за\s+(?:контакт|запитване|връзка)/gi, "календар за записване");
+          // Step 3: Keep form instructions — both calendar and forms coexist
+          // Calendar handles reservations/meetings, forms handle inquiries
 
           resolvedInstruction = resolvedInstruction + "\n\n" + calendarBlock;
           console.log("[SESSION] 📅 Calendar block appended to instruction (" + calendarBlock.length + " chars)");
