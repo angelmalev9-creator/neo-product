@@ -3862,6 +3862,24 @@ export const useGeminiVoice = ({
                 }
 
                 if (!handled) {
+                  const systemInstruction = String((sessionDataRef.current as any)?.systemInstruction || "");
+                  if (shouldForceCalendarFallback(responseText, systemInstruction)) {
+                    const ownerUserId = extractCalendarOwnerUserId(systemInstruction);
+                    const date = extractCalendarDefaultDate(systemInstruction);
+                    const forcedAction = JSON.stringify({
+                      type: "action_request",
+                      action: "book_slot",
+                      calendar_action: "get_slots",
+                      ...(ownerUserId ? { owner_user_id: ownerUserId } : {}),
+                      ...(date ? { date } : {}),
+                    });
+
+                    console.log("[CALENDAR FALLBACK] forcing get_slots after refusal:", forcedAction);
+                    handled = await maybeExecuteActionFromGemini(forcedAction);
+                  }
+                }
+
+                if (!handled) {
                   onMessage?.({ role: "assistant", content: responseText });
                   onTranscript?.(responseText, true, "assistant");
                   expectedSensitiveInputModeRef.current = detectExpectedSensitiveInputMode(responseText);
