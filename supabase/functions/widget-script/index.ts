@@ -84,11 +84,25 @@ serve(async (req) => {
       transition: transform 0.3s ease;
       transform: scale(1.08);
     }
+    @media (max-width: 640px) {
+      .neo-widget-wrapper {
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+      }
+      #neo-widget-container {
+        left: 8px !important;
+        right: 8px !important;
+        width: auto !important;
+        bottom: 80px !important;
+      }
+    }
   \`;
   document.head.appendChild(styleEl);
 
   // Wrapper for button + pulse rings
   var wrapper = document.createElement('div');
+  wrapper.className = 'neo-widget-wrapper';
   wrapper.style.cssText = 'position:fixed;bottom:20px;${position}z-index:999999;display:flex;align-items:center;gap:0;cursor:pointer;';
 
   // Pill button: icon circle + text label
