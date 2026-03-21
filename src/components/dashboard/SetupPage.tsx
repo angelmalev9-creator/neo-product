@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import {
   Globe, CheckCircle2, Circle, CalendarDays, Mail, Database,
-  ArrowRight, Loader2,
+  ArrowRight, Loader2, CheckCircle,
 } from 'lucide-react';
 import KnowledgeBaseEditor from '@/components/dashboard/KnowledgeBaseEditor';
-import IntegrationsPanel from '@/components/dashboard/IntegrationsPanel';
+import CalendarAutomation from '@/components/dashboard/CalendarAutomation';
 import { supabase } from '@/integrations/supabase/client';
 
 interface SetupPageProps {
