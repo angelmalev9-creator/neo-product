@@ -11,7 +11,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { action, userId, date, time, attendeeName, attendeeEmail, conversationId } = await req.json();
+    const { action, userId, date, time, attendeeName, attendeeEmail, attendeePhone, service, conversationId } = await req.json();
 
     if (!userId) {
       return new Response(JSON.stringify({ error: "Missing userId" }), {
