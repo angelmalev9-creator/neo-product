@@ -1,53 +1,39 @@
 
 
-## Plan: Connect gemini-session to calendar system
+## Plan: Fix NEO interruption sensitivity + transcript loss + calendar loop
 
-### Root cause
+### Problems identified
 
-The `gemini-session` edge function (deployed but not in local codebase) builds its **own** system prompt and returns it as `instruction`. However, `useGeminiVoice` reads `data.systemInstruction` — a field that doesn't exist in the response. This means:
+From the screenshot and logs:
+1. **NEO interrupts from noise** — `MIN_BARGE_IN_CHARS=2`, `MIN_BARGE_IN_WORDS=2`, `ANTI_BARGE_IN_MS=350` are far too low. VAD barge-in triggers after just 5 frames with `rms > threshold * 1.2`. Background noise easily passes these thresholds.
+2. **Transcript vanishes on interrupt** — In `TURN_COMPLETE` (line 3962), when `wasCanceled=true`, the assistant response is **suppressed entirely** — never delivered to `onMessage`. So whatever NEO said disappears from the chat.
+3. **Calendar repetition loop** — NEO says "22 март не е работен ден, 23 март е свободен" → noise triggers barge-in → turn canceled → transcript lost → NEO restarts fresh → repeats same availability info → cycle continues.
 
-1. The calendar instructions injected by `widget-session` into `systemPrompt` are sent to `gemini-session` but **discarded** — `gemini-session` builds its own prompt.
-2. `useGeminiVoice` stores an empty/undefined `systemInstruction`, so `hasCalendarInSystemInstruction()` always returns `false`.
-3. All calendar fallbacks and `submit_form` interception are **dead code** because they check `systemInstruction`.
+### Changes
 
-### Fix approach
+**File: `src/hooks/useGeminiVoice.ts`**
 
-Since `gemini-session` is an externally deployed function we can't modify locally, the fix is in `useGeminiVoice.ts`:
+**A) Raise barge-in thresholds (only clear speech interrupts):**
+- `ANTI_BARGE_IN_MS`: 350 → 1200 (NEO must speak 1.2s before any interrupt allowed)
+- `MIN_BARGE_IN_CHARS`: 2 → 8
+- `MIN_BARGE_IN_WORDS`: 2 → 3
+- `VAD_BARGE_IN_FRAMES_REQUIRED`: 5 → 15
+- VAD RMS multiplier: 1.2 → 2.5
 
-**Step 1: Read the correct field from gemini-session response**
-
-In `prepareSession`, change:
+**B) Preserve canceled assistant transcript:**
+In `TURN_COMPLETE` handler (line 3962), instead of silently suppressing, deliver the partial text to `onMessage` so it stays visible:
 ```
-systemInstruction: data.systemInstruction || ""
+} else {
+  // Was canceled but still deliver text so it doesn't vanish
+  onMessage?.({ role: "assistant", content: responseText });
+  onTranscript?.(responseText, true, "assistant");
+}
 ```
-to:
-```
-systemInstruction: data.systemInstruction || data.instruction || ""
-```
 
-**Step 2: Append calendar instructions to the resolved systemInstruction**
-
-The `systemPrompt` passed to `prepareSession` (from `widget-session`) contains the calendar block. After getting `gemini-session`'s response, extract the calendar section from the original `systemPrompt` and append it to the `instruction` returned by `gemini-session`.
-
-In `prepareSession`:
-- Accept and store the original `systemPrompt` in a ref
-- After getting `gemini-session` response, check if the original prompt contains calendar instructions (the `##############################` block)
-- If yes, append it to the resolved `instruction` — this ensures the calendar rules override the form rules from `gemini-session`
-
-**Step 3: Also strip conflicting form rules from gemini-session's prompt when calendar is active**
-
-Apply the same regex sanitization (already in `widget-session`) to the `instruction` from `gemini-session`:
-- Remove `ФОРМИ И ДЕЙСТВИЯ` section
-- Replace `submit_form` references with `(DISABLED)`
-- Replace `can_submit_forms: true` with `false`
-
-### Files to change
-
-| File | Change |
-|------|--------|
-| `src/hooks/useGeminiVoice.ts` | Fix field name (`instruction` fallback), append calendar block from original systemPrompt, sanitize form rules when calendar is active |
+**C) Prevent calendar repetition loop:**
+After a successful `get_slots` call returns availability info and NEO communicates it, store the response hash. In `shouldForceCalendarFallback`, skip if NEO is already talking about available dates (not refusing — just repeating).
 
 ### Technical details
 
-The calendar block is identifiable by the marker `##############################` followed by `# КАЛЕНДАР`. We extract everything from that marker to end-of-string from the original `systemPrompt` and append it to the `gemini-session` instruction. The form-stripping regexes from `widget-session` are replicated client-side to ensure the `gemini-session` prompt's form instructions don't conflict.
+The core issue chain is: low thresholds → noise triggers barge-in → `assistantTurnCanceledRef = true` → `TURN_COMPLETE` suppresses the text → user sees nothing → Gemini has no context of what was said → repeats. Fixing A+B breaks this chain entirely. Fix C is defense-in-depth.
 
