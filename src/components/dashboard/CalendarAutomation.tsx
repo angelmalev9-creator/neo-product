@@ -316,6 +316,29 @@ const CalendarAutomation = () => {
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">Задължителни полета за записване</Label>
+              <p className="text-[10px] text-muted-foreground">NEO ще събира тези данни от клиента преди да запише час</p>
+              <div className="flex flex-wrap gap-3">
+                {BOOKING_FIELDS.map(field => (
+                  <label key={field.value} className="flex items-center gap-1.5 cursor-pointer">
+                    <Checkbox
+                      checked={settings.required_booking_fields.includes(field.value)}
+                      onCheckedChange={(checked) => {
+                        setSettings(prev => ({
+                          ...prev,
+                          required_booking_fields: checked
+                            ? [...prev.required_booking_fields, field.value]
+                            : prev.required_booking_fields.filter(f => f !== field.value),
+                        }));
+                      }}
+                    />
+                    <span className="text-xs text-foreground">{field.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
             <div className="flex items-center justify-between py-1">
               <div>
                 <Label className="text-xs font-medium">Автоматично записване</Label>
