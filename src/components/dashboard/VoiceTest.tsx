@@ -242,6 +242,14 @@ const VoiceTest = ({
     isDisconnectingRef.current = true;
     playDisconnectSound();
     stopAmbient();
+    
+    // Commit any partial assistant transcript before disconnecting
+    const pendingAssistant = liveAssistantTranscript.trim();
+    if (pendingAssistant) {
+      setMessages(prev => [...prev, { role: 'assistant' as const, content: pendingAssistant }]);
+    }
+    setLiveAssistantTranscript('');
+    
     disconnect();
     setTextOnlyMode(false);
 
@@ -270,7 +278,7 @@ const VoiceTest = ({
         }).catch(console.error);
       }
     }
-  }, [disconnect, onUsageUpdate, playDisconnectSound, stopAmbient]);
+  }, [disconnect, onUsageUpdate, playDisconnectSound, stopAmbient, liveAssistantTranscript]);
 
   // Send text (same as demo - useGeminiVoice handles worker proxy internally)
   const handleSendText = useCallback(async () => {
