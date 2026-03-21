@@ -44,6 +44,7 @@ const VoiceTest = ({
   const [localUsedMinutes, setLocalUsedMinutes] = useState<number>(usedMinutes);
   const [textInput, setTextInput] = useState<string>('');
   const [textOnlyMode, setTextOnlyMode] = useState(false);
+  const [liveAssistantTranscript, setLiveAssistantTranscript] = useState<string>('');
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -116,6 +117,15 @@ const VoiceTest = ({
   } = useGeminiVoice({
     onMessage: handleMessage,
     onError: handleError,
+    onTranscript: (transcript, isFinal, role) => {
+      if (role === 'assistant') {
+        if (!isFinal) {
+          setLiveAssistantTranscript(transcript);
+        } else {
+          setLiveAssistantTranscript('');
+        }
+      }
+    },
   });
 
   // Pre-warm microphone
@@ -232,6 +242,14 @@ const VoiceTest = ({
     isDisconnectingRef.current = true;
     playDisconnectSound();
     stopAmbient();
+    
+    // Commit any partial assistant transcript before disconnecting
+    const pendingAssistant = liveAssistantTranscript.trim();
+    if (pendingAssistant) {
+      setMessages(prev => [...prev, { role: 'assistant' as const, content: pendingAssistant }]);
+    }
+    setLiveAssistantTranscript('');
+    
     disconnect();
     setTextOnlyMode(false);
 
@@ -260,7 +278,7 @@ const VoiceTest = ({
         }).catch(console.error);
       }
     }
-  }, [disconnect, onUsageUpdate, playDisconnectSound, stopAmbient]);
+  }, [disconnect, onUsageUpdate, playDisconnectSound, stopAmbient, liveAssistantTranscript]);
 
   // Send text (same as demo - useGeminiVoice handles worker proxy internally)
   const handleSendText = useCallback(async () => {
@@ -392,7 +410,7 @@ const VoiceTest = ({
         </div>
 
         {/* Messages */}
-        {messages.length > 0 && (
+        {(messages.length > 0 || liveAssistantTranscript) && (
           <div
             ref={messagesContainerRef}
             className="mt-4 max-h-48 overflow-y-auto space-y-2 text-left"
@@ -412,6 +430,12 @@ const VoiceTest = ({
                 {msg.content}
               </div>
             ))}
+            {liveAssistantTranscript && (
+              <div className="p-3 rounded-lg text-sm bg-primary/10 border border-primary/20 animate-pulse">
+                <span className="font-medium text-xs text-muted-foreground block mb-1">NEO</span>
+                {liveAssistantTranscript}
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
         )}

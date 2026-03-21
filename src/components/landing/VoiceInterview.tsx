@@ -86,9 +86,8 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
   const [latestEmailLog, setLatestEmailLog] = useState<DemoEmailLog | null>(null);
   const [emailLogOpen, setEmailLogOpen] = useState(false);
 
-  // ✅ REMOVED: Live preview transcripts - now using "Final clean only" approach
-  // const [liveUserTranscript, setLiveUserTranscript] = useState<string>("");
-  // const [liveNeoTranscript, setLiveNeoTranscript] = useState<string>("");
+  // Live streaming transcripts for real-time display
+  const [liveAssistantTranscript, setLiveAssistantTranscript] = useState<string>("");
 
   // Fallback manual contact capture (shown only when backend asks for it)
   const [contactName, setContactName] = useState("");
@@ -718,6 +717,15 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
   } = useGeminiVoice({
     onMessage: handleMessage,
     onError: handleError,
+    onTranscript: (transcript, isFinal, role) => {
+      if (role === 'assistant') {
+        if (!isFinal) {
+          setLiveAssistantTranscript(transcript);
+        } else {
+          setLiveAssistantTranscript('');
+        }
+      }
+    },
   });
 
   // ✅ Text-only: chat history for Gemini REST API (same AI as voice mode)
@@ -1137,9 +1145,15 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     if (timerRef.current) window.clearInterval(timerRef.current);
     playDisconnectSound();
     stopAmbient();
+    // Commit any partial assistant transcript before disconnecting
+    const pendingAssistant = liveAssistantTranscript.trim();
+    if (pendingAssistant) {
+      setMessages(prev => [...prev, { role: 'assistant', content: pendingAssistant }]);
+    }
+    setLiveAssistantTranscript('');
     disconnect();
     setTextOnlyMode(false);
-  }, [disconnect, playDisconnectSound, stopAmbient]);
+  }, [disconnect, playDisconnectSound, stopAmbient, liveAssistantTranscript]);
 
   const handleTryAgain = useCallback(() => {
     setShowEndModal(false);
@@ -1393,12 +1407,11 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
 
             {/* Contact panel and resend button removed - no email functionality for now */}
 
-            {messages.length > 0 && (
+            {(messages.length > 0 || liveAssistantTranscript) && (
               <div
                 ref={messagesContainerRef}
                 className="mt-4 lg:mt-6 max-h-40 lg:max-h-52 overflow-y-auto space-y-2 lg:space-y-3 text-left"
               >
-                {/* ✅ REMOVED: Live preview UI - now using "Final clean only" approach */}
                 {messages.map((msg, i) => (
                   <div
                     key={i}
@@ -1414,6 +1427,14 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
                     {msg.content}
                   </div>
                 ))}
+                {liveAssistantTranscript && (
+                  <div className="p-2 lg:p-3 rounded-lg text-xs lg:text-sm bg-primary/10 border border-primary/20 animate-pulse">
+                    <span className="font-medium text-[10px] lg:text-xs text-muted-foreground block mb-1">
+                      {t("interview.neo")}
+                    </span>
+                    {liveAssistantTranscript}
+                  </div>
+                )}
                 <div ref={messagesEndRef} />
               </div>
             )}
