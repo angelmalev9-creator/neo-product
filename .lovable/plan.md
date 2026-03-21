@@ -1,21 +1,53 @@
 
 
-## Plan: Fix transcript persistence + configurable booking fields from dashboard
+## Plan: Connect gemini-session to calendar system
 
-### Problems to solve
-1. **NEO transcript vanishes on disconnect** — When the client disconnects, NEO's partial transcript disappears instead of being saved
-2. **NEO asks for contact form fields instead of using calendar** — The system prompt still allows `submit_form` to trigger for missing fields
-3. **Business needs to choose which data to collect for bookings** — Add configurable required fields (name, email, phone, service) in dashboard calendar settings
+### Root cause
 
-### Architecture overview
+The `gemini-session` edge function (deployed but not in local codebase) builds its **own** system prompt and returns it as `instruction`. However, `useGeminiVoice` reads `data.systemInstruction` — a field that doesn't exist in the response. This means:
 
-Key files and their roles:
-- **`src/pages/Widget.tsx`** — Widget UI, handles connect/disconnect, transcript persistence
-- **`src/hooks/useGeminiVoice.ts`** — Voice hook, action parsing (book_slot, submit_form), Gemini WebSocket
-- **`supabase/functions/widget-session/index.ts`** — Builds system prompt for NEO, injects calendar instructions
-- **`supabase/functions/widget-book-slot/index.ts`** — Handles get_slots/book actions
-- **`src/components/dashboard/CalendarAutomation.tsx`** — Dashboard calendar settings UI
-- **`src/components/dashboard/IntegrationsPanel.tsx`** — Toggle calendar on/off
-- **`supabase/functions/widget-track-conversation/index.ts`** — Persists messages to DB
+1. The calendar instructions injected by `widget-session` into `systemPrompt` are sent to `gemini-session` but **discarded** — `gemini-session` builds its own prompt.
+2. `useGeminiVoice` stores an empty/undefined `systemInstruction`, so `hasCalendarInSystemInstruction()` always returns `false`.
+3. All calendar fallbacks and `submit_form` interception are **dead code** because they check `systemInstruction`.
 
-### Step 1: DB migration —
+### Fix approach
+
+Since `gemini-session` is an externally deployed function we can't modify locally, the fix is in `useGeminiVoice.ts`:
+
+**Step 1: Read the correct field from gemini-session response**
+
+In `prepareSession`, change:
+```
+systemInstruction: data.systemInstruction || ""
+```
+to:
+```
+systemInstruction: data.systemInstruction || data.instruction || ""
+```
+
+**Step 2: Append calendar instructions to the resolved systemInstruction**
+
+The `systemPrompt` passed to `prepareSession` (from `widget-session`) contains the calendar block. After getting `gemini-session`'s response, extract the calendar section from the original `systemPrompt` and append it to the `instruction` returned by `gemini-session`.
+
+In `prepareSession`:
+- Accept and store the original `systemPrompt` in a ref
+- After getting `gemini-session` response, check if the original prompt contains calendar instructions (the `##############################` block)
+- If yes, append it to the resolved `instruction` — this ensures the calendar rules override the form rules from `gemini-session`
+
+**Step 3: Also strip conflicting form rules from gemini-session's prompt when calendar is active**
+
+Apply the same regex sanitization (already in `widget-session`) to the `instruction` from `gemini-session`:
+- Remove `ФОРМИ И ДЕЙСТВИЯ` section
+- Replace `submit_form` references with `(DISABLED)`
+- Replace `can_submit_forms: true` with `false`
+
+### Files to change
+
+| File | Change |
+|------|--------|
+| `src/hooks/useGeminiVoice.ts` | Fix field name (`instruction` fallback), append calendar block from original systemPrompt, sanitize form rules when calendar is active |
+
+### Technical details
+
+The calendar block is identifiable by the marker `##############################` followed by `# КАЛЕНДАР`. We extract everything from that marker to end-of-string from the original `systemPrompt` and append it to the `gemini-session` instruction. The form-stripping regexes from `widget-session` are replicated client-side to ensure the `gemini-session` prompt's form instructions don't conflict.
+
