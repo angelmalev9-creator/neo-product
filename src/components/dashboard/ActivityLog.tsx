@@ -86,6 +86,8 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
   const [emails, setEmails] = useState<Record<string, EmailLog[]>>({});
   const [summarizing, setSummarizing] = useState<string | null>(null);
 
+  const [bookings, setBookings] = useState<CalendarBooking[]>([]);
+
   useEffect(() => { if (userId) loadData(); }, [userId]);
 
   // Realtime
@@ -97,7 +99,10 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
     const ch2 = supabase.channel('activity-leads')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'captured_leads', filter: `user_id=eq.${userId}` }, () => loadData())
       .subscribe();
-    const ch3 = supabase.channel(`activity-messages-${userId}`)
+    const ch3 = supabase.channel('activity-bookings')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_bookings', filter: `user_id=eq.${userId}` }, () => loadData())
+      .subscribe();
+    const ch4 = supabase.channel(`activity-messages-${userId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'conversation_messages' }, (payload) => {
         const row = payload.new as ConversationMessage;
         if (!row?.conversation_id) return;
