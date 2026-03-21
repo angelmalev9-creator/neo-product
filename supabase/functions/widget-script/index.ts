@@ -84,6 +84,19 @@ serve(async (req) => {
       transition: transform 0.3s ease;
       transform: scale(1.08);
     }
+    @media (max-width: 640px) {
+      .neo-widget-wrapper {
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+      }
+      #neo-widget-container {
+        left: 8px !important;
+        right: 8px !important;
+        width: auto !important;
+        bottom: 80px !important;
+      }
+    }
   \`;
   document.head.appendChild(styleEl);
 
