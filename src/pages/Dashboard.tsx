@@ -136,6 +136,7 @@ const Dashboard = () => {
           websiteUrl={websiteUrl}
           calendarConnected={false}
           hasTestedNeo={false}
+          userId={user?.id || ''}
         />
       );
     }
