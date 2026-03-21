@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   MessageSquare, Clock, Users, Phone, Mail,
   ChevronDown, ChevronUp, RefreshCw, User, Briefcase,
-  Sparkles, Bot, UserCircle, Globe, TrendingUp,
+  Sparkles, Bot, UserCircle, Globe, TrendingUp, CalendarDays,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -47,6 +47,18 @@ interface CapturedLead {
   conversation_id: string | null;
 }
 
+interface CalendarBooking {
+  id: string;
+  conversation_id: string | null;
+  attendee_name: string | null;
+  attendee_email: string | null;
+  attendee_phone: string | null;
+  service: string | null;
+  event_title: string;
+  event_start: string;
+  status: string | null;
+}
+
 interface EmailLog {
   id: string;
   conversation_id: string | null;
@@ -74,6 +86,8 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
   const [emails, setEmails] = useState<Record<string, EmailLog[]>>({});
   const [summarizing, setSummarizing] = useState<string | null>(null);
 
+  const [bookings, setBookings] = useState<CalendarBooking[]>([]);
+
   useEffect(() => { if (userId) loadData(); }, [userId]);
 
   // Realtime
@@ -85,7 +99,10 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
     const ch2 = supabase.channel('activity-leads')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'captured_leads', filter: `user_id=eq.${userId}` }, () => loadData())
       .subscribe();
-    const ch3 = supabase.channel(`activity-messages-${userId}`)
+    const ch3 = supabase.channel('activity-bookings')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_bookings', filter: `user_id=eq.${userId}` }, () => loadData())
+      .subscribe();
+    const ch4 = supabase.channel(`activity-messages-${userId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'conversation_messages' }, (payload) => {
         const row = payload.new as ConversationMessage;
         if (!row?.conversation_id) return;
@@ -99,18 +116,20 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
           c.id === row.conversation_id ? { ...c, messages_count: (c.messages_count || 0) + 1 } : c
         ));
       }).subscribe();
-    return () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2); supabase.removeChannel(ch3); };
+    return () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2); supabase.removeChannel(ch3); supabase.removeChannel(ch4); };
   }, [userId]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [convosRes, leadsRes] = await Promise.all([
+      const [convosRes, leadsRes, bookingsRes] = await Promise.all([
         supabase.from('conversations').select('*').eq('user_id', userId).order('started_at', { ascending: false }).limit(100),
         supabase.from('captured_leads').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(100),
+        supabase.from('calendar_bookings').select('id, conversation_id, attendee_name, attendee_email, attendee_phone, service, event_title, event_start, status').eq('user_id', userId).order('created_at', { ascending: false }).limit(100),
       ]);
       setConversations(convosRes.data || []);
       setLeads(leadsRes.data || []);
+      setBookings((bookingsRes.data || []) as CalendarBooking[]);
     } catch {
       toast({ title: 'Грешка', description: 'Неуспешно зареждане', variant: 'destructive' });
     } finally { setLoading(false); }
@@ -153,6 +172,7 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
   };
 
   const getLeadForConversation = (convoId: string) => leads.find(l => l.conversation_id === convoId);
+  const getBookingForConversation = (convoId: string) => bookings.find(b => b.conversation_id === convoId);
   const getLeadName = (lead: CapturedLead) => {
     if (lead.first_name || lead.last_name) return `${lead.first_name || ''} ${lead.last_name || ''}`.trim();
     return lead.name || 'Неизвестен';
@@ -208,12 +228,18 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
           <div className="space-y-2 pr-2">
             {conversations.map((convo) => {
               const lead = getLeadForConversation(convo.id);
+              const booking = getBookingForConversation(convo.id);
               const isExpanded = expandedId === convo.id;
               const convoMessages = messages[convo.id];
               const convoEmails = emails[convo.id];
               const parsed = parseSummary(convo.summary);
               const isSummarizing = summarizing === convo.id;
               const date = new Date(convo.started_at);
+              const clientName = lead ? getLeadName(lead) : booking?.attendee_name || null;
+              const clientEmail = lead?.email || booking?.attendee_email || null;
+              const clientPhone = lead?.phone || booking?.attendee_phone || null;
+              const clientService = lead?.service || booking?.service || null;
+              const hasClientData = !!(clientName || clientEmail || clientPhone);
 
               return (
                 <div key={convo.id} className="rounded-xl border border-border/30 bg-card/50 overflow-hidden transition-colors hover:border-primary/20">
@@ -228,8 +254,8 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                     {/* Name + short summary */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        {lead ? (
-                          <span className="font-medium text-sm text-foreground truncate">{getLeadName(lead)}</span>
+                        {clientName ? (
+                          <span className="font-medium text-sm text-foreground truncate">{clientName}</span>
                         ) : (
                           <span className="text-sm text-muted-foreground">Посетител</span>
                         )}
@@ -242,7 +268,8 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
 
                     {/* Badges */}
                     <div className="flex items-center gap-1.5 shrink-0">
-                      {convo.lead_captured && <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-500 border-green-500/20 px-1.5 py-0">✓</Badge>}
+                      {(convo.lead_captured || booking) && <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-500 border-green-500/20 px-1.5 py-0">✓</Badge>}
+                      {booking && <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20 px-1.5 py-0">📅</Badge>}
                       {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                     </div>
                   </div>
@@ -257,14 +284,23 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                           <p className="text-[10px] uppercase font-semibold text-muted-foreground mb-2 flex items-center gap-1">
                             <User className="w-3 h-3 text-primary" /> Данни
                           </p>
-                          {lead ? (
+                          {hasClientData ? (
                             <div className="space-y-1.5 text-xs">
-                              <div className="flex items-center gap-1.5 text-foreground font-medium">
-                                <UserCircle className="w-3.5 h-3.5 text-primary" /> {getLeadName(lead)}
-                              </div>
-                              {lead.email && <div className="flex items-center gap-1.5 text-foreground"><Mail className="w-3.5 h-3.5 text-muted-foreground" /> {lead.email}</div>}
-                              {lead.phone && <div className="flex items-center gap-1.5 text-foreground"><Phone className="w-3.5 h-3.5 text-muted-foreground" /> {lead.phone}</div>}
-                              {lead.service && <div className="flex items-center gap-1.5 text-foreground"><Briefcase className="w-3.5 h-3.5 text-muted-foreground" /> {lead.service}</div>}
+                              {clientName && (
+                                <div className="flex items-center gap-1.5 text-foreground font-medium">
+                                  <UserCircle className="w-3.5 h-3.5 text-primary" /> {clientName}
+                                </div>
+                              )}
+                              {clientEmail && <div className="flex items-center gap-1.5 text-foreground"><Mail className="w-3.5 h-3.5 text-muted-foreground" /> {clientEmail}</div>}
+                              {clientPhone && <div className="flex items-center gap-1.5 text-foreground"><Phone className="w-3.5 h-3.5 text-muted-foreground" /> {clientPhone}</div>}
+                              {clientService && <div className="flex items-center gap-1.5 text-foreground"><Briefcase className="w-3.5 h-3.5 text-muted-foreground" /> {clientService}</div>}
+                              {booking && (
+                                <div className="flex items-center gap-1.5 text-foreground mt-1 pt-1 border-t border-border/10">
+                                  <CalendarDays className="w-3.5 h-3.5 text-primary" />
+                                  <span>{booking.event_title} · {new Date(booking.event_start).toLocaleString('bg-BG', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                              )}
+                              {lead?.source && <div className="text-[10px] text-muted-foreground/60 mt-1">Източник: {lead.source}</div>}
                             </div>
                           ) : (
                             <p className="text-xs text-muted-foreground italic">Няма данни за клиента</p>
