@@ -1410,7 +1410,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
             {(messages.length > 0 || liveAssistantTranscript) && (
               <div
                 ref={messagesContainerRef}
-                className="mt-4 lg:mt-6 max-h-40 lg:max-h-52 overflow-y-auto space-y-2 lg:space-y-3 text-left"
+                className="mt-4 lg:mt-6 max-h-60 lg:max-h-72 overflow-y-auto space-y-2 lg:space-y-3 text-left"
               >
                 {messages.map((msg, i) => (
                   <div
