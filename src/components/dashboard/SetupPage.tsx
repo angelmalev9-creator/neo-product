@@ -327,7 +327,9 @@ const EmailLogsSection = ({ emailConnected, userId }: { emailConnected: boolean;
                       {(() => {
                         if (!log.body) return 'Няма съдържание';
                         const text = log.body.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
-                        return text;
+                        // Extract key info: first 2-3 meaningful sentences
+                        const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10).slice(0, 3);
+                        return sentences.length > 0 ? sentences.join('. ').trim() + '.' : text.slice(0, 150);
                       })()}
                     </p>
                   </div>
