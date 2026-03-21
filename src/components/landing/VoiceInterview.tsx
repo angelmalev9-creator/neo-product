@@ -717,6 +717,15 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
   } = useGeminiVoice({
     onMessage: handleMessage,
     onError: handleError,
+    onTranscript: (transcript, isFinal, role) => {
+      if (role === 'assistant') {
+        if (!isFinal) {
+          setLiveAssistantTranscript(transcript);
+        } else {
+          setLiveAssistantTranscript('');
+        }
+      }
+    },
   });
 
   // ✅ Text-only: chat history for Gemini REST API (same AI as voice mode)
