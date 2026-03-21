@@ -47,6 +47,18 @@ interface CapturedLead {
   conversation_id: string | null;
 }
 
+interface CalendarBooking {
+  id: string;
+  conversation_id: string | null;
+  attendee_name: string | null;
+  attendee_email: string | null;
+  attendee_phone: string | null;
+  service: string | null;
+  event_title: string;
+  event_start: string;
+  status: string | null;
+}
+
 interface EmailLog {
   id: string;
   conversation_id: string | null;
