@@ -3500,6 +3500,12 @@ export const useGeminiVoice = ({
             console.log("[ACTION][BOOK_SLOT] result:", calResult);
 
             if (calAction === "get_slots") {
+              lastCalendarCheckedDateRef.current = String(calResult?.date || parsed?.date || "");
+              lastCalendarNextAvailableDateRef.current = String(calResult?.nextAvailableDate || "");
+              lastCalendarSlotsRef.current = Array.isArray(calResult?.slots)
+                ? calResult.slots.map((s: any) => String(s?.time || s?.display || "")).filter(Boolean)
+                : [];
+
               sendToGemini(
                 [
                   "CALENDAR_SLOTS_RESULT:",
