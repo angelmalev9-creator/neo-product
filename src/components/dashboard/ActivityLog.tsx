@@ -172,6 +172,7 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
   };
 
   const getLeadForConversation = (convoId: string) => leads.find(l => l.conversation_id === convoId);
+  const getBookingForConversation = (convoId: string) => bookings.find(b => b.conversation_id === convoId);
   const getLeadName = (lead: CapturedLead) => {
     if (lead.first_name || lead.last_name) return `${lead.first_name || ''} ${lead.last_name || ''}`.trim();
     return lead.name || 'Неизвестен';
