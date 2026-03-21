@@ -117,6 +117,15 @@ const VoiceTest = ({
   } = useGeminiVoice({
     onMessage: handleMessage,
     onError: handleError,
+    onTranscript: (transcript, isFinal, role) => {
+      if (role === 'assistant') {
+        if (!isFinal) {
+          setLiveAssistantTranscript(transcript);
+        } else {
+          setLiveAssistantTranscript('');
+        }
+      }
+    },
   });
 
   // Pre-warm microphone
