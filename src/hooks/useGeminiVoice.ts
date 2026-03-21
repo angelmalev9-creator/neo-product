@@ -48,9 +48,9 @@ const AUDIO_SAMPLE_RATE_OUT = 24000;
 const AUDIO_SAMPLE_RATE_IN = 16000;
 
 const ECHO_GUARD_MS = 80;
-const ANTI_BARGE_IN_MS = 350;
-const MIN_BARGE_IN_CHARS = 2;
-const MIN_BARGE_IN_WORDS = 2;
+const ANTI_BARGE_IN_MS = 1200;
+const MIN_BARGE_IN_CHARS = 8;
+const MIN_BARGE_IN_WORDS = 3;
 const BARGE_IN_COMMANDS = ["стоп", "спри", "изчакай", "чакай", "момент", "секунда", "стига", "почакай"];
 const UTTERANCE_DEBOUNCE_MS = 350;
 const SPEECH_FINAL_MIN_MS = 280;
