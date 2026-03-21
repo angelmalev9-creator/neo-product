@@ -54,7 +54,7 @@ serve(async (req) => {
     // Fetch calendar settings
     const { data: calSettings } = await supabase
       .from("calendar_settings")
-      .select("calendar_enabled, booking_type, default_meeting_duration, working_hours_start, working_hours_end, working_days, auto_book_after_conversation")
+      .select("calendar_enabled, booking_type, default_meeting_duration, working_hours_start, working_hours_end, working_days, auto_book_after_conversation, required_booking_fields")
       .eq("user_id", userId)
       .maybeSingle();
 
