@@ -322,19 +322,15 @@ const EmailLogsSection = ({ emailConnected, userId }: { emailConnected: boolean;
                   </div>
                 </button>
                 {isExpanded && (
-                  <div className="px-2 sm:px-4 pb-2 sm:pb-3 border-t border-border/10">
-                    <div className="mt-2 rounded-lg overflow-hidden">
-                      {log.body && log.body.includes('<') ? (
-                        <div
-                          className="bg-white p-2 sm:p-3 text-[9px] sm:text-xs text-gray-800 leading-relaxed max-h-36 sm:max-h-52 overflow-y-auto overflow-x-hidden [&_*]:max-w-full [&_table]:w-full [&_table]:table-fixed [&_table]:text-[9px] [&_table]:sm:text-[10px] [&_td]:p-1 [&_a]:text-primary [&_a]:underline [&_a]:break-all [&_h1]:text-xs [&_h1]:sm:text-sm [&_h2]:text-[11px] [&_h2]:sm:text-xs [&_h3]:text-[10px] [&_p]:text-[9px] [&_p]:sm:text-xs [&_p]:break-words [&_img]:max-w-[120px] [&_img]:sm:max-w-[200px] [&_img]:h-auto [&_div]:max-w-full [&_div]:overflow-hidden [&_span]:break-words"
-                          dangerouslySetInnerHTML={{ __html: log.body }}
-                        />
-                      ) : (
-                        <div className="bg-background/50 p-2 sm:p-3 text-[10px] sm:text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed max-h-36 sm:max-h-52 overflow-y-auto break-words">
-                          {log.body || 'Няма съдържание'}
-                        </div>
-                      )}
-                    </div>
+                  <div className="px-2.5 sm:px-4 pb-2.5 sm:pb-3 border-t border-border/10">
+                    <p className="mt-2 text-[10px] sm:text-xs text-foreground/70 leading-relaxed break-words line-clamp-4">
+                      {(() => {
+                        if (!log.body) return 'Няма съдържание';
+                        // Strip HTML tags to show plain text summary
+                        const text = log.body.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+                        return text.length > 200 ? text.slice(0, 200) + '…' : text;
+                      })()}
+                    </p>
                   </div>
                 )}
               </div>
