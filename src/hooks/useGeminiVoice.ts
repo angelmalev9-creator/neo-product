@@ -4272,6 +4272,32 @@ export const useGeminiVoice = ({
       } catch (e) {
         console.warn("[ROOM DETECT] error:", e);
       }
+      // ── Calendar follow-up shortcut ───────────────────────────────
+      try {
+        const normalized = String(t || "").toLowerCase().trim();
+        const parsedDates = parseBulgarianDateText(normalized);
+        const explicitDate = parsedDates[0] || "";
+        const wantsBooking = /(да|ok|okay|добре|става|искам|нека|запиши|запишем|потвърждавам)/i.test(normalized);
+        const asksForNextSuggestedDay =
+          !!lastCalendarNextAvailableDateRef.current &&
+          wantsBooking &&
+          (normalized.includes("следващ") || normalized.includes("тогава") || normalized.includes("да") || explicitDate === lastCalendarNextAvailableDateRef.current);
+
+        const targetDate = explicitDate || (asksForNextSuggestedDay ? lastCalendarNextAvailableDateRef.current : "");
+        if (wantsBooking && targetDate && targetDate !== lastCalendarCheckedDateRef.current) {
+          const ownerUserId = extractCalendarOwnerUserId(String((sessionDataRef.current as any)?.systemInstruction || ""));
+          if (ownerUserId) {
+            void maybeExecuteActionFromGemini(JSON.stringify({
+              type: "action_request",
+              action: "book_slot",
+              calendar_action: "get_slots",
+              owner_user_id: ownerUserId,
+              date: targetDate,
+            }));
+            return;
+          }
+        }
+      } catch {}
       // ─────────────────────────────────────────────────────────────
 
       handleUserUtterance(`${text}`);
@@ -4280,7 +4306,7 @@ export const useGeminiVoice = ({
         tryAutoRunReservationCheck();
       }, 40);
     },
-    [handleUserUtterance, tryAutoRunReservationCheck, sendToGemini],
+    [handleUserUtterance, tryAutoRunReservationCheck, sendToGemini, maybeExecuteActionFromGemini],
   );
 
   useEffect(() => () => disconnect(), [disconnect]);
