@@ -23,7 +23,15 @@ interface CalendarSettings {
   working_days: number[];
   meeting_title_template: string;
   meeting_description_template: string;
+  required_booking_fields: string[];
 }
+
+const BOOKING_FIELDS = [
+  { value: 'name', label: 'Име' },
+  { value: 'email', label: 'Имейл' },
+  { value: 'phone', label: 'Телефон' },
+  { value: 'service', label: 'Услуга' },
+];
 
 interface CalendarBooking {
   id: string;
