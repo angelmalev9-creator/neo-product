@@ -69,30 +69,20 @@ serve(async (req) => {
   // Inject keyframes
   var styleEl = document.createElement('style');
   styleEl.textContent = \`
-    @keyframes neo-pulse-ring {
-      0% { transform: scale(1); opacity: 0.5; }
-      70% { transform: scale(1.7); opacity: 0; }
-      100% { transform: scale(1.7); opacity: 0; }
-    }
-    @keyframes neo-pulse-ring2 {
-      0% { transform: scale(1); opacity: 0.35; }
-      70% { transform: scale(2); opacity: 0; }
-      100% { transform: scale(2); opacity: 0; }
+    @keyframes neo-glow {
+      0%, 100% { box-shadow: 0 0 20px \${color}33, 0 4px 16px rgba(0,0,0,0.15); }
+      50% { box-shadow: 0 0 32px \${color}55, 0 4px 20px rgba(0,0,0,0.2); }
     }
     @keyframes neo-float {
       0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-5px); }
+      50% { transform: translateY(-3px); }
     }
-    @keyframes neo-tooltip-in {
-      0% { opacity: 0; transform: translateY(8px) scale(0.95); }
-      100% { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    @keyframes neo-icon-breathe {
-      0%, 100% { transform: scale(1) rotate(0deg); }
-      50% { transform: scale(1.1) rotate(4deg); }
+    #neo-widget-btn {
+      animation: neo-float 4s ease-in-out infinite, neo-glow 3s ease-in-out infinite;
     }
     #neo-widget-btn:hover .neo-phone-icon {
-      animation: neo-icon-breathe 0.5s ease-in-out;
+      transition: transform 0.3s ease;
+      transform: scale(1.08);
     }
   \`;
   document.head.appendChild(styleEl);
@@ -104,26 +94,21 @@ serve(async (req) => {
   // Pill button: icon circle + text label
   var pill = document.createElement('div');
   pill.id = 'neo-widget-btn';
-  pill.style.cssText = 'display:flex;align-items:center;gap:10px;padding:6px 18px 6px 6px;border-radius:999px;background:linear-gradient(135deg,' + color + ',' + color + 'cc);box-shadow:0 6px 28px ' + color + '55,0 2px 8px rgba(0,0,0,0.2),inset 0 1px 1px rgba(255,255,255,0.15);transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.3s ease;animation:neo-float 3s ease-in-out infinite;cursor:pointer;';
-  pill.onmouseenter = function() { pill.style.transform = 'scale(1.06)'; pill.style.boxShadow = '0 8px 36px ' + color + '70,0 4px 12px rgba(0,0,0,0.25),inset 0 1px 1px rgba(255,255,255,0.25)'; };
-  pill.onmouseleave = function() { pill.style.transform = 'scale(1)'; pill.style.boxShadow = '0 6px 28px ' + color + '55,0 2px 8px rgba(0,0,0,0.2),inset 0 1px 1px rgba(255,255,255,0.15)'; };
+  pill.style.cssText = 'display:flex;align-items:center;gap:10px;padding:6px 20px 6px 6px;border-radius:999px;background:linear-gradient(135deg,' + color + ',' + color + 'dd);box-shadow:0 4px 20px ' + color + '40,0 2px 8px rgba(0,0,0,0.15);transition:transform 0.35s ease,box-shadow 0.35s ease;cursor:pointer;';
+  pill.onmouseenter = function() { pill.style.transform = 'scale(1.04)'; pill.style.boxShadow = '0 6px 28px ' + color + '55,0 4px 12px rgba(0,0,0,0.2)'; };
+  pill.onmouseleave = function() { pill.style.transform = 'scale(1)'; pill.style.boxShadow = '0 4px 20px ' + color + '40,0 2px 8px rgba(0,0,0,0.15)'; };
 
-  // Icon circle with NEO logo (robot/sparkle)
+  // Icon circle with NEO logo
   var iconCircle = document.createElement('div');
   iconCircle.style.cssText = 'width:' + (btnSize - 12) + 'px;height:' + (btnSize - 12) + 'px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;';
-  iconCircle.innerHTML = '<svg class="neo-phone-icon" xmlns="http://www.w3.org/2000/svg" width="' + (btnSize * 0.32) + '" height="' + (btnSize * 0.32) + '" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3))"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="m2 14 2-2-2-2"/><path d="m22 14-2-2 2-2"/><path d="M9 15h2"/><path d="M13 15h2"/></svg>';
+  iconCircle.innerHTML = '<svg class="neo-phone-icon" xmlns="http://www.w3.org/2000/svg" width="' + (btnSize * 0.32) + '" height="' + (btnSize * 0.32) + '" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="m2 14 2-2-2-2"/><path d="m22 14-2-2 2-2"/><path d="M9 15h2"/><path d="M13 15h2"/></svg>';
   pill.appendChild(iconCircle);
 
   // Text label
   var label = document.createElement('span');
   label.textContent = config.buttonText || 'Говори с NEO';
-  label.style.cssText = 'color:#fff;font-size:13px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;white-space:nowrap;letter-spacing:0.02em;text-shadow:0 1px 2px rgba(0,0,0,0.2);';
+  label.style.cssText = 'color:#fff;font-size:13px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;white-space:nowrap;letter-spacing:0.02em;';
   pill.appendChild(label);
-
-  // Pulse ring behind pill
-  var ring1 = document.createElement('div');
-  ring1.style.cssText = 'position:absolute;left:6px;width:' + (btnSize - 12) + 'px;height:' + (btnSize - 12) + 'px;border-radius:50%;background:' + color + ';animation:neo-pulse-ring 2.5s cubic-bezier(0.4,0,0.6,1) infinite;pointer-events:none;';
-  wrapper.appendChild(ring1);
 
   wrapper.appendChild(pill);
   // Iframe container - premium glass
