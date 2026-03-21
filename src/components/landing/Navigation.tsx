@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, Bot } from 'lucide-react';
+import { Menu, X, Bot, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -12,14 +12,11 @@ const Navigation = () => {
   const { t } = useTranslation();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Auto-detect language from IP on first load
   useEffect(() => {
     const autoDetectLanguage = async () => {
       const savedLang = localStorage.getItem('neo_language');
@@ -43,33 +40,29 @@ const Navigation = () => {
       <div 
         className={`mx-auto max-w-6xl border transition-all duration-500 rounded-full ${
           isScrolled 
-            ? 'bg-background/80 backdrop-blur-2xl border-foreground/10 shadow-[0_4px_30px_hsl(0_0%_0%/0.5),0_0_60px_hsl(0_90%_58%/0.06)]' 
+            ? 'bg-background/85 backdrop-blur-2xl border-foreground/8 shadow-[0_4px_30px_hsl(0_0%_0%/0.5),0_0_60px_hsl(0_90%_58%/0.05)]' 
             : 'bg-transparent border-transparent'
         }`}
       >
         <div className="flex items-center justify-between h-12 sm:h-12 lg:h-14 px-4 sm:px-4 lg:px-6">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg shadow-red-500/20">
-              <Bot className="w-4 h-4 text-white" />
+          <a href="/" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-primary/30 transition-shadow">
+              <Bot className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="text-lg font-bold text-foreground">NEO</span>
+            <span className="text-lg font-black text-foreground tracking-tight">NEO</span>
           </a>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-4 lg:gap-6">
+          <div className="hidden md:flex items-center gap-1 lg:gap-1">
             {navLinks.map((link) => (
               <button 
                 key={link.href} 
                 onClick={() => {
-                  if ((link as any).isRoute) {
-                    navigate(link.href);
-                  } else {
-                    const element = document.querySelector(link.href);
-                    element?.scrollIntoView({ behavior: 'smooth' });
-                  }
+                  if ((link as any).isRoute) navigate(link.href);
+                  else document.querySelector(link.href)?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="text-xs lg:text-sm font-medium text-white/50 hover:text-white transition-colors duration-300"
+                className="text-xs lg:text-sm font-medium text-foreground/40 hover:text-foreground px-3 lg:px-4 py-2 rounded-full hover:bg-foreground/5 transition-all duration-300"
               >
                 {link.label}
               </button>
@@ -81,17 +74,18 @@ const Navigation = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-xs lg:text-sm h-8 lg:h-9 px-3 lg:px-4 text-white/60 hover:text-white hover:bg-white/5 transition-all duration-300" 
+              className="text-xs lg:text-sm h-8 lg:h-9 px-3 lg:px-4 text-foreground/50 hover:text-foreground hover:bg-foreground/5 transition-all duration-300 rounded-full" 
               onClick={() => navigate('/auth')}
             >
               {t('nav.login')}
             </Button>
             <Button 
               size="sm" 
-              className="bg-gradient-to-r from-red-600 to-rose-500 text-xs lg:text-sm h-8 lg:h-9 px-4 lg:px-5 rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-red-500/20" 
+              className="neo-btn-primary text-xs lg:text-sm h-8 lg:h-9 px-4 lg:px-5 rounded-full gap-1.5" 
               onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
             >
               {t('nav.demo')}
+              <ArrowRight className="w-3 h-3" />
             </Button>
           </div>
 
@@ -104,39 +98,35 @@ const Navigation = () => {
         </div>
       </div>
 
-      {/* Mobile Menu - OUTSIDE the rounded-full container */}
+      {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden mx-auto max-w-6xl mt-2 mx-2 rounded-2xl bg-background/95 backdrop-blur-2xl border border-foreground/10 shadow-[0_8px_40px_hsl(0_0%_0%/0.6)] overflow-hidden">
+        <div className="md:hidden mx-auto max-w-6xl mt-2 rounded-2xl bg-background/95 backdrop-blur-2xl border border-foreground/8 shadow-[0_8px_40px_hsl(0_0%_0%/0.6)] overflow-hidden">
           <div className="py-4 px-5">
             {navLinks.map((link) => (
               <button 
                 key={link.href} 
                 onClick={() => {
                   setIsOpen(false);
-                  if ((link as any).isRoute) {
-                    navigate(link.href);
-                  } else {
-                    const element = document.querySelector(link.href);
-                    element?.scrollIntoView({ behavior: 'smooth' });
-                  }
+                  if ((link as any).isRoute) navigate(link.href);
+                  else document.querySelector(link.href)?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="block text-[15px] py-3 text-foreground/55 hover:text-foreground active:text-foreground transition-colors text-left w-full font-medium" 
+                className="block text-[15px] py-3 text-foreground/45 hover:text-foreground active:text-foreground transition-colors text-left w-full font-medium" 
               >
                 {link.label}
               </button>
             ))}
-            <div className="flex gap-3 pt-4 mt-3 border-t border-foreground/8">
+            <div className="flex gap-3 pt-4 mt-3 border-t border-foreground/6">
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="text-[15px] flex-1 h-12 text-foreground/55 rounded-xl font-medium" 
+                className="text-[15px] flex-1 h-12 text-foreground/45 rounded-xl font-medium" 
                 onClick={() => { setIsOpen(false); navigate('/auth'); }}
               >
                 {t('nav.login')}
               </Button>
               <Button 
                 size="sm" 
-                className="bg-gradient-to-r from-red-600 to-rose-500 text-[15px] flex-1 h-12 rounded-full font-bold shadow-lg shadow-red-500/20" 
+                className="neo-btn-primary text-[15px] flex-1 h-12 rounded-full font-bold" 
                 onClick={() => { setIsOpen(false); document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' }); }}
               >
                 {t('nav.demo')}

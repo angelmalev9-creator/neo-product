@@ -28,92 +28,82 @@ const Footer = () => {
   ];
 
   const handleScrollClick = (href: string) => {
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+    document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
     <footer className="relative overflow-hidden">
       {/* Top CTA Section */}
-      <div className="border-t border-border/20 bg-gradient-to-b from-background to-card/30">
-        <div className="container mx-auto px-4 lg:px-8 py-12 lg:py-16">
+      <div className="border-t border-border/10">
+        <div className="container mx-auto px-4 lg:px-8 py-16 lg:py-24">
           <div className="max-w-3xl mx-auto text-center">
-            <h3 className="text-2xl lg:text-3xl font-display font-black text-foreground mb-4">
+            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-display font-black text-foreground mb-4">
               {t('footer.ctaTitle')}
             </h3>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-muted-foreground mb-8 text-base sm:text-lg">
               {t('footer.ctaSubtitle')}
             </p>
             <Button
               size="lg"
-              className="bg-gradient-to-r from-red-600 via-red-500 to-rose-500 text-white px-8 py-4 font-semibold rounded-full"
+              className="neo-btn-primary text-base px-10 py-5 font-bold rounded-full gap-2"
               onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
             >
-              <Zap className="w-4 h-4 mr-2" />
+              <Zap className="w-4 h-4" />
               {t('footer.ctaButton')}
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Main Footer Content */}
-      <div className="border-t border-border/20 py-12 lg:py-16">
+      {/* Main Footer */}
+      <div className="border-t border-border/10 py-14 lg:py-16">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
-            
-            {/* Brand Column */}
+            {/* Brand */}
             <div className="lg:col-span-2">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg shadow-red-500/20">
-                  <Bot className="w-5 h-5 text-white" />
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
+                  <Bot className="w-5 h-5 text-primary-foreground" />
                 </div>
                 <div>
                   <span className="text-xl font-display font-black text-foreground">NEO</span>
-                  <span className="text-xl font-display font-black text-primary">-ASSISTANT.COM</span>
+                  <span className="text-xl font-display font-black text-primary">.</span>
                 </div>
               </div>
-              <p className="text-muted-foreground text-sm mb-6 max-w-xs">
+              <p className="text-muted-foreground text-sm mb-6 max-w-xs leading-relaxed">
                 {t('footer.description')}
               </p>
-              
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <a href="mailto:admin@neo-assistant.com" className="flex items-center gap-2 hover:text-foreground">
-                  <Mail className="w-4 h-4 text-primary" />
-                  admin@neo-assistant.com
-                </a>
-              </div>
+              <a href="mailto:admin@neo-assistant.com" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group">
+                <Mail className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
+                admin@neo-assistant.com
+              </a>
             </div>
 
-            {/* Platform Links */}
+            {/* Platform */}
             <div>
-              <h4 className="font-bold text-foreground mb-4 text-sm uppercase tracking-wider">{t('footer.platform')}</h4>
+              <h4 className="font-bold text-foreground/60 mb-5 text-xs uppercase tracking-[0.2em]">{t('footer.platform')}</h4>
               <ul className="space-y-3">
                 {platformLinks.map((link) => (
                   <li key={link.label}>
                     <button 
                       onClick={() => handleScrollClick(link.href)}
-                      className="text-muted-foreground hover:text-foreground transition-colors text-sm flex items-center gap-1 group"
+                      className="text-muted-foreground hover:text-foreground transition-colors text-sm flex items-center gap-1.5 group"
                     >
                       {link.label}
-                      <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                     </button>
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* Resources Links */}
+            {/* Resources */}
             <div>
-              <h4 className="font-bold text-foreground mb-4 text-sm uppercase tracking-wider">{t('footer.resources')}</h4>
+              <h4 className="font-bold text-foreground/60 mb-5 text-xs uppercase tracking-[0.2em]">{t('footer.resources')}</h4>
               <ul className="space-y-3">
                 {resourceLinks.map((link) => (
                   <li key={link.label}>
-                    <Link 
-                      to={link.href}
-                      className="text-muted-foreground hover:text-foreground transition-colors text-sm flex items-center gap-1 group"
-                    >
+                    <Link to={link.href} className="text-muted-foreground hover:text-foreground transition-colors text-sm flex items-center gap-1.5 group">
                       {link.label}
                       <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </Link>
@@ -122,16 +112,13 @@ const Footer = () => {
               </ul>
             </div>
 
-            {/* Legal Links */}
+            {/* Legal */}
             <div>
-              <h4 className="font-bold text-foreground mb-4 text-sm uppercase tracking-wider">{t('footer.legal')}</h4>
+              <h4 className="font-bold text-foreground/60 mb-5 text-xs uppercase tracking-[0.2em]">{t('footer.legal')}</h4>
               <ul className="space-y-3">
                 {legalLinks.map((link) => (
                   <li key={link.label}>
-                    <Link 
-                      to={link.href}
-                      className="text-muted-foreground hover:text-foreground transition-colors text-sm"
-                    >
+                    <Link to={link.href} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
                       {link.label}
                     </Link>
                   </li>
@@ -143,21 +130,16 @@ const Footer = () => {
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-border/20 py-6">
+      <div className="border-t border-border/10 py-6">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground text-center md:text-left">
+            <p className="text-xs text-muted-foreground/50">
               {t('footer.copyright', { year: currentYear })}
             </p>
-            <p className="text-sm text-muted-foreground flex items-center gap-2">
+            <p className="text-xs text-muted-foreground/50 flex items-center gap-2">
               {t('footer.madeIn')}
-              <span className="text-border">|</span>
-              <a 
-                href="https://webvision-bg.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-primary hover:underline"
-              >
+              <span className="text-border/30">|</span>
+              <a href="https://webvision-bg.com" target="_blank" rel="noopener noreferrer" className="text-primary/60 hover:text-primary transition-colors">
                 webvision-bg.com
               </a>
             </p>
