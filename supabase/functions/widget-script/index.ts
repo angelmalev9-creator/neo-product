@@ -174,14 +174,11 @@ serve(async (req) => {
         });
       });
       wrapper.style.display = 'none';
-      tooltip.style.opacity = '0';
-      tooltip.style.animation = 'none';
       isOpen = true;
     }
   };
 
   document.body.appendChild(wrapper);
-  document.body.appendChild(tooltip);
   document.body.appendChild(container);
 })();
 `;
