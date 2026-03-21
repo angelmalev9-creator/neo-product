@@ -95,10 +95,13 @@ serve(async (req) => {
   "outcome": "Какъв е резултатът от разговора (1 изречение)",
   "sentiment": "positive" | "neutral" | "negative",
   "tags": ["масив", "от", "ключови", "теми"],
-  "action_items": ["масив от следващи стъпки ако има такива"]
+  "action_items": ["масив от следващи стъпки ако има такива"],
+  "client_name": "Име на клиента ако е споменато в разговора, или null",
+  "client_email": "Имейл на клиента ако е споменат, или null",
+  "client_phone": "Телефон на клиента ако е споменат, или null"
 }
 
-Пиши на български. Бъди кратък и конкретен.`,
+Пиши на български. Бъди кратък и конкретен. Извлечи ВСИЧКИ данни за клиента от транскрипцията — имена, имейли и телефони дори ако са изговорени по нестандартен начин (напр. "маймунско" = @, "точка" = ., "джимейл" = gmail.com).`,
             },
             {
               role: "user",
@@ -120,8 +123,11 @@ serve(async (req) => {
                     sentiment: { type: "string", enum: ["positive", "neutral", "negative"] },
                     tags: { type: "array", items: { type: "string" }, description: "Key topics" },
                     action_items: { type: "array", items: { type: "string" }, description: "Next steps if any" },
+                    client_name: { type: ["string", "null"], description: "Client full name extracted from conversation, null if not mentioned" },
+                    client_email: { type: ["string", "null"], description: "Client email extracted from conversation (normalize spoken forms like маймунско=@, точка=., джимейл=gmail.com), null if not mentioned" },
+                    client_phone: { type: ["string", "null"], description: "Client phone number extracted from conversation, null if not mentioned" },
                   },
-                  required: ["summary", "client_intent", "outcome", "sentiment", "tags"],
+                  required: ["summary", "client_intent", "outcome", "sentiment", "tags", "client_name", "client_email", "client_phone"],
                 },
               },
             },
@@ -181,6 +187,57 @@ serve(async (req) => {
 
     if (updateError) {
       console.error("[SUMMARIZE] Update error:", updateError);
+    }
+
+    // Extract and upsert client data into captured_leads if AI found contact info
+    const hasClientData = analysis.client_name || analysis.client_email || analysis.client_phone;
+    if (hasClientData) {
+      const convo = convoRes.data;
+      // Check if a lead already exists for this conversation
+      const { data: existingLead } = await supabase
+        .from("captured_leads")
+        .select("id")
+        .eq("conversation_id", conversationId)
+        .maybeSingle();
+
+      const leadData: Record<string, any> = {
+        user_id: convo.user_id,
+        conversation_id: conversationId,
+        source: "ai_extraction",
+      };
+
+      // Parse name into first/last
+      if (analysis.client_name) {
+        const nameParts = analysis.client_name.trim().split(/\s+/);
+        leadData.first_name = nameParts[0] || null;
+        leadData.last_name = nameParts.slice(1).join(" ") || null;
+        leadData.name = analysis.client_name;
+      }
+      if (analysis.client_email) leadData.email = analysis.client_email;
+      if (analysis.client_phone) leadData.phone = analysis.client_phone;
+
+      if (existingLead) {
+        // Update existing lead with new data
+        await supabase
+          .from("captured_leads")
+          .update(leadData)
+          .eq("id", existingLead.id);
+        console.log("[SUMMARIZE] Updated existing lead:", existingLead.id);
+      } else {
+        // Insert new lead
+        const { error: leadError } = await supabase
+          .from("captured_leads")
+          .insert(leadData);
+        if (leadError) console.error("[SUMMARIZE] Lead insert error:", leadError);
+        else {
+          // Mark conversation as lead_captured
+          await supabase
+            .from("conversations")
+            .update({ lead_captured: true })
+            .eq("id", conversationId);
+          console.log("[SUMMARIZE] Created new lead from AI extraction");
+        }
+      }
     }
 
     return new Response(

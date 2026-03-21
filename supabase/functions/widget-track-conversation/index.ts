@@ -58,13 +58,27 @@ serve(async (req) => {
         });
       }
 
-      const inserts: { conversation_id: string; role: string; content: string }[] = [];
+      const inserts: { conversation_id: string; role: string; content: string; created_at: string }[] = [];
+      const now = Date.now();
 
+      // Give user message an earlier timestamp, assistant a later one
+      // so chronological ordering is preserved
       if (userMessage) {
-        inserts.push({ conversation_id: conversationId, role: "user", content: userMessage });
+        inserts.push({
+          conversation_id: conversationId,
+          role: "user",
+          content: userMessage,
+          created_at: new Date(now).toISOString(),
+        });
       }
       if (assistantMessage) {
-        inserts.push({ conversation_id: conversationId, role: "assistant", content: assistantMessage });
+        inserts.push({
+          conversation_id: conversationId,
+          role: "assistant",
+          content: assistantMessage,
+          // 500ms offset ensures assistant always sorts after user in same batch
+          created_at: new Date(now + 500).toISOString(),
+        });
       }
 
       if (inserts.length > 0) {
@@ -76,7 +90,6 @@ serve(async (req) => {
           conv_id: conversationId,
           delta: inserts.length,
         }).then(() => {}).catch(() => {
-          // Fallback: manual update
           supabase
             .from("conversations")
             .update({ messages_count: inserts.length, updated_at: new Date().toISOString() })
@@ -84,7 +97,6 @@ serve(async (req) => {
             .then(() => {});
         });
       }
-
       return new Response(JSON.stringify({ ok: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
