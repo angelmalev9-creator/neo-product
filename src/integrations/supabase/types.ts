@@ -424,9 +424,15 @@ export type Database = {
           intent: string | null
           is_demo: boolean | null
           lead_id: string | null
+          metadata: Json | null
+          provider: string | null
+          provider_payload: Json | null
           recipient_email: string
           recipient_name: string | null
+          resend_email_id: string | null
+          sender_email: string | null
           sent_at: string | null
+          session_id: string | null
           status: string | null
           subject: string
           user_id: string | null
@@ -441,9 +447,15 @@ export type Database = {
           intent?: string | null
           is_demo?: boolean | null
           lead_id?: string | null
+          metadata?: Json | null
+          provider?: string | null
+          provider_payload?: Json | null
           recipient_email: string
           recipient_name?: string | null
+          resend_email_id?: string | null
+          sender_email?: string | null
           sent_at?: string | null
+          session_id?: string | null
           status?: string | null
           subject: string
           user_id?: string | null
@@ -458,9 +470,15 @@ export type Database = {
           intent?: string | null
           is_demo?: boolean | null
           lead_id?: string | null
+          metadata?: Json | null
+          provider?: string | null
+          provider_payload?: Json | null
           recipient_email?: string
           recipient_name?: string | null
+          resend_email_id?: string | null
+          sender_email?: string | null
           sent_at?: string | null
+          session_id?: string | null
           status?: string | null
           subject?: string
           user_id?: string | null
