@@ -99,6 +99,14 @@ serve(async (req) => {
 
     // Add calendar instructions if enabled — placed as HIGH-PRIORITY override
     if (calSettings?.calendar_enabled) {
+      // CRITICAL: Strip form-related instructions from the prompt to prevent Gemini
+      // from using submit_form when calendar is the intended booking mechanism
+      systemPrompt = systemPrompt
+        .replace(/ФОРМИ\/ДЕЙСТВИЯ[^]*?(?=\n\n[A-ZА-Я]|\n\nEXECUTION|\z)/g, '')
+        .replace(/can_submit_forms:\s*true/g, 'can_submit_forms: false')
+        .replace(/submit_form/g, '(DISABLED)')
+        .replace(/контактна\s*форма/gi, 'календар за записване');
+
       const bt = calSettings.booking_type || "consultation";
       const label = bt === "reservation" ? "резервация" : bt === "meeting" ? "среща" : "консултация";
       const labelPlural = bt === "reservation" ? "резервации" : bt === "meeting" ? "срещи" : "консултации";
@@ -137,10 +145,11 @@ serve(async (req) => {
 АБСОЛЮТНИ ПРАВИЛА (нарушаването им е ЗАБРАНЕНО):
 1. Когато клиент иска ${label}, час, запазване, записване, среща, консултация или резервация → ИЗПОЛЗВАЙ book_slot
 2. НИКОГА не казвай "нямаме система", "не мога да запиша", "нямаме онлайн система" — ИМАШ КАЛЕНДАР!
-3. НИКОГА не използвай submit_form за записване на часове — submit_form е ЗАБРАНЕНА за тази цел
-4. НИКОГА не пренасочвай към контактна форма за записване — използвай КАЛЕНДАРА
-5. Казвай "${label}" (не "среща" ако типът е "резервация" и обратно)
-6. ПРОАКТИВНО предлагай: "Искате ли да ви запиша ${label}? Мога да проверя свободните часове."
+3. НИКОГА не използвай submit_form — тази команда е НАПЪЛНО ДЕАКТИВИРАНА
+4. НИКОГА не пренасочвай към контактна форма — НЯМАШ ФОРМА, ИМАШ КАЛЕНДАР
+5. НИКОГА не питай "искате ли да подам запитването чрез формата" — НЯМА ФОРМА
+6. Казвай "${label}" (не "среща" ако типът е "резервация" и обратно)
+7. ПРОАКТИВНО предлагай: "Искате ли да ви запиша ${label}? Мога да проверя свободните часове."
 
 ЗАДЪЛЖИТЕЛНИ ДАННИ ПРЕДИ ЗАПИСВАНЕ:
 Преди да извикаш book с action="book", ТРЯБВА да събереш следните данни от клиента: ${requiredFieldsList}.
@@ -156,7 +165,7 @@ serve(async (req) => {
 
 ВАЖНО: Ако клиентът не уточни дата, използвай ${tomorrowStr}. Ако попита кога си свободен, извикай get_slots.
 ВАЖНО: Когато връщаш JSON за book_slot, отговорът трябва да съдържа САМО JSON обекта. Никакъв текст.
-ВАЖНО: Ако клиентът поиска ${label} или час, ВЕДНАГА извикай get_slots и предложи часове. НЕ питай дали иска да попълни форма.`;
+ВАЖНО: Ако клиентът поиска ${label} или час, ВЕДНАГА извикай get_slots и предложи часове. НЕ питай нищо за форма.`;
     }
 
     const response = {
