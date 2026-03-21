@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
 import VoiceTest from '@/components/dashboard/VoiceTest';
 import WidgetCustomizer from '@/components/dashboard/WidgetCustomizer';
@@ -14,12 +13,10 @@ import WidgetAvatarUpload from '@/components/dashboard/WidgetAvatarUpload';
 import KnowledgeBaseEditor from '@/components/dashboard/KnowledgeBaseEditor';
 import ActivityLog from '@/components/dashboard/ActivityLog';
 import IntegrationsPanel from '@/components/dashboard/IntegrationsPanel';
-import {
-  LogOut, Settings, CreditCard, Globe, Mic, ExternalLink, Copy, Check,
-  Crown, AlertCircle, FileText, Clock, Palette, Database, Link2,
-} from 'lucide-react';
-import NeoLogo from '@/components/ui/NeoLogo';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
+import DashboardMobileNav from '@/components/dashboard/DashboardMobileNav';
+import DashboardOverview from '@/components/dashboard/DashboardOverview';
+import { Settings, Globe, Mic, Copy, Link2, Database, Palette } from 'lucide-react';
 
 const TIER_NAMES: Record<string, string> = {
   starter: 'NEO Старт',
@@ -27,17 +24,12 @@ const TIER_NAMES: Record<string, string> = {
   empire: 'NEO Империя',
 };
 
-const PLAN_LIMITS: Record<string, number> = {
-  starter: 500,
-  growth: 2500,
-  empire: 10000,
-};
-
 const Dashboard = () => {
   const { user, subscription, signOut, loading, checkSubscription } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const [activeTab, setActiveTab] = useState('overview');
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [voiceSpeed, setVoiceSpeed] = useState(1.0);
@@ -156,202 +148,163 @@ const Dashboard = () => {
     try {
       const embedCode = `<script src="${getWidgetScriptUrl()}"></script>`;
       await navigator.clipboard.writeText(embedCode);
-      toast({ title: 'Кодът е копиран', description: 'Поставете го преди </body> тага на вашия сайт. Това е единственото нещо, което трябва да направите.' });
+      toast({ title: 'Кодът е копиран', description: 'Поставете го преди </body> тага на вашия сайт.' });
     } finally { setInstallingWidget(false); }
   };
 
-  const usagePercent = planLimit > 0 ? (usedMinutes / planLimit) * 100 : 0;
+  const tierName = TIER_NAMES[subscription.tier || 'starter'] || 'Активен';
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-primary">Зареждане...</div>
+        <div className="animate-pulse text-primary text-sm">Зареждане...</div>
       </div>
     );
   }
 
+  const renderContent = () => {
+    if (!subscription.subscribed && activeTab !== 'overview') {
+      setActiveTab('overview');
+      return null;
+    }
+
+    switch (activeTab) {
+      case 'overview':
+        return (
+          <DashboardOverview
+            subscribed={subscription.subscribed}
+            tierName={tierName}
+            subscriptionEnd={subscription.subscription_end}
+            usedMinutes={usedMinutes}
+            planLimit={planLimit}
+            onManageSubscription={handleManageSubscription}
+            portalLoading={portalLoading}
+            onTabChange={setActiveTab}
+          />
+        );
+
+      case 'diary':
+        return (
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold text-foreground">Дневник на активността</h2>
+            <ActivityLog userId={user?.id || ''} />
+          </div>
+        );
+
+      case 'settings':
+        return (
+          <div className="space-y-5">
+            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <Settings className="w-5 h-5 text-primary" /> Настройки
+            </h2>
+            <div className="rounded-xl border border-border/20 bg-card/30 p-5 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Име на компанията</Label>
+                  <Input placeholder="Вашата компания" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="bg-background/50 text-sm" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs flex items-center gap-1.5"><Globe className="w-3.5 h-3.5" /> Уебсайт</Label>
+                  <Input type="url" placeholder="https://your-website.com" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} className="bg-background/50 text-sm" />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs flex items-center gap-1.5"><Mic className="w-3.5 h-3.5" /> Скорост: {voiceSpeed.toFixed(2)}x</Label>
+                  <span className="text-[10px] text-muted-foreground">{voiceSpeed < 0.9 ? 'Бавно' : voiceSpeed > 1.1 ? 'Бързо' : 'Нормално'}</span>
+                </div>
+                <Slider value={[voiceSpeed]} onValueChange={(v) => setVoiceSpeed(v[0])} min={0.7} max={1.3} step={0.05} />
+              </div>
+              <Button onClick={handleSaveSettings} disabled={saving} size="sm" className="w-full">{saving ? 'Запазване...' : 'Запази'}</Button>
+            </div>
+          </div>
+        );
+
+      case 'integrations':
+        return (
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <Link2 className="w-5 h-5 text-primary" /> Интеграции
+            </h2>
+            <IntegrationsPanel />
+          </div>
+        );
+
+      case 'knowledge':
+        return (
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <Database className="w-5 h-5 text-primary" /> База знания
+            </h2>
+            <KnowledgeBaseEditor
+              userId={user?.id || ''} currentSession={demoSession}
+              onSessionUpdate={(session) => { setDemoSession(session); if (session.url) setWebsiteUrl(session.url); if (session.company_name) setCompanyName(session.company_name); }}
+              onCompanyNameExtracted={(name) => setCompanyName(name)}
+            />
+          </div>
+        );
+
+      case 'test':
+        return (
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <Mic className="w-5 h-5 text-primary" /> Тест на NEO
+            </h2>
+            <VoiceTest companyName={companyName} customPrompt="" promptTemplate="sales" voiceSpeed={voiceSpeed} demoSession={demoSession} usedMinutes={usedMinutes} planLimit={planLimit} onUsageUpdate={setUsedMinutes} />
+          </div>
+        );
+
+      case 'widget':
+        return (
+          <div className="space-y-5">
+            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <Palette className="w-5 h-5 text-primary" /> Уиджет
+            </h2>
+            {/* Quick install */}
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+              <h4 className="text-xs font-semibold text-foreground mb-1">Инсталиране с един клик</h4>
+              <p className="text-[10px] text-muted-foreground mb-2">Копирайте кода → поставете преди &lt;/body&gt;</p>
+              <Button onClick={handleOneClickInstall} disabled={installingWidget} size="sm" className="w-full gap-1.5 text-xs">
+                <Copy className="w-3.5 h-3.5" />
+                {installingWidget ? 'Копиране...' : 'Копирай код'}
+              </Button>
+            </div>
+            <WidgetAvatarUpload userId={user?.id || ''} currentAvatarUrl={logoUrl} onAvatarChange={setLogoUrl} />
+            <WidgetCustomizer userId={user?.id || ''} companyName={companyName} initialConfig={null} />
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border/40 bg-card/50 backdrop-blur-xl sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <NeoLogo size="sm" />
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground hidden sm:block truncate max-w-[150px]">{user?.email}</span>
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-1.5 text-xs">
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Изход</span>
-            </Button>
+    <div className="min-h-screen bg-background flex">
+      {/* Desktop sidebar */}
+      <div className="hidden lg:block">
+        <DashboardSidebar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onLogout={handleLogout}
+          userEmail={user?.email}
+          subscribed={subscription.subscribed}
+          tierName={tierName}
+        />
+      </div>
+
+      {/* Main area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Mobile nav */}
+        <DashboardMobileNav activeTab={activeTab} onTabChange={setActiveTab} />
+
+        {/* Content */}
+        <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
+          <div className="max-w-4xl mx-auto">
+            {renderContent()}
           </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-6">
-        <div className="max-w-4xl mx-auto space-y-6">
-          {/* Plan & Usage */}
-          <div className="rounded-2xl border border-border/30 bg-card/30 backdrop-blur-sm p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${subscription.subscribed ? 'bg-primary/15' : 'bg-muted'}`}>
-                  {subscription.subscribed ? <Crown className="w-5 h-5 text-primary" /> : <AlertCircle className="w-5 h-5 text-muted-foreground" />}
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-foreground">
-                    {subscription.subscribed ? TIER_NAMES[subscription.tier || 'starter'] || 'Активен' : 'Няма план'}
-                  </h2>
-                  <p className="text-xs text-muted-foreground">
-                    {subscription.subscribed && subscription.subscription_end
-                      ? `Валиден до: ${new Date(subscription.subscription_end).toLocaleDateString('bg-BG')}`
-                      : 'Изберете план за достъп'}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                {subscription.subscribed ? (
-                  <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="text-xs">
-                    <CreditCard className="w-3.5 h-3.5 mr-1.5" />
-                    {portalLoading ? '...' : 'Управление'}
-                  </Button>
-                ) : (
-                  <Button size="sm" onClick={() => navigate('/#pricing')} className="text-xs">Избери план</Button>
-                )}
-              </div>
-            </div>
-            {subscription.subscribed && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5" /> Използвани минути
-                  </span>
-                  <span className="font-medium">{usedMinutes.toFixed(1)} / {planLimit}</span>
-                </div>
-                <Progress value={Math.min(usagePercent, 100)} className="h-2" />
-              </div>
-            )}
-          </div>
-
-          {/* Main Content */}
-          {subscription.subscribed && (
-            <Tabs defaultValue="diary" className="space-y-4">
-              <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full h-auto p-1 gap-1 bg-card/30 backdrop-blur-sm border border-border/20 rounded-xl">
-                <TabsTrigger value="diary" className="gap-1.5 py-2.5 text-xs rounded-lg data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-                  <FileText className="w-4 h-4" /><span className="hidden sm:inline">Дневник</span>
-                </TabsTrigger>
-                <TabsTrigger value="settings" className="gap-1.5 py-2.5 text-xs rounded-lg data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-                  <Settings className="w-4 h-4" /><span className="hidden sm:inline">Настройки</span>
-                </TabsTrigger>
-                <TabsTrigger value="integrations" className="gap-1.5 py-2.5 text-xs rounded-lg data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-                  <Link2 className="w-4 h-4" /><span className="hidden sm:inline">Интеграции</span>
-                </TabsTrigger>
-                <TabsTrigger value="knowledge" className="gap-1.5 py-2.5 text-xs rounded-lg data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-                  <Database className="w-4 h-4" /><span className="hidden sm:inline">Знания</span>
-                </TabsTrigger>
-                <TabsTrigger value="test" className="gap-1.5 py-2.5 text-xs rounded-lg data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-                  <Mic className="w-4 h-4" /><span className="hidden sm:inline">Тест</span>
-                </TabsTrigger>
-                <TabsTrigger value="widget" className="gap-1.5 py-2.5 text-xs rounded-lg data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
-                  <Palette className="w-4 h-4" /><span className="hidden sm:inline">Уиджет</span>
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="diary">
-                <div className="rounded-2xl border border-border/20 bg-card/20 backdrop-blur-sm p-5">
-                  <ActivityLog userId={user?.id || ''} />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="settings">
-                <div className="rounded-2xl border border-border/20 bg-card/20 backdrop-blur-sm p-5 space-y-5">
-                  <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                    <Settings className="w-5 h-5 text-primary" /> Основни настройки
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Име на компанията</Label>
-                      <Input placeholder="Вашата компания" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="bg-background/50 text-sm" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs flex items-center gap-1.5"><Globe className="w-3.5 h-3.5" /> Уебсайт</Label>
-                      <Input type="url" placeholder="https://your-website.com" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} className="bg-background/50 text-sm" />
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs flex items-center gap-1.5"><Mic className="w-3.5 h-3.5" /> Скорост на гласа: {voiceSpeed.toFixed(2)}x</Label>
-                      <span className="text-xs text-muted-foreground">{voiceSpeed < 0.9 ? 'Бавно' : voiceSpeed > 1.1 ? 'Бързо' : 'Нормално'}</span>
-                    </div>
-                    <Slider value={[voiceSpeed]} onValueChange={(v) => setVoiceSpeed(v[0])} min={0.7} max={1.3} step={0.05} />
-                  </div>
-                  <Button onClick={handleSaveSettings} disabled={saving} className="w-full">{saving ? 'Запазване...' : 'Запази настройките'}</Button>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="integrations">
-                <div className="rounded-2xl border border-border/20 bg-card/20 backdrop-blur-sm p-5">
-                  <h3 className="text-base font-bold text-foreground flex items-center gap-2 mb-4">
-                    <Link2 className="w-5 h-5 text-primary" /> Интеграции
-                  </h3>
-                  <IntegrationsPanel />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="knowledge">
-                <div className="rounded-2xl border border-border/20 bg-card/20 backdrop-blur-sm p-5">
-                  <h3 className="text-base font-bold text-foreground flex items-center gap-2 mb-4">
-                    <Database className="w-5 h-5 text-primary" /> База знания
-                  </h3>
-                  <KnowledgeBaseEditor
-                    userId={user?.id || ''} currentSession={demoSession}
-                    onSessionUpdate={(session) => { setDemoSession(session); if (session.url) setWebsiteUrl(session.url); if (session.company_name) setCompanyName(session.company_name); }}
-                    onCompanyNameExtracted={(name) => setCompanyName(name)}
-                  />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="test">
-                <div className="rounded-2xl border border-border/20 bg-card/20 backdrop-blur-sm p-5">
-                  <h3 className="text-base font-bold text-foreground flex items-center gap-2 mb-4">
-                    <Mic className="w-5 h-5 text-primary" /> Тест на NEO
-                  </h3>
-                  <VoiceTest companyName={companyName} customPrompt="" promptTemplate="sales" voiceSpeed={voiceSpeed} demoSession={demoSession} usedMinutes={usedMinutes} planLimit={planLimit} onUsageUpdate={setUsedMinutes} />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="widget">
-                <div className="rounded-2xl border border-border/20 bg-card/20 backdrop-blur-sm p-5 space-y-6">
-                  <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                    <Palette className="w-5 h-5 text-primary" /> Уиджет за сайта
-                  </h3>
-
-                  {/* One-click install */}
-                  <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
-                    <h4 className="text-sm font-semibold text-foreground mb-1">Инсталиране с един клик</h4>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Копирайте кода и го поставете преди затварящия &lt;/body&gt; таг на вашия сайт. Това е всичко.
-                    </p>
-                    <Button onClick={handleOneClickInstall} disabled={installingWidget} className="w-full gap-2">
-                      <Copy className="w-4 h-4" />
-                      {installingWidget ? 'Копиране...' : 'Копирай кода за инсталиране'}
-                    </Button>
-                  </div>
-
-                  <WidgetAvatarUpload userId={user?.id || ''} currentAvatarUrl={logoUrl} onAvatarChange={setLogoUrl} />
-                  <WidgetCustomizer userId={user?.id || ''} companyName={companyName} initialConfig={null} />
-                </div>
-              </TabsContent>
-            </Tabs>
-          )}
-
-          {!subscription.subscribed && (
-            <div className="text-center py-16">
-              <NeoLogo size="lg" showText={false} className="mx-auto mb-4 justify-center" />
-              <h3 className="text-xl font-bold text-foreground mb-2">Активирайте NEO</h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto text-sm">Изберете план, за да получите достъп до AI асистента и всички функции.</p>
-              <Button onClick={() => navigate('/#pricing')} className="bg-primary hover:bg-primary/90">Разгледайте плановете</Button>
-            </div>
-          )}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };
