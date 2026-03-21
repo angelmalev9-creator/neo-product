@@ -4,7 +4,7 @@ import Hero from '@/components/landing/Hero';
 import DemoSection from '@/components/landing/DemoSection';
 import VoiceInterview from '@/components/landing/VoiceInterview';
 import Comparison from '@/components/landing/Comparison';
-import Features from '@/components/landing/Features';
+
 import Testimonials from '@/components/landing/Testimonials';
 import MarketingSkills from '@/components/landing/MarketingSkills';
 import BusinessResults from '@/components/landing/BusinessResults';
@@ -43,7 +43,7 @@ const Index = () => {
           <DemoSection onTrainingComplete={handleTrainingComplete} />
           <VoiceInterview key={sessionId || 'no-session'} sessionId={sessionId} />
           <Comparison />
-          <Features />
+          
           <BusinessResults />
           <Testimonials />
           <MarketingSkills />

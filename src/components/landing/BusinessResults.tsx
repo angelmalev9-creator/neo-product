@@ -76,11 +76,11 @@ const BusinessResults = () => {
         {/* Header */}
         <div className="text-center mb-14 sm:mb-20">
           <span className="inline-block px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            Какво получавате
+            Какво може NEO
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-black text-foreground mb-5 leading-[1.08] tracking-wide max-w-4xl mx-auto">
-            Вашият бизнес с{' '}
-            <span className="neo-gradient-text">перфектен маркетинг</span>
+            Какво може{' '}
+            <span className="neo-gradient-text">NEO</span>
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             NEO не е просто чатбот — той е вашият дигитален търговец, рецепционист и маркетолог в едно.
