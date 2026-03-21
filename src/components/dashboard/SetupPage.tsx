@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import {
   Globe, CheckCircle2, Circle, CalendarDays, Mail, Database,
-  ArrowRight, Loader2,
+  ArrowRight, Loader2, CheckCircle,
 } from 'lucide-react';
 import KnowledgeBaseEditor from '@/components/dashboard/KnowledgeBaseEditor';
-import IntegrationsPanel from '@/components/dashboard/IntegrationsPanel';
+import CalendarAutomation from '@/components/dashboard/CalendarAutomation';
 import { supabase } from '@/integrations/supabase/client';
 
 interface SetupPageProps {
@@ -144,35 +146,11 @@ const SetupPage = ({
       )}
 
       {activeSection === 'calendar' && (
-        <div className="rounded-2xl border border-border/10 bg-card/50 p-6 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center">
-              <CalendarDays className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold text-foreground">Календар</h2>
-              <p className="text-xs text-muted-foreground">Свържете календар за автоматични резервации</p>
-            </div>
-            {calendarConnected && <CheckCircle2 className="w-4 h-4 text-[hsl(var(--neo-success))] ml-auto" />}
-          </div>
-          <IntegrationsPanel />
-        </div>
+        <CalendarSection calendarConnected={calendarConnected} userId={userId} />
       )}
 
       {activeSection === 'email' && (
-        <div className="rounded-2xl border border-border/10 bg-card/50 p-6 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center">
-              <Mail className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold text-foreground">Имейл</h2>
-              <p className="text-xs text-muted-foreground">Свържете имейл за автоматични известия</p>
-            </div>
-            {emailConnected && <CheckCircle2 className="w-4 h-4 text-[hsl(var(--neo-success))] ml-auto" />}
-          </div>
-          <IntegrationsPanel />
-        </div>
+        <EmailLogsSection emailConnected={emailConnected} userId={userId} />
       )}
 
       {activeSection === 'data' && (
@@ -199,6 +177,130 @@ const SetupPage = ({
               onCompanyNameExtracted={(name) => setCompanyName(name)}
             />
           </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+/* ── Calendar-only section ── */
+const CalendarSection = ({ calendarConnected, userId }: { calendarConnected: boolean; userId: string }) => {
+  const [calendarEnabled, setCalendarEnabled] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from('calendar_settings').select('calendar_enabled').eq('user_id', userId).maybeSingle();
+      setCalendarEnabled(!!data?.calendar_enabled);
+      setLoading(false);
+    })();
+  }, [userId]);
+
+  const toggleCalendar = async (checked: boolean) => {
+    setCalendarEnabled(checked);
+    await supabase.from('calendar_settings').upsert({
+      user_id: userId,
+      calendar_connected: true,
+      calendar_enabled: checked,
+      auto_book_after_conversation: true,
+    } as any, { onConflict: 'user_id' });
+  };
+
+  if (loading) return <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-border/10 bg-card/50 p-6 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center">
+            <CalendarDays className="w-5 h-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-sm font-semibold text-foreground">Календар</h2>
+            <p className="text-xs text-muted-foreground">
+              {calendarEnabled ? 'NEO записва консултации / резервации автоматично' : 'Включете за автоматични резервации'}
+            </p>
+          </div>
+          <Switch checked={calendarEnabled} onCheckedChange={toggleCalendar} />
+          {calendarConnected && <CheckCircle2 className="w-4 h-4 text-[hsl(var(--neo-success))]" />}
+        </div>
+      </div>
+      {calendarEnabled && <CalendarAutomation />}
+    </div>
+  );
+};
+
+/* ── Email logs section ── */
+interface EmailLog {
+  id: string;
+  recipient_email: string;
+  subject: string;
+  status: string;
+  sent_at: string | null;
+  created_at: string;
+}
+
+const EmailLogsSection = ({ emailConnected, userId }: { emailConnected: boolean; userId: string }) => {
+  const [logs, setLogs] = useState<EmailLog[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('email_logs')
+        .select('id, recipient_email, subject, status, sent_at, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      setLogs((data || []) as EmailLog[]);
+      setLoading(false);
+    })();
+  }, [userId]);
+
+  const statusBadge = (status: string) => {
+    if (status === 'sent') return <Badge variant="outline" className="text-[10px] border-green-500/30 text-green-400">Изпратен</Badge>;
+    if (status === 'failed' || status === 'error') return <Badge variant="outline" className="text-[10px] border-destructive/30 text-destructive">Грешка</Badge>;
+    return <Badge variant="outline" className="text-[10px]">{status}</Badge>;
+  };
+
+  if (loading) return <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
+
+  return (
+    <div className="rounded-2xl border border-border/10 bg-card/50 p-6 space-y-4">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center">
+          <Mail className="w-5 h-5 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">Изпратени имейли</h2>
+          <p className="text-xs text-muted-foreground">Последните имейли от NEO</p>
+        </div>
+        {emailConnected && <CheckCircle className="w-4 h-4 text-green-500 ml-auto" />}
+      </div>
+
+      {logs.length === 0 ? (
+        <div className="text-center py-8">
+          <Mail className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">Няма изпратени имейли все още</p>
+          <p className="text-xs text-muted-foreground/60 mt-1">Свържете Gmail от Настройки, за да активирате</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {logs.map((log) => (
+            <div key={log.id} className="flex items-center gap-3 p-3 rounded-xl border border-border/10 bg-background/30">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-foreground truncate">{log.subject}</p>
+                <p className="text-[11px] text-muted-foreground truncate">{log.recipient_email}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {statusBadge(log.status)}
+                <span className="text-[10px] text-muted-foreground">
+                  {new Date(log.sent_at || log.created_at).toLocaleDateString('bg-BG', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
