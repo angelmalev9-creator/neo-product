@@ -146,35 +146,11 @@ const SetupPage = ({
       )}
 
       {activeSection === 'calendar' && (
-        <div className="rounded-2xl border border-border/10 bg-card/50 p-6 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center">
-              <CalendarDays className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold text-foreground">Календар</h2>
-              <p className="text-xs text-muted-foreground">Свържете календар за автоматични резервации</p>
-            </div>
-            {calendarConnected && <CheckCircle2 className="w-4 h-4 text-[hsl(var(--neo-success))] ml-auto" />}
-          </div>
-          <IntegrationsPanel />
-        </div>
+        <CalendarSection calendarConnected={calendarConnected} userId={userId} />
       )}
 
       {activeSection === 'email' && (
-        <div className="rounded-2xl border border-border/10 bg-card/50 p-6 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center">
-              <Mail className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold text-foreground">Имейл</h2>
-              <p className="text-xs text-muted-foreground">Свържете имейл за автоматични известия</p>
-            </div>
-            {emailConnected && <CheckCircle2 className="w-4 h-4 text-[hsl(var(--neo-success))] ml-auto" />}
-          </div>
-          <IntegrationsPanel />
-        </div>
+        <EmailLogsSection emailConnected={emailConnected} userId={userId} />
       )}
 
       {activeSection === 'data' && (
