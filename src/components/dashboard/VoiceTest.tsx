@@ -435,6 +435,7 @@ const VoiceTest = ({
                 <span className="font-medium text-xs text-muted-foreground block mb-1">NEO</span>
                 {liveAssistantTranscript}
               </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
         )}
