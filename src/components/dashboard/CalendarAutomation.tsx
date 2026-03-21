@@ -132,6 +132,7 @@ const CalendarAutomation = () => {
           working_days: data.working_days || [1, 2, 3, 4, 5],
           meeting_title_template: data.meeting_title_template || settings.meeting_title_template,
           meeting_description_template: data.meeting_description_template || '',
+          required_booking_fields: (data as any).required_booking_fields || ['name'],
         });
       }
     } catch (e) {
