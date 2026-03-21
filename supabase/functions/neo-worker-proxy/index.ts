@@ -453,41 +453,76 @@ function buildClientEmailHtml(clientName: string, companyName: string): string {
 async function sendPostSubmitEmails(sessionId: string, fields: Record<string, unknown>): Promise<void> {
   try {
     const SUPABASE_URL = (Deno.env.get("SUPABASE_URL") || "").trim();
+    const SUPABASE_KEY = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("NEO_SERVICE_ROLE_KEY") || "").trim();
     const INTERNAL_KEY = (Deno.env.get("INTERNAL_FUNCTION_KEY") || "").trim();
     if (!SUPABASE_URL) { console.log("[POST-SUBMIT-EMAIL] No SUPABASE_URL, skipping"); return; }
+    const sb = (SUPABASE_URL && SUPABASE_KEY) ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+    // Load user_id from demo_sessions for logging
+    let sessionUserId: string | null = null;
+    if (sb) {
+      try {
+        const { data: sess } = await sb.from("demo_sessions").select("user_id").eq("id", sessionId).single();
+        sessionUserId = sess?.user_id || null;
+      } catch { /* ignore */ }
+    }
+
     const [ownerEmail, companyName] = await Promise.all([loadOwnerEmail(sessionId), loadCompanyName(sessionId)]);
     const client = extractClientInfo(fields);
-    console.log(`[POST-SUBMIT-EMAIL] owner=${ownerEmail||"none"} client=${client.email||"none"} company=${companyName}`);
+    console.log(`[POST-SUBMIT-EMAIL] owner=${ownerEmail||"none"} client=${client.email||"none"} company=${companyName} user_id=${sessionUserId||"none"}`);
     const emailExecutorUrl = `${SUPABASE_URL}/functions/v1/action_email_executor`;
     const RESEND_API_KEY = (Deno.env.get("RESEND_API_KEY") || "").trim();
     const EMAIL_FROM = Deno.env.get("EMAIL_FROM") || "NEO Assistant <onboarding@resend.dev>";
-    const sendEmail = async (to: string, subject: string, html: string) => {
+
+    const logEmail = async (to: string, subject: string, body: string, status: string, intent: string) => {
+      if (!sb || !sessionUserId) return;
+      try {
+        await sb.from("email_logs").insert({
+          user_id: sessionUserId,
+          recipient_email: to,
+          recipient_name: client.name || null,
+          subject,
+          body,
+          status,
+          intent,
+          sent_at: status === "sent" ? new Date().toISOString() : null,
+          demo_session_id: sessionId,
+          is_demo: false,
+        });
+      } catch (e) { console.warn(`[POST-SUBMIT-EMAIL] log insert failed:`, e); }
+    };
+
+    const sendEmail = async (to: string, subject: string, html: string, intent: string) => {
+      let sent = false;
       if (INTERNAL_KEY && emailExecutorUrl) {
         try {
           const res = await fetch(emailExecutorUrl, { method:"POST", headers:{"Content-Type":"application/json","x-internal-key":INTERNAL_KEY}, body:JSON.stringify({mode:"real",to,subject,content:html}) });
           const result = await res.json().catch(()=>({}));
-          if (result?.success) { console.log(`[POST-SUBMIT-EMAIL] via executor to ${to}: OK`); return; }
-          console.warn(`[POST-SUBMIT-EMAIL] executor failed for ${to}: ${result?.error||res.status}`);
+          if (result?.success) { console.log(`[POST-SUBMIT-EMAIL] via executor to ${to}: OK`); sent = true; }
+          else console.warn(`[POST-SUBMIT-EMAIL] executor failed for ${to}: ${result?.error||res.status}`);
         } catch (e) { console.warn(`[POST-SUBMIT-EMAIL] executor error for ${to}:`, e); }
       }
-      if (RESEND_API_KEY) {
+      if (!sent && RESEND_API_KEY) {
         try {
           const res = await fetch("https://api.resend.com/emails", { method:"POST", headers:{Authorization:`Bearer ${RESEND_API_KEY}`,"Content-Type":"application/json"}, body:JSON.stringify({from:EMAIL_FROM,to:[to],subject,html}) });
           const data = await res.json().catch(()=>({}));
+          sent = res.ok;
           console.log(`[POST-SUBMIT-EMAIL] via Resend direct to ${to}: ${res.ok?"OK":data?.error||res.status}`);
         } catch (e) { console.error(`[POST-SUBMIT-EMAIL] Resend direct failed for ${to}:`, e); }
-      } else { console.error(`[POST-SUBMIT-EMAIL] No way to send email to ${to}`); }
+      }
+      if (!sent && !RESEND_API_KEY && !INTERNAL_KEY) { console.error(`[POST-SUBMIT-EMAIL] No way to send email to ${to}`); }
+      await logEmail(to, subject, html, sent ? "sent" : "failed", intent);
     };
     const promises: Promise<void>[] = [];
     if (ownerEmail) {
       const ownerSubject = `Ново запитване от ${client.name||"клиент"} чрез NEO`;
       const ownerHtml = buildOwnerEmailHtml(client.name, client.email, client.phone, fields, companyName);
-      promises.push(sendEmail(ownerEmail, ownerSubject, ownerHtml));
+      promises.push(sendEmail(ownerEmail, ownerSubject, ownerHtml, "owner_notification"));
     }
     if (client.email && client.email.includes("@")) {
       const clientSubject = `Запитването Ви към ${companyName} е изпратено`;
       const clientHtml = buildClientEmailHtml(client.name, companyName);
-      promises.push(sendEmail(client.email, clientSubject, clientHtml));
+      promises.push(sendEmail(client.email, clientSubject, clientHtml, "client_confirmation"));
     }
     await Promise.allSettled(promises);
   } catch (e) { console.error("[POST-SUBMIT-EMAIL] unexpected error:", e); }
