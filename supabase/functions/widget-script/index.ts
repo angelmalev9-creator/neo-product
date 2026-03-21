@@ -154,7 +154,7 @@ serve(async (req) => {
   };
   container.appendChild(closeBtn);
 
-  btn.onclick = function() {
+  pill.onclick = function() {
     if (mustOpenStandalone) {
       window.open('${widgetPageUrl}', '_blank', 'noopener,noreferrer');
       return;
