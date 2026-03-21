@@ -1003,16 +1003,28 @@ function shouldForceCalendarFallback(responseText: string, systemInstruction: st
   // If NEO already produced an action JSON, no fallback needed
   if (response.includes("action_request") || response.includes("book_slot") || response.includes("submit_form")) return false;
 
-  // If NEO is talking about availability or offering to book, it's working correctly — no fallback
+  // If NEO is talking about availability, dates, or offering to book — it's working correctly
   if (/следващ(?:ият|ия)\s+свободен/i.test(response)) return false;
-  if (/искате\s+ли\s+да\s+запиш/i.test(response)) return false;
+  if (/свободен\s+ден/i.test(response)) return false;
+  if (/свободни\s+часов/i.test(response)) return false;
+  if (/(?:искате|желаете)\s+ли\s+да\s+запиш/i.test(response)) return false;
   if (/да\s+(?:ви\s+)?запиш/i.test(response)) return false;
   if (/можем\s+да\s+насрочим/i.test(response)) return false;
   if (/за\s+кога\s+(?:бихте\s+)?(?:искали|предпочитате)/i.test(response)) return false;
+  if (/удобен\s+(?:ли\s+)?(?:ви\s+)?е/i.test(response)) return false;
+  if (/кой\s+час\s+(?:ви\s+)?(?:е\s+)?удобен/i.test(response)) return false;
+  if (/не\s+е\s+работен/i.test(response)) return false;
+  if (/работно\s+време/i.test(response)) return false;
+  if (/има\s+свободни/i.test(response)) return false;
+  if (/консултаци(?:я|ята)\s+за/i.test(response)) return false;
+  if (/да\s+(?:ви\s+)?насроч/i.test(response)) return false;
+  if (/запазя\s+(?:ви\s+)?час/i.test(response)) return false;
+  if (/да\s+(?:ви\s+)?резервирам/i.test(response)) return false;
 
-  // If NEO is legitimately guiding the user toward a form/inquiry (not refusing calendar), skip
-  if (/попълн(?:им|ите|ете)\s+(?:контактна(?:та)?\s+)?форма(?:та)?\s+за\s+запитване/i.test(response)) return false;
+  // If NEO is legitimately guiding the user toward a form/inquiry, skip
+  if (/попълн(?:им|ите|ете)\s+(?:контактна(?:та)?\s+)?форма/i.test(response)) return false;
   if (/да\s+(?:ви\s+)?изпрат(?:им|я)\s+запитване/i.test(response)) return false;
+  if (/форма(?:та)?\s+за\s+запитване/i.test(response)) return false;
 
   // Only trigger on genuine refusals where NEO claims it CAN'T book
   const refusal =
