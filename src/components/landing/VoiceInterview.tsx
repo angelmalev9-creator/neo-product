@@ -1145,9 +1145,15 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     if (timerRef.current) window.clearInterval(timerRef.current);
     playDisconnectSound();
     stopAmbient();
+    // Commit any partial assistant transcript before disconnecting
+    const pendingAssistant = liveAssistantTranscript.trim();
+    if (pendingAssistant) {
+      setMessages(prev => [...prev, { role: 'assistant', content: pendingAssistant }]);
+    }
+    setLiveAssistantTranscript('');
     disconnect();
     setTextOnlyMode(false);
-  }, [disconnect, playDisconnectSound, stopAmbient]);
+  }, [disconnect, playDisconnectSound, stopAmbient, liveAssistantTranscript]);
 
   const handleTryAgain = useCallback(() => {
     setShowEndModal(false);
