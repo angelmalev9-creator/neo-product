@@ -323,9 +323,16 @@ const EmailLogsSection = ({ emailConnected, userId }: { emailConnected: boolean;
                 </button>
                 {isExpanded && (
                   <div className="px-4 pb-4 border-t border-border/10">
-                    <div className="mt-3 rounded-lg bg-background/50 p-4 text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
-                      {log.body || 'Няма съдържание'}
-                    </div>
+                    {log.body && log.body.includes('<') ? (
+                      <div
+                        className="mt-3 rounded-lg bg-white p-4 text-xs text-gray-800 leading-relaxed max-h-72 overflow-y-auto [&_table]:w-full [&_td]:p-2 [&_a]:text-primary [&_a]:underline"
+                        dangerouslySetInnerHTML={{ __html: log.body }}
+                      />
+                    ) : (
+                      <div className="mt-3 rounded-lg bg-background/50 p-4 text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed max-h-72 overflow-y-auto">
+                        {log.body || 'Няма съдържание'}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
