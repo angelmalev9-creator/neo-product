@@ -1002,12 +1002,10 @@ function shouldForceCalendarFallback(responseText: string, systemInstruction: st
   if (!hasCalendarInSystemInstruction(systemInstruction)) return false;
   if (response.includes("action_request") || response.includes("book_slot")) return false;
 
-  const bookingIntent = /(консултац|резервац|срещ|запис|час|среща|записване|резервация)/i.test(response);
   const refusal =
     /нямаме\s+(?:опц(?:ия|ии)\s+за\s+)?(?:онлайн\s+)?записване/i.test(response) ||
     /не\s+мож(?:ем|а)\s+да\s+запиш/i.test(response) ||
     /може\s+да\s+се\s+свържете\s+с\s+нас/i.test(response) ||
-    /в\s+работно\s+време/i.test(response) ||
     /нямаме\s+възможност/i.test(response) ||
     /попълн(?:им|ите|ете)\s+(?:контактна(?:та)?\s+)?форма/i.test(response) ||
     /подам\s+запитване/i.test(response) ||
@@ -1017,7 +1015,10 @@ function shouldForceCalendarFallback(responseText: string, systemInstruction: st
     /нямаме\s+(?:онлайн\s+)?систем/i.test(response) ||
     /не\s+разполагаме\s+с/i.test(response);
 
-  return bookingIntent || refusal;
+  // Only rescue genuine refusals / form redirects.
+  // Do NOT trigger on normal booking follow-ups like "Искате ли да запишем..."
+  // or availability explanations like "Следващият свободен ден е..." because that creates loops.
+  return refusal;
 }
 
 function parseBulgarianDateText(raw: string): string[] {
