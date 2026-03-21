@@ -235,8 +235,11 @@ const CalendarSection = ({ calendarConnected, userId }: { calendarConnected: boo
 interface EmailLog {
   id: string;
   recipient_email: string;
+  recipient_name: string | null;
   subject: string;
+  body: string;
   status: string;
+  intent: string | null;
   sent_at: string | null;
   created_at: string;
 }
@@ -244,15 +247,16 @@ interface EmailLog {
 const EmailLogsSection = ({ emailConnected, userId }: { emailConnected: boolean; userId: string }) => {
   const [logs, setLogs] = useState<EmailLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase
         .from('email_logs')
-        .select('id, recipient_email, subject, status, sent_at, created_at')
+        .select('id, recipient_email, recipient_name, subject, body, status, intent, sent_at, created_at')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(30);
       setLogs((data || []) as EmailLog[]);
       setLoading(false);
     })();
@@ -262,6 +266,12 @@ const EmailLogsSection = ({ emailConnected, userId }: { emailConnected: boolean;
     if (status === 'sent') return <Badge variant="outline" className="text-[10px] border-green-500/30 text-green-400">Изпратен</Badge>;
     if (status === 'failed' || status === 'error') return <Badge variant="outline" className="text-[10px] border-destructive/30 text-destructive">Грешка</Badge>;
     return <Badge variant="outline" className="text-[10px]">{status}</Badge>;
+  };
+
+  const intentLabel = (intent: string | null) => {
+    if (intent === 'owner_notification') return 'За вас';
+    if (intent === 'client_confirmation') return 'За клиента';
+    return null;
   };
 
   if (loading) return <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
@@ -274,7 +284,7 @@ const EmailLogsSection = ({ emailConnected, userId }: { emailConnected: boolean;
         </div>
         <div>
           <h2 className="text-sm font-semibold text-foreground">Изпратени имейли</h2>
-          <p className="text-xs text-muted-foreground">Последните имейли от NEO</p>
+          <p className="text-xs text-muted-foreground">Имейли изпратени от NEO за вашия бизнес</p>
         </div>
         {emailConnected && <CheckCircle className="w-4 h-4 text-green-500 ml-auto" />}
       </div>
@@ -283,24 +293,44 @@ const EmailLogsSection = ({ emailConnected, userId }: { emailConnected: boolean;
         <div className="text-center py-8">
           <Mail className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
           <p className="text-sm text-muted-foreground">Няма изпратени имейли все още</p>
-          <p className="text-xs text-muted-foreground/60 mt-1">Свържете Gmail от Настройки, за да активирате</p>
+          <p className="text-xs text-muted-foreground/60 mt-1">NEO ще изпраща имейли автоматично след разговори</p>
         </div>
       ) : (
         <div className="space-y-2">
-          {logs.map((log) => (
-            <div key={log.id} className="flex items-center gap-3 p-3 rounded-xl border border-border/10 bg-background/30">
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-foreground truncate">{log.subject}</p>
-                <p className="text-[11px] text-muted-foreground truncate">{log.recipient_email}</p>
+          {logs.map((log) => {
+            const isExpanded = expandedId === log.id;
+            const label = intentLabel(log.intent);
+            return (
+              <div key={log.id} className="rounded-xl border border-border/10 bg-background/30 overflow-hidden">
+                <button
+                  onClick={() => setExpandedId(isExpanded ? null : log.id)}
+                  className="w-full flex items-center gap-3 p-3 text-left hover:bg-muted/20 transition-colors"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-foreground truncate">{log.subject}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">
+                      До: {log.recipient_name ? `${log.recipient_name} (${log.recipient_email})` : log.recipient_email}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {label && <span className="text-[10px] text-muted-foreground/70 bg-muted/30 px-1.5 py-0.5 rounded">{label}</span>}
+                    {statusBadge(log.status)}
+                    <span className="text-[10px] text-muted-foreground">
+                      {new Date(log.sent_at || log.created_at).toLocaleDateString('bg-BG', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <ArrowRight className={`w-3 h-3 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                  </div>
+                </button>
+                {isExpanded && (
+                  <div className="px-4 pb-4 border-t border-border/10">
+                    <div className="mt-3 rounded-lg bg-background/50 p-4 text-xs text-foreground/80 whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
+                      {log.body || 'Няма съдържание'}
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {statusBadge(log.status)}
-                <span className="text-[10px] text-muted-foreground">
-                  {new Date(log.sent_at || log.created_at).toLocaleDateString('bg-BG', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                </span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
