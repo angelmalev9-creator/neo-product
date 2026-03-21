@@ -1000,24 +1000,28 @@ function shouldForceCalendarFallback(responseText: string, systemInstruction: st
   const response = String(responseText || "").toLowerCase();
 
   if (!hasCalendarInSystemInstruction(systemInstruction)) return false;
-  if (response.includes("action_request") || response.includes("book_slot")) return false;
+  // If NEO already produced an action JSON, no fallback needed
+  if (response.includes("action_request") || response.includes("book_slot") || response.includes("submit_form")) return false;
 
+  // If NEO is talking about availability or offering to book, it's working correctly — no fallback
+  if (/следващ(?:ият|ия)\s+свободен/i.test(response)) return false;
+  if (/искате\s+ли\s+да\s+запиш/i.test(response)) return false;
+  if (/да\s+(?:ви\s+)?запиш/i.test(response)) return false;
+  if (/можем\s+да\s+насрочим/i.test(response)) return false;
+  if (/за\s+кога\s+(?:бихте\s+)?(?:искали|предпочитате)/i.test(response)) return false;
+
+  // If NEO is legitimately guiding the user toward a form/inquiry (not refusing calendar), skip
+  if (/попълн(?:им|ите|ете)\s+(?:контактна(?:та)?\s+)?форма(?:та)?\s+за\s+запитване/i.test(response)) return false;
+  if (/да\s+(?:ви\s+)?изпрат(?:им|я)\s+запитване/i.test(response)) return false;
+
+  // Only trigger on genuine refusals where NEO claims it CAN'T book
   const refusal =
     /нямаме\s+(?:опц(?:ия|ии)\s+за\s+)?(?:онлайн\s+)?записване/i.test(response) ||
     /не\s+мож(?:ем|а)\s+да\s+запиш/i.test(response) ||
-    /може\s+да\s+се\s+свържете\s+с\s+нас/i.test(response) ||
     /нямаме\s+възможност/i.test(response) ||
-    /попълн(?:им|ите|ете)\s+(?:контактна(?:та)?\s+)?форма/i.test(response) ||
-    /подам\s+запитване/i.test(response) ||
-    /чрез\s+(?:контактна(?:та)?\s+)?форма/i.test(response) ||
-    /изпрат(?:им|ете|я)\s+запитване/i.test(response) ||
-    /насроч(?:им|ете)\s+.*(?:форма|запитване)/i.test(response) ||
     /нямаме\s+(?:онлайн\s+)?систем/i.test(response) ||
     /не\s+разполагаме\s+с/i.test(response);
 
-  // Only rescue genuine refusals / form redirects.
-  // Do NOT trigger on normal booking follow-ups like "Искате ли да запишем..."
-  // or availability explanations like "Следващият свободен ден е..." because that creates loops.
   return refusal;
 }
 
