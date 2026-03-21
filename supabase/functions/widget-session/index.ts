@@ -99,13 +99,19 @@ serve(async (req) => {
 
     // Add calendar instructions if enabled — placed as HIGH-PRIORITY override
     if (calSettings?.calendar_enabled) {
-      // CRITICAL: Strip form-related instructions from the prompt to prevent Gemini
-      // from using submit_form when calendar is the intended booking mechanism
+      // CRITICAL: Strip ALL form-related instructions from the prompt
+      // This prevents Gemini from using submit_form when calendar is the intended booking mechanism
       systemPrompt = systemPrompt
         .replace(/ФОРМИ\/ДЕЙСТВИЯ[^]*?(?=\n\n[A-ZА-Я]|\n\nEXECUTION|\z)/g, '')
+        .replace(/ФОРМИ[^]*?(?=\n\n[A-ZА-Я]|\n\nEXECUTION|\z)/g, '')
         .replace(/can_submit_forms:\s*true/g, 'can_submit_forms: false')
         .replace(/submit_form/g, '(DISABLED)')
-        .replace(/контактна\s*форма/gi, 'календар за записване');
+        .replace(/контактна\s*форма/gi, 'календар за записване')
+        .replace(/контактната\s*форма/gi, 'календара за записване')
+        .replace(/форма(?:та)?\s+за\s+(?:контакт|запитване|връзка)/gi, 'календар за записване')
+        .replace(/попълн(?:им|ете|ите)\s+форма/gi, 'запишем час')
+        .replace(/изпрат(?:им|ете|я)\s+запитване/gi, 'запишем час')
+        .replace(/подам\s+запитване/gi, 'запиша час');
 
       const bt = calSettings.booking_type || "consultation";
       const label = bt === "reservation" ? "резервация" : bt === "meeting" ? "среща" : "консултация";
