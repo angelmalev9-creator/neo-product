@@ -2800,11 +2800,10 @@ export const useGeminiVoice = ({
 
   const preWarmMicrophone = useCallback(async () => {
     if (streamRef.current) return;
-    try {
-      streamRef.current = await navigator.mediaDevices.getUserMedia({
-        audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-      });
-    } catch {}
+    // Let errors propagate so callers can detect mic failure and switch to text-only
+    streamRef.current = await navigator.mediaDevices.getUserMedia({
+      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+    });
   }, []);
 
   const disconnect = useCallback(() => {
@@ -3701,9 +3700,15 @@ export const useGeminiVoice = ({
 
         if (!textOnly) {
           if (!streamRef.current) {
-            streamRef.current = await navigator.mediaDevices.getUserMedia({
-              audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-            });
+            try {
+              streamRef.current = await navigator.mediaDevices.getUserMedia({
+                audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+              });
+            } catch (micErr) {
+              console.warn("[CONNECT] Mic failed, falling back to text-only:", micErr);
+              textOnly = true;
+              textOnlyRef.current = true;
+            }
           }
         }
 
