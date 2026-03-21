@@ -1002,12 +1002,10 @@ function shouldForceCalendarFallback(responseText: string, systemInstruction: st
   if (!hasCalendarInSystemInstruction(systemInstruction)) return false;
   if (response.includes("action_request") || response.includes("book_slot")) return false;
 
-  const bookingIntent = /(консултац|резервац|срещ|запис|час|среща|записване|резервация)/i.test(response);
   const refusal =
     /нямаме\s+(?:опц(?:ия|ии)\s+за\s+)?(?:онлайн\s+)?записване/i.test(response) ||
     /не\s+мож(?:ем|а)\s+да\s+запиш/i.test(response) ||
     /може\s+да\s+се\s+свържете\s+с\s+нас/i.test(response) ||
-    /в\s+работно\s+време/i.test(response) ||
     /нямаме\s+възможност/i.test(response) ||
     /попълн(?:им|ите|ете)\s+(?:контактна(?:та)?\s+)?форма/i.test(response) ||
     /подам\s+запитване/i.test(response) ||
@@ -1017,7 +1015,10 @@ function shouldForceCalendarFallback(responseText: string, systemInstruction: st
     /нямаме\s+(?:онлайн\s+)?систем/i.test(response) ||
     /не\s+разполагаме\s+с/i.test(response);
 
-  return bookingIntent || refusal;
+  // Only rescue genuine refusals / form redirects.
+  // Do NOT trigger on normal booking follow-ups like "Искате ли да запишем..."
+  // or availability explanations like "Следващият свободен ден е..." because that creates loops.
+  return refusal;
 }
 
 function parseBulgarianDateText(raw: string): string[] {
@@ -1416,6 +1417,9 @@ export const useGeminiVoice = ({
   const capturedSensitiveContactRef = useRef<CapturedSensitiveContact | null>(null);
   const assistantTurnCanceledRef = useRef(false);
   const vadBargeInFramesRef = useRef<number>(0);
+  const lastCalendarCheckedDateRef = useRef("");
+  const lastCalendarNextAvailableDateRef = useRef("");
+  const lastCalendarSlotsRef = useRef<string[]>([]);
 
   // ★ NEW: track what context we prepared for (sessionId/companyName/systemPrompt)
   const preparedKeyRef = useRef<string>("");
@@ -3496,6 +3500,12 @@ export const useGeminiVoice = ({
             console.log("[ACTION][BOOK_SLOT] result:", calResult);
 
             if (calAction === "get_slots") {
+              lastCalendarCheckedDateRef.current = String(calResult?.date || parsed?.date || "");
+              lastCalendarNextAvailableDateRef.current = String(calResult?.nextAvailableDate || "");
+              lastCalendarSlotsRef.current = Array.isArray(calResult?.slots)
+                ? calResult.slots.map((s: any) => String(s?.time || s?.display || "")).filter(Boolean)
+                : [];
+
               sendToGemini(
                 [
                   "CALENDAR_SLOTS_RESULT:",
@@ -4262,6 +4272,32 @@ export const useGeminiVoice = ({
       } catch (e) {
         console.warn("[ROOM DETECT] error:", e);
       }
+      // ── Calendar follow-up shortcut ───────────────────────────────
+      try {
+        const normalized = String(t || "").toLowerCase().trim();
+        const parsedDates = parseBulgarianDateText(normalized);
+        const explicitDate = parsedDates[0] || "";
+        const wantsBooking = /(да|ok|okay|добре|става|искам|нека|запиши|запишем|потвърждавам)/i.test(normalized);
+        const asksForNextSuggestedDay =
+          !!lastCalendarNextAvailableDateRef.current &&
+          wantsBooking &&
+          (normalized.includes("следващ") || normalized.includes("тогава") || normalized.includes("да") || explicitDate === lastCalendarNextAvailableDateRef.current);
+
+        const targetDate = explicitDate || (asksForNextSuggestedDay ? lastCalendarNextAvailableDateRef.current : "");
+        if (wantsBooking && targetDate && targetDate !== lastCalendarCheckedDateRef.current) {
+          const ownerUserId = extractCalendarOwnerUserId(String((sessionDataRef.current as any)?.systemInstruction || ""));
+          if (ownerUserId) {
+            void maybeExecuteActionFromGemini(JSON.stringify({
+              type: "action_request",
+              action: "book_slot",
+              calendar_action: "get_slots",
+              owner_user_id: ownerUserId,
+              date: targetDate,
+            }));
+            return;
+          }
+        }
+      } catch {}
       // ─────────────────────────────────────────────────────────────
 
       handleUserUtterance(`${text}`);
@@ -4270,7 +4306,7 @@ export const useGeminiVoice = ({
         tryAutoRunReservationCheck();
       }, 40);
     },
-    [handleUserUtterance, tryAutoRunReservationCheck, sendToGemini],
+    [handleUserUtterance, tryAutoRunReservationCheck, sendToGemini, maybeExecuteActionFromGemini],
   );
 
   useEffect(() => () => disconnect(), [disconnect]);
