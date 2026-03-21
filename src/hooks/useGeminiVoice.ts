@@ -48,9 +48,9 @@ const AUDIO_SAMPLE_RATE_OUT = 24000;
 const AUDIO_SAMPLE_RATE_IN = 16000;
 
 const ECHO_GUARD_MS = 80;
-const ANTI_BARGE_IN_MS = 350;
-const MIN_BARGE_IN_CHARS = 2;
-const MIN_BARGE_IN_WORDS = 2;
+const ANTI_BARGE_IN_MS = 1200;
+const MIN_BARGE_IN_CHARS = 8;
+const MIN_BARGE_IN_WORDS = 3;
 const BARGE_IN_COMMANDS = ["стоп", "спри", "изчакай", "чакай", "момент", "секунда", "стига", "почакай"];
 const UTTERANCE_DEBOUNCE_MS = 350;
 const SPEECH_FINAL_MIN_MS = 280;
@@ -75,7 +75,7 @@ const SENSITIVE_MODE_EXTRA_WAIT_MS: Record<SensitiveInputMode, number> = {
 };
 // VAD-based barge-in: number of consecutive speech frames needed to interrupt NEO
 // Higher = less false positives from noise/echo.
-const VAD_BARGE_IN_FRAMES_REQUIRED = 5;
+const VAD_BARGE_IN_FRAMES_REQUIRED = 15;
 
 // VAD (client-side) is only a fallback safety layer.
 // Server-final tokens should end the turn first.
@@ -2649,7 +2649,7 @@ export const useGeminiVoice = ({
 
         if (isPlayingRef.current && Date.now() - speakStartRef.current > ANTI_BARGE_IN_MS) {
           vadBargeInFramesRef.current += 1;
-          if (vadBargeInFramesRef.current >= VAD_BARGE_IN_FRAMES_REQUIRED && rms > vadThresholdRef.current * 1.2) {
+          if (vadBargeInFramesRef.current >= VAD_BARGE_IN_FRAMES_REQUIRED && rms > vadThresholdRef.current * 2.5) {
             console.log("[VAD BARGE-IN] ⚡ Speech detected → interrupt", { rms, frames: vadBargeInFramesRef.current });
             performEarlyBargeIn();
             vadBargeInFramesRef.current = 0;
@@ -3960,7 +3960,14 @@ export const useGeminiVoice = ({
                   }
                 }
               } else {
-                console.log("[TURN_COMPLETE] suppressed canceled assistant turn:", responseText.slice(0, 100));
+                // Was canceled (barge-in) but still deliver partial text so it doesn't vanish
+                if (responseText.trim().length > 5) {
+                  console.log("[TURN_COMPLETE] delivering canceled assistant turn:", responseText.slice(0, 100));
+                  onMessage?.({ role: "assistant", content: responseText });
+                  onTranscript?.(responseText, true, "assistant");
+                } else {
+                  console.log("[TURN_COMPLETE] suppressed tiny canceled fragment:", responseText.slice(0, 50));
+                }
               }
             }
 
