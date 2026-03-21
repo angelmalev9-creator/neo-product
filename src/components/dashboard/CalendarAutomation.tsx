@@ -73,6 +73,7 @@ const CalendarAutomation = () => {
     working_days: [1, 2, 3, 4, 5],
     meeting_title_template: 'Среща с {{lead_name}} - {{company_name}}',
     meeting_description_template: '',
+    required_booking_fields: ['name'],
   });
   const [bookings, setBookings] = useState<CalendarBooking[]>([]);
   const [calendarMonth, setCalendarMonth] = useState(new Date());
