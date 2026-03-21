@@ -1417,6 +1417,9 @@ export const useGeminiVoice = ({
   const capturedSensitiveContactRef = useRef<CapturedSensitiveContact | null>(null);
   const assistantTurnCanceledRef = useRef(false);
   const vadBargeInFramesRef = useRef<number>(0);
+  const lastCalendarCheckedDateRef = useRef("");
+  const lastCalendarNextAvailableDateRef = useRef("");
+  const lastCalendarSlotsRef = useRef<string[]>([]);
 
   // ★ NEW: track what context we prepared for (sessionId/companyName/systemPrompt)
   const preparedKeyRef = useRef<string>("");
