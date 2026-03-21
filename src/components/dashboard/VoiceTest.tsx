@@ -410,7 +410,7 @@ const VoiceTest = ({
         </div>
 
         {/* Messages */}
-        {messages.length > 0 && (
+        {(messages.length > 0 || liveAssistantTranscript) && (
           <div
             ref={messagesContainerRef}
             className="mt-4 max-h-48 overflow-y-auto space-y-2 text-left"
@@ -428,6 +428,14 @@ const VoiceTest = ({
                   {msg.role === 'assistant' ? 'NEO' : 'Вие'}
                 </span>
                 {msg.content}
+              </div>
+            ))}
+            {liveAssistantTranscript && (
+              <div className="p-3 rounded-lg text-sm bg-primary/10 border border-primary/20 animate-pulse">
+                <span className="font-medium text-xs text-muted-foreground block mb-1">NEO</span>
+                {liveAssistantTranscript}
+              </div>
+            )}
               </div>
             ))}
             <div ref={messagesEndRef} />
