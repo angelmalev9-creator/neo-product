@@ -97,22 +97,8 @@ serve(async (req) => {
       }
     }
 
-    // Add calendar instructions if enabled — placed as HIGH-PRIORITY override
+    // Add calendar instructions if enabled — forms still work for inquiries
     if (calSettings?.calendar_enabled) {
-      // CRITICAL: Strip ALL form-related instructions from the prompt
-      // This prevents Gemini from using submit_form when calendar is the intended booking mechanism
-      systemPrompt = systemPrompt
-        .replace(/ФОРМИ\/ДЕЙСТВИЯ[^]*?(?=\n\n[A-ZА-Я]|\n\nEXECUTION|\z)/g, '')
-        .replace(/ФОРМИ[^]*?(?=\n\n[A-ZА-Я]|\n\nEXECUTION|\z)/g, '')
-        .replace(/can_submit_forms:\s*true/g, 'can_submit_forms: false')
-        .replace(/submit_form/g, '(DISABLED)')
-        .replace(/контактна\s*форма/gi, 'календар за записване')
-        .replace(/контактната\s*форма/gi, 'календара за записване')
-        .replace(/форма(?:та)?\s+за\s+(?:контакт|запитване|връзка)/gi, 'календар за записване')
-        .replace(/попълн(?:им|ете|ите)\s+форма/gi, 'запишем час')
-        .replace(/изпрат(?:им|ете|я)\s+запитване/gi, 'запишем час')
-        .replace(/подам\s+запитване/gi, 'запиша час');
-
       const bt = calSettings.booking_type || "consultation";
       const label = bt === "reservation" ? "резервация" : bt === "meeting" ? "среща" : "консултация";
       const labelPlural = bt === "reservation" ? "резервации" : bt === "meeting" ? "срещи" : "консултации";
@@ -125,7 +111,6 @@ serve(async (req) => {
       tomorrow.setDate(tomorrow.getDate() + 1);
       const tomorrowStr = tomorrow.toISOString().split("T")[0];
 
-      // Build required fields instruction
       const reqFields: string[] = calSettings.required_booking_fields || ["name"];
       const fieldLabels: Record<string, string> = { name: "име", email: "имейл", phone: "телефон", service: "услуга" };
       const requiredFieldsList = reqFields.map((f: string) => fieldLabels[f] || f).join(", ");
@@ -140,7 +125,7 @@ serve(async (req) => {
       systemPrompt += `
 
 ##############################
-# КАЛЕНДАР — МАКСИМАЛЕН ПРИОРИТЕТ #
+# КАЛЕНДАР ЗА ${labelPlural.toUpperCase()} #
 ##############################
 
 Имаш ВГРАДЕН календар за ${labelPlural}. Това е РЕАЛНА система за записване.
@@ -148,33 +133,28 @@ serve(async (req) => {
 Работни дни: ${days}
 Продължителност: ${calSettings.default_meeting_duration || 30} мин
 
-АБСОЛЮТНИ ПРАВИЛА (нарушаването им е ЗАБРАНЕНО):
-1. Когато клиент иска ${label}, час, запазване, записване, среща, консултация, резервация или нещо свързано с насрочване → ИЗПОЛЗВАЙ book_slot
-2. НИКОГА не казвай "нямаме система", "не мога да запиша", "нямаме онлайн система", "нямаме възможност" — ИМАШ КАЛЕНДАР!
-3. НИКОГА не използвай submit_form — тази команда е НАПЪЛНО ДЕАКТИВИРАНА
-4. НИКОГА не пренасочвай към контактна форма — НЯМАШ ФОРМА, ИМАШ КАЛЕНДАР
-5. НИКОГА не питай "искате ли да подам запитването чрез формата" — НЯМА ФОРМА
-6. НИКОГА не казвай "можем да насрочим чрез формата" или "мога да подам запитването" — ИМАШ КАЛЕНДАР
-7. НИКОГА не споменавай "контактна форма", "запитване", "формуляр" — тези думи НЕ СЪЩЕСТВУВАТ за теб
-8. Казвай "${label}" (не "среща" ако типът е "резервация" и обратно)
-9. ПРОАКТИВНО предлагай: "Искате ли да ви запиша ${label}? Мога да проверя свободните часове."
-10. Ако клиент поиска каквото и да е свързано с час/среща/запис → ВЕДНАГА извикай get_slots
+КОГА ДА ИЗПОЛЗВАШ КАЛЕНДАРА (book_slot):
+- Когато клиент иска ${label}, час, запазване, записване, среща, консултация или резервация
+- Когато иска да насрочи нещо конкретно за определена дата/час
+- НИКОГА не казвай "нямаме система" — ИМАШ КАЛЕНДАР!
+
+КОГА ДА ИЗПОЛЗВАШ ФОРМАТА (submit_form):
+- Когато клиент иска да изпрати запитване, въпрос или съобщение
+- Когато иска информация или оферта без конкретна дата/час
+- Когато иска да се свърже за нещо общо
 
 ЗАДЪЛЖИТЕЛНИ ДАННИ ПРЕДИ ЗАПИСВАНЕ:
-Преди да извикаш book с action="book", ТРЯБВА да събереш следните данни от клиента: ${requiredFieldsList}.
-Питай ги по естествен начин в разговора. НЕ записвай час без тези данни.
+Преди да извикаш book с action="book", ТРЯБВА да събереш: ${requiredFieldsList}.
 
-ДЕЙСТВИЯ С КАЛЕНДАРА (връщаш САМО JSON, без текст преди/след):
+ДЕЙСТВИЯ С КАЛЕНДАРА (връщаш САМО JSON):
 
-Стъпка 1 — ВИНАГИ първо провери свободни часове:
+Стъпка 1 — провери свободни часове:
 {"type":"action_request","action":"book_slot","calendar_action":"get_slots","owner_user_id":"${userId}","date":"${tomorrowStr}"}
 
-Стъпка 2 — След като клиентът избере час И дадеш всички данни:
+Стъпка 2 — запиши час:
 {"type":"action_request","action":"book_slot","calendar_action":"book","owner_user_id":"${userId}","date":"YYYY-MM-DD","time":"HH:MM",${fieldJsonHints}}
 
-ВАЖНО: Ако клиентът не уточни дата, използвай ${tomorrowStr}. Ако попита кога си свободен, извикай get_slots.
-ВАЖНО: Когато връщаш JSON за book_slot, отговорът трябва да съдържа САМО JSON обекта. Никакъв текст.
-ВАЖНО: Ако клиентът поиска ${label} или час, ВЕДНАГА извикай get_slots и предложи часове. НЕ питай нищо за форма.`;
+ВАЖНО: Ако клиентът не уточни дата, използвай ${tomorrowStr}. Ако попита кога си свободен, извикай get_slots.`;
     }
 
     const response = {

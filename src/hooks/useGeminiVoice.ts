@@ -3542,23 +3542,7 @@ export const useGeminiVoice = ({
         }
 
         // ── СТАНДАРТНА ФОРМА (submit_form) ───────────────────────────
-        // If calendar is enabled, intercept submit_form and redirect to book_slot
-        if (parsed?.action === "submit_form") {
-          const sysInstr = String((sessionDataRef.current as any)?.systemInstruction || "");
-          if (hasCalendarInSystemInstruction(sysInstr)) {
-            console.log("[SUBMIT_FORM → CALENDAR] Calendar enabled, redirecting submit_form to get_slots");
-            const ownerUserId = extractCalendarOwnerUserId(sysInstr);
-            const date = extractCalendarDefaultDate(sysInstr);
-            const forcedAction = JSON.stringify({
-              type: "action_request",
-              action: "book_slot",
-              calendar_action: "get_slots",
-              ...(ownerUserId ? { owner_user_id: ownerUserId } : {}),
-              ...(date ? { date } : {}),
-            });
-            return maybeExecuteActionFromGemini(forcedAction);
-          }
-        }
+        // Both calendar and forms coexist — no redirect
         if (parsed?.action !== "submit_form") return false;
 
         // Inject live session + deterministic form target so proxy always has a target.
