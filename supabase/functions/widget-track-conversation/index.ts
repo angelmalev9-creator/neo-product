@@ -102,6 +102,27 @@ serve(async (req) => {
           .eq("id", conversationId);
       }
 
+      // Also update profiles.used_minutes for real-time dashboard tracking
+      if (durationSeconds && durationSeconds > 0) {
+        const addedMinutes = durationSeconds / 60;
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("used_minutes")
+          .eq("user_id", userId)
+          .single();
+
+        if (profile) {
+          const currentUsed = parseFloat(String(profile.used_minutes || 0));
+          await supabase
+            .from("profiles")
+            .update({
+              used_minutes: currentUsed + addedMinutes,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("user_id", userId);
+        }
+      }
+
       return new Response(JSON.stringify({ ok: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
