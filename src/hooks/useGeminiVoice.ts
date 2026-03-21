@@ -3960,7 +3960,14 @@ export const useGeminiVoice = ({
                   }
                 }
               } else {
-                console.log("[TURN_COMPLETE] suppressed canceled assistant turn:", responseText.slice(0, 100));
+                // Was canceled (barge-in) but still deliver partial text so it doesn't vanish
+                if (responseText.trim().length > 5) {
+                  console.log("[TURN_COMPLETE] delivering canceled assistant turn:", responseText.slice(0, 100));
+                  onMessage?.({ role: "assistant", content: responseText });
+                  onTranscript?.(responseText, true, "assistant");
+                } else {
+                  console.log("[TURN_COMPLETE] suppressed tiny canceled fragment:", responseText.slice(0, 50));
+                }
               }
             }
 
