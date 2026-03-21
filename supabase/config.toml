@@ -98,3 +98,6 @@ verify_jwt = false
 
 [functions.demo-email-log]
 verify_jwt = false
+
+[functions.widget-book-slot]
+verify_jwt = false

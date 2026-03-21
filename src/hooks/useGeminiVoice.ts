@@ -3843,6 +3843,12 @@ export const useGeminiVoice = ({
 
                   if (looksLikeAction) {
                     currentResponseTextRef.current = partText;
+                    // Fire book_slot actions immediately during streaming (don't wait for TURN_COMPLETE)
+                    if (partText.includes("book_slot") && !earlyActionFiredRef.current) {
+                      console.log("[EARLY ACTION] Firing book_slot during streaming");
+                      earlyActionFiredRef.current = true;
+                      void maybeExecuteActionFromGemini(partText);
+                    }
                   } else if (partText) {
                     if (currentResponseTextRef.current && !currentResponseTextRef.current.endsWith(" ")) {
                       currentResponseTextRef.current += " ";
