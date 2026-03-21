@@ -54,7 +54,7 @@ serve(async (req) => {
     // Fetch calendar settings
     const { data: calSettings } = await supabase
       .from("calendar_settings")
-      .select("calendar_enabled, booking_type, default_meeting_duration, working_hours_start, working_hours_end, working_days, auto_book_after_conversation")
+      .select("calendar_enabled, booking_type, default_meeting_duration, working_hours_start, working_hours_end, working_days, auto_book_after_conversation, required_booking_fields")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -107,10 +107,21 @@ serve(async (req) => {
         return names[d];
       }).join(", ");
       
-      // Get tomorrow's date for default
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       const tomorrowStr = tomorrow.toISOString().split("T")[0];
+
+      // Build required fields instruction
+      const reqFields: string[] = calSettings.required_booking_fields || ["name"];
+      const fieldLabels: Record<string, string> = { name: "име", email: "имейл", phone: "телефон", service: "услуга" };
+      const requiredFieldsList = reqFields.map((f: string) => fieldLabels[f] || f).join(", ");
+      const fieldJsonHints = reqFields.map((f: string) => {
+        if (f === "name") return '"attendee_name":"Име"';
+        if (f === "email") return '"attendee_email":"имейл"';
+        if (f === "phone") return '"attendee_phone":"телефон"';
+        if (f === "service") return '"service":"услуга"';
+        return "";
+      }).filter(Boolean).join(",");
       
       systemPrompt += `
 
@@ -126,21 +137,26 @@ serve(async (req) => {
 АБСОЛЮТНИ ПРАВИЛА (нарушаването им е ЗАБРАНЕНО):
 1. Когато клиент иска ${label}, час, запазване, записване, среща, консултация или резервация → ИЗПОЛЗВАЙ book_slot
 2. НИКОГА не казвай "нямаме система", "не мога да запиша", "нямаме онлайн система" — ИМАШ КАЛЕНДАР!
-3. НИКОГА не използвай submit_form за записване на часове
+3. НИКОГА не използвай submit_form за записване на часове — submit_form е ЗАБРАНЕНА за тази цел
 4. НИКОГА не пренасочвай към контактна форма за записване — използвай КАЛЕНДАРА
 5. Казвай "${label}" (не "среща" ако типът е "резервация" и обратно)
 6. ПРОАКТИВНО предлагай: "Искате ли да ви запиша ${label}? Мога да проверя свободните часове."
+
+ЗАДЪЛЖИТЕЛНИ ДАННИ ПРЕДИ ЗАПИСВАНЕ:
+Преди да извикаш book с action="book", ТРЯБВА да събереш следните данни от клиента: ${requiredFieldsList}.
+Питай ги по естествен начин в разговора. НЕ записвай час без тези данни.
 
 ДЕЙСТВИЯ С КАЛЕНДАРА (връщаш САМО JSON, без текст преди/след):
 
 Стъпка 1 — ВИНАГИ първо провери свободни часове:
 {"type":"action_request","action":"book_slot","calendar_action":"get_slots","owner_user_id":"${userId}","date":"${tomorrowStr}"}
 
-Стъпка 2 — След като клиентът избере час:
-{"type":"action_request","action":"book_slot","calendar_action":"book","owner_user_id":"${userId}","date":"YYYY-MM-DD","time":"HH:MM","attendee_name":"Име","attendee_email":"имейл ако има"}
+Стъпка 2 — След като клиентът избере час И дадеш всички данни:
+{"type":"action_request","action":"book_slot","calendar_action":"book","owner_user_id":"${userId}","date":"YYYY-MM-DD","time":"HH:MM",${fieldJsonHints}}
 
 ВАЖНО: Ако клиентът не уточни дата, използвай ${tomorrowStr}. Ако попита кога си свободен, извикай get_slots.
-ВАЖНО: Когато връщаш JSON за book_slot, отговорът трябва да съдържа САМО JSON обекта. Никакъв текст.`;
+ВАЖНО: Когато връщаш JSON за book_slot, отговорът трябва да съдържа САМО JSON обекта. Никакъв текст.
+ВАЖНО: Ако клиентът поиска ${label} или час, ВЕДНАГА извикай get_slots и предложи часове. НЕ питай дали иска да попълни форма.`;
     }
 
     const response = {

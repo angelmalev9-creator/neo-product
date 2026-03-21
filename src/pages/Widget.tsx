@@ -217,14 +217,9 @@ const Widget = () => {
   }, [systemPrompt, companyName, sessionId, connect, userId, trackConversation, initAudioContext, playConnectSound, startAmbient, preWarmMicrophone]);
 
   const endCall = useCallback(async () => {
-    stopAmbient();
-    playDisconnectSound();
-    disconnect();
-    setLiveTranscript('');
-    // Keep liveAssistantTranscript visible briefly, then commit it as a message
+    // FIRST: Capture pending transcript BEFORE disconnect clears state
     const pendingAssistant = liveAssistantTranscript.trim();
     if (pendingAssistant) {
-      // Commit the partial assistant transcript as a full message so it doesn't vanish
       setMessages(prev => {
         const next = [...prev, { role: 'assistant' as const, content: pendingAssistant }];
         messagesRef.current = next;
@@ -233,6 +228,11 @@ const Widget = () => {
       void persistTranscriptMessage('assistant', pendingAssistant);
     }
     setLiveAssistantTranscript('');
+    setLiveTranscript('');
+    // THEN: Disconnect audio/voice
+    stopAmbient();
+    playDisconnectSound();
+    disconnect();
     if (!leadSubmitted) setShowLeadModal(true);
     if (conversationId) {
       // Persist any unsaved messages from state before ending

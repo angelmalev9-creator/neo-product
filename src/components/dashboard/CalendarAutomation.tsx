@@ -23,7 +23,15 @@ interface CalendarSettings {
   working_days: number[];
   meeting_title_template: string;
   meeting_description_template: string;
+  required_booking_fields: string[];
 }
+
+const BOOKING_FIELDS = [
+  { value: 'name', label: 'Име' },
+  { value: 'email', label: 'Имейл' },
+  { value: 'phone', label: 'Телефон' },
+  { value: 'service', label: 'Услуга' },
+];
 
 interface CalendarBooking {
   id: string;
@@ -65,6 +73,7 @@ const CalendarAutomation = () => {
     working_days: [1, 2, 3, 4, 5],
     meeting_title_template: 'Среща с {{lead_name}} - {{company_name}}',
     meeting_description_template: '',
+    required_booking_fields: ['name'],
   });
   const [bookings, setBookings] = useState<CalendarBooking[]>([]);
   const [calendarMonth, setCalendarMonth] = useState(new Date());
@@ -123,6 +132,7 @@ const CalendarAutomation = () => {
           working_days: data.working_days || [1, 2, 3, 4, 5],
           meeting_title_template: data.meeting_title_template || settings.meeting_title_template,
           meeting_description_template: data.meeting_description_template || '',
+          required_booking_fields: (data as any).required_booking_fields || ['name'],
         });
       }
     } catch (e) {
@@ -169,6 +179,7 @@ const CalendarAutomation = () => {
         working_days: settings.working_days,
         meeting_title_template: settings.meeting_title_template,
         meeting_description_template: settings.meeting_description_template,
+        required_booking_fields: settings.required_booking_fields,
       } as any, { onConflict: 'user_id' });
       if (error) throw error;
       toast({ title: 'Настройките са запазени!' });
@@ -301,6 +312,29 @@ const CalendarAutomation = () => {
                   >
                     {day.label}
                   </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">Задължителни полета за записване</Label>
+              <p className="text-[10px] text-muted-foreground">NEO ще събира тези данни от клиента преди да запише час</p>
+              <div className="flex flex-wrap gap-3">
+                {BOOKING_FIELDS.map(field => (
+                  <label key={field.value} className="flex items-center gap-1.5 cursor-pointer">
+                    <Checkbox
+                      checked={settings.required_booking_fields.includes(field.value)}
+                      onCheckedChange={(checked) => {
+                        setSettings(prev => ({
+                          ...prev,
+                          required_booking_fields: checked
+                            ? [...prev.required_booking_fields, field.value]
+                            : prev.required_booking_fields.filter(f => f !== field.value),
+                        }));
+                      }}
+                    />
+                    <span className="text-xs text-foreground">{field.label}</span>
+                  </label>
                 ))}
               </div>
             </div>

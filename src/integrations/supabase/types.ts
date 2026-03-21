@@ -51,6 +51,7 @@ export type Database = {
         Row: {
           attendee_email: string | null
           attendee_name: string | null
+          attendee_phone: string | null
           conversation_id: string | null
           created_at: string
           event_end: string
@@ -59,12 +60,14 @@ export type Database = {
           google_event_id: string | null
           id: string
           lead_id: string | null
+          service: string | null
           status: string | null
           user_id: string
         }
         Insert: {
           attendee_email?: string | null
           attendee_name?: string | null
+          attendee_phone?: string | null
           conversation_id?: string | null
           created_at?: string
           event_end: string
@@ -73,12 +76,14 @@ export type Database = {
           google_event_id?: string | null
           id?: string
           lead_id?: string | null
+          service?: string | null
           status?: string | null
           user_id: string
         }
         Update: {
           attendee_email?: string | null
           attendee_name?: string | null
+          attendee_phone?: string | null
           conversation_id?: string | null
           created_at?: string
           event_end?: string
@@ -87,6 +92,7 @@ export type Database = {
           google_event_id?: string | null
           id?: string
           lead_id?: string | null
+          service?: string | null
           status?: string | null
           user_id?: string
         }
@@ -123,6 +129,7 @@ export type Database = {
           id: string
           meeting_description_template: string | null
           meeting_title_template: string | null
+          required_booking_fields: string[] | null
           updated_at: string
           user_id: string
           working_days: number[] | null
@@ -144,6 +151,7 @@ export type Database = {
           id?: string
           meeting_description_template?: string | null
           meeting_title_template?: string | null
+          required_booking_fields?: string[] | null
           updated_at?: string
           user_id: string
           working_days?: number[] | null
@@ -165,6 +173,7 @@ export type Database = {
           id?: string
           meeting_description_template?: string | null
           meeting_title_template?: string | null
+          required_booking_fields?: string[] | null
           updated_at?: string
           user_id?: string
           working_days?: number[] | null

@@ -3410,6 +3410,9 @@ export const useGeminiVoice = ({
               time: parsed?.time || undefined,
               attendeeName: parsed?.attendee_name || parsed?.client_name || undefined,
               attendeeEmail: parsed?.attendee_email || parsed?.client_email || undefined,
+              attendeePhone: parsed?.attendee_phone || parsed?.client_phone || undefined,
+              service: parsed?.service || undefined,
+              conversationId: parsed?.conversation_id || undefined,
             };
 
             console.log("[ACTION][BOOK_SLOT]", calAction, calBody);
