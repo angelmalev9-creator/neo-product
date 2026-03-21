@@ -7,6 +7,7 @@ import Comparison from '@/components/landing/Comparison';
 import Features from '@/components/landing/Features';
 import Testimonials from '@/components/landing/Testimonials';
 import MarketingSkills from '@/components/landing/MarketingSkills';
+import BusinessResults from '@/components/landing/BusinessResults';
 import DashboardPreview from '@/components/landing/DashboardPreview';
 import Founder from '@/components/landing/Founder';
 import Pricing from '@/components/landing/Pricing';
