@@ -86,7 +86,7 @@ const SetupPage = ({
       </div>
 
       {/* Section tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" ref={tabsRef}>
         {[
           { id: 'website', label: 'Уебсайт', icon: Globe },
           { id: 'calendar', label: 'Календар', icon: CalendarDays },
@@ -95,6 +95,7 @@ const SetupPage = ({
         ].map((tab) => (
           <button
             key={tab.id}
+            ref={activeSection === tab.id ? activeTabRef : undefined}
             onClick={() => onTabChange(`setup-${tab.id}`)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
               activeSection === tab.id
