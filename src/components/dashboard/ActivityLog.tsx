@@ -116,18 +116,20 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
           c.id === row.conversation_id ? { ...c, messages_count: (c.messages_count || 0) + 1 } : c
         ));
       }).subscribe();
-    return () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2); supabase.removeChannel(ch3); };
+    return () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2); supabase.removeChannel(ch3); supabase.removeChannel(ch4); };
   }, [userId]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [convosRes, leadsRes] = await Promise.all([
+      const [convosRes, leadsRes, bookingsRes] = await Promise.all([
         supabase.from('conversations').select('*').eq('user_id', userId).order('started_at', { ascending: false }).limit(100),
         supabase.from('captured_leads').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(100),
+        supabase.from('calendar_bookings').select('id, conversation_id, attendee_name, attendee_email, attendee_phone, service, event_title, event_start, status').eq('user_id', userId).order('created_at', { ascending: false }).limit(100),
       ]);
       setConversations(convosRes.data || []);
       setLeads(leadsRes.data || []);
+      setBookings((bookingsRes.data || []) as CalendarBooking[]);
     } catch {
       toast({ title: 'Грешка', description: 'Неуспешно зареждане', variant: 'destructive' });
     } finally { setLoading(false); }
