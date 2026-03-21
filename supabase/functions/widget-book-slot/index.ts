@@ -145,6 +145,8 @@ serve(async (req) => {
           event_end: slotEnd,
           attendee_name: attendeeName || null,
           attendee_email: attendeeEmail || null,
+          attendee_phone: attendeePhone || null,
+          service: service || null,
           conversation_id: conversationId || null,
           status: "scheduled",
         })
