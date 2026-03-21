@@ -1407,12 +1407,11 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
 
             {/* Contact panel and resend button removed - no email functionality for now */}
 
-            {messages.length > 0 && (
+            {(messages.length > 0 || liveAssistantTranscript) && (
               <div
                 ref={messagesContainerRef}
                 className="mt-4 lg:mt-6 max-h-40 lg:max-h-52 overflow-y-auto space-y-2 lg:space-y-3 text-left"
               >
-                {/* ✅ REMOVED: Live preview UI - now using "Final clean only" approach */}
                 {messages.map((msg, i) => (
                   <div
                     key={i}
@@ -1428,6 +1427,14 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
                     {msg.content}
                   </div>
                 ))}
+                {liveAssistantTranscript && (
+                  <div className="p-2 lg:p-3 rounded-lg text-xs lg:text-sm bg-primary/10 border border-primary/20 animate-pulse">
+                    <span className="font-medium text-[10px] lg:text-xs text-muted-foreground block mb-1">
+                      {t("interview.neo")}
+                    </span>
+                    {liveAssistantTranscript}
+                  </div>
+                )}
                 <div ref={messagesEndRef} />
               </div>
             )}
