@@ -97,7 +97,7 @@ serve(async (req) => {
       }
     }
 
-    // Add calendar instructions if enabled
+    // Add calendar instructions if enabled — placed as HIGH-PRIORITY override
     if (calSettings?.calendar_enabled) {
       const bt = calSettings.booking_type || "consultation";
       const label = bt === "reservation" ? "резервация" : bt === "meeting" ? "среща" : "консултация";
@@ -107,26 +107,40 @@ serve(async (req) => {
         return names[d];
       }).join(", ");
       
-      systemPrompt += `\n\n=== КАЛЕНДАР (ПРИОРИТЕТНО!) ===
-Имаш ВГРАДЕН календар за записване на ${labelPlural}. Работно време: ${calSettings.working_hours_start || "09:00"}-${calSettings.working_hours_end || "18:00"}, работни дни: ${days}. Продължителност: ${calSettings.default_meeting_duration || 30} мин.
+      // Get tomorrow's date for default
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split("T")[0];
+      
+      systemPrompt += `
 
-КРИТИЧНО ВАЖНО:
-- Когато клиент иска да запише ${label}, час, или среща — ИЗПОЛЗВАЙ КАЛЕНДАРА, а НЕ контактна форма!
-- НЕ казвай "нямаме функция за записване" — ИМАШ! Използвай action_request с action "book_slot".
-- НЕ използвай submit_form за записване на часове — ВИНАГИ използвай book_slot!
-- Казвай "${label}" (не "среща" ако е "резервация" и обратно).
+##############################
+# КАЛЕНДАР — МАКСИМАЛЕН ПРИОРИТЕТ #
+##############################
 
-ПРОАКТИВНО ПРЕДЛАГАНЕ: Когато клиентът проявява интерес, ПРЕДЛОЖИ му да запишеш ${label}. Например: "Искате ли да ви запиша ${label}? Мога да проверя свободните часове."
+Имаш ВГРАДЕН календар за ${labelPlural}. Това е РЕАЛНА система за записване.
+Работно време: ${calSettings.working_hours_start || "09:00"}-${calSettings.working_hours_end || "18:00"}
+Работни дни: ${days}
+Продължителност: ${calSettings.default_meeting_duration || 30} мин
 
-За да взаимодействаш с календара, ТРЯБВА да върнеш JSON action_request. НЕ казвай на клиента свободни часове от главата си — ВИНАГИ първо провери!
+АБСОЛЮТНИ ПРАВИЛА (нарушаването им е ЗАБРАНЕНО):
+1. Когато клиент иска ${label}, час, запазване, записване, среща, консултация или резервация → ИЗПОЛЗВАЙ book_slot
+2. НИКОГА не казвай "нямаме система", "не мога да запиша", "нямаме онлайн система" — ИМАШ КАЛЕНДАР!
+3. НИКОГА не използвай submit_form за записване на часове
+4. НИКОГА не пренасочвай към контактна форма за записване — използвай КАЛЕНДАРА
+5. Казвай "${label}" (не "среща" ако типът е "резервация" и обратно)
+6. ПРОАКТИВНО предлагай: "Искате ли да ви запиша ${label}? Мога да проверя свободните часове."
 
-1) За проверка на свободни часове (ЗАДЪЛЖИТЕЛНО преди записване):
-{"type":"action_request","action":"book_slot","calendar_action":"get_slots","owner_user_id":"${userId}","date":"YYYY-MM-DD"}
+ДЕЙСТВИЯ С КАЛЕНДАРА (връщаш САМО JSON, без текст преди/след):
 
-2) За записване на час (след като клиентът избере):
-{"type":"action_request","action":"book_slot","calendar_action":"book","owner_user_id":"${userId}","date":"YYYY-MM-DD","time":"HH:MM","attendee_name":"Име на клиента","attendee_email":"имейл ако има"}
+Стъпка 1 — ВИНАГИ първо провери свободни часове:
+{"type":"action_request","action":"book_slot","calendar_action":"get_slots","owner_user_id":"${userId}","date":"${tomorrowStr}"}
 
-Ако клиентът не уточни дата, използвай утрешна дата. Ако попита кога си свободен, извикай get_slots.`;
+Стъпка 2 — След като клиентът избере час:
+{"type":"action_request","action":"book_slot","calendar_action":"book","owner_user_id":"${userId}","date":"YYYY-MM-DD","time":"HH:MM","attendee_name":"Име","attendee_email":"имейл ако има"}
+
+ВАЖНО: Ако клиентът не уточни дата, използвай ${tomorrowStr}. Ако попита кога си свободен, извикай get_slots.
+ВАЖНО: Когато връщаш JSON за book_slot, отговорът трябва да съдържа САМО JSON обекта. Никакъв текст.`;
     }
 
     const response = {
