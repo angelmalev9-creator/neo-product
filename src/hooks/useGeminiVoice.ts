@@ -1418,6 +1418,7 @@ export const useGeminiVoice = ({
   const assistantTurnCanceledRef = useRef(false);
   const vadBargeInFramesRef = useRef<number>(0);
   const lastCalendarCheckedDateRef = useRef("");
+  const earlyActionFiredRef = useRef(false);
   const lastCalendarNextAvailableDateRef = useRef("");
   const lastCalendarSlotsRef = useRef<string[]>([]);
 
