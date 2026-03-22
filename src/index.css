@@ -75,6 +75,62 @@
     --sidebar-ring: 0 90% 58%;
   }
 
+  .light {
+    --background: 0 0% 98%;
+    --foreground: 0 0% 8%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 8%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 8%;
+
+    --primary: 0 85% 52%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 94%;
+    --secondary-foreground: 0 0% 15%;
+
+    --muted: 0 0% 92%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 355 85% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 88%;
+    --input: 0 0% 92%;
+    --ring: 0 85% 52%;
+
+    --neo-red: 0 85% 52%;
+    --neo-red-glow: 355 90% 62%;
+    --neo-red-dark: 0 70% 40%;
+    --neo-red-light: 0 80% 68%;
+    --neo-dark: 0 0% 98%;
+    --neo-dark-lighter: 0 0% 95%;
+    --neo-glass: 0 0% 96%;
+    --neo-glass-border: 0 0% 85%;
+    --neo-text-muted: 0 0% 45%;
+    --neo-text-bright: 0 0% 10%;
+    --neo-success: 145 70% 40%;
+    --neo-warning: 45 90% 50%;
+    --neo-purple: 280 70% 55%;
+    --neo-blue: 220 85% 55%;
+    --neo-cyan: 185 80% 42%;
+    --neo-gold: 40 90% 48%;
+
+    --sidebar-background: 0 0% 97%;
+    --sidebar-foreground: 0 0% 8%;
+    --sidebar-primary: 0 85% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 93%;
+    --sidebar-accent-foreground: 0 0% 8%;
+    --sidebar-border: 0 0% 88%;
+    --sidebar-ring: 0 85% 52%;
+  }
+
   .dark {
     --background: 0 0% 2%;
     --foreground: 0 0% 98%;

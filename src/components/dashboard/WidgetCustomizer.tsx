@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Phone, Copy, Check, Eye, Upload, Crown } from 'lucide-react';
+import { Phone, Eye, Crown } from 'lucide-react';
 
 interface WidgetConfig {
   position: string;
@@ -63,11 +63,9 @@ const WidgetCustomizer = ({
   const { toast } = useToast();
   const [config, setConfig] = useState<WidgetConfig>(initialConfig || DEFAULT_CONFIG);
   const [saving, setSaving] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [localHideBranding, setLocalHideBranding] = useState(hideNeoBranding || false);
   
-  // Check if user has Growth or Business plan
   const canCustomizeBranding = subscriptionTier === 'growth' || subscriptionTier === 'empire';
 
   useEffect(() => {
@@ -101,22 +99,6 @@ const WidgetCustomizer = ({
     }
   };
 
-  const getEmbedCode = () => {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    return `<script src="${supabaseUrl}/functions/v1/widget-script?userId=${userId}"></script>`;
-  };
-
-  const copyEmbedCode = () => {
-    navigator.clipboard.writeText(getEmbedCode());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-    toast({
-      title: 'Копирано!',
-      description: 'Embed кодът е копиран',
-    });
-  };
-
-  // Calculate button size for preview
   const getPreviewSize = () => {
     switch (config.buttonSize) {
       case 'small': return { width: 40, height: 40, iconSize: 16 };
@@ -146,14 +128,12 @@ const WidgetCustomizer = ({
         
         {showPreview && (
           <div className="relative h-48 bg-muted/30 rounded-lg border border-border/30 overflow-hidden">
-            {/* Preview website mockup */}
             <div className="absolute inset-0 p-4">
               <div className="h-4 bg-muted/50 rounded w-3/4 mb-2" />
               <div className="h-3 bg-muted/30 rounded w-1/2 mb-4" />
               <div className="h-16 bg-muted/20 rounded" />
             </div>
             
-            {/* Widget button preview */}
             <div
               className={`absolute ${config.position === 'bottom-left' ? 'left-4' : 'right-4'} bottom-4 rounded-full flex items-center justify-center shadow-lg transition-all`}
               style={{
@@ -165,7 +145,6 @@ const WidgetCustomizer = ({
               <Phone className="text-white" style={{ width: previewSize.iconSize, height: previewSize.iconSize }} />
             </div>
 
-            {/* Tooltip preview */}
             <div
               className={`absolute ${config.position === 'bottom-left' ? 'left-16' : 'right-16'} bottom-6 bg-background text-foreground text-xs px-2 py-1 rounded shadow-lg border border-border/30`}
             >
@@ -239,7 +218,7 @@ const WidgetCustomizer = ({
         />
       </div>
 
-      {/* Hide NEO Branding - Growth+ only */}
+      {/* Hide NEO Branding */}
       <div className="flex items-center justify-between">
         <div>
           <Label className="text-sm flex items-center gap-2">
@@ -290,27 +269,6 @@ const WidgetCustomizer = ({
       >
         {saving ? 'Запазване...' : 'Запази настройките'}
       </Button>
-
-      {/* Embed Code */}
-      <div className="space-y-2 pt-4 border-t border-border/30">
-        <Label className="text-sm font-medium">Код за вграждане</Label>
-        <p className="text-xs text-muted-foreground">
-          Добавете този код преди &lt;/body&gt; тага на вашия сайт:
-        </p>
-        <div className="relative bg-background/50 rounded-lg p-3 border border-border/30">
-          <code className="text-xs text-muted-foreground break-all block pr-10">
-            {getEmbedCode()}
-          </code>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={copyEmbedCode}
-            className="absolute top-2 right-2 w-7 h-7"
-          >
-            {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-          </Button>
-        </div>
-      </div>
     </div>
   );
 };

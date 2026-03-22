@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import {
   Home, Rocket, Globe, CalendarDays, Mail, Database,
-  MessageSquare, FileText, Users, HelpCircle,
+  MessageSquare,
   Brain, Mic, BarChart3, TrendingUp,
   Settings, Crown, User, LogOut, ChevronDown, Palette,
+  Sun, Moon,
 } from 'lucide-react';
 import NeoLogo from '@/components/ui/NeoLogo';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/hooks/useTheme';
 
 interface DashboardSidebarProps {
   activeTab: string;
@@ -36,13 +38,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'setup-data', label: 'Данни от сайта', icon: Database },
     ],
   },
-  {
-    id: 'conversations', label: 'Разговори', icon: MessageSquare,
-    children: [
-      { id: 'conv-diary', label: 'Дневник', icon: FileText },
-      { id: 'conv-clients', label: 'Клиенти', icon: Users },
-    ],
-  },
+  { id: 'conv-diary', label: 'Разговори', icon: MessageSquare },
   {
     id: 'neo', label: 'NEO', icon: Brain,
     children: [
@@ -67,6 +63,7 @@ const NAV_GROUPS: NavGroup[] = [
 ];
 
 const DashboardSidebar = ({ activeTab, onTabChange, onLogout, userEmail, subscribed, tierName }: DashboardSidebarProps) => {
+  const { theme, toggleTheme } = useTheme();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     NAV_GROUPS.forEach((g) => {
@@ -82,7 +79,7 @@ const DashboardSidebar = ({ activeTab, onTabChange, onLogout, userEmail, subscri
   const isChildActive = (group: NavGroup) => group.children?.some((c) => c.id === activeTab);
 
   return (
-    <aside className="w-[240px] min-h-screen border-r border-border/10 bg-sidebar flex flex-col">
+    <aside className="w-[240px] h-screen sticky top-0 border-r border-border/10 bg-sidebar flex flex-col">
       {/* Logo */}
       <div className="p-5 pb-4">
         <NeoLogo size="sm" />
@@ -98,8 +95,8 @@ const DashboardSidebar = ({ activeTab, onTabChange, onLogout, userEmail, subscri
         </div>
       )}
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
+      {/* Navigation - scrollable */}
+      <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto scrollbar-thin">
         {NAV_GROUPS.map((group) => {
           const hasChildren = !!group.children?.length;
           const isOpen = openGroups[group.id] || isChildActive(group);
@@ -161,7 +158,16 @@ const DashboardSidebar = ({ activeTab, onTabChange, onLogout, userEmail, subscri
 
       {/* User footer */}
       <div className="p-4 border-t border-border/10 space-y-2">
-        <div className="px-1 truncate text-[11px] text-muted-foreground">{userEmail}</div>
+        <div className="flex items-center justify-between">
+          <div className="px-1 truncate text-[11px] text-muted-foreground flex-1">{userEmail}</div>
+          <button
+            onClick={toggleTheme}
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+            title={theme === 'dark' ? 'Светъл режим' : 'Тъмен режим'}
+          >
+            {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+          </button>
+        </div>
         <Button
           variant="ghost"
           size="sm"
