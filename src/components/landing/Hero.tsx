@@ -8,7 +8,7 @@ const Hero = () => {
   const { t } = useTranslation();
 
   return (
-    <section className="relative min-h-[60vh] sm:min-h-[70vh] lg:min-h-[85vh] flex items-center justify-center py-10 sm:py-12 lg:py-20 overflow-hidden">
+    <section className="relative min-h-[55vh] sm:min-h-[60vh] lg:min-h-[75vh] flex items-center justify-center py-8 sm:py-10 lg:py-16 overflow-hidden">
       <div className="absolute inset-0 neo-grid-bg opacity-10 pointer-events-none" />
 
       {/* Ambient glow orbs */}
@@ -67,7 +67,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.45 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-4 lg:gap-5 mb-12 sm:mb-12 lg:mb-16 px-3 sm:px-4 lg:px-0">
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-4 lg:gap-5 mb-8 sm:mb-10 lg:mb-12 px-3 sm:px-4 lg:px-0">
             
             <Button
               size="lg"

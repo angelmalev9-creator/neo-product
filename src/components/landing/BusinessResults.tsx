@@ -105,7 +105,7 @@ const BusinessResults = () => {
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="results"
-      className="py-14 sm:py-28 relative overflow-hidden"
+      className="py-10 sm:py-16 relative overflow-hidden"
     >
       {/* Ambient glows */}
       <div className="absolute top-1/4 left-0 w-[500px] h-[500px] rounded-full bg-primary/5 blur-[180px] pointer-events-none" />
@@ -113,7 +113,7 @@ const BusinessResults = () => {
 
       <div className="container mx-auto px-5 sm:px-4 lg:px-8 relative z-10">
         {/* Header */}
-        <div className="text-center mb-10 sm:mb-20">
+        <div className="text-center mb-8 sm:mb-12">
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/8 border border-primary/15 text-primary text-sm font-medium mb-5">
             <Sparkles className="w-3.5 h-3.5" />
             Какво може NEO
@@ -132,7 +132,7 @@ const BusinessResults = () => {
           variants={containerVariants}
           initial="hidden"
           animate={isVisible ? 'visible' : 'hidden'}
-          className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-12 sm:mb-24"
+          className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-8 sm:mb-14"
         >
           {outcomes.map((item, idx) => (
             <motion.div
@@ -155,7 +155,7 @@ const BusinessResults = () => {
 
         {/* Dashboard Features with Real Screenshots */}
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-10 sm:mb-14">
+          <div className="text-center mb-6 sm:mb-8">
             <h3 className="text-2xl sm:text-3xl md:text-4xl font-display font-black text-foreground mb-3 leading-tight">
               Всичко на{' '}
               <span className="neo-gradient-text">едно табло</span>
@@ -207,7 +207,7 @@ const BusinessResults = () => {
           </motion.div>
 
           {/* CTA */}
-          <div className="text-center mt-12 sm:mt-16">
+          <div className="text-center mt-8 sm:mt-10">
             <Button
               size="lg"
               className="neo-btn-primary text-base px-8 py-6 rounded-full gap-2"

@@ -31,11 +31,11 @@ const Pricing = () => {
       minutes: '500', callsPerDay: `~25 ${t('pricing.callsPerDay')}`, savings: '97%',
       description: t('pricing.starterDesc'),
       features: [
-        { text: t('pricing.feature_minutes', { count: 500 }), icon: Phone },
+        { text: `500 ${t('pricing.minutes')} / ${t('pricing.perMonthShort')}`, icon: Phone },
         { text: t('pricing.feature_247'), icon: Headphones },
         { text: t('pricing.feature_bulgarian'), icon: Check },
         { text: t('pricing.feature_widget'), icon: Check },
-        { text: t('pricing.feature_stats'), icon: BarChart3 },
+        { text: 'Базова статистика', icon: BarChart3 },
       ],
       cta: t('pricing.ctaStarter'), featured: false,
       priceId: yearly ? PRICE_IDS.starter.yearly : PRICE_IDS.starter.monthly,
@@ -45,12 +45,12 @@ const Pricing = () => {
       minutes: '2500', callsPerDay: `~125 ${t('pricing.callsPerDay')}`, savings: '96%',
       description: t('pricing.growthDesc'),
       features: [
-        { text: t('pricing.feature_minutes', { count: 2500 }), icon: Phone },
+        { text: `2 500 ${t('pricing.minutes')} / ${t('pricing.perMonthShort')}`, icon: Phone },
         { text: t('pricing.feature_247'), icon: Headphones },
-        { text: t('pricing.feature_bulgarian'), icon: Check },
-        { text: t('pricing.feature_widget'), icon: Check },
-        { text: t('pricing.feature_stats'), icon: BarChart3 },
+        { text: 'Всичко от Старт +', icon: Check },
+        { text: 'Автоматични резервации', icon: Sparkles },
         { text: t('pricing.feature_email_automation'), icon: Mail },
+        { text: 'Детайлна статистика', icon: BarChart3 },
         { text: t('pricing.feature_priority'), icon: Users },
       ],
       cta: t('pricing.ctaPopular'), featured: true,
@@ -61,12 +61,12 @@ const Pricing = () => {
       minutes: '10000', callsPerDay: `500+ ${t('pricing.callsPerDay')}`, savings: '93%',
       description: t('pricing.businessDesc'),
       features: [
-        { text: t('pricing.feature_minutes', { count: 10000 }), icon: Phone },
-        { text: t('pricing.feature_247'), icon: Headphones },
-        { text: t('pricing.feature_bulgarian'), icon: Check },
-        { text: t('pricing.feature_widget'), icon: Check },
-        { text: t('pricing.feature_stats'), icon: BarChart3 },
-        { text: t('pricing.feature_manager'), icon: Users },
+        { text: `10 000 ${t('pricing.minutes')} / ${t('pricing.perMonthShort')}`, icon: Phone },
+        { text: 'Всичко от Растеж +', icon: Check },
+        { text: 'Без NEO брандиране', icon: Sparkles },
+        { text: 'Персонален мениджър', icon: Users },
+        { text: 'API достъп', icon: BarChart3 },
+        { text: 'Приоритетна поддръжка', icon: Headphones },
       ],
       cta: t('pricing.ctaBusiness'), featured: false,
       priceId: yearly ? PRICE_IDS.empire.yearly : PRICE_IDS.empire.monthly,
@@ -98,7 +98,7 @@ const Pricing = () => {
     <section 
       ref={ref as React.RefObject<HTMLElement>}
       id="pricing" 
-      className="py-14 sm:py-28 relative overflow-hidden"
+      className="py-10 sm:py-16 relative overflow-hidden"
     >
       {/* Ambient glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 blur-[150px] rounded-full pointer-events-none" />
