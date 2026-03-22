@@ -128,7 +128,7 @@ const Testimonials = () => {
                 transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
                 className="absolute inset-0"
               >
-                <div className="relative rounded-3xl border border-border/30 bg-card/40 backdrop-blur-xl p-8 sm:p-10 lg:p-12 shadow-2xl shadow-primary/5">
+                <div className="relative rounded-2xl sm:rounded-3xl border border-border/30 bg-card/40 backdrop-blur-xl p-5 sm:p-10 lg:p-12 shadow-2xl shadow-primary/5">
                   {/* Decorative gradient */}
                   <div className="absolute -z-10 inset-0 rounded-3xl bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
 
