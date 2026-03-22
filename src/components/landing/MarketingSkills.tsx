@@ -28,7 +28,7 @@ const MarketingSkills = () => {
   ];
 
   return (
-    <section ref={ref as React.RefObject<HTMLElement>} className="relative py-20 sm:py-28 px-4 overflow-hidden">
+    <section ref={ref as React.RefObject<HTMLElement>} className="relative py-14 sm:py-28 px-4 overflow-hidden">
       {/* Ambient glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/4 blur-[150px] pointer-events-none" />
       
