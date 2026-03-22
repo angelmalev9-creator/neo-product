@@ -163,14 +163,26 @@ const BusinessResults = () => {
               <motion.div
                 key={idx}
                 variants={itemVariants}
-                className="flex gap-4 p-5 rounded-2xl neo-glass-subtle border border-border/20 hover:border-primary/20 transition-all duration-300 group"
+                className="relative overflow-hidden rounded-2xl neo-glass-subtle border border-border/20 hover:border-primary/20 transition-all duration-300 group"
               >
-                <div className="shrink-0 w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/15 group-hover:scale-105 transition-all duration-300">
-                  <feature.icon className="w-5 h-5 text-primary" />
+                {/* Preview image */}
+                <div className="h-36 sm:h-44 overflow-hidden">
+                  <img 
+                    src={feature.image} 
+                    alt={feature.title}
+                    className="w-full h-full object-cover object-top opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
                 </div>
-                <div>
-                  <h4 className="font-semibold text-foreground mb-1">{feature.title}</h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{feature.desc}</p>
+                {/* Content */}
+                <div className="relative flex gap-4 p-5 -mt-8">
+                  <div className="shrink-0 w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/15 group-hover:scale-105 transition-all duration-300 border border-border/20 backdrop-blur-sm">
+                    <feature.icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-foreground mb-1">{feature.title}</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{feature.desc}</p>
+                  </div>
                 </div>
               </motion.div>
             ))}
