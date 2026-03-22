@@ -5,6 +5,10 @@ import {
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
+import dashboardStats from '@/assets/dashboard-stats.jpg';
+import dashboardCalendar from '@/assets/dashboard-calendar.jpg';
+import dashboardEmail from '@/assets/dashboard-email.jpg';
+import dashboardSetup from '@/assets/dashboard-setup.jpg';
 
 const BusinessResults = () => {
   const { ref, isVisible } = useScrollAnimation();
