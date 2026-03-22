@@ -68,19 +68,20 @@ const DashboardHome = ({
     if (!userId) return;
     const todayStart = getTodayStart();
 
-    const [convRes, leadsRes, bookingsRes, totalConvRes, totalLeadsRes] = await Promise.all([
+    const [convRes, clientConvRes, bookingsRes, totalConvRes, totalClientConvRes] = await Promise.all([
       supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', todayStart),
-      supabase.from('captured_leads').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', todayStart),
+      // Нови клиенти = разговори с lead_captured=true (всеки разговор = макс 1 клиент)
+      supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('lead_captured', true).gte('created_at', todayStart),
       supabase.from('calendar_bookings').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', todayStart),
       supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId),
-      supabase.from('captured_leads').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+      supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('lead_captured', true),
     ]);
 
     setTodayConversations(convRes.count ?? 0);
-    setTodayClients((leadsRes.count ?? 0) + (bookingsRes.count ?? 0));
+    setTodayClients(clientConvRes.count ?? 0);
     setTodayBookings(bookingsRes.count ?? 0);
     setTotalConversations(totalConvRes.count ?? 0);
-    setTotalLeads(totalLeadsRes.count ?? 0);
+    setTotalLeads(totalClientConvRes.count ?? 0);
     setStatsLoading(false);
   };
 
