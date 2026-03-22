@@ -336,7 +336,7 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
                       value={url}
                       onChange={(e) => setUrl(e.target.value)}
                       placeholder={t("demo.placeholder")}
-                      className="w-full bg-background/60 border-0 rounded-xl py-3.5 sm:py-4 pl-11 sm:pl-12 pr-3 sm:pr-4 text-[16px] sm:text-base text-foreground placeholder:text-muted-foreground/35 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all font-medium"
+                      className="w-full bg-background/60 border-0 rounded-xl py-3 sm:py-4 pl-10 sm:pl-12 pr-3 sm:pr-4 text-[16px] sm:text-base text-foreground placeholder:text-muted-foreground/35 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all font-medium"
                     />
                   </div>
                   <Button

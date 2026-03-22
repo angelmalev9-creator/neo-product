@@ -161,7 +161,7 @@ const Pricing = () => {
                 initial={{ opacity: 0, y: 24 }}
                 animate={isVisible ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className={`relative flex flex-col rounded-2xl p-6 sm:p-7 lg:p-8 transition-all duration-500 overflow-visible ${
+                className={`relative flex flex-col rounded-2xl p-5 sm:p-7 lg:p-8 transition-all duration-500 overflow-visible ${
                   plan.featured 
                     ? 'neo-glass-premium ring-1 ring-primary/30 lg:scale-[1.04] shadow-[0_0_60px_hsl(var(--neo-red)/0.12)] mt-5' 
                     : 'neo-glass-subtle border border-border/20 hover:border-border/40 mt-5'
