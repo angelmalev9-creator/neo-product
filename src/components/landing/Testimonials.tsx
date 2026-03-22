@@ -156,8 +156,8 @@ const Testimonials = () => {
                   </blockquote>
 
                   {/* Author */}
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/30 to-accent/20 flex items-center justify-center text-base font-black text-foreground shadow-lg shadow-primary/10">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/30 to-accent/20 flex items-center justify-center text-sm sm:text-base font-black text-foreground shadow-lg shadow-primary/10">
                       {t.initials}
                     </div>
                     <div>
