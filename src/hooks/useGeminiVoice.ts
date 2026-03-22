@@ -980,7 +980,9 @@ function extractCalendarOwnerUserId(systemInstruction: string): string {
 }
 
 function extractCalendarDefaultDate(systemInstruction: string): string {
-  const match = String(systemInstruction || "").match(/"calendar_action":"get_slots"[^]*?"date":"(\d{4}-\d{2}-\d{2})"/i);
+  const match = String(systemInstruction || "").match(
+    /"calendar_action":"get_slots"[^]*?"date":"(\d{4}-\d{2}-\d{2})"/i,
+  );
   if (match?.[1]) return match[1];
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -1001,7 +1003,8 @@ function shouldForceCalendarFallback(responseText: string, systemInstruction: st
 
   if (!hasCalendarInSystemInstruction(systemInstruction)) return false;
   // If NEO already produced an action JSON, no fallback needed
-  if (response.includes("action_request") || response.includes("book_slot") || response.includes("submit_form")) return false;
+  if (response.includes("action_request") || response.includes("book_slot") || response.includes("submit_form"))
+    return false;
 
   // If NEO is talking about availability, dates, or offering to book — it's working correctly
   if (/следващ(?:ият|ия)\s+свободен/i.test(response)) return false;
@@ -1534,7 +1537,21 @@ export const useGeminiVoice = ({
     isPlayingRef.current = false;
     nextPlayTimeRef.current = 0;
     updateSpeaking(false);
-  }, [updateSpeaking]);
+
+    // ★ FIX 2: При barge-in веднага изпращаме натрупаната транскрипция — НЕ я губим
+    const builtTranscript = buildStableTranscriptFromBuffers();
+    if (builtTranscript && builtTranscript.trim().length >= 3) {
+      console.log("[BARGE-IN] ⚡ Flushing partial transcript immediately:", builtTranscript.slice(0, 80));
+      // Нулираме буферите преди flush — да не се изпрати отново при нормалния дебаунс
+      utteranceBufferRef.current = [];
+      finalChunksRef.current = [];
+      firstFinalChunkTsRef.current = 0;
+      lastFinalChunkTsRef.current = 0;
+      lastInterimTranscriptRef.current = "";
+      // Изпращаме директно (заобикаляме aggregation window guard-а)
+      handleUtteranceRef.current(builtTranscript);
+    }
+  }, [updateSpeaking, buildStableTranscriptFromBuffers]);
 
   const buildStableTranscriptFromBuffers = useCallback(() => {
     const finalJoined = finalChunksRef.current.join(" ").trim();
@@ -3476,9 +3493,11 @@ export const useGeminiVoice = ({
           const calAction = String(parsed?.calendar_action || "get_slots");
           const SUPABASE_BASE = "https://onufuxczpqlxxkgyltlz.supabase.co/functions/v1/widget-book-slot";
 
-          const calUserId = parsed?.owner_user_id ||
+          const calUserId =
+            parsed?.owner_user_id ||
             (sessionDataRef.current as any)?.userId ||
-            (sessionDataRef.current as any)?.user_id || "";
+            (sessionDataRef.current as any)?.user_id ||
+            "";
 
           if (!calUserId) {
             sendToGemini("CALENDAR_ERROR: Няма userId. Кажи на клиента учтиво, че календарът не е наличен в момента.");
@@ -3527,7 +3546,9 @@ export const useGeminiVoice = ({
                   calResult?.slots ? `slots=${calResult.slots.map((s: any) => s.display).join(", ")}` : "",
                   "",
                   "Предай тази информация на клиента по естествен начин.",
-                ].filter(Boolean).join("\n")
+                ]
+                  .filter(Boolean)
+                  .join("\n"),
               );
             } else if (calAction === "book") {
               if (calResult?.success) {
@@ -3538,7 +3559,7 @@ export const useGeminiVoice = ({
                     `bookingId=${calResult?.bookingId || ""}`,
                     "",
                     "Кажи на клиента, че записът е направен успешно. Предай детайлите.",
-                  ].join("\n")
+                  ].join("\n"),
                 );
               } else {
                 sendToGemini(
@@ -3547,7 +3568,7 @@ export const useGeminiVoice = ({
                     `message=${calResult?.message || calResult?.error || "Грешка при записване"}`,
                     "",
                     "Кажи на клиента учтиво, че часът не е наличен и предложи алтернатива.",
-                  ].join("\n")
+                  ].join("\n"),
                 );
               }
             }
@@ -3836,11 +3857,21 @@ export const useGeminiVoice = ({
 
                   if (looksLikeAction) {
                     currentResponseTextRef.current = partText;
-                    // Fire book_slot actions immediately during streaming (don't wait for TURN_COMPLETE)
+                    // ★ FIX 2.2: Fire book_slot САМО ако JSON-ът е пълен и валиден.
+                    // При streaming partText може да е непълен → JSON.parse гърми тихо
+                    // но earlyActionFiredRef вече е true → TURN_COMPLETE го пропуска → мълчание.
                     if (partText.includes("book_slot") && !earlyActionFiredRef.current) {
-                      console.log("[EARLY ACTION] Firing book_slot during streaming");
-                      earlyActionFiredRef.current = true;
-                      void maybeExecuteActionFromGemini(partText);
+                      try {
+                        const earlyParsed = JSON.parse(partText);
+                        if (earlyParsed?.type === "action_request" && earlyParsed?.action === "book_slot") {
+                          console.log("[EARLY ACTION] book_slot — пълен JSON потвърден, изпращаме веднага");
+                          earlyActionFiredRef.current = true;
+                          void maybeExecuteActionFromGemini(partText);
+                        }
+                      } catch {
+                        // Непълен streaming JSON — ще се обработи при TURN_COMPLETE
+                        console.log("[EARLY ACTION] book_slot засечен, но JSON е непълен — чакаме TURN_COMPLETE");
+                      }
                     }
                   } else if (partText) {
                     if (currentResponseTextRef.current && !currentResponseTextRef.current.endsWith(" ")) {
@@ -4294,26 +4325,35 @@ export const useGeminiVoice = ({
       }
       // ── Calendar follow-up shortcut ───────────────────────────────
       try {
-        const normalized = String(t || "").toLowerCase().trim();
+        const normalized = String(t || "")
+          .toLowerCase()
+          .trim();
         const parsedDates = parseBulgarianDateText(normalized);
         const explicitDate = parsedDates[0] || "";
         const wantsBooking = /(да|ok|okay|добре|става|искам|нека|запиши|запишем|потвърждавам)/i.test(normalized);
         const asksForNextSuggestedDay =
           !!lastCalendarNextAvailableDateRef.current &&
           wantsBooking &&
-          (normalized.includes("следващ") || normalized.includes("тогава") || normalized.includes("да") || explicitDate === lastCalendarNextAvailableDateRef.current);
+          (normalized.includes("следващ") ||
+            normalized.includes("тогава") ||
+            normalized.includes("да") ||
+            explicitDate === lastCalendarNextAvailableDateRef.current);
 
         const targetDate = explicitDate || (asksForNextSuggestedDay ? lastCalendarNextAvailableDateRef.current : "");
         if (wantsBooking && targetDate && targetDate !== lastCalendarCheckedDateRef.current) {
-          const ownerUserId = extractCalendarOwnerUserId(String((sessionDataRef.current as any)?.systemInstruction || ""));
+          const ownerUserId = extractCalendarOwnerUserId(
+            String((sessionDataRef.current as any)?.systemInstruction || ""),
+          );
           if (ownerUserId) {
-            void maybeExecuteActionFromGemini(JSON.stringify({
-              type: "action_request",
-              action: "book_slot",
-              calendar_action: "get_slots",
-              owner_user_id: ownerUserId,
-              date: targetDate,
-            }));
+            void maybeExecuteActionFromGemini(
+              JSON.stringify({
+                type: "action_request",
+                action: "book_slot",
+                calendar_action: "get_slots",
+                owner_user_id: ownerUserId,
+                date: targetDate,
+              }),
+            );
             return;
           }
         }
