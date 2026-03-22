@@ -5,10 +5,10 @@ import {
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import dashboardStats from '@/assets/dashboard-stats.jpg';
-import dashboardCalendar from '@/assets/dashboard-calendar.jpg';
-import dashboardEmail from '@/assets/dashboard-email.jpg';
-import dashboardSetup from '@/assets/dashboard-setup.jpg';
+import dashboardStats from '@/assets/dashboard-stats.png';
+import dashboardCalendar from '@/assets/dashboard-calendar.png';
+import dashboardEmail from '@/assets/dashboard-email.png';
+import dashboardSetup from '@/assets/dashboard-setup.png';
 
 const BusinessResults = () => {
   const { ref, isVisible } = useScrollAnimation();
@@ -58,32 +58,42 @@ const BusinessResults = () => {
       title: 'Пълна статистика',
       desc: 'Вижте колко разговора води NEO, колко контакта събира и какъв е ефектът.',
       image: dashboardStats,
+      accent: 'from-primary/30 via-primary/10 to-transparent',
+      border: 'hover:border-primary/40',
+      iconBg: 'bg-primary/15',
     },
     {
       icon: CalendarCheck,
       title: 'Автоматични резервации',
       desc: 'NEO записва срещи директно в календара ви — без вашата намеса.',
       image: dashboardCalendar,
+      accent: 'from-emerald-500/30 via-emerald-500/10 to-transparent',
+      border: 'hover:border-emerald-500/40',
+      iconBg: 'bg-emerald-500/15',
     },
     {
       icon: Mail,
       title: 'Имейл автоматизация',
       desc: 'След разговор NEO изпраща персонализиран имейл на потенциалния клиент.',
       image: dashboardEmail,
+      accent: 'from-violet-500/30 via-violet-500/10 to-transparent',
+      border: 'hover:border-violet-500/40',
+      iconBg: 'bg-violet-500/15',
     },
     {
       icon: Clock,
       title: 'Настройка за 5 минути',
       desc: 'Въведете адреса на сайта си и NEO е готов. Без код, без интеграции.',
       image: dashboardSetup,
+      accent: 'from-amber-500/30 via-amber-500/10 to-transparent',
+      border: 'hover:border-amber-500/40',
+      iconBg: 'bg-amber-500/15',
     },
   ];
 
   const containerVariants = {
     hidden: {},
-    visible: {
-      transition: { staggerChildren: 0.1 },
-    },
+    visible: { transition: { staggerChildren: 0.1 } },
   };
 
   const itemVariants = {
@@ -97,6 +107,10 @@ const BusinessResults = () => {
       id="results"
       className="py-14 sm:py-28 relative overflow-hidden"
     >
+      {/* Ambient glows */}
+      <div className="absolute top-1/4 left-0 w-[500px] h-[500px] rounded-full bg-primary/5 blur-[180px] pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-violet-500/5 blur-[150px] pointer-events-none" />
+
       <div className="container mx-auto px-5 sm:px-4 lg:px-8 relative z-10">
         {/* Header */}
         <div className="text-center mb-10 sm:mb-20">
@@ -105,8 +119,8 @@ const BusinessResults = () => {
             Какво може NEO
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-black text-foreground mb-5 leading-[1.08] tracking-wide max-w-4xl mx-auto">
-            Какво може{' '}
-            <span className="neo-gradient-text">NEO</span>
+            Вашият AI асистент за{' '}
+            <span className="neo-gradient-text">продажби и резервации</span>
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             NEO не е просто чатбот — той е вашият дигитален търговец, рецепционист и маркетолог в едно.
@@ -126,9 +140,7 @@ const BusinessResults = () => {
               variants={itemVariants}
               className="group relative neo-glass-premium p-4 sm:p-6 rounded-xl sm:rounded-2xl hover:scale-[1.03] transition-transform duration-500"
             >
-              {/* Gradient overlay on hover */}
               <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-              
               <div className="relative z-10">
                 <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300`}>
                   <item.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${item.iconColor}`} />
@@ -141,9 +153,9 @@ const BusinessResults = () => {
           ))}
         </motion.div>
 
-        {/* Dashboard Explanation */}
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10">
+        {/* Dashboard Features with Real Screenshots */}
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10 sm:mb-14">
             <h3 className="text-2xl sm:text-3xl md:text-4xl font-display font-black text-foreground mb-3 leading-tight">
               Всичко на{' '}
               <span className="neo-gradient-text">едно табло</span>
@@ -157,31 +169,37 @@ const BusinessResults = () => {
             variants={containerVariants}
             initial="hidden"
             animate={isVisible ? 'visible' : 'hidden'}
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6"
           >
             {dashboardFeatures.map((feature, idx) => (
               <motion.div
                 key={idx}
                 variants={itemVariants}
-                className="relative overflow-hidden rounded-2xl neo-glass-subtle border border-border/20 hover:border-primary/20 transition-all duration-300 group"
+                className={`group relative overflow-hidden rounded-2xl border border-border/20 ${feature.border} bg-card/30 backdrop-blur-sm transition-all duration-500 hover:shadow-[0_0_40px_-10px_hsl(var(--primary)/0.2)]`}
               >
-                {/* Preview image */}
-                <div className="h-36 sm:h-44 overflow-hidden">
+                {/* Screenshot */}
+                <div className="relative h-48 sm:h-56 overflow-hidden">
                   <img 
                     src={feature.image} 
                     alt={feature.title}
-                    className="w-full h-full object-cover object-top opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-500"
+                    loading="lazy"
+                    className="w-full h-full object-cover object-top transition-all duration-700 group-hover:scale-[1.03]"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
+                  {/* Gradient overlay */}
+                  <div className={`absolute inset-0 bg-gradient-to-t ${feature.accent}`} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
                 </div>
+
                 {/* Content */}
-                <div className="relative flex gap-4 p-5 -mt-8">
-                  <div className="shrink-0 w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/15 group-hover:scale-105 transition-all duration-300 border border-border/20 backdrop-blur-sm">
-                    <feature.icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-1">{feature.title}</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{feature.desc}</p>
+                <div className="relative p-5 sm:p-6 -mt-6">
+                  <div className="flex items-start gap-4">
+                    <div className={`shrink-0 w-11 h-11 rounded-xl ${feature.iconBg} flex items-center justify-center border border-border/20 backdrop-blur-sm group-hover:scale-110 transition-transform duration-300`}>
+                      <feature.icon className="w-5 h-5 text-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-foreground text-base sm:text-lg mb-1">{feature.title}</h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{feature.desc}</p>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -189,7 +207,7 @@ const BusinessResults = () => {
           </motion.div>
 
           {/* CTA */}
-          <div className="text-center mt-12">
+          <div className="text-center mt-12 sm:mt-16">
             <Button
               size="lg"
               className="neo-btn-primary text-base px-8 py-6 rounded-full gap-2"
