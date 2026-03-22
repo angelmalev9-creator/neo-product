@@ -60,7 +60,7 @@ const Hero = () => {
             className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 lg:gap-5 mb-6 sm:mb-10 lg:mb-12 px-2 sm:px-4 lg:px-0">
             <Button
               size="lg"
-              className="neo-btn-primary text-sm sm:text-sm lg:text-base px-6 sm:px-7 lg:px-10 py-4 sm:py-4 lg:py-5 h-auto font-bold rounded-full w-full sm:w-auto group"
+              className="neo-btn-primary text-[13px] sm:text-sm lg:text-base px-5 sm:px-7 lg:px-10 py-3 sm:py-4 lg:py-5 h-auto font-bold rounded-full w-full sm:w-auto group whitespace-nowrap overflow-hidden"
               onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}>
               <Play className="w-4 h-4 mr-1 fill-current" />
               <span>{t('hero.cta')}</span>
