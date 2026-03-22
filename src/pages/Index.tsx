@@ -8,7 +8,6 @@ import Comparison from '@/components/landing/Comparison';
 import Testimonials from '@/components/landing/Testimonials';
 import MarketingSkills from '@/components/landing/MarketingSkills';
 import BusinessResults from '@/components/landing/BusinessResults';
-import DashboardPreview from '@/components/landing/DashboardPreview';
 import Founder from '@/components/landing/Founder';
 import Pricing from '@/components/landing/Pricing';
 import EnterpriseContact from '@/components/landing/EnterpriseContact';
@@ -24,7 +23,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen text-foreground neo-grain relative flex flex-col items-center">
-      {/* Global gradient background */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-background" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-[80vh] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,hsl(355_100%_50%/0.3),transparent_70%)]" />
@@ -33,7 +31,6 @@ const Index = () => {
         <div className="absolute top-[60%] left-1/2 -translate-x-1/2 w-[80%] h-[40vh] bg-[radial-gradient(ellipse_70%_50%_at_50%_50%,hsl(280_80%_50%/0.06),transparent_70%)]" />
       </div>
 
-      {/* Animated Particles, Bands & Shadows */}
       <AnimatedBackground />
       
       <div className="pt-14 sm:pt-16 lg:pt-20 pb-8 sm:pb-12 w-full">
@@ -47,7 +44,6 @@ const Index = () => {
           <BusinessResults />
           <Testimonials />
           <MarketingSkills />
-          <DashboardPreview />
           <Founder />
           <Pricing />
           <EnterpriseContact />
