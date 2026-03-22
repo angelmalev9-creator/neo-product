@@ -238,7 +238,7 @@ const Dashboard = () => {
 
       <div className="flex-1 flex flex-col min-w-0 h-screen">
         <DashboardMobileNav activeTab={activeTab} onTabChange={setActiveTab} />
-        <main className="flex-1 overflow-hidden">
+        <main className="flex-1 overflow-hidden pb-[4.5rem] lg:pb-0">
           {renderContent()}
         </main>
       </div>
