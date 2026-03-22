@@ -209,7 +209,7 @@ const DashboardHome = ({
         </div>
         <div className="grid grid-cols-3 gap-3">
           <LiveStatCard icon={MessageSquare} label="Разговори" value={statsLoading ? '—' : String(todayConversations)} color="text-primary" />
-          <LiveStatCard icon={Users} label="Нови клиенти" value={statsLoading ? '—' : String(todayClients)} color="text-[hsl(var(--neo-success))]" subtitle="Запитвания + Резервации" />
+          <LiveStatCard icon={Users} label="Нови клиенти" value={statsLoading ? '—' : String(todayClients)} color="text-[hsl(var(--neo-success))]" subtitle="Разговори с уловени данни" />
           <LiveStatCard icon={CalendarCheck} label="Резервации" value={statsLoading ? '—' : String(todayBookings)} color="text-[hsl(var(--neo-blue))]" />
         </div>
       </div>
