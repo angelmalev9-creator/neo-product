@@ -76,59 +76,59 @@
   }
 
   .light {
-    --background: 220 20% 97%;
-    --foreground: 240 15% 8%;
+    --background: 220 14% 96%;
+    --foreground: 240 20% 6%;
 
     --card: 0 0% 100%;
-    --card-foreground: 240 15% 8%;
+    --card-foreground: 240 20% 6%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 15% 8%;
+    --popover-foreground: 240 20% 6%;
 
-    --primary: 355 88% 50%;
+    --primary: 355 85% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 15% 93%;
-    --secondary-foreground: 240 10% 15%;
+    --secondary: 220 14% 90%;
+    --secondary-foreground: 240 15% 12%;
 
-    --muted: 220 12% 91%;
-    --muted-foreground: 220 10% 42%;
+    --muted: 220 12% 90%;
+    --muted-foreground: 220 12% 35%;
 
-    --accent: 335 85% 52%;
+    --accent: 335 80% 48%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 50%;
+    --destructive: 0 72% 48%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 12% 86%;
-    --input: 220 12% 91%;
-    --ring: 355 88% 50%;
+    --border: 220 14% 80%;
+    --input: 220 14% 88%;
+    --ring: 355 85% 48%;
 
-    --neo-red: 355 88% 50%;
-    --neo-red-glow: 345 90% 60%;
-    --neo-red-dark: 355 70% 40%;
-    --neo-red-light: 350 80% 68%;
-    --neo-dark: 220 20% 97%;
-    --neo-dark-lighter: 220 15% 95%;
-    --neo-glass: 220 10% 96%;
-    --neo-glass-border: 220 12% 85%;
-    --neo-text-muted: 220 10% 42%;
-    --neo-text-bright: 240 15% 10%;
-    --neo-success: 160 75% 38%;
-    --neo-warning: 45 90% 48%;
-    --neo-purple: 270 75% 55%;
-    --neo-blue: 220 90% 55%;
-    --neo-cyan: 185 80% 40%;
-    --neo-gold: 40 90% 48%;
+    --neo-red: 355 85% 48%;
+    --neo-red-glow: 345 85% 55%;
+    --neo-red-dark: 355 70% 38%;
+    --neo-red-light: 350 75% 62%;
+    --neo-dark: 220 14% 96%;
+    --neo-dark-lighter: 220 12% 93%;
+    --neo-glass: 220 10% 94%;
+    --neo-glass-border: 220 14% 78%;
+    --neo-text-muted: 220 12% 35%;
+    --neo-text-bright: 240 20% 8%;
+    --neo-success: 160 70% 32%;
+    --neo-warning: 45 85% 42%;
+    --neo-purple: 270 70% 48%;
+    --neo-blue: 220 85% 48%;
+    --neo-cyan: 185 75% 35%;
+    --neo-gold: 40 85% 42%;
 
-    --sidebar-background: 220 15% 96%;
-    --sidebar-foreground: 240 15% 8%;
-    --sidebar-primary: 355 88% 50%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 20% 6%;
+    --sidebar-primary: 355 85% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 12% 92%;
-    --sidebar-accent-foreground: 240 15% 8%;
-    --sidebar-border: 220 12% 86%;
-    --sidebar-ring: 355 88% 50%;
+    --sidebar-accent: 220 14% 92%;
+    --sidebar-accent-foreground: 240 15% 10%;
+    --sidebar-border: 220 14% 82%;
+    --sidebar-ring: 355 85% 48%;
   }
 
   .dark {
