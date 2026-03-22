@@ -68,7 +68,7 @@ const Hero = () => {
             <Button
               size="lg"
               variant="outline"
-              className="neo-glass-premium border-0 text-foreground/60 hover:text-foreground text-sm sm:text-sm lg:text-base px-6 sm:px-6 lg:px-8 py-4 sm:py-4 lg:py-5 h-auto rounded-full w-full sm:w-auto transition-all duration-300 hover:bg-foreground/5 font-bold"
+              className="neo-glass-premium border-0 text-foreground/60 hover:text-foreground text-[13px] sm:text-sm lg:text-base px-5 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 h-auto rounded-full w-full sm:w-auto transition-all duration-300 hover:bg-foreground/5 font-bold whitespace-nowrap overflow-hidden"
               onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>
               {t('hero.ctaSecondary')}
             </Button>

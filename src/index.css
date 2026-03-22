@@ -178,6 +178,7 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Montserrat', system-ui, sans-serif;
+    font-weight: 700;
     background: 
       radial-gradient(ellipse 100% 60% at 50% -30%, hsl(var(--neo-red) / 0.12) 0%, transparent 50%),
       radial-gradient(ellipse 80% 50% at 0% 50%, hsl(var(--neo-purple) / 0.06) 0%, transparent 40%),
