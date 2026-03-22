@@ -161,14 +161,14 @@ const Pricing = () => {
                 initial={{ opacity: 0, y: 24 }}
                 animate={isVisible ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className={`relative flex flex-col rounded-2xl p-6 sm:p-7 lg:p-8 transition-all duration-500 ${
+                className={`relative flex flex-col rounded-2xl p-6 sm:p-7 lg:p-8 transition-all duration-500 overflow-visible ${
                   plan.featured 
-                    ? 'neo-glass-premium ring-1 ring-primary/30 lg:scale-[1.04] shadow-[0_0_60px_hsl(var(--neo-red)/0.12)]' 
-                    : 'neo-glass-subtle border border-border/20 hover:border-border/40'
+                    ? 'neo-glass-premium ring-1 ring-primary/30 lg:scale-[1.04] shadow-[0_0_60px_hsl(var(--neo-red)/0.12)] mt-5' 
+                    : 'neo-glass-subtle border border-border/20 hover:border-border/40 mt-5'
                 }`}
               >
                 {plan.featured && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-gradient-to-r from-primary to-accent text-primary-foreground px-5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-primary/30">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 bg-gradient-to-r from-primary to-accent text-primary-foreground px-5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-primary/30 whitespace-nowrap">
                     <Crown className="w-3.5 h-3.5" />
                     {t('pricing.mostPopular')}
                   </div>
