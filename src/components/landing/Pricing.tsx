@@ -98,7 +98,7 @@ const Pricing = () => {
     <section 
       ref={ref as React.RefObject<HTMLElement>}
       id="pricing" 
-      className="py-10 sm:py-16 relative overflow-hidden"
+      className="py-10 sm:py-16 relative overflow-visible"
     >
       {/* Ambient glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 blur-[150px] rounded-full pointer-events-none" />
@@ -150,7 +150,7 @@ const Pricing = () => {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-6 max-w-6xl mx-auto px-1 sm:px-0">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-6 max-w-6xl mx-auto px-1 sm:px-0 overflow-visible">
           {plans.map((plan, i) => {
             const monthlyPrices = { starter: '25', growth: '33', empire: '60' };
             const yearlySavings = getYearlySavings(monthlyPrices[plan.id as keyof typeof monthlyPrices], plan.price);
