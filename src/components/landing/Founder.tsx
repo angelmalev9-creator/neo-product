@@ -10,7 +10,7 @@ const Founder = () => {
     <section 
       ref={ref as React.RefObject<HTMLElement>}
       id="founder"
-      className="py-14 sm:py-20 lg:py-28 relative overflow-hidden"
+      className="py-10 sm:py-14 lg:py-16 relative overflow-hidden"
     >
       {/* Ambient glow */}
       <div className="absolute top-1/2 left-0 w-[400px] h-[400px] rounded-full bg-primary/4 blur-[120px] pointer-events-none" />

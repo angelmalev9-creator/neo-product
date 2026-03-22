@@ -92,9 +92,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!session) return;
 
+    // Check every 5 minutes instead of every minute to avoid 429 rate limits
     const interval = setInterval(() => {
       checkSubscription();
-    }, 60000);
+    }, 300000);
 
     return () => clearInterval(interval);
   }, [session]);
