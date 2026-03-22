@@ -61,7 +61,7 @@ const Index = () => {
         style={{ paddingBottom: 'max(0.625rem, env(safe-area-inset-bottom))' }}
       >
         <Button
-          className="neo-btn-primary w-full py-3 text-sm font-bold rounded-full gap-2"
+          className="neo-btn-primary w-full py-3 text-[13px] font-bold rounded-full gap-2 whitespace-nowrap"
           onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
         >
           Опитайте NEO безплатно

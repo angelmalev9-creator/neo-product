@@ -34,7 +34,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.15 }}
-            className="text-[1.6rem] leading-[1.15] sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.5rem] font-display font-black text-foreground sm:leading-[1.08] mb-3 sm:mb-6 lg:mb-8 tracking-wide">
+            className="text-[2rem] leading-[1.1] sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.5rem] font-display font-black text-foreground sm:leading-[1.08] mb-3 sm:mb-6 lg:mb-8 tracking-wide">
             <span><PencilUnderline>{t('hero.headline1')}</PencilUnderline></span>
             <br />
             <span className="neo-gradient-text-animated">
@@ -60,7 +60,7 @@ const Hero = () => {
             className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 lg:gap-5 mb-6 sm:mb-10 lg:mb-12 px-2 sm:px-4 lg:px-0">
             <Button
               size="lg"
-              className="neo-btn-primary text-sm sm:text-sm lg:text-base px-6 sm:px-7 lg:px-10 py-4 sm:py-4 lg:py-5 h-auto font-bold rounded-full w-full sm:w-auto group"
+              className="neo-btn-primary text-[13px] sm:text-sm lg:text-base px-5 sm:px-7 lg:px-10 py-3 sm:py-4 lg:py-5 h-auto font-bold rounded-full w-full sm:w-auto group whitespace-nowrap overflow-hidden"
               onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}>
               <Play className="w-4 h-4 mr-1 fill-current" />
               <span>{t('hero.cta')}</span>
@@ -68,7 +68,7 @@ const Hero = () => {
             <Button
               size="lg"
               variant="outline"
-              className="neo-glass-premium border-0 text-foreground/60 hover:text-foreground text-sm sm:text-sm lg:text-base px-6 sm:px-6 lg:px-8 py-4 sm:py-4 lg:py-5 h-auto rounded-full w-full sm:w-auto transition-all duration-300 hover:bg-foreground/5 font-bold"
+              className="neo-glass-premium border-0 text-foreground/60 hover:text-foreground text-[13px] sm:text-sm lg:text-base px-5 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 h-auto rounded-full w-full sm:w-auto transition-all duration-300 hover:bg-foreground/5 font-bold whitespace-nowrap overflow-hidden"
               onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>
               {t('hero.ctaSecondary')}
             </Button>
