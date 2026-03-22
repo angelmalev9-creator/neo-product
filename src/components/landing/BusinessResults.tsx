@@ -57,21 +57,25 @@ const BusinessResults = () => {
       icon: BarChart3,
       title: 'Пълна статистика',
       desc: 'Вижте колко разговора води NEO, колко контакта събира и какъв е ефектът.',
+      image: dashboardStats,
     },
     {
       icon: CalendarCheck,
       title: 'Автоматични резервации',
       desc: 'NEO записва срещи директно в календара ви — без вашата намеса.',
+      image: dashboardCalendar,
     },
     {
       icon: Mail,
       title: 'Имейл автоматизация',
       desc: 'След разговор NEO изпраща персонализиран имейл на потенциалния клиент.',
+      image: dashboardEmail,
     },
     {
       icon: Clock,
       title: 'Настройка за 5 минути',
       desc: 'Въведете адреса на сайта си и NEO е готов. Без код, без интеграции.',
+      image: dashboardSetup,
     },
   ];
 
