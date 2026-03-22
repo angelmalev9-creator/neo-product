@@ -7,72 +7,72 @@
 
 @layer base {
   :root {
-    /* ULTRA HD: Pure Deep Black + Vivid Neon Red - Maximum Contrast */
-    --background: 0 0% 2%;
+    /* PREMIUM SaaS: Deep rich dark + Vivid saturated accents */
+    --background: 240 15% 3%;
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 5%;
+    --card: 240 12% 6%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 5%;
+    --popover: 240 12% 6%;
     --popover-foreground: 0 0% 98%;
 
-    /* PRIMARY: Intense Neon Red - Higher saturation for HD */
-    --primary: 0 90% 58%;
+    /* PRIMARY: Vivid Crimson — punchy, luxurious */
+    --primary: 355 92% 56%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 8%;
+    --secondary: 240 10% 10%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 240 8% 14%;
+    --muted-foreground: 220 10% 55%;
 
-    /* ACCENT: Electric Crimson - Vivid for contrast */
-    --accent: 355 95% 62%;
+    /* ACCENT: Electric Rose-Magenta */
+    --accent: 335 90% 58%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 80% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 18%;
-    --input: 0 0% 8%;
-    --ring: 0 90% 58%;
+    --border: 240 8% 18%;
+    --input: 240 10% 8%;
+    --ring: 355 92% 56%;
 
     --radius: 0.75rem;
 
-    /* NEO Custom Colors - ULTRA HD Futuristic Palette */
-    --neo-red: 0 90% 58%;
-    --neo-red-glow: 355 100% 68%;
-    --neo-red-dark: 0 75% 38%;
-    --neo-red-light: 0 85% 72%;
-    --neo-orange: 18 95% 58%;
-    --neo-orange-glow: 25 100% 65%;
-    --neo-dark: 0 0% 2%;
-    --neo-dark-lighter: 0 0% 6%;
-    --neo-glass: 0 0% 7%;
-    --neo-glass-border: 0 0% 20%;
-    --neo-text-muted: 0 0% 60%;
-    --neo-text-bright: 0 0% 95%;
-    --neo-success: 145 80% 48%;
-    --neo-success-glow: 145 90% 55%;
-    --neo-warning: 45 100% 58%;
-    --neo-warning-glow: 50 100% 65%;
-    --neo-purple: 280 80% 60%;
-    --neo-purple-glow: 280 90% 70%;
-    --neo-blue: 220 95% 60%;
-    --neo-blue-glow: 220 100% 70%;
-    --neo-cyan: 185 90% 50%;
+    /* NEO Custom Colors - PREMIUM Saturated Palette */
+    --neo-red: 355 92% 56%;
+    --neo-red-glow: 345 100% 65%;
+    --neo-red-dark: 355 75% 38%;
+    --neo-red-light: 350 85% 72%;
+    --neo-orange: 20 95% 58%;
+    --neo-orange-glow: 28 100% 65%;
+    --neo-dark: 240 15% 3%;
+    --neo-dark-lighter: 240 12% 7%;
+    --neo-glass: 240 10% 8%;
+    --neo-glass-border: 240 8% 22%;
+    --neo-text-muted: 220 10% 55%;
+    --neo-text-bright: 0 0% 96%;
+    --neo-success: 160 85% 45%;
+    --neo-success-glow: 160 95% 52%;
+    --neo-warning: 45 100% 55%;
+    --neo-warning-glow: 50 100% 62%;
+    --neo-purple: 270 85% 62%;
+    --neo-purple-glow: 270 95% 72%;
+    --neo-blue: 220 100% 62%;
+    --neo-blue-glow: 220 100% 72%;
+    --neo-cyan: 185 95% 48%;
     --neo-gold: 40 100% 55%;
 
-    /* Sidebar - Enhanced contrast */
-    --sidebar-background: 0 0% 3%;
+    /* Sidebar - Enhanced depth */
+    --sidebar-background: 240 15% 4%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 0 90% 58%;
+    --sidebar-primary: 355 92% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent: 240 10% 12%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 18%;
-    --sidebar-ring: 0 90% 58%;
+    --sidebar-border: 240 8% 18%;
+    --sidebar-ring: 355 92% 56%;
   }
 
   .light {
