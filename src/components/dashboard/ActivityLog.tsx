@@ -358,7 +358,7 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                                     {' · '}
                                     {new Date(msg.created_at).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })}
                                   </span>
-                                  <p className="mt-0.5">{msg.content}</p>
+                                  <p className="mt-0.5">{msg.content.replace(/\[CURRENT_DATE_CONTEXT:[^\]]*\]\s*/g, '').replace(/\[SYSTEM:[^\]]*\]\s*/g, '').trim()}</p>
                                 </div>
                               </div>
                             ))}
