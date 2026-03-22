@@ -101,7 +101,7 @@ const Testimonials = () => {
           <span className="inline-block px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
             Доверието говори
           </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-black text-foreground mb-4 max-w-3xl mx-auto leading-[1.1] tracking-wide">
+          <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-black text-foreground mb-3 sm:mb-4 max-w-3xl mx-auto leading-[1.1] tracking-wide">
             <PencilUnderline>Какво казват</PencilUnderline>{' '}
             <span className="neo-gradient-text">клиентите</span>
           </h2>
