@@ -116,7 +116,7 @@ const BusinessResults = () => {
             <motion.div
               key={idx}
               variants={itemVariants}
-              className="group relative neo-glass-premium p-6 rounded-2xl hover:scale-[1.03] transition-transform duration-500"
+              className="group relative neo-glass-premium p-4 sm:p-6 rounded-xl sm:rounded-2xl hover:scale-[1.03] transition-transform duration-500"
             >
               {/* Gradient overlay on hover */}
               <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
