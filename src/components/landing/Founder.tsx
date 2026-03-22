@@ -60,11 +60,12 @@ const Founder = () => {
                       Пишете ми директно
                     </a>
                   </Button>
-                  <Button className="neo-btn-primary gap-2 rounded-xl h-11" asChild>
-                    <a href="/#pricing">
-                      Опитайте NEO
-                      <ArrowRight className="w-4 h-4" />
-                    </a>
+                  <Button 
+                    className="neo-btn-primary gap-2 rounded-xl h-11"
+                    onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+                  >
+                    Опитайте NEO
+                    <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
