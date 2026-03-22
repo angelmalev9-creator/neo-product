@@ -150,7 +150,7 @@ const Pricing = () => {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-6 max-w-6xl mx-auto px-1 sm:px-0 overflow-visible">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-6 max-w-6xl mx-auto overflow-visible">
           {plans.map((plan, i) => {
             const monthlyPrices = { starter: '25', growth: '33', empire: '60' };
             const yearlySavings = getYearlySavings(monthlyPrices[plan.id as keyof typeof monthlyPrices], plan.price);
@@ -161,7 +161,7 @@ const Pricing = () => {
                 initial={{ opacity: 0, y: 24 }}
                 animate={isVisible ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className={`relative flex flex-col rounded-2xl p-6 sm:p-7 lg:p-8 transition-all duration-500 overflow-visible ${
+                className={`relative flex flex-col rounded-2xl p-5 sm:p-7 lg:p-8 transition-all duration-500 overflow-visible ${
                   plan.featured 
                     ? 'neo-glass-premium ring-1 ring-primary/30 lg:scale-[1.04] shadow-[0_0_60px_hsl(var(--neo-red)/0.12)] mt-5' 
                     : 'neo-glass-subtle border border-border/20 hover:border-border/40 mt-5'

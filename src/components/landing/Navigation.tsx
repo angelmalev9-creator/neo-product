@@ -46,11 +46,11 @@ const Navigation = () => {
       >
         <div className="flex items-center justify-between h-12 sm:h-12 lg:h-14 px-4 sm:px-4 lg:px-6">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-primary/30 transition-shadow">
-              <Bot className="w-4 h-4 text-primary-foreground" />
+          <a href="/" className="flex items-center gap-2 group">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-primary/30 transition-shadow">
+              <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-foreground" />
             </div>
-            <span className="text-lg font-black text-foreground tracking-tight">NEO</span>
+            <span className="text-base sm:text-lg font-black text-foreground tracking-tight">NEO</span>
           </a>
 
           {/* Desktop Nav */}
@@ -91,6 +91,13 @@ const Navigation = () => {
 
           {/* Mobile */}
           <div className="md:hidden flex items-center gap-2">
+            <Button 
+              size="sm" 
+              className="neo-btn-primary text-[11px] h-8 px-3.5 rounded-full font-bold" 
+              onClick={() => { setIsOpen(false); document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' }); }}
+            >
+              {t('nav.demo')}
+            </Button>
             <button className="p-2 text-foreground rounded-full active:bg-foreground/5 transition-colors" onClick={() => setIsOpen(!isOpen)}>
               {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -101,7 +108,7 @@ const Navigation = () => {
       {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden mx-auto max-w-6xl mt-2 rounded-2xl bg-background/95 backdrop-blur-2xl border border-foreground/8 shadow-[0_8px_40px_hsl(0_0%_0%/0.6)] overflow-hidden">
-          <div className="py-4 px-5">
+          <div className="py-3 px-5">
             {navLinks.map((link) => (
               <button 
                 key={link.href} 
@@ -110,23 +117,23 @@ const Navigation = () => {
                   if ((link as any).isRoute) navigate(link.href);
                   else document.querySelector(link.href)?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="block text-[15px] py-3.5 text-foreground/45 hover:text-foreground active:text-foreground transition-colors text-left w-full font-medium" 
+                className="block text-[15px] py-3 text-foreground/45 hover:text-foreground active:text-foreground transition-colors text-left w-full font-medium" 
               >
                 {link.label}
               </button>
             ))}
-            <div className="flex gap-3 pt-4 mt-3 border-t border-foreground/6">
+            <div className="flex gap-3 pt-3 mt-2 border-t border-foreground/6">
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="text-[15px] flex-1 h-12 text-foreground/45 rounded-xl font-medium" 
+                className="text-[15px] flex-1 h-11 text-foreground/45 rounded-xl font-medium" 
                 onClick={() => { setIsOpen(false); navigate('/auth'); }}
               >
                 {t('nav.login')}
               </Button>
               <Button 
                 size="sm" 
-                className="neo-btn-primary text-[15px] flex-1 h-12 rounded-full font-bold" 
+                className="neo-btn-primary text-[15px] flex-1 h-11 rounded-full font-bold" 
                 onClick={() => { setIsOpen(false); document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' }); }}
               >
                 {t('nav.demo')}

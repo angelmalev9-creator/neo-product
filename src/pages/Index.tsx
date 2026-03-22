@@ -2,6 +2,8 @@ import { useState, lazy, Suspense } from 'react';
 import Navigation from '@/components/landing/Navigation';
 import Hero from '@/components/landing/Hero';
 import AnimatedBackground from '@/components/landing/AnimatedBackground';
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 
 // Lazy load below-fold sections for faster initial paint
 const DemoSection = lazy(() => import('@/components/landing/DemoSection'));
@@ -33,7 +35,7 @@ const Index = () => {
 
       <AnimatedBackground />
       
-      <div className="pt-14 sm:pt-16 lg:pt-20 pb-8 sm:pb-12 w-full">
+      <div className="pt-14 sm:pt-16 lg:pt-20 pb-16 sm:pb-12 w-full">
         <Navigation />
         <main className="relative z-10">
           <Hero />
@@ -51,6 +53,20 @@ const Index = () => {
         <Suspense fallback={null}>
           <Footer />
         </Suspense>
+      </div>
+
+      {/* Sticky mobile CTA */}
+      <div 
+        className="fixed bottom-0 inset-x-0 z-40 sm:hidden bg-background/90 backdrop-blur-xl border-t border-border/20 px-4 py-2.5"
+        style={{ paddingBottom: 'max(0.625rem, env(safe-area-inset-bottom))' }}
+      >
+        <Button
+          className="neo-btn-primary w-full py-3 text-sm font-bold rounded-full gap-2"
+          onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
+        >
+          Опитайте NEO безплатно
+          <ArrowRight className="w-4 h-4" />
+        </Button>
       </div>
     </div>
   );
