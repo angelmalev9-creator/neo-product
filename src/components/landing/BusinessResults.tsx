@@ -87,7 +87,7 @@ const BusinessResults = () => {
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="results"
-      className="py-20 sm:py-28 relative overflow-hidden"
+      className="py-14 sm:py-28 relative overflow-hidden"
     >
       <div className="container mx-auto px-5 sm:px-4 lg:px-8 relative z-10">
         {/* Header */}
