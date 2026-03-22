@@ -93,7 +93,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
-            className="flex items-stretch justify-center gap-2.5 sm:gap-4 lg:gap-6 mb-8 sm:mb-10 px-0">
+            className="flex items-stretch justify-center gap-2 sm:gap-4 lg:gap-6 mb-6 sm:mb-10 px-0">
             
             {[
             { value: t('hero.stat1Value'), label: t('hero.stat1Label'), icon: Zap },
