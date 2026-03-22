@@ -37,7 +37,7 @@ const EnterpriseContact = () => {
     <section 
       ref={ref as React.RefObject<HTMLElement>}
       id="contact" 
-      className="py-16 lg:py-24 relative overflow-hidden"
+      className="py-12 sm:py-16 lg:py-24 relative overflow-hidden"
     >
       {/* Ambient glow */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/4 blur-[120px] rounded-full pointer-events-none" />
