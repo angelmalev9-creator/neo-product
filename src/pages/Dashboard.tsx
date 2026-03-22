@@ -164,11 +164,7 @@ const Dashboard = () => {
     }
 
     if (activeTab.startsWith('conv')) {
-      const sectionMap: Record<string, string> = {
-        'conv-diary': 'diary',
-        'conv-clients': 'clients',
-      };
-      return <ConversationsPage userId={user?.id || ''} section={sectionMap[activeTab] || 'diary'} />;
+      return <ConversationsPage userId={user?.id || ''} />;
     }
 
     if (activeTab.startsWith('neo')) {
