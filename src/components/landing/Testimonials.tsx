@@ -161,9 +161,9 @@ const Testimonials = () => {
                       {t.initials}
                     </div>
                     <div>
-                      <p className="font-bold text-foreground text-base">{t.name}</p>
-                      <p className="text-sm text-muted-foreground">{t.role}</p>
-                      <p className="text-sm text-primary font-semibold">{t.business}</p>
+                      <p className="font-bold text-foreground text-sm sm:text-base">{t.name}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{t.role}</p>
+                      <p className="text-xs sm:text-sm text-primary font-semibold">{t.business}</p>
                     </div>
                   </div>
                 </div>
