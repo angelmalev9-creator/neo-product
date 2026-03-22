@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
-import { Settings, CheckCircle, Loader2, Clock, ChevronDown, ChevronLeft, ChevronRight, Trash2, User } from 'lucide-react';
+import { Settings, CheckCircle, Loader2, Clock, ChevronDown, ChevronLeft, ChevronRight, Trash2, User, Phone, Mail } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface CalendarSettings {
   id?: string;
@@ -40,8 +40,10 @@ interface CalendarBooking {
   event_end: string;
   attendee_email: string | null;
   attendee_name: string | null;
+  attendee_phone: string | null;
   status: string;
   created_at: string;
+  service: string | null;
 }
 
 const WEEKDAYS = [
@@ -57,11 +59,23 @@ const WEEKDAYS = [
 const MONTH_NAMES = ['Януари', 'Февруари', 'Март', 'Април', 'Май', 'Юни', 'Юли', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'];
 const DAY_HEADERS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
 
+const BOOKING_COLORS = [
+  'from-primary/80 to-primary/40',
+  'from-emerald-500/80 to-emerald-500/30',
+  'from-violet-500/80 to-violet-500/30',
+  'from-amber-500/80 to-amber-500/30',
+  'from-cyan-500/80 to-cyan-500/30',
+  'from-rose-500/80 to-rose-500/30',
+];
+
+const getBookingColor = (index: number) => BOOKING_COLORS[index % BOOKING_COLORS.length];
+
 const CalendarAutomation = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [settings, setSettings] = useState<CalendarSettings>({
     calendar_enabled: false,
     booking_type: 'consultation',
@@ -88,7 +102,6 @@ const CalendarAutomation = () => {
     loadBookings();
   }, [calendarMonth]);
 
-  // Real-time subscription for new bookings
   useEffect(() => {
     const setupRealtime = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -154,6 +167,7 @@ const CalendarAutomation = () => {
         .eq('user_id', user.id)
         .gte('event_start', monthStart.toISOString())
         .lte('event_start', monthEnd.toISOString())
+        .neq('status', 'cancelled')
         .order('event_start', { ascending: true });
       setBookings((data || []) as CalendarBooking[]);
     } catch (e) {
@@ -191,14 +205,17 @@ const CalendarAutomation = () => {
     }
   };
 
-  const cancelBooking = async (bookingId: string) => {
+  const deleteBooking = async (bookingId: string) => {
+    setDeletingId(bookingId);
     try {
-      const { error } = await supabase.from('calendar_bookings').update({ status: 'cancelled' }).eq('id', bookingId);
+      const { error } = await supabase.from('calendar_bookings').delete().eq('id', bookingId);
       if (error) throw error;
-      toast({ title: 'Записът е отменен.' });
+      toast({ title: 'Записът е изтрит.' });
       loadBookings();
     } catch {
-      toast({ title: 'Грешка', variant: 'destructive' });
+      toast({ title: 'Грешка при изтриване', variant: 'destructive' });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -214,7 +231,6 @@ const CalendarAutomation = () => {
   const bookingLabel = settings.booking_type === 'reservation' ? 'Резервация' : settings.booking_type === 'meeting' ? 'Среща' : 'Консултация';
   const bookingLabelPlural = settings.booking_type === 'reservation' ? 'Резервации' : settings.booking_type === 'meeting' ? 'Срещи' : 'Консултации';
 
-  // Calendar helpers
   const getDaysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   const getFirstDayOfMonth = (date: Date) => {
     const day = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
@@ -223,7 +239,7 @@ const CalendarAutomation = () => {
   const getBookingsForDate = (day: number) => {
     return bookings.filter(b => {
       const d = new Date(b.event_start);
-      return d.getDate() === day && d.getMonth() === calendarMonth.getMonth() && d.getFullYear() === calendarMonth.getFullYear() && b.status !== 'cancelled';
+      return d.getDate() === day && d.getMonth() === calendarMonth.getMonth() && d.getFullYear() === calendarMonth.getFullYear();
     });
   };
   const isToday = (day: number) => {
@@ -238,7 +254,7 @@ const CalendarAutomation = () => {
     return selectedDate.getMonth() === calendarMonth.getMonth() && selectedDate.getFullYear() === calendarMonth.getFullYear();
   });
 
-  const upcomingBookings = bookings.filter(b => b.status !== 'cancelled' && new Date(b.event_start) >= new Date());
+  const upcomingBookings = bookings.filter(b => new Date(b.event_start) >= new Date());
 
   if (loading) {
     return <div className="flex items-center justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
@@ -252,16 +268,18 @@ const CalendarAutomation = () => {
       {/* Collapsible Settings */}
       <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen}>
         <CollapsibleTrigger asChild>
-          <button className="w-full flex items-center justify-between p-4 rounded-xl border border-border/30 bg-card/30 hover:bg-card/50 transition-colors">
+          <button className="w-full flex items-center justify-between p-4 rounded-xl border border-border/30 bg-gradient-to-r from-card/60 to-card/30 backdrop-blur-sm hover:from-card/80 hover:to-card/50 transition-all">
             <div className="flex items-center gap-3">
-              <Settings className="w-4 h-4 text-muted-foreground" />
+              <div className="p-1.5 rounded-lg bg-primary/10">
+                <Settings className="w-4 h-4 text-primary" />
+              </div>
               <span className="text-sm font-medium text-foreground">Настройки на календара</span>
             </div>
             <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${settingsOpen ? 'rotate-180' : ''}`} />
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="mt-2 p-4 rounded-xl border border-border/30 bg-card/30 space-y-4">
+          <div className="mt-2 p-4 rounded-xl border border-border/30 bg-card/30 backdrop-blur-sm space-y-4">
             <div className="space-y-2">
               <Label className="text-xs font-medium">Тип записване</Label>
               <Select value={settings.booking_type} onValueChange={(v) => setSettings(prev => ({ ...prev, booking_type: v }))}>
@@ -356,17 +374,17 @@ const CalendarAutomation = () => {
       </Collapsible>
 
       {/* Calendar Grid */}
-      <div className="rounded-xl border border-border/30 bg-card/30 overflow-hidden">
+      <div className="rounded-xl border border-border/30 bg-gradient-to-br from-card/60 via-card/30 to-card/10 backdrop-blur-sm overflow-hidden">
         <div className="p-4">
           {/* Month navigation */}
           <div className="flex items-center justify-between mb-4">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10" onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))}>
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <span className="text-sm font-semibold text-foreground">
+            <span className="text-sm font-bold text-foreground tracking-wide">
               {MONTH_NAMES[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}
             </span>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10" onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))}>
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
@@ -374,7 +392,7 @@ const CalendarAutomation = () => {
           {/* Day headers */}
           <div className="grid grid-cols-7 mb-1">
             {DAY_HEADERS.map(d => (
-              <div key={d} className="text-center text-[10px] font-medium text-muted-foreground py-1.5">{d}</div>
+              <div key={d} className="text-center text-[10px] font-semibold text-muted-foreground/70 py-1.5 uppercase tracking-wider">{d}</div>
             ))}
           </div>
 
@@ -387,92 +405,173 @@ const CalendarAutomation = () => {
               const day = i + 1;
               const dayBookings = getBookingsForDate(day);
               const hasBookings = dayBookings.length > 0;
+              const isWorkDay = settings.working_days.includes(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day).getDay());
               return (
-                <button
+                <motion.button
                   key={day}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setSelectedDate(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day))}
                   className={`h-10 rounded-lg text-xs font-medium relative transition-all ${
                     isSelected(day)
-                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      ? 'bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-lg shadow-primary/25'
                       : isToday(day)
-                      ? 'bg-accent text-accent-foreground'
+                      ? 'bg-gradient-to-br from-accent to-accent/70 text-accent-foreground ring-1 ring-primary/30'
+                      : !isWorkDay
+                      ? 'text-muted-foreground/40'
                       : 'hover:bg-muted/50 text-foreground'
                   }`}
                 >
                   {day}
                   {hasBookings && (
-                    <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${
-                      isSelected(day) ? 'bg-primary-foreground' : 'bg-primary'
-                    }`} />
+                    <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 flex gap-0.5">
+                      {dayBookings.slice(0, 3).map((_, idx) => (
+                        <span key={idx} className={`w-1 h-1 rounded-full ${
+                          isSelected(day) ? 'bg-primary-foreground' : 
+                          idx === 0 ? 'bg-primary' : 
+                          idx === 1 ? 'bg-emerald-400' : 'bg-violet-400'
+                        }`} />
+                      ))}
+                    </span>
                   )}
-                </button>
+                </motion.button>
               );
             })}
           </div>
 
           {/* Selected day detail */}
           <div className="mt-4 pt-4 border-t border-border/20">
-            <p className="text-xs font-medium text-muted-foreground mb-2">
+            <p className="text-xs font-semibold text-foreground mb-2">
               {selectedDate.toLocaleDateString('bg-BG', { weekday: 'long', day: 'numeric', month: 'long' })}
             </p>
-            {selectedDayBookings.length === 0 ? (
-              <p className="text-xs text-muted-foreground/50 py-3 text-center">Няма записи за този ден</p>
-            ) : (
-              <div className="space-y-2">
-                {selectedDayBookings.map(b => (
-                  <div key={b.id} className="flex items-start gap-3 p-2.5 rounded-lg bg-muted/30 border border-border/20">
-                    <Clock className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-foreground">{b.event_title}</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
-                        {new Date(b.event_start).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })}
-                        {' – '}
-                        {new Date(b.event_end).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                      {b.attendee_name && (
-                        <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                          <User className="w-3 h-3" /> {b.attendee_name}
-                        </p>
-                      )}
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive shrink-0" onClick={() => cancelBooking(b.id)}>
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
+            <AnimatePresence mode="wait">
+              {selectedDayBookings.length === 0 ? (
+                <motion.p
+                  key="empty"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-xs text-muted-foreground/50 py-4 text-center"
+                >
+                  Няма записи за този ден
+                </motion.p>
+              ) : (
+                <motion.div
+                  key="bookings"
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-2"
+                >
+                  {selectedDayBookings.map((b, idx) => (
+                    <motion.div
+                      key={b.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className={`relative flex items-start gap-3 p-3 rounded-xl border border-border/20 overflow-hidden group`}
+                    >
+                      {/* Color accent bar */}
+                      <div className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${getBookingColor(idx)}`} />
+                      
+                      <div className="pl-2 flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">{b.event_title}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Clock className="w-3 h-3 text-primary shrink-0" />
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(b.event_start).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })}
+                            {' – '}
+                            {new Date(b.event_end).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
+                          {b.attendee_name && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <User className="w-3 h-3 text-emerald-400" /> {b.attendee_name}
+                            </span>
+                          )}
+                          {b.attendee_phone && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Phone className="w-3 h-3 text-violet-400" /> {b.attendee_phone}
+                            </span>
+                          )}
+                          {b.attendee_email && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Mail className="w-3 h-3 text-cyan-400" /> {b.attendee_email}
+                            </span>
+                          )}
+                        </div>
+                        {b.service && (
+                          <span className="inline-block mt-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                            {b.service}
+                          </span>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={deletingId === b.id}
+                        className="h-8 w-8 text-destructive/60 hover:text-destructive hover:bg-destructive/10 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity"
+                        onClick={() => deleteBooking(b.id)}
+                      >
+                        {deletingId === b.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                      </Button>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
 
       {/* Upcoming bookings list */}
-      <div className="rounded-xl border border-border/30 bg-card/30 p-4">
-        <h4 className="text-sm font-semibold text-foreground mb-3">
-          Предстоящи {bookingLabelPlural.toLowerCase()} ({upcomingBookings.length})
+      <div className="rounded-xl border border-border/30 bg-gradient-to-br from-card/60 to-card/20 backdrop-blur-sm p-4">
+        <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          Предстоящи {bookingLabelPlural.toLowerCase()}
+          <span className="text-xs font-normal text-muted-foreground ml-1">({upcomingBookings.length})</span>
         </h4>
         {upcomingBookings.length === 0 ? (
           <p className="text-xs text-muted-foreground/50 text-center py-4">Няма предстоящи {bookingLabelPlural.toLowerCase()}</p>
         ) : (
           <div className="space-y-2">
-            {upcomingBookings.map(b => (
-              <div key={b.id} className="flex items-center justify-between p-3 rounded-lg border border-border/30 bg-card/20">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-foreground truncate">{b.event_title}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <Clock className="w-3 h-3 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">
+            {upcomingBookings.map((b, idx) => (
+              <motion.div
+                key={b.id}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.03 }}
+                className="relative flex items-center justify-between p-3 rounded-xl border border-border/20 bg-card/20 group overflow-hidden"
+              >
+                <div className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${getBookingColor(idx)}`} />
+                <div className="min-w-0 flex-1 pl-2">
+                  <p className="text-sm font-semibold text-foreground truncate">{b.event_title}</p>
+                  <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-primary" />
                       {new Date(b.event_start).toLocaleString('bg-BG', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     </span>
+                    {b.attendee_name && (
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <User className="w-3 h-3 text-emerald-400" /> {b.attendee_name}
+                      </span>
+                    )}
+                    {b.attendee_phone && (
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Phone className="w-3 h-3 text-violet-400" /> {b.attendee_phone}
+                      </span>
+                    )}
                   </div>
-                  {b.attendee_name && (
-                    <p className="text-xs text-muted-foreground mt-0.5">{b.attendee_name}{b.attendee_email ? ` · ${b.attendee_email}` : ''}</p>
-                  )}
                 </div>
-                <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 text-destructive hover:text-destructive" onClick={() => cancelBooking(b.id)}>
-                  <Trash2 className="w-3.5 h-3.5" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={deletingId === b.id}
+                  className="shrink-0 h-8 w-8 text-destructive/60 hover:text-destructive hover:bg-destructive/10 opacity-60 group-hover:opacity-100 transition-opacity"
+                  onClick={() => deleteBooking(b.id)}
+                >
+                  {deletingId === b.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                 </Button>
-              </div>
+              </motion.div>
             ))}
           </div>
         )}
