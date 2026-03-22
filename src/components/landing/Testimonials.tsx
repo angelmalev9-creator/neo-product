@@ -151,7 +151,7 @@ const Testimonials = () => {
                   </div>
 
                   {/* Content */}
-                  <blockquote className="text-base sm:text-lg lg:text-xl text-foreground/90 leading-relaxed mb-8 font-medium">
+                  <blockquote className="text-sm sm:text-lg lg:text-xl text-foreground/90 leading-relaxed mb-6 sm:mb-8 font-medium">
                     "{t.content}"
                   </blockquote>
 
