@@ -34,7 +34,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.15 }}
-            className="text-[1.6rem] leading-[1.15] sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.5rem] font-display font-black text-foreground sm:leading-[1.08] mb-3 sm:mb-6 lg:mb-8 tracking-wide">
+            className="text-[2rem] leading-[1.1] sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.5rem] font-display font-black text-foreground sm:leading-[1.08] mb-3 sm:mb-6 lg:mb-8 tracking-wide">
             <span><PencilUnderline>{t('hero.headline1')}</PencilUnderline></span>
             <br />
             <span className="neo-gradient-text-animated">
