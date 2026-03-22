@@ -17,7 +17,7 @@ const Founder = () => {
       
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <div className="max-w-4xl mx-auto">
-          <div className="neo-glass-premium rounded-3xl p-8 lg:p-14 relative overflow-hidden">
+          <div className="neo-glass-premium rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-14 relative overflow-hidden">
             {/* Decorative gradient */}
             <div className="absolute -z-0 top-0 right-0 w-[40%] h-full bg-gradient-to-l from-primary/5 to-transparent" />
             
