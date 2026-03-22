@@ -8,7 +8,7 @@ const Hero = () => {
   const { t } = useTranslation();
 
   return (
-    <section className="relative min-h-[70vh] sm:min-h-[70vh] lg:min-h-[85vh] flex items-center justify-center py-12 sm:py-12 lg:py-20 overflow-hidden">
+    <section className="relative min-h-[60vh] sm:min-h-[70vh] lg:min-h-[85vh] flex items-center justify-center py-10 sm:py-12 lg:py-20 overflow-hidden">
       <div className="absolute inset-0 neo-grid-bg opacity-10 pointer-events-none" />
 
       {/* Ambient glow orbs */}
@@ -42,7 +42,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.15 }}
-            className="text-[2rem] sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.5rem] font-display font-black text-foreground leading-[1.08] sm:leading-[1.08] mb-5 sm:mb-6 lg:mb-8 tracking-wide px-0">
+            className="text-[1.75rem] sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.5rem] font-display font-black text-foreground leading-[1.1] sm:leading-[1.08] mb-4 sm:mb-6 lg:mb-8 tracking-wide px-0">
             
             <span><PencilUnderline>{t('hero.headline1')}</PencilUnderline></span>
             <br />
@@ -56,7 +56,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="text-base sm:text-lg md:text-xl lg:text-2xl text-foreground/40 mb-8 sm:mb-8 lg:mb-12 px-2 sm:px-4 lg:px-0 max-w-2xl mx-auto leading-relaxed font-medium">
+            className="text-sm sm:text-lg md:text-xl lg:text-2xl text-foreground/40 mb-6 sm:mb-8 lg:mb-12 px-2 sm:px-4 lg:px-0 max-w-2xl mx-auto leading-relaxed font-medium">
             
             {t('hero.subheadline')}
             <span className="text-foreground/80 font-bold"> {t('hero.price')}</span>
@@ -93,7 +93,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
-            className="flex items-stretch justify-center gap-2.5 sm:gap-4 lg:gap-6 mb-8 sm:mb-10 px-0">
+            className="flex items-stretch justify-center gap-2 sm:gap-4 lg:gap-6 mb-6 sm:mb-10 px-0">
             
             {[
             { value: t('hero.stat1Value'), label: t('hero.stat1Label'), icon: Zap },
@@ -102,10 +102,10 @@ const Hero = () => {
             map((stat, i) =>
             <div
               key={stat.label}
-              className="neo-glass-premium flex-1 sm:flex-none px-2.5 sm:px-5 lg:px-7 py-3 sm:py-4 lg:py-5 text-center rounded-xl sm:rounded-2xl group hover:scale-[1.03] transition-transform duration-300 min-w-0">
+              className="neo-glass-premium flex-1 sm:flex-none px-2 sm:px-5 lg:px-7 py-2.5 sm:py-4 lg:py-5 text-center rounded-xl sm:rounded-2xl group hover:scale-[1.03] transition-transform duration-300 min-w-0">
               
-                <div className="text-lg sm:text-2xl lg:text-3xl font-black text-foreground tracking-tight group-hover:text-primary transition-colors">{stat.value}</div>
-                <div className="text-[7px] sm:text-[9px] lg:text-[10px] text-foreground/30 uppercase tracking-[0.1em] sm:tracking-[0.15em] mt-1 sm:mt-1.5 font-semibold leading-tight">{stat.label}</div>
+                <div className="text-base sm:text-2xl lg:text-3xl font-black text-foreground tracking-tight group-hover:text-primary transition-colors">{stat.value}</div>
+                <div className="text-[6px] sm:text-[9px] lg:text-[10px] text-foreground/30 uppercase tracking-[0.08em] sm:tracking-[0.15em] mt-0.5 sm:mt-1.5 font-semibold leading-tight">{stat.label}</div>
               </div>
             )}
           </motion.div>

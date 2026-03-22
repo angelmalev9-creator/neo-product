@@ -110,7 +110,7 @@ const Navigation = () => {
                   if ((link as any).isRoute) navigate(link.href);
                   else document.querySelector(link.href)?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="block text-[15px] py-3 text-foreground/45 hover:text-foreground active:text-foreground transition-colors text-left w-full font-medium" 
+                className="block text-[15px] py-3.5 text-foreground/45 hover:text-foreground active:text-foreground transition-colors text-left w-full font-medium" 
               >
                 {link.label}
               </button>

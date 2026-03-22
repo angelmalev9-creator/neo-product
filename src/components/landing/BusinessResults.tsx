@@ -178,7 +178,7 @@ const BusinessResults = () => {
                 className={`group relative overflow-hidden rounded-2xl border border-border/20 ${feature.border} bg-card/30 backdrop-blur-sm transition-all duration-500 hover:shadow-[0_0_40px_-10px_hsl(var(--primary)/0.2)]`}
               >
                 {/* Screenshot */}
-                <div className="relative h-48 sm:h-56 overflow-hidden">
+                <div className="relative h-40 sm:h-56 overflow-hidden">
                   <img 
                     src={feature.image} 
                     alt={feature.title}
