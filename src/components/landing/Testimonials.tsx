@@ -116,7 +116,7 @@ const Testimonials = () => {
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
         >
-          <div className="relative min-h-[340px] sm:min-h-[300px]">
+          <div className="relative min-h-[380px] sm:min-h-[300px]">
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
                 key={current}
