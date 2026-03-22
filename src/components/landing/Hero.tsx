@@ -102,10 +102,10 @@ const Hero = () => {
             map((stat, i) =>
             <div
               key={stat.label}
-              className="neo-glass-premium flex-1 sm:flex-none px-2.5 sm:px-5 lg:px-7 py-3 sm:py-4 lg:py-5 text-center rounded-xl sm:rounded-2xl group hover:scale-[1.03] transition-transform duration-300 min-w-0">
+              className="neo-glass-premium flex-1 sm:flex-none px-2 sm:px-5 lg:px-7 py-2.5 sm:py-4 lg:py-5 text-center rounded-xl sm:rounded-2xl group hover:scale-[1.03] transition-transform duration-300 min-w-0">
               
-                <div className="text-lg sm:text-2xl lg:text-3xl font-black text-foreground tracking-tight group-hover:text-primary transition-colors">{stat.value}</div>
-                <div className="text-[7px] sm:text-[9px] lg:text-[10px] text-foreground/30 uppercase tracking-[0.1em] sm:tracking-[0.15em] mt-1 sm:mt-1.5 font-semibold leading-tight">{stat.label}</div>
+                <div className="text-base sm:text-2xl lg:text-3xl font-black text-foreground tracking-tight group-hover:text-primary transition-colors">{stat.value}</div>
+                <div className="text-[6px] sm:text-[9px] lg:text-[10px] text-foreground/30 uppercase tracking-[0.08em] sm:tracking-[0.15em] mt-0.5 sm:mt-1.5 font-semibold leading-tight">{stat.label}</div>
               </div>
             )}
           </motion.div>
