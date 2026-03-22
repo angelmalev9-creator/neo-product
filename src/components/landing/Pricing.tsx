@@ -168,14 +168,14 @@ const Pricing = () => {
                 }`}
               >
                 {plan.featured && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-accent text-primary-foreground px-5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-primary/30">
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-gradient-to-r from-primary to-accent text-primary-foreground px-5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-primary/30">
                     <Crown className="w-3.5 h-3.5" />
                     {t('pricing.mostPopular')}
                   </div>
                 )}
 
                 {isYearly && yearlySavings > 0 && (
-                  <div className="absolute -top-2 -right-2 bg-emerald-500 text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-lg">
+                  <div className="absolute -top-2 -right-2 z-10 bg-emerald-500 text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-lg">
                     -{yearlySavings}%
                   </div>
                 )}
