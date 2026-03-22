@@ -1,5 +1,4 @@
 import ConversationStats from '@/components/dashboard/ConversationStats';
-import { BarChart3 } from 'lucide-react';
 
 interface ResultsPageProps {
   userId: string;
@@ -7,9 +6,11 @@ interface ResultsPageProps {
 
 const ResultsPage = ({ userId }: ResultsPageProps) => {
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-bold text-foreground">Резултати</h1>
-      <ConversationStats userId={userId} />
+    <div className="h-full flex flex-col p-4 lg:p-6 overflow-hidden">
+      <h1 className="text-lg font-bold text-foreground mb-3 shrink-0">Резултати</h1>
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <ConversationStats userId={userId} />
+      </div>
     </div>
   );
 };

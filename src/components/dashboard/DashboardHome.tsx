@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import {
   Crown, Globe, CalendarDays, Mic, MessageSquare, Users, CalendarCheck,
   CheckCircle2, Circle, Zap, ArrowRight, TrendingUp, Clock, Activity,
+  Sparkles,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Area, AreaChart } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
 
 interface DashboardHomeProps {
   subscribed: boolean;
@@ -67,16 +68,13 @@ const DashboardHome = ({
   const fetchTodayStats = async () => {
     if (!userId) return;
     const todayStart = getTodayStart();
-
     const [convRes, clientConvRes, bookingsRes, totalConvRes, totalClientConvRes] = await Promise.all([
       supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', todayStart),
-      // Нови клиенти = разговори с lead_captured=true (всеки разговор = макс 1 клиент)
       supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('lead_captured', true).gte('created_at', todayStart),
       supabase.from('calendar_bookings').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', todayStart),
       supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId),
       supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('lead_captured', true),
     ]);
-
     setTodayConversations(convRes.count ?? 0);
     setTodayClients(clientConvRes.count ?? 0);
     setTodayBookings(bookingsRes.count ?? 0);
@@ -89,21 +87,17 @@ const DashboardHome = ({
     if (!userId) return;
     const days = getLast7Days();
     const weekStart = days[0].dayStart;
-
     const [convRes, clientConvRes] = await Promise.all([
       supabase.from('conversations').select('created_at').eq('user_id', userId).gte('created_at', weekStart),
       supabase.from('conversations').select('created_at').eq('user_id', userId).eq('lead_captured', true).gte('created_at', weekStart),
     ]);
-
     const convos = convRes.data || [];
     const clientConvos = clientConvRes.data || [];
-
-    const result = days.map(day => {
-      const convCount = convos.filter(c => c.created_at >= day.dayStart && c.created_at < day.dayEnd).length;
-      const clientCount = clientConvos.filter(c => c.created_at >= day.dayStart && c.created_at < day.dayEnd).length;
-      return { label: day.label, conversations: convCount, clients: clientCount };
-    });
-
+    const result = days.map(day => ({
+      label: day.label,
+      conversations: convos.filter(c => c.created_at >= day.dayStart && c.created_at < day.dayEnd).length,
+      clients: clientConvos.filter(c => c.created_at >= day.dayStart && c.created_at < day.dayEnd).length,
+    }));
     setWeekData(result);
   };
 
@@ -111,7 +105,6 @@ const DashboardHome = ({
     if (!userId || !subscribed) return;
     fetchTodayStats();
     fetchWeeklyStats();
-
     const channel = supabase.channel('today-stats-realtime')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'conversations', filter: `user_id=eq.${userId}` }, () => {
         setTodayConversations(prev => prev + 1);
@@ -120,7 +113,6 @@ const DashboardHome = ({
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'conversations', filter: `user_id=eq.${userId}` }, (payload) => {
         const newRow = payload.new as any;
         const oldRow = payload.old as any;
-        // Когато разговор получи lead_captured=true, броим нов клиент
         if (newRow.lead_captured === true && oldRow.lead_captured !== true) {
           setTodayClients(prev => prev + 1);
           setTotalLeads(prev => prev + 1);
@@ -130,23 +122,21 @@ const DashboardHome = ({
         setTodayBookings(prev => prev + 1);
       })
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [userId, subscribed]);
 
   if (!subscribed) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-xl font-bold text-foreground">Добре дошли в NEO</h1>
-        <div className="rounded-2xl border border-border/10 bg-card/50 p-8 text-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
-            <Zap className="w-8 h-8 text-primary" />
+      <div className="h-full flex items-center justify-center p-6">
+        <div className="text-center space-y-5 max-w-sm">
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mx-auto neo-float">
+            <Zap className="w-10 h-10 text-primary" />
           </div>
-          <h2 className="text-lg font-bold text-foreground">Активирайте NEO</h2>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Изберете план, за да получите достъп до AI асистента, който работи 24/7 на вашия сайт.
+          <h2 className="text-xl font-bold text-foreground">Активирайте NEO</h2>
+          <p className="text-sm text-muted-foreground">
+            Изберете план, за да получите AI асистент 24/7 на вашия сайт.
           </p>
-          <Button onClick={() => navigate('/#pricing')} className="gap-2">
+          <Button onClick={() => navigate('/#pricing')} size="lg" className="gap-2">
             Разгледайте плановете <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
@@ -154,160 +144,154 @@ const DashboardHome = ({
     );
   }
 
+  const conversionRate = totalConversations > 0 ? Math.round((totalLeads / totalConversations) * 100) : 0;
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-foreground">Начало</h1>
-        <div className="flex items-center gap-2">
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${isActive ? 'bg-neo-success/10 text-[hsl(var(--neo-success))]' : 'bg-muted text-muted-foreground'}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-[hsl(var(--neo-success))]' : 'bg-muted-foreground'}`} />
-            {isActive ? 'NEO активен' : 'NEO неактивен'}
+    <div className="h-full flex flex-col p-4 lg:p-6 gap-4 overflow-y-auto lg:overflow-hidden">
+      {/* Row 1: Header + Status */}
+      <div className="flex items-center justify-between shrink-0">
+        <div>
+          <h1 className="text-lg font-bold text-foreground">Начало</h1>
+          <p className="text-xs text-muted-foreground">Преглед на активността в реално време</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold border ${isActive ? 'bg-[hsl(var(--neo-success))]/8 border-[hsl(var(--neo-success))]/20 text-[hsl(var(--neo-success))]' : 'bg-muted/50 border-border/20 text-muted-foreground'}`}>
+            <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-[hsl(var(--neo-success))] animate-pulse' : 'bg-muted-foreground/50'}`} />
+            {isActive ? 'Online' : 'Offline'}
           </span>
         </div>
       </div>
 
-      {/* Plan + Usage row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="rounded-2xl border border-border/10 bg-card/50 p-5 space-y-3">
+      {/* Row 2: Live Stats (3 cards) + Plan mini */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
+        <LiveStatCard icon={MessageSquare} label="Разговори днес" value={statsLoading ? '—' : String(todayConversations)} gradient="from-primary/15 to-primary/5" iconColor="text-primary" />
+        <LiveStatCard icon={Users} label="Нови клиенти" value={statsLoading ? '—' : String(todayClients)} gradient="from-[hsl(var(--neo-success))]/15 to-[hsl(var(--neo-success))]/5" iconColor="text-[hsl(var(--neo-success))]" />
+        <LiveStatCard icon={CalendarCheck} label="Резервации" value={statsLoading ? '—' : String(todayBookings)} gradient="from-[hsl(var(--neo-blue))]/15 to-[hsl(var(--neo-blue))]/5" iconColor="text-[hsl(var(--neo-blue))]" />
+        <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Crown className="w-4 h-4 text-primary" />
-              <span className="text-sm font-semibold text-foreground">{tierName}</span>
+            <div className="flex items-center gap-1.5">
+              <Crown className="w-3.5 h-3.5 text-primary" />
+              <span className="text-[11px] font-semibold text-primary">{tierName}</span>
             </div>
-            <Button variant="ghost" size="sm" onClick={onManageSubscription} disabled={portalLoading} className="text-xs h-7">
+            <Button variant="ghost" size="sm" onClick={onManageSubscription} disabled={portalLoading} className="text-[10px] h-6 px-2">
               {portalLoading ? '...' : 'Управление'}
             </Button>
           </div>
-          {subscriptionEnd && (
-            <p className="text-xs text-muted-foreground">
-              Активен до {new Date(subscriptionEnd).toLocaleDateString('bg-BG')}
-            </p>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-border/10 bg-card/50 p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Използвани минути</span>
-            <span className="text-sm font-bold text-foreground">{usedMinutes.toFixed(1)} / {planLimit}</span>
-          </div>
-          <Progress value={Math.min(usagePercent, 100)} className="h-2" />
-          {usagePercent > 80 && (
-            <p className="text-[11px] text-[hsl(var(--neo-warning))]">Остават малко минути</p>
-          )}
-        </div>
-      </div>
-
-      {/* Live stats */}
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <h2 className="text-sm font-semibold text-muted-foreground">Днешни резултати</h2>
-          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10">
-            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            <span className="text-[10px] text-primary font-medium">Live</span>
+          <div className="mt-2">
+            <Progress value={Math.min(usagePercent, 100)} className="h-1.5" />
+            <p className="text-[10px] text-muted-foreground mt-1">{usedMinutes.toFixed(0)}/{planLimit} мин</p>
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-3">
-          <LiveStatCard icon={MessageSquare} label="Разговори" value={statsLoading ? '—' : String(todayConversations)} color="text-primary" />
-          <LiveStatCard icon={Users} label="Нови клиенти" value={statsLoading ? '—' : String(todayClients)} color="text-[hsl(var(--neo-success))]" subtitle="Разговори с уловени данни" />
-          <LiveStatCard icon={CalendarCheck} label="Резервации" value={statsLoading ? '—' : String(todayBookings)} color="text-[hsl(var(--neo-blue))]" />
-        </div>
       </div>
 
-      {/* Totals row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <MiniStat icon={Activity} label="Общо разговори" value={String(totalConversations)} />
-        <MiniStat icon={Users} label="Общо клиенти" value={String(totalLeads)} />
-        <MiniStat icon={Clock} label="Минути" value={`${usedMinutes.toFixed(0)}`} />
-        <MiniStat icon={TrendingUp} label="Конверсия" value={totalConversations > 0 ? `${Math.round((totalLeads / totalConversations) * 100)}%` : '—'} />
-      </div>
-
-      {/* Weekly bar chart */}
-      {weekData.length > 0 && (
-        <div>
-          <h2 className="text-sm font-semibold text-muted-foreground mb-3">Седмичен преглед</h2>
-          <div className="rounded-2xl border border-border/10 bg-card/50 p-4">
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={weekData} barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-                <YAxis hide allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 12, fontSize: 12 }}
-                  labelStyle={{ color: 'hsl(var(--foreground))' }}
-                  formatter={(value: number, name: string) => [value, name === 'conversations' ? 'Разговори' : 'Нови клиенти']}
-                />
-                <Bar dataKey="conversations" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} maxBarSize={28} />
-                <Bar dataKey="clients" fill="hsl(var(--neo-success, 142 71% 45%))" radius={[6, 6, 0, 0]} maxBarSize={28} />
-              </BarChart>
-            </ResponsiveContainer>
-            <div className="flex items-center justify-center gap-4 mt-2">
-              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                <div className="w-2.5 h-2.5 rounded-sm bg-primary" /> Разговори
+      {/* Row 3: Main content - Chart + Totals + Actions */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 min-h-0">
+        {/* Chart - takes 3 cols */}
+        <div className="lg:col-span-3 rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-4 flex flex-col min-h-[200px]">
+          <div className="flex items-center justify-between mb-3 shrink-0">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xs font-semibold text-foreground">Седмичен преглед</h2>
+              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-primary/10">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                <span className="text-[9px] text-primary font-medium">Live</span>
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                <div className="w-2.5 h-2.5 rounded-sm bg-[hsl(142,71%,45%)]" /> Нови клиенти
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
+                <div className="w-2 h-2 rounded-sm bg-primary" /> Разговори
+              </div>
+              <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
+                <div className="w-2 h-2 rounded-sm bg-[hsl(142,71%,45%)]" /> Клиенти
               </div>
             </div>
           </div>
+          <div className="flex-1 min-h-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={weekData} barGap={2}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.2} vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                <YAxis hide allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 12, fontSize: 11 }}
+                  labelStyle={{ color: 'hsl(var(--foreground))' }}
+                  formatter={(value: number, name: string) => [value, name === 'conversations' ? 'Разговори' : 'Нови клиенти']}
+                />
+                <Bar dataKey="conversations" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} maxBarSize={24} />
+                <Bar dataKey="clients" fill="hsl(var(--neo-success, 142 71% 45%))" radius={[6, 6, 0, 0]} maxBarSize={24} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-      )}
 
-      {/* Action cards */}
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3">Бързи действия</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <ActionCard icon={Globe} title="Добави сайт" description={websiteUrl ? `Свързан: ${websiteUrl}` : 'Въведи URL на сайта си'} done={!!websiteUrl} onClick={() => onTabChange('setup-website')} />
-          <ActionCard icon={CalendarDays} title="Свържи календар" description={calendarConnected ? 'Календарът е свързан' : 'Автоматични резервации'} done={calendarConnected} onClick={() => onTabChange('setup-calendar')} />
-          <ActionCard icon={Mic} title="Тествай NEO" description={hasTestedNeo ? 'Тестван е' : 'Чуй как звучи NEO'} done={hasTestedNeo} onClick={() => onTabChange('neo-test')} />
+        {/* Right panel - Totals + Quick actions */}
+        <div className="lg:col-span-2 flex flex-col gap-3 min-h-0">
+          {/* Totals grid */}
+          <div className="grid grid-cols-2 gap-2 shrink-0">
+            <MiniStat icon={Activity} label="Общо разговори" value={String(totalConversations)} />
+            <MiniStat icon={Users} label="Общо клиенти" value={String(totalLeads)} />
+            <MiniStat icon={Clock} label="Минути" value={`${usedMinutes.toFixed(0)}`} />
+            <MiniStat icon={TrendingUp} label="Конверсия" value={conversionRate > 0 ? `${conversionRate}%` : '—'} />
+          </div>
+
+          {/* Quick actions */}
+          <div className="flex-1 rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-4 flex flex-col gap-2 min-h-0 overflow-y-auto">
+            <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider shrink-0">Бързи действия</h3>
+            <ActionRow icon={Globe} title="Добави сайт" done={!!websiteUrl} onClick={() => onTabChange('setup-website')} />
+            <ActionRow icon={CalendarDays} title="Свържи календар" done={calendarConnected} onClick={() => onTabChange('setup-calendar')} />
+            <ActionRow icon={Mic} title="Тествай NEO" done={hasTestedNeo} onClick={() => onTabChange('neo-test')} />
+            <ActionRow icon={Sparkles} title="Персонализирай" done={false} onClick={() => onTabChange('neo-behavior')} />
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-function LiveStatCard({ icon: Icon, label, value, color, subtitle }: { icon: React.ElementType; label: string; value: string; color: string; subtitle?: string }) {
+function LiveStatCard({ icon: Icon, label, value, gradient, iconColor }: {
+  icon: React.ElementType; label: string; value: string; gradient: string; iconColor: string;
+}) {
   return (
-    <div className="rounded-2xl border border-border/10 bg-card/50 p-4 space-y-2 relative overflow-hidden group hover:border-border/30 transition-colors">
-      <div className="absolute top-0 right-0 w-16 h-16 rounded-full bg-primary/3 blur-2xl group-hover:bg-primary/5 transition-colors" />
-      <div className="flex items-center gap-2">
-        <Icon className={`w-4 h-4 ${color}`} />
-        <span className="text-[11px] text-muted-foreground font-medium">{label}</span>
+    <div className={`rounded-2xl border border-border/10 bg-gradient-to-br ${gradient} backdrop-blur-sm p-4 relative overflow-hidden group hover:border-border/30 transition-all duration-300`}>
+      <div className="flex items-center gap-2 mb-2">
+        <div className="w-8 h-8 rounded-xl bg-background/50 flex items-center justify-center">
+          <Icon className={`w-4 h-4 ${iconColor}`} />
+        </div>
       </div>
       <p className="text-2xl font-black text-foreground tracking-tight">{value}</p>
-      {subtitle && <p className="text-[9px] text-muted-foreground/60">{subtitle}</p>}
+      <p className="text-[10px] text-muted-foreground mt-0.5">{label}</p>
     </div>
   );
 }
 
 function MiniStat({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border/10 bg-card/30 p-3 flex items-center gap-3">
-      <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+    <div className="rounded-xl border border-border/10 bg-card/40 backdrop-blur-sm p-3 flex items-center gap-2.5 hover:bg-card/60 transition-colors">
+      <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
+        <Icon className="w-3.5 h-3.5 text-primary" />
+      </div>
       <div className="min-w-0">
-        <p className="text-sm font-bold text-foreground">{value}</p>
-        <p className="text-[10px] text-muted-foreground truncate">{label}</p>
+        <p className="text-sm font-bold text-foreground leading-none">{value}</p>
+        <p className="text-[9px] text-muted-foreground mt-0.5 truncate">{label}</p>
       </div>
     </div>
   );
 }
 
-function ActionCard({ icon: Icon, title, description, done, onClick }: {
-  icon: React.ElementType; title: string; description: string; done: boolean; onClick: () => void;
+function ActionRow({ icon: Icon, title, done, onClick }: {
+  icon: React.ElementType; title: string; done: boolean; onClick: () => void;
 }) {
   return (
     <button onClick={onClick}
-      className="group rounded-2xl border border-border/10 bg-card/50 p-5 text-left hover:bg-card/80 hover:border-primary/20 transition-all duration-200 space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="w-10 h-10 rounded-xl bg-primary/8 flex items-center justify-center group-hover:bg-primary/15 transition-colors">
-          <Icon className="w-5 h-5 text-primary" />
-        </div>
-        {done ? <CheckCircle2 className="w-4 h-4 text-[hsl(var(--neo-success))]" /> : <Circle className="w-4 h-4 text-muted-foreground/30" />}
+      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted/30 transition-all duration-200 group text-left w-full">
+      <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
+        <Icon className="w-4 h-4 text-primary" />
       </div>
-      <div>
-        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-        <p className="text-xs text-muted-foreground mt-0.5 truncate">{description}</p>
-      </div>
+      <span className="text-xs font-medium text-foreground flex-1">{title}</span>
+      {done ? (
+        <CheckCircle2 className="w-4 h-4 text-[hsl(var(--neo-success))]" />
+      ) : (
+        <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors" />
+      )}
     </button>
   );
 }
