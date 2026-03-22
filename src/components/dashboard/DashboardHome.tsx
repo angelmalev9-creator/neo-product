@@ -117,12 +117,16 @@ const DashboardHome = ({
         setTodayConversations(prev => prev + 1);
         setTotalConversations(prev => prev + 1);
       })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'captured_leads', filter: `user_id=eq.${userId}` }, () => {
-        setTodayClients(prev => prev + 1);
-        setTotalLeads(prev => prev + 1);
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'conversations', filter: `user_id=eq.${userId}` }, (payload) => {
+        const newRow = payload.new as any;
+        const oldRow = payload.old as any;
+        // Когато разговор получи lead_captured=true, броим нов клиент
+        if (newRow.lead_captured === true && oldRow.lead_captured !== true) {
+          setTodayClients(prev => prev + 1);
+          setTotalLeads(prev => prev + 1);
+        }
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'calendar_bookings', filter: `user_id=eq.${userId}` }, () => {
-        setTodayClients(prev => prev + 1);
         setTodayBookings(prev => prev + 1);
       })
       .subscribe();
