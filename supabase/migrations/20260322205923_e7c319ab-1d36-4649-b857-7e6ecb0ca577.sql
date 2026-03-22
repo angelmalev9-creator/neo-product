@@ -1,0 +1,1 @@
+CREATE POLICY "Users can delete own calendar bookings" ON public.calendar_bookings FOR DELETE TO authenticated USING (auth.uid() = user_id);
