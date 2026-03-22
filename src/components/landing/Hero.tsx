@@ -42,7 +42,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.15 }}
-            className="text-[2.5rem] sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.5rem] font-display font-black text-foreground leading-[1.05] sm:leading-[1.08] mb-6 sm:mb-6 lg:mb-8 tracking-wide px-1 sm:px-0"
+            className="text-[2rem] sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.5rem] font-display font-black text-foreground leading-[1.08] sm:leading-[1.08] mb-5 sm:mb-6 lg:mb-8 tracking-wide px-0"
           >
             <span><PencilUnderline>{t('hero.headline1')}</PencilUnderline></span>
             <br />
