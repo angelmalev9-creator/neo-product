@@ -155,7 +155,7 @@ const BusinessResults = () => {
 
         {/* Dashboard Features with Real Screenshots */}
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-10 sm:mb-14">
+          <div className="text-center mb-6 sm:mb-8">
             <h3 className="text-2xl sm:text-3xl md:text-4xl font-display font-black text-foreground mb-3 leading-tight">
               Всичко на{' '}
               <span className="neo-gradient-text">едно табло</span>
