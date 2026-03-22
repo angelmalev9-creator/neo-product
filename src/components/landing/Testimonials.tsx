@@ -105,7 +105,7 @@ const Testimonials = () => {
             <PencilUnderline>Какво казват</PencilUnderline>{' '}
             <span className="neo-gradient-text">клиентите</span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto">
             Реални бизнеси. Реални резултати. Без филтри.
           </p>
         </div>

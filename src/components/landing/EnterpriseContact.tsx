@@ -56,7 +56,7 @@ const EnterpriseContact = () => {
             </h2>
           </div>
 
-          <form onSubmit={handleSubmit} className="neo-glass-premium rounded-2xl lg:rounded-3xl p-6 lg:p-10 space-y-4 lg:space-y-5">
+          <form onSubmit={handleSubmit} className="neo-glass-premium rounded-xl sm:rounded-2xl lg:rounded-3xl p-5 sm:p-6 lg:p-10 space-y-3 sm:space-y-4 lg:space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-5">
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />

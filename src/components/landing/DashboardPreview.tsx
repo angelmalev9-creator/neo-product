@@ -16,7 +16,7 @@ const DashboardPreview = () => {
       <div className="container mx-auto px-4 sm:px-4 relative z-10">
         {/* Header */}
         <div className="text-center mb-14 sm:mb-20">
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/8 border border-primary/15 text-primary text-sm font-medium mb-5">
+          <span className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/8 border border-primary/15 text-primary text-xs sm:text-sm font-medium mb-4 sm:mb-5">
             <Activity className="w-3.5 h-3.5" />
             {t('dashboardPreview.badge')}
           </span>

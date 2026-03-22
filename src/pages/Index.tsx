@@ -36,7 +36,7 @@ const Index = () => {
       {/* Animated Particles, Bands & Shadows */}
       <AnimatedBackground />
       
-      <div className="pt-[60px] sm:pt-16 lg:pt-20 pb-12 w-full">
+      <div className="pt-14 sm:pt-16 lg:pt-20 pb-8 sm:pb-12 w-full">
         <Navigation />
         <main className="relative z-10">
           <Hero />

@@ -122,12 +122,12 @@ const BusinessResults = () => {
               <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
               
               <div className="relative z-10">
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                  <item.icon className={`w-6 h-6 ${item.iconColor}`} />
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                  <item.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${item.iconColor}`} />
                 </div>
-                <p className={`text-3xl font-black ${item.metricColor} mb-1 tracking-tight`}>{item.metric}</p>
-                <h3 className="text-base font-bold text-foreground mb-2">{item.label}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+                <p className={`text-2xl sm:text-3xl font-black ${item.metricColor} mb-1 tracking-tight`}>{item.metric}</p>
+                <h3 className="text-sm sm:text-base font-bold text-foreground mb-1.5 sm:mb-2">{item.label}</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{item.description}</p>
               </div>
             </motion.div>
           ))}
