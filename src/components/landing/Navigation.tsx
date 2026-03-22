@@ -32,7 +32,7 @@ const Navigation = () => {
     { href: '#features', label: t('nav.features') },
     { href: '#demo', label: t('nav.demo') },
     { href: '#pricing', label: t('nav.pricing') },
-    { href: '/partners', label: t('nav.partners'), isRoute: true },
+    { href: '/blog', label: 'Блог', isRoute: true },
   ];
 
   return (
