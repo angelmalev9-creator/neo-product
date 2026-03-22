@@ -395,7 +395,7 @@ const Widget = () => {
                 boxShadow: `0 2px 12px ${widgetColor}30`
               } : undefined}
             >
-              {msg.content}
+              {msg.content.replace(/\[CURRENT_DATE_CONTEXT:[^\]]*\]\s*/g, '').replace(/\[SYSTEM:[^\]]*\]\s*/g, '').trim()}
             </div>
           </div>
         ))}
