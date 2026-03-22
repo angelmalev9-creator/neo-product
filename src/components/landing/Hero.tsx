@@ -31,7 +31,7 @@ const Hero = () => {
             <span className="text-foreground/60 text-[10px] lg:text-xs font-semibold tracking-[0.2em] uppercase">
               {t('hero.badge')}
             </span>
-            <span className="h-4 w-px bg-foreground/10" />
+            
             
 
             
