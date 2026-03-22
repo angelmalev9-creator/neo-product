@@ -207,7 +207,7 @@ const BusinessResults = () => {
           </motion.div>
 
           {/* CTA */}
-          <div className="text-center mt-12 sm:mt-16">
+          <div className="text-center mt-8 sm:mt-10">
             <Button
               size="lg"
               className="neo-btn-primary text-base px-8 py-6 rounded-full gap-2"
