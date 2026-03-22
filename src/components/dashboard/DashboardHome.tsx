@@ -68,19 +68,20 @@ const DashboardHome = ({
     if (!userId) return;
     const todayStart = getTodayStart();
 
-    const [convRes, leadsRes, bookingsRes, totalConvRes, totalLeadsRes] = await Promise.all([
+    const [convRes, clientConvRes, bookingsRes, totalConvRes, totalClientConvRes] = await Promise.all([
       supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', todayStart),
-      supabase.from('captured_leads').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', todayStart),
+      // Нови клиенти = разговори с lead_captured=true (всеки разговор = макс 1 клиент)
+      supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('lead_captured', true).gte('created_at', todayStart),
       supabase.from('calendar_bookings').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', todayStart),
       supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId),
-      supabase.from('captured_leads').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+      supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('lead_captured', true),
     ]);
 
     setTodayConversations(convRes.count ?? 0);
-    setTodayClients((leadsRes.count ?? 0) + (bookingsRes.count ?? 0));
+    setTodayClients(clientConvRes.count ?? 0);
     setTodayBookings(bookingsRes.count ?? 0);
     setTotalConversations(totalConvRes.count ?? 0);
-    setTotalLeads(totalLeadsRes.count ?? 0);
+    setTotalLeads(totalClientConvRes.count ?? 0);
     setStatsLoading(false);
   };
 
@@ -89,21 +90,18 @@ const DashboardHome = ({
     const days = getLast7Days();
     const weekStart = days[0].dayStart;
 
-    const [convRes, leadsRes, bookingsRes] = await Promise.all([
+    const [convRes, clientConvRes] = await Promise.all([
       supabase.from('conversations').select('created_at').eq('user_id', userId).gte('created_at', weekStart),
-      supabase.from('captured_leads').select('created_at').eq('user_id', userId).gte('created_at', weekStart),
-      supabase.from('calendar_bookings').select('created_at').eq('user_id', userId).gte('created_at', weekStart),
+      supabase.from('conversations').select('created_at').eq('user_id', userId).eq('lead_captured', true).gte('created_at', weekStart),
     ]);
 
     const convos = convRes.data || [];
-    const leads = leadsRes.data || [];
-    const bookings = bookingsRes.data || [];
+    const clientConvos = clientConvRes.data || [];
 
     const result = days.map(day => {
       const convCount = convos.filter(c => c.created_at >= day.dayStart && c.created_at < day.dayEnd).length;
-      const leadCount = leads.filter(l => l.created_at >= day.dayStart && l.created_at < day.dayEnd).length;
-      const bookCount = bookings.filter(b => b.created_at >= day.dayStart && b.created_at < day.dayEnd).length;
-      return { label: day.label, conversations: convCount, clients: leadCount + bookCount };
+      const clientCount = clientConvos.filter(c => c.created_at >= day.dayStart && c.created_at < day.dayEnd).length;
+      return { label: day.label, conversations: convCount, clients: clientCount };
     });
 
     setWeekData(result);
@@ -119,12 +117,16 @@ const DashboardHome = ({
         setTodayConversations(prev => prev + 1);
         setTotalConversations(prev => prev + 1);
       })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'captured_leads', filter: `user_id=eq.${userId}` }, () => {
-        setTodayClients(prev => prev + 1);
-        setTotalLeads(prev => prev + 1);
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'conversations', filter: `user_id=eq.${userId}` }, (payload) => {
+        const newRow = payload.new as any;
+        const oldRow = payload.old as any;
+        // Когато разговор получи lead_captured=true, броим нов клиент
+        if (newRow.lead_captured === true && oldRow.lead_captured !== true) {
+          setTodayClients(prev => prev + 1);
+          setTotalLeads(prev => prev + 1);
+        }
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'calendar_bookings', filter: `user_id=eq.${userId}` }, () => {
-        setTodayClients(prev => prev + 1);
         setTodayBookings(prev => prev + 1);
       })
       .subscribe();
@@ -207,7 +209,7 @@ const DashboardHome = ({
         </div>
         <div className="grid grid-cols-3 gap-3">
           <LiveStatCard icon={MessageSquare} label="Разговори" value={statsLoading ? '—' : String(todayConversations)} color="text-primary" />
-          <LiveStatCard icon={Users} label="Нови клиенти" value={statsLoading ? '—' : String(todayClients)} color="text-[hsl(var(--neo-success))]" subtitle="Запитвания + Резервации" />
+          <LiveStatCard icon={Users} label="Нови клиенти" value={statsLoading ? '—' : String(todayClients)} color="text-[hsl(var(--neo-success))]" subtitle="Разговори с уловени данни" />
           <LiveStatCard icon={CalendarCheck} label="Резервации" value={statsLoading ? '—' : String(todayBookings)} color="text-[hsl(var(--neo-blue))]" />
         </div>
       </div>
