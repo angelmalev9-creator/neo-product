@@ -47,6 +47,72 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_posts: {
+        Row: {
+          canonical_url: string | null
+          category: string | null
+          content_html: string | null
+          content_md: string | null
+          created_at: string
+          created_by: string | null
+          excerpt: string | null
+          featured_image_url: string | null
+          id: string
+          meta_description: string | null
+          publish_at: string | null
+          seo_title: string | null
+          slug: string
+          source_refs: Json | null
+          status: string
+          tags: Json | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          canonical_url?: string | null
+          category?: string | null
+          content_html?: string | null
+          content_md?: string | null
+          created_at?: string
+          created_by?: string | null
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          meta_description?: string | null
+          publish_at?: string | null
+          seo_title?: string | null
+          slug: string
+          source_refs?: Json | null
+          status?: string
+          tags?: Json | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          canonical_url?: string | null
+          category?: string | null
+          content_html?: string | null
+          content_md?: string | null
+          created_at?: string
+          created_by?: string | null
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          meta_description?: string | null
+          publish_at?: string | null
+          seo_title?: string | null
+          slug?: string
+          source_refs?: Json | null
+          status?: string
+          tags?: Json | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       calendar_bookings: {
         Row: {
           attendee_email: string | null
@@ -284,6 +350,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      content_ideas: {
+        Row: {
+          angle: string | null
+          audience: string | null
+          created_at: string
+          id: string
+          keywords: string[] | null
+          score: number | null
+          source_refs: Json | null
+          status: string
+          topic: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          angle?: string | null
+          audience?: string | null
+          created_at?: string
+          id?: string
+          keywords?: string[] | null
+          score?: number | null
+          source_refs?: Json | null
+          status?: string
+          topic: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          angle?: string | null
+          audience?: string | null
+          created_at?: string
+          id?: string
+          keywords?: string[] | null
+          score?: number | null
+          source_refs?: Json | null
+          status?: string
+          topic?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      content_sources: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          source_name: string
+          source_type: string
+          source_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          source_name: string
+          source_type?: string
+          source_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          source_name?: string
+          source_type?: string
+          source_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       conversation_messages: {
         Row: {
@@ -798,6 +939,39 @@ export type Database = {
           messages_count?: number | null
           started_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      workflow_runs: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          raw_payload: Json | null
+          result: string | null
+          run_date: string
+          user_id: string
+          workflow_name: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          raw_payload?: Json | null
+          result?: string | null
+          run_date?: string
+          user_id: string
+          workflow_name: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          raw_payload?: Json | null
+          result?: string | null
+          run_date?: string
+          user_id?: string
+          workflow_name?: string
         }
         Relationships: []
       }
