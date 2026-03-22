@@ -224,7 +224,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen h-screen bg-background flex overflow-hidden">
       <div className="hidden lg:block">
         <DashboardSidebar
           activeTab={activeTab}
@@ -236,7 +236,7 @@ const Dashboard = () => {
         />
       </div>
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-screen">
         <DashboardMobileNav activeTab={activeTab} onTabChange={setActiveTab} />
         <main className="flex-1 p-4 lg:p-8 overflow-y-auto">
           <div className="max-w-4xl mx-auto">
