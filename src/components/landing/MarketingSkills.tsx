@@ -28,7 +28,7 @@ const MarketingSkills = () => {
   ];
 
   return (
-    <section ref={ref as React.RefObject<HTMLElement>} className="relative py-20 sm:py-28 px-4 overflow-hidden">
+    <section ref={ref as React.RefObject<HTMLElement>} className="relative py-14 sm:py-28 px-4 overflow-hidden">
       {/* Ambient glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/4 blur-[150px] pointer-events-none" />
       
@@ -48,7 +48,7 @@ const MarketingSkills = () => {
         </div>
 
         {/* Skills Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
           {skills.map((skill, index) => (
             <motion.div
               key={index}
@@ -57,17 +57,17 @@ const MarketingSkills = () => {
               transition={{ duration: 0.4, delay: index * 0.06 }}
               className="group relative"
             >
-              <div className="neo-glass-premium p-6 rounded-2xl h-full transition-all duration-500 hover:scale-[1.03] neo-spotlight-card">
+              <div className="neo-glass-premium p-4 sm:p-6 rounded-xl sm:rounded-2xl h-full transition-all duration-500 hover:scale-[1.03] neo-spotlight-card">
                 {/* Top accent line */}
-                <div className={`absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent ${skill.accent === 'primary' ? 'via-primary/30' : 'via-accent/30'} to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                <div className={`absolute top-0 left-4 right-4 sm:left-6 sm:right-6 h-px bg-gradient-to-r from-transparent ${skill.accent === 'primary' ? 'via-primary/30' : 'via-accent/30'} to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                 
-                <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${skill.accent === 'primary' ? 'from-primary/15 to-primary/5' : 'from-accent/15 to-accent/5'} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                  <skill.icon className={`w-5 h-5 ${skill.accent === 'primary' ? 'text-primary' : 'text-accent'}`} />
+                <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-gradient-to-br ${skill.accent === 'primary' ? 'from-primary/15 to-primary/5' : 'from-accent/15 to-accent/5'} flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                  <skill.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${skill.accent === 'primary' ? 'text-primary' : 'text-accent'}`} />
                 </div>
-                <h3 className="text-base font-bold text-foreground mb-2 group-hover:text-foreground transition-colors">
+                <h3 className="text-[13px] sm:text-base font-bold text-foreground mb-1.5 sm:mb-2 group-hover:text-foreground transition-colors leading-tight">
                   {skill.title}
                 </h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">
+                <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">
                   {skill.description}
                 </p>
               </div>

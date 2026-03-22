@@ -9,14 +9,14 @@ const DashboardPreview = () => {
   const { ref, isVisible } = useScrollAnimation();
 
   return (
-    <section ref={ref as React.RefObject<HTMLElement>} id="dashboard-features" className="py-20 sm:py-28 relative overflow-hidden">
+    <section ref={ref as React.RefObject<HTMLElement>} id="dashboard-features" className="py-14 sm:py-28 relative overflow-hidden">
       {/* Ambient glow */}
       <div className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-primary/4 blur-[150px] pointer-events-none" />
       
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-4 sm:px-4 relative z-10">
         {/* Header */}
         <div className="text-center mb-14 sm:mb-20">
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/8 border border-primary/15 text-primary text-sm font-medium mb-5">
+          <span className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/8 border border-primary/15 text-primary text-xs sm:text-sm font-medium mb-4 sm:mb-5">
             <Activity className="w-3.5 h-3.5" />
             {t('dashboardPreview.badge')}
           </span>

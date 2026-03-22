@@ -93,19 +93,19 @@ const Testimonials = () => {
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="testimonials"
-      className={`py-20 lg:py-32 relative overflow-hidden neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
+      className={`py-14 sm:py-20 lg:py-32 relative overflow-hidden neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
     >
       <div className="container mx-auto px-5 sm:px-4 lg:px-8 relative z-10">
         {/* Header */}
-        <div className="text-center mb-12 lg:mb-20">
+        <div className="text-center mb-8 sm:mb-12 lg:mb-20">
           <span className="inline-block px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
             Доверието говори
           </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-black text-foreground mb-4 max-w-3xl mx-auto leading-[1.1] tracking-wide">
+          <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-black text-foreground mb-3 sm:mb-4 max-w-3xl mx-auto leading-[1.1] tracking-wide">
             <PencilUnderline>Какво казват</PencilUnderline>{' '}
             <span className="neo-gradient-text">клиентите</span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto">
             Реални бизнеси. Реални резултати. Без филтри.
           </p>
         </div>
@@ -116,7 +116,7 @@ const Testimonials = () => {
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
         >
-          <div className="relative min-h-[340px] sm:min-h-[300px]">
+          <div className="relative min-h-[380px] sm:min-h-[300px]">
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
                 key={current}
@@ -128,7 +128,7 @@ const Testimonials = () => {
                 transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
                 className="absolute inset-0"
               >
-                <div className="relative rounded-3xl border border-border/30 bg-card/40 backdrop-blur-xl p-8 sm:p-10 lg:p-12 shadow-2xl shadow-primary/5">
+                <div className="relative rounded-2xl sm:rounded-3xl border border-border/30 bg-card/40 backdrop-blur-xl p-5 sm:p-10 lg:p-12 shadow-2xl shadow-primary/5">
                   {/* Decorative gradient */}
                   <div className="absolute -z-10 inset-0 rounded-3xl bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
 
@@ -151,19 +151,19 @@ const Testimonials = () => {
                   </div>
 
                   {/* Content */}
-                  <blockquote className="text-base sm:text-lg lg:text-xl text-foreground/90 leading-relaxed mb-8 font-medium">
+                  <blockquote className="text-sm sm:text-lg lg:text-xl text-foreground/90 leading-relaxed mb-6 sm:mb-8 font-medium">
                     "{t.content}"
                   </blockquote>
 
                   {/* Author */}
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/30 to-accent/20 flex items-center justify-center text-base font-black text-foreground shadow-lg shadow-primary/10">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/30 to-accent/20 flex items-center justify-center text-sm sm:text-base font-black text-foreground shadow-lg shadow-primary/10">
                       {t.initials}
                     </div>
                     <div>
-                      <p className="font-bold text-foreground text-base">{t.name}</p>
-                      <p className="text-sm text-muted-foreground">{t.role}</p>
-                      <p className="text-sm text-primary font-semibold">{t.business}</p>
+                      <p className="font-bold text-foreground text-sm sm:text-base">{t.name}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{t.role}</p>
+                      <p className="text-xs sm:text-sm text-primary font-semibold">{t.business}</p>
                     </div>
                   </div>
                 </div>

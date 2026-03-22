@@ -35,7 +35,7 @@ const Footer = () => {
     <footer className="relative overflow-hidden">
       {/* Top CTA Section */}
       <div className="border-t border-border/10">
-        <div className="container mx-auto px-4 lg:px-8 py-16 lg:py-24">
+        <div className="container mx-auto px-5 lg:px-8 py-12 lg:py-24">
           <div className="max-w-3xl mx-auto text-center">
             <h3 className="text-2xl sm:text-3xl lg:text-4xl font-display font-black text-foreground mb-4">
               {t('footer.ctaTitle')}
@@ -58,9 +58,9 @@ const Footer = () => {
       {/* Main Footer */}
       <div className="border-t border-border/10 py-14 lg:py-16">
         <div className="container mx-auto px-4 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-8">
             {/* Brand */}
-            <div className="lg:col-span-2">
+            <div className="col-span-2 lg:col-span-2">
               <div className="flex items-center gap-3 mb-5">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
                   <Bot className="w-5 h-5 text-primary-foreground" />

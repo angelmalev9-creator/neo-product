@@ -98,14 +98,14 @@ const Pricing = () => {
     <section 
       ref={ref as React.RefObject<HTMLElement>}
       id="pricing" 
-      className="py-20 sm:py-28 relative overflow-hidden"
+      className="py-14 sm:py-28 relative overflow-hidden"
     >
       {/* Ambient glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 blur-[150px] rounded-full pointer-events-none" />
       
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         {/* Header */}
-        <div className="text-center mb-10 sm:mb-14">
+        <div className="text-center mb-8 sm:mb-14">
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/8 border border-primary/15 text-primary text-sm font-medium mb-5">
             <Sparkles className="w-3.5 h-3.5" />
             Ценови планове
@@ -150,7 +150,7 @@ const Pricing = () => {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 lg:gap-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-6 max-w-6xl mx-auto px-1 sm:px-0">
           {plans.map((plan, i) => {
             const monthlyPrices = { starter: '25', growth: '33', empire: '60' };
             const yearlySavings = getYearlySavings(monthlyPrices[plan.id as keyof typeof monthlyPrices], plan.price);

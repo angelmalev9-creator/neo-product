@@ -10,14 +10,14 @@ const Founder = () => {
     <section 
       ref={ref as React.RefObject<HTMLElement>}
       id="founder"
-      className="py-20 lg:py-28 relative overflow-hidden"
+      className="py-14 sm:py-20 lg:py-28 relative overflow-hidden"
     >
       {/* Ambient glow */}
       <div className="absolute top-1/2 left-0 w-[400px] h-[400px] rounded-full bg-primary/4 blur-[120px] pointer-events-none" />
       
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <div className="max-w-4xl mx-auto">
-          <div className="neo-glass-premium rounded-3xl p-8 lg:p-14 relative overflow-hidden">
+          <div className="neo-glass-premium rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-14 relative overflow-hidden">
             {/* Decorative gradient */}
             <div className="absolute -z-0 top-0 right-0 w-[40%] h-full bg-gradient-to-l from-primary/5 to-transparent" />
             
@@ -25,8 +25,8 @@ const Founder = () => {
               {/* Photo */}
               <div className="lg:col-span-1 flex justify-center">
                 <div className="relative">
-                  <div className="w-40 h-40 lg:w-48 lg:h-48 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/15 shadow-xl shadow-primary/10">
-                    <span className="text-6xl lg:text-7xl">👨‍💻</span>
+                  <div className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/15 shadow-xl shadow-primary/10">
+                    <span className="text-5xl sm:text-6xl lg:text-7xl">👨‍💻</span>
                   </div>
                   <div className="absolute -bottom-3 -right-3 w-10 h-10 rounded-xl bg-primary/15 border border-primary/20 flex items-center justify-center">
                     <Quote className="w-4 h-4 text-primary" />

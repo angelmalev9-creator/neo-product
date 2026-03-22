@@ -87,11 +87,11 @@ const BusinessResults = () => {
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="results"
-      className="py-20 sm:py-28 relative overflow-hidden"
+      className="py-14 sm:py-28 relative overflow-hidden"
     >
       <div className="container mx-auto px-5 sm:px-4 lg:px-8 relative z-10">
         {/* Header */}
-        <div className="text-center mb-14 sm:mb-20">
+        <div className="text-center mb-10 sm:mb-20">
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/8 border border-primary/15 text-primary text-sm font-medium mb-5">
             <Sparkles className="w-3.5 h-3.5" />
             Какво може NEO
@@ -110,24 +110,24 @@ const BusinessResults = () => {
           variants={containerVariants}
           initial="hidden"
           animate={isVisible ? 'visible' : 'hidden'}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-16 sm:mb-24"
+          className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-12 sm:mb-24"
         >
           {outcomes.map((item, idx) => (
             <motion.div
               key={idx}
               variants={itemVariants}
-              className="group relative neo-glass-premium p-6 rounded-2xl hover:scale-[1.03] transition-transform duration-500"
+              className="group relative neo-glass-premium p-4 sm:p-6 rounded-xl sm:rounded-2xl hover:scale-[1.03] transition-transform duration-500"
             >
               {/* Gradient overlay on hover */}
               <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
               
               <div className="relative z-10">
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                  <item.icon className={`w-6 h-6 ${item.iconColor}`} />
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                  <item.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${item.iconColor}`} />
                 </div>
-                <p className={`text-3xl font-black ${item.metricColor} mb-1 tracking-tight`}>{item.metric}</p>
-                <h3 className="text-base font-bold text-foreground mb-2">{item.label}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+                <p className={`text-2xl sm:text-3xl font-black ${item.metricColor} mb-1 tracking-tight`}>{item.metric}</p>
+                <h3 className="text-sm sm:text-base font-bold text-foreground mb-1.5 sm:mb-2">{item.label}</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{item.description}</p>
               </div>
             </motion.div>
           ))}
