@@ -1,10 +1,11 @@
 import {
   Home, Rocket, MessageSquare, Brain, BarChart3,
-  Settings, Menu, X, Palette,
+  Settings, Menu, X, Palette, Sun, Moon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import NeoLogo from '@/components/ui/NeoLogo';
+import { useTheme } from '@/hooks/useTheme';
 
 interface DashboardMobileNavProps {
   activeTab: string;
@@ -23,18 +24,27 @@ const MOBILE_ITEMS = [
 
 const DashboardMobileNav = ({ activeTab, onTabChange }: DashboardMobileNavProps) => {
   const [open, setOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <>
       <header className="lg:hidden sticky top-0 z-50 border-b border-border/10 bg-sidebar/95 backdrop-blur-xl px-4 py-3 flex items-center justify-between">
         <NeoLogo size="sm" />
-        <button onClick={() => setOpen(!open)} className="text-muted-foreground hover:text-foreground">
-          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+          <button onClick={() => setOpen(!open)} className="text-muted-foreground hover:text-foreground">
+            {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </header>
 
       {open && (
-        <div className="lg:hidden fixed inset-x-0 top-[53px] z-40 bg-sidebar/98 backdrop-blur-xl border-b border-border/10 p-3 space-y-0.5">
+        <div className="lg:hidden fixed inset-x-0 top-[53px] bottom-0 z-40 bg-sidebar/98 backdrop-blur-xl border-b border-border/10 p-3 space-y-0.5 overflow-y-auto">
           {MOBILE_ITEMS.map((item) => (
             <button
               key={item.id}

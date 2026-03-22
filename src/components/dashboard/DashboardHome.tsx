@@ -3,11 +3,11 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import {
   Crown, Globe, CalendarDays, Mic, MessageSquare, Users, CalendarCheck,
-  CheckCircle2, Circle, Zap, ArrowRight,
+  CheckCircle2, Circle, Zap, ArrowRight, TrendingUp, Clock, Activity,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Area, AreaChart } from 'recharts';
 
 interface DashboardHomeProps {
   subscribed: boolean;
@@ -34,7 +34,7 @@ function getLast7Days() {
     const dateStr = d.toISOString().split('T')[0];
     const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
     const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).toISOString();
-    const dow = d.getDay(); // 0=Sun
+    const dow = d.getDay();
     const label = WEEKDAY_LABELS[dow === 0 ? 6 : dow - 1];
     days.push({ date: dateStr, label, dayStart, dayEnd });
   }
@@ -55,6 +55,8 @@ const DashboardHome = ({
   const [todayBookings, setTodayBookings] = useState(0);
   const [statsLoading, setStatsLoading] = useState(true);
   const [weekData, setWeekData] = useState<{ label: string; conversations: number; clients: number }[]>([]);
+  const [totalConversations, setTotalConversations] = useState(0);
+  const [totalLeads, setTotalLeads] = useState(0);
 
   const getTodayStart = () => {
     const now = new Date();
@@ -66,30 +68,19 @@ const DashboardHome = ({
     if (!userId) return;
     const todayStart = getTodayStart();
 
-    const [convRes, leadsRes, bookingsRes] = await Promise.all([
-      supabase
-        .from('conversations')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .gte('created_at', todayStart),
-      supabase
-        .from('captured_leads')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .gte('created_at', todayStart),
-      supabase
-        .from('calendar_bookings')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .gte('created_at', todayStart),
+    const [convRes, leadsRes, bookingsRes, totalConvRes, totalLeadsRes] = await Promise.all([
+      supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', todayStart),
+      supabase.from('captured_leads').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', todayStart),
+      supabase.from('calendar_bookings').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', todayStart),
+      supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+      supabase.from('captured_leads').select('id', { count: 'exact', head: true }).eq('user_id', userId),
     ]);
 
-    const leadsCount = leadsRes.count ?? 0;
-    const bookingsCount = bookingsRes.count ?? 0;
-
     setTodayConversations(convRes.count ?? 0);
-    setTodayClients(leadsCount + bookingsCount);
-    setTodayBookings(bookingsCount);
+    setTodayClients((leadsRes.count ?? 0) + (bookingsRes.count ?? 0));
+    setTodayBookings(bookingsRes.count ?? 0);
+    setTotalConversations(totalConvRes.count ?? 0);
+    setTotalLeads(totalLeadsRes.count ?? 0);
     setStatsLoading(false);
   };
 
@@ -124,22 +115,15 @@ const DashboardHome = ({
     fetchWeeklyStats();
 
     const channel = supabase.channel('today-stats-realtime')
-      .on('postgres_changes', {
-        event: 'INSERT', schema: 'public', table: 'conversations',
-        filter: `user_id=eq.${userId}`,
-      }, () => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'conversations', filter: `user_id=eq.${userId}` }, () => {
         setTodayConversations(prev => prev + 1);
+        setTotalConversations(prev => prev + 1);
       })
-      .on('postgres_changes', {
-        event: 'INSERT', schema: 'public', table: 'captured_leads',
-        filter: `user_id=eq.${userId}`,
-      }, () => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'captured_leads', filter: `user_id=eq.${userId}` }, () => {
         setTodayClients(prev => prev + 1);
+        setTotalLeads(prev => prev + 1);
       })
-      .on('postgres_changes', {
-        event: 'INSERT', schema: 'public', table: 'calendar_bookings',
-        filter: `user_id=eq.${userId}`,
-      }, () => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'calendar_bookings', filter: `user_id=eq.${userId}` }, () => {
         setTodayClients(prev => prev + 1);
         setTodayBookings(prev => prev + 1);
       })
@@ -212,17 +196,7 @@ const DashboardHome = ({
         </div>
       </div>
 
-      {/* Action cards */}
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3">Бързи действия</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <ActionCard icon={Globe} title="Добави сайт" description={websiteUrl ? `Свързан: ${websiteUrl}` : 'Въведи URL на сайта си'} done={!!websiteUrl} onClick={() => onTabChange('setup-website')} />
-          <ActionCard icon={CalendarDays} title="Свържи календар" description={calendarConnected ? 'Календарът е свързан' : 'Автоматични резервации'} done={calendarConnected} onClick={() => onTabChange('setup-calendar')} />
-          <ActionCard icon={Mic} title="Тествай NEO" description={hasTestedNeo ? 'Тестван е' : 'Чуй как звучи NEO'} done={hasTestedNeo} onClick={() => onTabChange('neo-test')} />
-        </div>
-      </div>
-
-      {/* Stats summary - real-time */}
+      {/* Live stats */}
       <div>
         <div className="flex items-center gap-2 mb-3">
           <h2 className="text-sm font-semibold text-muted-foreground">Днешни резултати</h2>
@@ -232,10 +206,18 @@ const DashboardHome = ({
           </div>
         </div>
         <div className="grid grid-cols-3 gap-3">
-          <StatCard icon={MessageSquare} label="Разговори" value={statsLoading ? '...' : String(todayConversations)} />
-          <StatCard icon={Users} label="Нови клиенти" value={statsLoading ? '...' : String(todayClients)} subtitle="Запитвания + Резервации" />
-          <StatCard icon={CalendarCheck} label="Резервации" value={statsLoading ? '...' : String(todayBookings)} />
+          <LiveStatCard icon={MessageSquare} label="Разговори" value={statsLoading ? '—' : String(todayConversations)} color="text-primary" />
+          <LiveStatCard icon={Users} label="Нови клиенти" value={statsLoading ? '—' : String(todayClients)} color="text-[hsl(var(--neo-success))]" subtitle="Запитвания + Резервации" />
+          <LiveStatCard icon={CalendarCheck} label="Резервации" value={statsLoading ? '—' : String(todayBookings)} color="text-[hsl(var(--neo-blue))]" />
         </div>
+      </div>
+
+      {/* Totals row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <MiniStat icon={Activity} label="Общо разговори" value={String(totalConversations)} />
+        <MiniStat icon={Users} label="Общо клиенти" value={String(totalLeads)} />
+        <MiniStat icon={Clock} label="Минути" value={`${usedMinutes.toFixed(0)}`} />
+        <MiniStat icon={TrendingUp} label="Конверсия" value={totalConversations > 0 ? `${Math.round((totalLeads / totalConversations) * 100)}%` : '—'} />
       </div>
 
       {/* Weekly bar chart */}
@@ -243,8 +225,9 @@ const DashboardHome = ({
         <div>
           <h2 className="text-sm font-semibold text-muted-foreground mb-3">Седмичен преглед</h2>
           <div className="rounded-2xl border border-border/10 bg-card/50 p-4">
-            <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={weekData} barGap={2}>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={weekData} barGap={4}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
                 <YAxis hide allowDecimals={false} />
                 <Tooltip
@@ -252,8 +235,8 @@ const DashboardHome = ({
                   labelStyle={{ color: 'hsl(var(--foreground))' }}
                   formatter={(value: number, name: string) => [value, name === 'conversations' ? 'Разговори' : 'Нови клиенти']}
                 />
-                <Bar dataKey="conversations" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={24} />
-                <Bar dataKey="clients" fill="hsl(var(--neo-success, 142 71% 45%))" radius={[4, 4, 0, 0]} maxBarSize={24} />
+                <Bar dataKey="conversations" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} maxBarSize={28} />
+                <Bar dataKey="clients" fill="hsl(var(--neo-success, 142 71% 45%))" radius={[6, 6, 0, 0]} maxBarSize={28} />
               </BarChart>
             </ResponsiveContainer>
             <div className="flex items-center justify-center gap-4 mt-2">
@@ -267,9 +250,45 @@ const DashboardHome = ({
           </div>
         </div>
       )}
+
+      {/* Action cards */}
+      <div>
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3">Бързи действия</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <ActionCard icon={Globe} title="Добави сайт" description={websiteUrl ? `Свързан: ${websiteUrl}` : 'Въведи URL на сайта си'} done={!!websiteUrl} onClick={() => onTabChange('setup-website')} />
+          <ActionCard icon={CalendarDays} title="Свържи календар" description={calendarConnected ? 'Календарът е свързан' : 'Автоматични резервации'} done={calendarConnected} onClick={() => onTabChange('setup-calendar')} />
+          <ActionCard icon={Mic} title="Тествай NEO" description={hasTestedNeo ? 'Тестван е' : 'Чуй как звучи NEO'} done={hasTestedNeo} onClick={() => onTabChange('neo-test')} />
+        </div>
+      </div>
     </div>
   );
 };
+
+function LiveStatCard({ icon: Icon, label, value, color, subtitle }: { icon: React.ElementType; label: string; value: string; color: string; subtitle?: string }) {
+  return (
+    <div className="rounded-2xl border border-border/10 bg-card/50 p-4 space-y-2 relative overflow-hidden group hover:border-border/30 transition-colors">
+      <div className="absolute top-0 right-0 w-16 h-16 rounded-full bg-primary/3 blur-2xl group-hover:bg-primary/5 transition-colors" />
+      <div className="flex items-center gap-2">
+        <Icon className={`w-4 h-4 ${color}`} />
+        <span className="text-[11px] text-muted-foreground font-medium">{label}</span>
+      </div>
+      <p className="text-2xl font-black text-foreground tracking-tight">{value}</p>
+      {subtitle && <p className="text-[9px] text-muted-foreground/60">{subtitle}</p>}
+    </div>
+  );
+}
+
+function MiniStat({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-border/10 bg-card/30 p-3 flex items-center gap-3">
+      <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+      <div className="min-w-0">
+        <p className="text-sm font-bold text-foreground">{value}</p>
+        <p className="text-[10px] text-muted-foreground truncate">{label}</p>
+      </div>
+    </div>
+  );
+}
 
 function ActionCard({ icon: Icon, title, description, done, onClick }: {
   icon: React.ElementType; title: string; description: string; done: boolean; onClick: () => void;
@@ -288,17 +307,6 @@ function ActionCard({ icon: Icon, title, description, done, onClick }: {
         <p className="text-xs text-muted-foreground mt-0.5 truncate">{description}</p>
       </div>
     </button>
-  );
-}
-
-function StatCard({ icon: Icon, label, value, subtitle }: { icon: React.ElementType; label: string; value: string; subtitle?: string }) {
-  return (
-    <div className="rounded-2xl border border-border/10 bg-card/50 p-4 text-center space-y-1">
-      <Icon className="w-4 h-4 text-muted-foreground mx-auto" />
-      <p className="text-lg font-bold text-foreground">{value}</p>
-      <p className="text-[11px] text-muted-foreground">{label}</p>
-      {subtitle && <p className="text-[9px] text-muted-foreground/60">{subtitle}</p>}
-    </div>
   );
 }
 
