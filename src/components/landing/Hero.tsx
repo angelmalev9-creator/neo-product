@@ -56,7 +56,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="text-base sm:text-lg md:text-xl lg:text-2xl text-foreground/40 mb-8 sm:mb-8 lg:mb-12 px-2 sm:px-4 lg:px-0 max-w-2xl mx-auto leading-relaxed font-medium">
+            className="text-sm sm:text-lg md:text-xl lg:text-2xl text-foreground/40 mb-6 sm:mb-8 lg:mb-12 px-2 sm:px-4 lg:px-0 max-w-2xl mx-auto leading-relaxed font-medium">
             
             {t('hero.subheadline')}
             <span className="text-foreground/80 font-bold"> {t('hero.price')}</span>
