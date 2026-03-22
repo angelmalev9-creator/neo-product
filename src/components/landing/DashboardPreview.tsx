@@ -13,7 +13,7 @@ const DashboardPreview = () => {
       {/* Ambient glow */}
       <div className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-primary/4 blur-[150px] pointer-events-none" />
       
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-4 sm:px-4 relative z-10">
         {/* Header */}
         <div className="text-center mb-14 sm:mb-20">
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/8 border border-primary/15 text-primary text-sm font-medium mb-5">
