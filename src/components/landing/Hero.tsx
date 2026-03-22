@@ -8,7 +8,7 @@ const Hero = () => {
   const { t } = useTranslation();
 
   return (
-    <section className="relative min-h-[70vh] sm:min-h-[70vh] lg:min-h-[85vh] flex items-center justify-center py-12 sm:py-12 lg:py-20 overflow-hidden">
+    <section className="relative min-h-[60vh] sm:min-h-[70vh] lg:min-h-[85vh] flex items-center justify-center py-10 sm:py-12 lg:py-20 overflow-hidden">
       <div className="absolute inset-0 neo-grid-bg opacity-10 pointer-events-none" />
 
       {/* Ambient glow orbs */}
