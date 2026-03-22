@@ -97,7 +97,7 @@ const Testimonials = () => {
     >
       <div className="container mx-auto px-5 sm:px-4 lg:px-8 relative z-10">
         {/* Header */}
-        <div className="text-center mb-12 lg:mb-20">
+        <div className="text-center mb-8 sm:mb-12 lg:mb-20">
           <span className="inline-block px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
             Доверието говори
           </span>
