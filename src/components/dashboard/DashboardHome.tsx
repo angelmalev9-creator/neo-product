@@ -90,21 +90,18 @@ const DashboardHome = ({
     const days = getLast7Days();
     const weekStart = days[0].dayStart;
 
-    const [convRes, leadsRes, bookingsRes] = await Promise.all([
+    const [convRes, clientConvRes] = await Promise.all([
       supabase.from('conversations').select('created_at').eq('user_id', userId).gte('created_at', weekStart),
-      supabase.from('captured_leads').select('created_at').eq('user_id', userId).gte('created_at', weekStart),
-      supabase.from('calendar_bookings').select('created_at').eq('user_id', userId).gte('created_at', weekStart),
+      supabase.from('conversations').select('created_at').eq('user_id', userId).eq('lead_captured', true).gte('created_at', weekStart),
     ]);
 
     const convos = convRes.data || [];
-    const leads = leadsRes.data || [];
-    const bookings = bookingsRes.data || [];
+    const clientConvos = clientConvRes.data || [];
 
     const result = days.map(day => {
       const convCount = convos.filter(c => c.created_at >= day.dayStart && c.created_at < day.dayEnd).length;
-      const leadCount = leads.filter(l => l.created_at >= day.dayStart && l.created_at < day.dayEnd).length;
-      const bookCount = bookings.filter(b => b.created_at >= day.dayStart && b.created_at < day.dayEnd).length;
-      return { label: day.label, conversations: convCount, clients: leadCount + bookCount };
+      const clientCount = clientConvos.filter(c => c.created_at >= day.dayStart && c.created_at < day.dayEnd).length;
+      return { label: day.label, conversations: convCount, clients: clientCount };
     });
 
     setWeekData(result);
