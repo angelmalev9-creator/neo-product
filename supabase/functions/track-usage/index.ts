@@ -31,7 +31,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return new Response(
         JSON.stringify({ error: 'No authorization header', success: false }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -39,16 +39,25 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
-    
-    if (userError || !userData.user) {
+    let userId: string;
+
+    try {
+      const { data: userData, error: userError } = await supabase.auth.getUser(token);
+      if (userError || !userData.user) {
+        logStep("Auth failed", { error: userError?.message });
+        return new Response(
+          JSON.stringify({ error: 'User not authenticated', success: false }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      userId = userData.user.id;
+    } catch (authErr) {
+      logStep("Auth exception", { message: String(authErr) });
       return new Response(
         JSON.stringify({ error: 'User not authenticated', success: false }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    const userId = userData.user.id;
     logStep("User authenticated", { userId });
 
     const { action, duration_seconds, session_id, minutes } = await req.json();
