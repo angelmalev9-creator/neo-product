@@ -93,7 +93,7 @@ const Testimonials = () => {
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="testimonials"
-      className={`py-14 sm:py-20 lg:py-32 relative overflow-hidden neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
+      className={`py-10 sm:py-14 lg:py-20 relative overflow-hidden neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
     >
       <div className="container mx-auto px-5 sm:px-4 lg:px-8 relative z-10">
         {/* Header */}

@@ -9,7 +9,6 @@ const VoiceInterview = lazy(() => import('@/components/landing/VoiceInterview'))
 const Comparison = lazy(() => import('@/components/landing/Comparison'));
 const BusinessResults = lazy(() => import('@/components/landing/BusinessResults'));
 const Testimonials = lazy(() => import('@/components/landing/Testimonials'));
-const MarketingSkills = lazy(() => import('@/components/landing/MarketingSkills'));
 const Founder = lazy(() => import('@/components/landing/Founder'));
 const Pricing = lazy(() => import('@/components/landing/Pricing'));
 const EnterpriseContact = lazy(() => import('@/components/landing/EnterpriseContact'));
@@ -41,12 +40,11 @@ const Index = () => {
           <Suspense fallback={<div className="min-h-[50vh]" />}>
             <DemoSection onTrainingComplete={handleTrainingComplete} />
             <VoiceInterview key={sessionId || 'no-session'} sessionId={sessionId} />
-            <Comparison />
             <BusinessResults />
+            <Comparison />
             <Testimonials />
-            <MarketingSkills />
-            <Founder />
             <Pricing />
+            <Founder />
             <EnterpriseContact />
           </Suspense>
         </main>
