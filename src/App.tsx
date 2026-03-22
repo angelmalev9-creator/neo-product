@@ -21,7 +21,7 @@ const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const GDPR = lazy(() => import("./pages/GDPR"));
 const Cookies = lazy(() => import("./pages/Cookies"));
-const Partners = lazy(() => import("./pages/Partners"));
+
 const VoiceAssistantEvolution = lazy(() => import("./pages/blog/VoiceAssistantEvolution"));
 const SmallBusinessSales = lazy(() => import("./pages/blog/SmallBusinessSales"));
 const DentalClinicAI = lazy(() => import("./pages/blog/DentalClinicAI"));
@@ -64,7 +64,7 @@ const App = () => {
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/gdpr" element={<GDPR />} />
                 <Route path="/cookies" element={<Cookies />} />
-                <Route path="/partners" element={<Partners />} />
+                
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
