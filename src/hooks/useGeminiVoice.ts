@@ -1553,15 +1553,9 @@ export const useGeminiVoice = ({
     }
   }, [updateSpeaking, buildStableTranscriptFromBuffers]);
 
-  const buildStableTranscriptFromBuffers = useCallback(() => {
-    const finalJoined = finalChunksRef.current.join(" ").trim();
-    const fallbackJoined = utteranceBufferRef.current
-      .map((x) => stripLowConfidenceTag(x))
-      .join(" ")
-      .trim();
-    const interimFallback = lastInterimTranscriptRef.current.trim();
-    return (finalJoined || fallbackJoined || interimFallback).replace(/\s+/g, " ").trim();
-  }, []);
+  // Moved ABOVE the useCallback that references it — see line ~1540
+  // (declaration already exists earlier; removing duplicate below)
+
 
   const flushBufferedUtterance = useCallback(() => {
     if (utteranceDebounceRef.current) {
