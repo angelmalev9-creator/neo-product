@@ -1,4 +1,4 @@
-import { ArrowRight, Zap, Clock, Users, Play } from 'lucide-react';
+import { Zap, Clock, Users, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PencilUnderline } from '@/components/ui/PencilUnderline';
 import { useTranslation } from 'react-i18next';
@@ -76,7 +76,7 @@ const Hero = () => {
               
               <Play className="w-4 h-4 mr-1 fill-current" />
               <span>{t('hero.cta')}</span>
-              <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+              
             </Button>
             <Button
               size="lg"
