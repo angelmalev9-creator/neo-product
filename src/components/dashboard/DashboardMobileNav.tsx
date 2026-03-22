@@ -1,9 +1,8 @@
 import {
   Home, Rocket, MessageSquare, Brain, BarChart3,
-  Settings, Menu, X, Palette, Sun, Moon,
+  Settings, Sun, Moon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
 import NeoLogo from '@/components/ui/NeoLogo';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -12,56 +11,80 @@ interface DashboardMobileNavProps {
   onTabChange: (tab: string) => void;
 }
 
-const MOBILE_ITEMS = [
+const BOTTOM_TABS = [
   { id: 'home', label: 'Начало', icon: Home },
   { id: 'setup-website', label: 'Настрой', icon: Rocket },
-  { id: 'conv-diary', label: 'Разговори', icon: MessageSquare },
+  { id: 'conv-diary', label: 'Чат', icon: MessageSquare },
   { id: 'neo-test', label: 'NEO', icon: Brain },
-  { id: 'results-stats', label: 'Резултати', icon: BarChart3 },
-  { id: 'widget', label: 'Уиджет', icon: Palette },
-  { id: 'settings-plan', label: 'Настройки', icon: Settings },
+  { id: 'results-stats', label: 'Данни', icon: BarChart3 },
+  { id: 'settings-plan', label: 'Още', icon: Settings },
 ];
 
+const isTabActive = (activeTab: string, tabId: string) => {
+  if (tabId === 'home') return activeTab === 'home';
+  if (tabId === 'setup-website') return activeTab.startsWith('setup');
+  if (tabId === 'conv-diary') return activeTab.startsWith('conv');
+  if (tabId === 'neo-test') return activeTab.startsWith('neo');
+  if (tabId === 'results-stats') return activeTab.startsWith('results');
+  if (tabId === 'settings-plan') return activeTab.startsWith('settings') || activeTab === 'widget';
+  return false;
+};
+
 const DashboardMobileNav = ({ activeTab, onTabChange }: DashboardMobileNavProps) => {
-  const [open, setOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
 
   return (
     <>
-      <header className="lg:hidden sticky top-0 z-50 border-b border-border/10 bg-sidebar/95 backdrop-blur-xl px-4 py-3 flex items-center justify-between" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
+      {/* Top header - slim */}
+      <header
+        className="lg:hidden sticky top-0 z-50 border-b border-border/10 bg-sidebar/95 backdrop-blur-xl px-4 py-2.5 flex items-center justify-between"
+        style={{ paddingTop: 'max(0.625rem, env(safe-area-inset-top))' }}
+      >
         <NeoLogo size="sm" />
-        <div className="flex items-center gap-2">
-          <button
-            onClick={toggleTheme}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-          <button onClick={() => setOpen(!open)} className="text-muted-foreground hover:text-foreground">
-            {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </div>
+        <button
+          onClick={toggleTheme}
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
       </header>
 
-      {open && (
-        <div className="lg:hidden fixed inset-x-0 top-[53px] bottom-0 z-40 bg-sidebar/98 backdrop-blur-xl border-b border-border/10 p-3 space-y-0.5 overflow-y-auto">
-          {MOBILE_ITEMS.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => { onTabChange(item.id); setOpen(false); }}
-              className={cn(
-                'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium transition-all',
-                activeTab === item.id
-                  ? 'bg-primary/12 text-primary'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
-              )}
-            >
-              <item.icon className="w-4 h-4" />
-              {item.label}
-            </button>
-          ))}
+      {/* Bottom tab bar - always visible */}
+      <nav
+        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-sidebar/95 backdrop-blur-xl border-t border-border/10"
+        style={{ paddingBottom: 'max(0.25rem, env(safe-area-inset-bottom))' }}
+      >
+        <div className="flex items-center justify-around px-1 pt-1.5 pb-1">
+          {BOTTOM_TABS.map((tab) => {
+            const active = isTabActive(activeTab, tab.id);
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onTabChange(tab.id)}
+                className={cn(
+                  'flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-all min-w-0 flex-1',
+                  active
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <div className={cn(
+                  'w-8 h-8 rounded-xl flex items-center justify-center transition-all',
+                  active && 'bg-primary/15 scale-110'
+                )}>
+                  <tab.icon className="w-4.5 h-4.5" strokeWidth={active ? 2.5 : 2} />
+                </div>
+                <span className={cn(
+                  'text-[10px] leading-tight truncate max-w-full',
+                  active ? 'font-semibold' : 'font-medium'
+                )}>
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
-      )}
+      </nav>
     </>
   );
 };
