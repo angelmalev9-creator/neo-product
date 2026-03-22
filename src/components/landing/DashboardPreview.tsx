@@ -9,7 +9,7 @@ const DashboardPreview = () => {
   const { ref, isVisible } = useScrollAnimation();
 
   return (
-    <section ref={ref as React.RefObject<HTMLElement>} id="dashboard-features" className="py-14 sm:py-28 relative overflow-hidden">
+    <section ref={ref as React.RefObject<HTMLElement>} id="dashboard-features" className="py-10 sm:py-16 relative overflow-hidden">
       {/* Ambient glow */}
       <div className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-primary/4 blur-[150px] pointer-events-none" />
       
