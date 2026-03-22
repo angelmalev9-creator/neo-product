@@ -1515,6 +1515,16 @@ export const useGeminiVoice = ({
     }
   }, []);
 
+  const buildStableTranscriptFromBuffers = useCallback(() => {
+    const finalJoined = finalChunksRef.current.join(" ").trim();
+    const fallbackJoined = utteranceBufferRef.current
+      .map((x) => stripLowConfidenceTag(x))
+      .join(" ")
+      .trim();
+    const interimFallback = lastInterimTranscriptRef.current.trim();
+    return (finalJoined || fallbackJoined || interimFallback).replace(/\s+/g, " ").trim();
+  }, []);
+
   /** Immediately stop assistant playback + mark turn canceled (speech-only barge-in) */
   const performEarlyBargeIn = useCallback(() => {
     if (!isPlayingRef.current) return;
@@ -1542,26 +1552,15 @@ export const useGeminiVoice = ({
     const builtTranscript = buildStableTranscriptFromBuffers();
     if (builtTranscript && builtTranscript.trim().length >= 3) {
       console.log("[BARGE-IN] ⚡ Flushing partial transcript immediately:", builtTranscript.slice(0, 80));
-      // Нулираме буферите преди flush — да не се изпрати отново при нормалния дебаунс
       utteranceBufferRef.current = [];
       finalChunksRef.current = [];
       firstFinalChunkTsRef.current = 0;
       lastFinalChunkTsRef.current = 0;
       lastInterimTranscriptRef.current = "";
-      // Изпращаме директно (заобикаляме aggregation window guard-а)
       handleUtteranceRef.current(builtTranscript);
     }
   }, [updateSpeaking, buildStableTranscriptFromBuffers]);
 
-  const buildStableTranscriptFromBuffers = useCallback(() => {
-    const finalJoined = finalChunksRef.current.join(" ").trim();
-    const fallbackJoined = utteranceBufferRef.current
-      .map((x) => stripLowConfidenceTag(x))
-      .join(" ")
-      .trim();
-    const interimFallback = lastInterimTranscriptRef.current.trim();
-    return (finalJoined || fallbackJoined || interimFallback).replace(/\s+/g, " ").trim();
-  }, []);
 
   const flushBufferedUtterance = useCallback(() => {
     if (utteranceDebounceRef.current) {
