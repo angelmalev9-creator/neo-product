@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-const BUILD_ID = "store-scrape-results_v1.16_booking_semantics_guardrails_2026-03-08";
+const BUILD_ID = "store-scrape-results_v1.17_fix_boot_2026-03-23";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -276,7 +276,7 @@ function normalizeLine(s: string) {
     .trim();
 }
 
-function splitLines(text: string) {
+function splitTextLines(text: string) {
   return String(text || "")
     .split(/\n+/g)
     .map((x) => normalizeLine(x))
@@ -296,7 +296,7 @@ function extractContactsFromText(text: string) {
 }
 
 function extractAddressesFromText(text: string) {
-  const lines = splitLines(text);
+  const lines = splitTextLines(text);
   const out: string[] = [];
 
   for (const ln of lines) {
@@ -407,7 +407,7 @@ function buildCleanedSummaryFromScrapedContent(pages: any[], siteUrl: string) {
     if (url) pageHead.push(url);
     if (pageHead.length) out.push(`=== ${pageHead.join(" — ")} ===`);
 
-    const lines = splitLines(content);
+    const lines = splitTextLines(content);
 
     for (const ln of lines) {
       const cleaned = normalizeLine(ln);
