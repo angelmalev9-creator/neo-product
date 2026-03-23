@@ -417,10 +417,10 @@ const VoiceTest = ({
         </div>
 
         {/* Messages */}
-        {(messages.length > 0 || liveAssistantTranscript) && (
+        {(messages.length > 0 || liveAssistantTranscript || liveUserTranscript) && (
           <div
             ref={messagesContainerRef}
-            className="mt-4 max-h-72 overflow-y-auto space-y-2 text-left"
+            className="mt-4 max-h-[60vh] overflow-y-auto space-y-2 text-left"
           >
             {messages.map((msg, i) => (
               <div
