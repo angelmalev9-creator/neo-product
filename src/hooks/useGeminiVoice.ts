@@ -1359,6 +1359,85 @@ function pickPreferredSubmitFormTarget(targets: SubmitFormTarget[]): SubmitFormT
   return anyTarget || null;
 }
 
+type ConversationFocusState = {
+  lastTopic: string;
+  lastEntityType: string;
+  lastEntityNames: string[];
+  lastAssistantSummary: string;
+};
+
+function normalizeFocusText(text: string): string {
+  return String(text || "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function dedupeFocusStrings(values: string[], max = 8): string[] {
+  return Array.from(
+    new Set((Array.isArray(values) ? values : []).map((x) => normalizeFocusText(x)).filter(Boolean)),
+  ).slice(0, max);
+}
+
+function extractFocusEntityNames(text: string): string[] {
+  const src = normalizeFocusText(text);
+  if (!src) return [];
+  const names: string[] = [];
+
+  const quoted = src.match(/["„“”']([^"„“”']{2,60})["„“”']/g) || [];
+  for (const q of quoted) {
+    names.push(q.replace(/["„“”']/g, "").trim());
+  }
+
+  const packageMatches = src.match(/\b(?:BASIC|STANDARD|STANDART|PREMIUM|DELUXE|ULTIMATE|PRO)\b/gi) || [];
+  names.push(...packageMatches.map((x) => x.toUpperCase()));
+
+  const optionMatches =
+    src.match(/\b(?:първ[аияото]*|втор[аияото]*|трет[аияото]*|basic|standard|standart|premium)\b/giu) || [];
+  names.push(...optionMatches);
+
+  return dedupeFocusStrings(names, 8);
+}
+
+function inferConversationFocus(text: string): Omit<ConversationFocusState, "lastAssistantSummary"> {
+  const t = normalizeFocusText(text).toLowerCase();
+  let lastTopic = "";
+  let lastEntityType = "";
+
+  if (/цен|струва|price|pricing|пакет|package|plan|план|оферта/i.test(t)) {
+    lastTopic = "pricing";
+    lastEntityType = "package";
+  }
+  if (/технолог|материал|конструкция|външна стена|вътрешна стена|изолац|wall|process|процес/i.test(t)) {
+    lastTopic = "technology";
+    lastEntityType = "technology";
+  }
+  if (/услуг|service|лечение|процедур|solution|продукт/i.test(t) && !lastTopic) {
+    lastTopic = "services";
+    lastEntityType = "service";
+  }
+  if (/час|резервац|дата|check[- ]?in|check[- ]?out|availability|slot/i.test(t) && !lastTopic) {
+    lastTopic = "booking";
+    lastEntityType = "booking";
+  }
+
+  return {
+    lastTopic,
+    lastEntityType,
+    lastEntityNames: extractFocusEntityNames(text),
+  };
+}
+
+function buildConversationFocusBlock(focus: ConversationFocusState): string {
+  const parts = [
+    "[CONVERSATION_FOCUS]",
+    `last_topic=${focus.lastTopic || "general"}`,
+    `last_entity_type=${focus.lastEntityType || "unknown"}`,
+    focus.lastEntityNames.length ? `last_entities=${focus.lastEntityNames.join(" | ")}` : "",
+    focus.lastAssistantSummary ? `last_assistant_summary=${focus.lastAssistantSummary}` : "",
+  ].filter(Boolean);
+  return parts.join("\n");
+}
+
 export const useGeminiVoice = ({
   onMessage,
   onError,
@@ -1446,6 +1525,12 @@ export const useGeminiVoice = ({
   // ★ NEW: track what context we prepared for (sessionId/companyName/systemPrompt)
   const preparedKeyRef = useRef<string>("");
   const lastSubmitFormTargetRef = useRef<SubmitFormTarget | null>(null);
+  const conversationFocusRef = useRef<ConversationFocusState>({
+    lastTopic: "",
+    lastEntityType: "",
+    lastEntityNames: [],
+    lastAssistantSummary: "",
+  });
 
   const updateSpeaking = useCallback(
     (speaking: boolean) => {
@@ -1497,6 +1582,31 @@ export const useGeminiVoice = ({
       sendToGemini("Все още ли сте на линия?");
     }, 25000);
   }, [clearSilenceWatchdog, sendToGemini]);
+
+  const updateConversationFocusFromAssistant = useCallback((text: string) => {
+    const inferred = inferConversationFocus(text);
+    if (inferred.lastTopic) conversationFocusRef.current.lastTopic = inferred.lastTopic;
+    if (inferred.lastEntityType) conversationFocusRef.current.lastEntityType = inferred.lastEntityType;
+    if (inferred.lastEntityNames.length) {
+      conversationFocusRef.current.lastEntityNames = dedupeFocusStrings(
+        [...conversationFocusRef.current.lastEntityNames, ...inferred.lastEntityNames],
+        8,
+      );
+    }
+    conversationFocusRef.current.lastAssistantSummary = normalizeFocusText(text).slice(0, 500);
+  }, []);
+
+  const updateConversationFocusFromUser = useCallback((text: string) => {
+    const inferred = inferConversationFocus(text);
+    if (inferred.lastTopic) conversationFocusRef.current.lastTopic = inferred.lastTopic;
+    if (inferred.lastEntityType) conversationFocusRef.current.lastEntityType = inferred.lastEntityType;
+    if (inferred.lastEntityNames.length) {
+      conversationFocusRef.current.lastEntityNames = dedupeFocusStrings(
+        [...conversationFocusRef.current.lastEntityNames, ...inferred.lastEntityNames],
+        8,
+      );
+    }
+  }, []);
 
   const handleUtteranceRef = useRef<(text: string) => void>(() => {});
 
@@ -1563,7 +1673,6 @@ export const useGeminiVoice = ({
       handleUtteranceRef.current(builtTranscript);
     }
   }, [updateSpeaking, buildStableTranscriptFromBuffers]);
-
 
   const flushBufferedUtterance = useCallback(() => {
     if (utteranceDebounceRef.current) {
@@ -2089,7 +2198,9 @@ export const useGeminiVoice = ({
       // ★ Extract contact hints separately — these are metadata, not replacements
       const genericContactFields = extractContactIntentFields(aggregatedUserTranscript);
       const extractedFields =
-        sensitiveMode !== "general" ? extractContactFields(aggregatedUserTranscript, sensitiveMode) : genericContactFields;
+        sensitiveMode !== "general"
+          ? extractContactFields(aggregatedUserTranscript, sensitiveMode)
+          : genericContactFields;
       const mergedContact =
         sensitiveMode !== "general" ||
         genericContactFields.name ||
@@ -2172,6 +2283,8 @@ export const useGeminiVoice = ({
       const likelyGarbled = hasRepeatedPattern || tooManyShortWords;
 
       const todayCtx = getTodayContextText();
+      updateConversationFocusFromUser(visibleUserText || aggregatedUserTranscript);
+      const focusBlock = buildConversationFocusBlock(conversationFocusRef.current);
 
       const lowConf = isLowConfidenceTranscript(text);
       const cleanText = stripLowConfidenceTag(geminiPayloadText).replace(/\s+/g, " ").trim();
@@ -2181,29 +2294,29 @@ export const useGeminiVoice = ({
         const phoneCandidate = mergedContact?.phone || normalizeSpokenPhone(visibleUserText);
         if (looksLikeCompletePhone(phoneCandidate)) {
           sendToGemini(
-            `${todayCtx}\n[STT_PHONE_CAPTURED — кажи номера цифра по цифра и поискай потвърждение]: ${phoneCandidate}`,
+            `${todayCtx}\n${focusBlock}\n[STT_PHONE_CAPTURED — кажи номера цифра по цифра и поискай потвърждение]: ${phoneCandidate}`,
           );
           expectedSensitiveInputModeRef.current = "general";
         } else {
           sendToGemini(
-            `${todayCtx}\n[STT_PHONE_PARTIAL — повтори какво си чул и поискай само липсващите цифри]: ${phoneCandidate || cleanText}`,
+            `${todayCtx}\n${focusBlock}\n[STT_PHONE_PARTIAL — повтори какво си чул и поискай само липсващите цифри]: ${phoneCandidate || cleanText}`,
           );
         }
       } else if (sensitiveMode === "email") {
         const emailCandidate = mergedContact?.email || normalizeSpokenEmail(visibleUserText);
         if (looksLikeCompleteEmail(emailCandidate)) {
           sendToGemini(
-            `${todayCtx}\n[STT_EMAIL_CAPTURED — изпиши имейла точно и поискай потвърждение]: ${emailCandidate}`,
+            `${todayCtx}\n${focusBlock}\n[STT_EMAIL_CAPTURED — изпиши имейла точно и поискай потвърждение]: ${emailCandidate}`,
           );
           expectedSensitiveInputModeRef.current = "general";
         } else {
           sendToGemini(
-            `${todayCtx}\n[STT_EMAIL_PARTIAL — изпиши точно какво си чул и поискай само липсващата част на имейла]: ${emailCandidate || cleanText}`,
+            `${todayCtx}\n${focusBlock}\n[STT_EMAIL_PARTIAL — изпиши точно какво си чул и поискай само липсващата част на имейла]: ${emailCandidate || cleanText}`,
           );
         }
       } else if (sensitiveMode === "name" && looksLikeSensitiveName(visibleUserText)) {
         sendToGemini(
-          `${todayCtx}\n[STT_NAME_CAPTURED — повтори името точно и поискай потвърждение]: ${normalizeSensitiveName(visibleUserText)}`,
+          `${todayCtx}\n${focusBlock}\n[STT_NAME_CAPTURED — повтори името точно и поискай потвърждение]: ${normalizeSensitiveName(visibleUserText)}`,
         );
         expectedSensitiveInputModeRef.current = "general";
       } else if (sensitiveMode === "contact") {
@@ -2229,22 +2342,26 @@ export const useGeminiVoice = ({
           looksLikeCompletePhone(mergedContact.phone)
         ) {
           sendToGemini(
-            `${todayCtx}\n[STT_CONTACT_CAPTURED — повтори точно име, имейл и телефон поотделно и поискай потвърждение, без да измисляш липсващи части]: ${payload}`,
+            `${todayCtx}\n${focusBlock}\n[STT_CONTACT_CAPTURED — повтори точно име, имейл и телефон поотделно и поискай потвърждение, без да измисляш липсващи части]: ${payload}`,
           );
           expectedSensitiveInputModeRef.current = "general";
         } else {
           sendToGemini(
-            `${todayCtx}\n[STT_CONTACT_PARTIAL — повтори само това, което вече е чуто, и поискай само липсващото: ${missing || "данни"}]: ${payload || cleanText}`,
+            `${todayCtx}\n${focusBlock}\n[STT_CONTACT_PARTIAL — повтори само това, което вече е чуто, и поискай само липсващото: ${missing || "данни"}]: ${payload || cleanText}`,
           );
         }
       } else if (likelyGarbled) {
-        sendToGemini(`${todayCtx}\n[STT_GARBLED — помоли клиента да повтори или напише в чата]: ${cleanText}`);
+        sendToGemini(
+          `${todayCtx}\n${focusBlock}\n[STT_GARBLED — помоли клиента да повтори или напише в чата]: ${cleanText}`,
+        );
       } else if (lowConf && maybeContact) {
         sendToGemini(
-          `${todayCtx}\n[STT_LOW_CONF + контактна информация — задължително изпиши и потвърди с клиента поправената версия]: ${cleanText}`,
+          `${todayCtx}\n${focusBlock}\n[STT_LOW_CONF + контактна информация — задължително изпиши и потвърди с клиента поправената версия]: ${cleanText}`,
         );
       } else if (lowConf) {
-        sendToGemini(`${todayCtx}\n[STT_LOW_CONF — ако нещо звучи нелогично, помоли за потвърждение]: ${cleanText}`);
+        sendToGemini(
+          `${todayCtx}\n${focusBlock}\n[STT_LOW_CONF — ако нещо звучи нелогично, помоли за потвърждение]: ${cleanText}`,
+        );
       } else if (maybeContact) {
         const parsedHints = [
           looksLikeCompleteEmail(autoEmailCandidate) ? `email=${autoEmailCandidate}` : "",
@@ -2253,13 +2370,13 @@ export const useGeminiVoice = ({
           .filter(Boolean)
           .join(" ");
         sendToGemini(
-          `${todayCtx}\n[STT_CONTACT — поправи имейл/телефон ако са изкривени, изпиши ги обратно на клиента за потвърждение${parsedHints ? `; parsed: ${parsedHints}` : ""}]: ${cleanText}`,
+          `${todayCtx}\n${focusBlock}\n[STT_CONTACT — поправи имейл/телефон ако са изкривени, изпиши ги обратно на клиента за потвърждение${parsedHints ? `; parsed: ${parsedHints}` : ""}]: ${cleanText}`,
         );
       } else {
-        sendToGemini(`${todayCtx}\n${cleanText}`);
+        sendToGemini(`${todayCtx}\n${focusBlock}\n${cleanText}`);
       }
     },
-    [clearSilenceWatchdog, updateSpeaking, onMessage, onTranscript, sendToGemini],
+    [clearSilenceWatchdog, updateSpeaking, onMessage, onTranscript, sendToGemini, updateConversationFocusFromUser],
   );
 
   useEffect(() => {
@@ -2324,6 +2441,7 @@ export const useGeminiVoice = ({
       const _checkPhrase = _checkPhrases[Math.floor(Math.random() * _checkPhrases.length)];
       // ✅ ВАЖНО: НЕ изпращай през sendToGemini — Gemini ще отговори с нов action JSON (безкраен цикъл)
       // Показваме само в чата като assistant съобщение
+      updateConversationFocusFromAssistant(_checkPhrase);
       onMessage?.({ role: "assistant", content: _checkPhrase });
       onTranscript?.(_checkPhrase, true, "assistant");
 
@@ -3136,6 +3254,7 @@ export const useGeminiVoice = ({
             ];
             const _wp = _waitPhrases[Math.floor(Math.random() * _waitPhrases.length)];
             // Само в чата — НЕ към Gemini
+            updateConversationFocusFromAssistant(_wp);
             onMessage?.({ role: "assistant", content: _wp });
             onTranscript?.(_wp, true, "assistant");
           }
@@ -4006,6 +4125,8 @@ export const useGeminiVoice = ({
                 }
 
                 if (!handled) {
+                  updateConversationFocusFromAssistant(responseText);
+                  updateConversationFocusFromAssistant(responseText);
                   onMessage?.({ role: "assistant", content: responseText });
                   onTranscript?.(responseText, true, "assistant");
                   expectedSensitiveInputModeRef.current = detectExpectedSensitiveInputMode(responseText);
@@ -4023,6 +4144,7 @@ export const useGeminiVoice = ({
                 // Was canceled (barge-in) but still deliver partial text so it doesn't vanish
                 if (responseText.trim().length > 5) {
                   console.log("[TURN_COMPLETE] delivering canceled assistant turn:", responseText.slice(0, 100));
+                  updateConversationFocusFromAssistant(responseText);
                   onMessage?.({ role: "assistant", content: responseText });
                   onTranscript?.(responseText, true, "assistant");
                 } else {
