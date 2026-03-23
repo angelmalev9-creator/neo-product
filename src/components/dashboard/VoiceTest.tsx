@@ -418,7 +418,7 @@ const VoiceTest = ({
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`p-3 rounded-lg text-sm ${
+                className={`p-3 rounded-lg text-sm break-words whitespace-pre-wrap ${
                   msg.role === 'assistant'
                     ? 'bg-primary/10 border border-primary/20'
                     : 'bg-muted/30 border border-border/20'
