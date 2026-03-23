@@ -384,7 +384,7 @@ const Widget = () => {
             {msg.role === 'assistant' && <AvatarIcon size="sm" />}
             <div
               className={`
-                max-w-[80%] px-3.5 py-2.5 text-xs leading-relaxed animate-fade-in
+                max-w-[80%] px-3.5 py-2.5 text-xs leading-relaxed animate-fade-in break-words whitespace-pre-wrap
                 ${msg.role === 'assistant'
                   ? 'bg-card/80 border border-border/20 rounded-2xl rounded-tl-md text-foreground'
                   : 'rounded-2xl rounded-tr-md text-white'
