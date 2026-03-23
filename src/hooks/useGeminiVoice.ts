@@ -1409,6 +1409,7 @@ export const useGeminiVoice = ({
   const firstFinalChunkTsRef = useRef<number>(0);
   const lastFinalChunkTsRef = useRef<number>(0);
   const lastInterimTranscriptRef = useRef<string>("");
+  const longestInterimTranscriptRef = useRef<string>("");
   const utteranceDebounceRef = useRef<number | null>(null);
   const pendingSensitiveCommitTimerRef = useRef<number | null>(null);
   const autoReservationCheckKeyRef = useRef<string>("");
@@ -1521,8 +1522,9 @@ export const useGeminiVoice = ({
       .map((x) => stripLowConfidenceTag(x))
       .join(" ")
       .trim();
+    const longestInterimFallback = longestInterimTranscriptRef.current.trim();
     const interimFallback = lastInterimTranscriptRef.current.trim();
-    return (finalJoined || fallbackJoined || interimFallback).replace(/\s+/g, " ").trim();
+    return (finalJoined || fallbackJoined || longestInterimFallback || interimFallback).replace(/\s+/g, " ").trim();
   }, []);
 
   /** Immediately stop assistant playback + mark turn canceled (speech-only barge-in) */
@@ -1557,6 +1559,7 @@ export const useGeminiVoice = ({
       firstFinalChunkTsRef.current = 0;
       lastFinalChunkTsRef.current = 0;
       lastInterimTranscriptRef.current = "";
+      longestInterimTranscriptRef.current = "";
       handleUtteranceRef.current(builtTranscript);
     }
   }, [updateSpeaking, buildStableTranscriptFromBuffers]);
@@ -1582,6 +1585,7 @@ export const useGeminiVoice = ({
       firstFinalChunkTsRef.current = 0;
       lastFinalChunkTsRef.current = 0;
       lastInterimTranscriptRef.current = "";
+      longestInterimTranscriptRef.current = "";
     };
 
     // Guard: wait a short stable window after the latest final chunk.
