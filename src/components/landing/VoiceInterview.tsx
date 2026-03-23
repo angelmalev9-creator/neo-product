@@ -88,6 +88,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
 
   // Live streaming transcripts for real-time display
   const [liveAssistantTranscript, setLiveAssistantTranscript] = useState<string>("");
+  const [liveUserTranscript, setLiveUserTranscript] = useState<string>("");
 
   // Fallback manual contact capture (shown only when backend asks for it)
   const [contactName, setContactName] = useState("");
@@ -724,6 +725,12 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
         } else {
           setLiveAssistantTranscript('');
         }
+      } else if (role === 'user') {
+        if (!isFinal) {
+          setLiveUserTranscript(transcript);
+        } else {
+          setLiveUserTranscript('');
+        }
       }
     },
   });
@@ -824,7 +831,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, liveAssistantTranscript, liveUserTranscript]);
 
   // ✅ Timer (runs in both voice AND text-only mode)
   useEffect(() => {
@@ -1407,10 +1414,10 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
 
             {/* Contact panel and resend button removed - no email functionality for now */}
 
-            {(messages.length > 0 || liveAssistantTranscript) && (
+            {(messages.length > 0 || liveAssistantTranscript || liveUserTranscript) && (
               <div
                 ref={messagesContainerRef}
-                className="mt-4 lg:mt-6 max-h-60 lg:max-h-72 overflow-y-auto space-y-2 lg:space-y-3 text-left"
+                className="mt-4 lg:mt-6 max-h-[60vh] overflow-y-auto space-y-2 lg:space-y-3 text-left"
               >
                 {messages.map((msg, i) => (
                   <div
@@ -1427,8 +1434,16 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
                     {msg.content}
                   </div>
                 ))}
+                {liveUserTranscript && (
+                  <div className="p-2 lg:p-3 rounded-lg text-xs lg:text-sm bg-muted/30 border border-border/20 animate-pulse italic break-words whitespace-pre-wrap">
+                    <span className="font-medium text-[10px] lg:text-xs text-muted-foreground block mb-1">
+                      {t("interview.you")}
+                    </span>
+                    {liveUserTranscript}
+                  </div>
+                )}
                 {liveAssistantTranscript && (
-                  <div className="p-2 lg:p-3 rounded-lg text-xs lg:text-sm bg-primary/10 border border-primary/20 animate-pulse">
+                  <div className="p-2 lg:p-3 rounded-lg text-xs lg:text-sm bg-primary/10 border border-primary/20 animate-pulse break-words whitespace-pre-wrap">
                     <span className="font-medium text-[10px] lg:text-xs text-muted-foreground block mb-1">
                       {t("interview.neo")}
                     </span>

@@ -2060,19 +2060,20 @@ export const useGeminiVoice = ({
       }
 
       let sensitiveMode = expectedSensitiveInputModeRef.current;
-      const rawVisibleUserText = sanitizeUserTranscriptForUi(text);
+      const aggregatedUserTranscript = buildStableTranscriptFromBuffers() || text;
+      const rawVisibleUserText = sanitizeUserTranscriptForUi(aggregatedUserTranscript);
       const autoDetectedIncomingMode = detectContactLikeMode(rawVisibleUserText || text);
       if (sensitiveMode !== "general" && autoDetectedIncomingMode === "general") {
         // User answered something non-contact (e.g. package choice) while assistant had asked for contact fields too.
         sensitiveMode = "general";
       }
-      let visibleUserText = rawVisibleUserText || text;
-      let geminiPayloadText = text;
+      let visibleUserText = rawVisibleUserText || aggregatedUserTranscript;
+      let geminiPayloadText = aggregatedUserTranscript;
 
       // ★ Extract contact hints separately — these are metadata, not replacements
-      const genericContactFields = extractContactIntentFields(text);
+      const genericContactFields = extractContactIntentFields(aggregatedUserTranscript);
       const extractedFields =
-        sensitiveMode !== "general" ? extractContactFields(text, sensitiveMode) : genericContactFields;
+        sensitiveMode !== "general" ? extractContactFields(aggregatedUserTranscript, sensitiveMode) : genericContactFields;
       const mergedContact =
         sensitiveMode !== "general" ||
         genericContactFields.name ||
@@ -2092,17 +2093,17 @@ export const useGeminiVoice = ({
 
         // ★ Build Gemini payload with contact hints — raw transcript stays intact for UI
         if (sensitiveMode === "phone") {
-          const phoneCandidate = mergedContact?.phone || normalizeSpokenPhone(text);
+          const phoneCandidate = mergedContact?.phone || normalizeSpokenPhone(aggregatedUserTranscript);
           geminiPayloadText =
             (looksLikeCompletePhone(phoneCandidate) ? "[STT_PHONE_CAPTURED]" : "[STT_PHONE_PARTIAL]") +
             ` candidate=${phoneCandidate || ""} raw="${rawVisibleUserText || text}"`;
         } else if (sensitiveMode === "email") {
-          const emailCandidate = mergedContact?.email || normalizeSpokenEmail(text);
+          const emailCandidate = mergedContact?.email || normalizeSpokenEmail(aggregatedUserTranscript);
           geminiPayloadText =
             (looksLikeCompleteEmail(emailCandidate) ? "[STT_EMAIL_CAPTURED]" : "[STT_EMAIL_PARTIAL]") +
             ` candidate=${emailCandidate || ""} raw="${rawVisibleUserText || text}"`;
         } else if (sensitiveMode === "name") {
-          const nameCandidate = mergedContact?.name || normalizeSensitiveName(text);
+          const nameCandidate = mergedContact?.name || normalizeSensitiveName(aggregatedUserTranscript);
           geminiPayloadText = `[STT_NAME_CAPTURED candidate="${nameCandidate}" raw="${rawVisibleUserText || text}"]`;
         } else if (sensitiveMode === "contact") {
           const possiblePhone = mergedContact?.phone || "";
@@ -2128,8 +2129,8 @@ export const useGeminiVoice = ({
         }
       }
 
-      onMessage?.({ role: "user", content: visibleUserText || text });
-      onTranscript?.(visibleUserText || text, true, "user");
+      onMessage?.({ role: "user", content: visibleUserText || aggregatedUserTranscript });
+      onTranscript?.(visibleUserText || aggregatedUserTranscript, true, "user");
 
       console.log("[VOICE] → Gemini:", geminiPayloadText.substring(0, 120));
       currentResponseTextRef.current = "";
@@ -2143,14 +2144,14 @@ export const useGeminiVoice = ({
       const maybeContact =
         /(@|маймунско|маймунка|кльомба|клумба|кломба|точка|дот|гмейл|абв|gmail|abv|yahoo|hotmail|outlook|мейл|поща)/i.test(
           lc,
-        ) || /([\d]{3,}|плюс\s*\d|\+\d|нула\s|осем\s|девет\s|седем\s)/.test(text);
-      const autoPhoneCandidate = normalizeSpokenPhone(rawVisibleUserText || text);
-      const autoEmailCandidate = normalizeSpokenEmail(rawVisibleUserText || text);
+        ) || /([\d]{3,}|плюс\s*\d|\+\d|нула\s|осем\s|девет\s|седем\s)/.test(aggregatedUserTranscript);
+      const autoPhoneCandidate = normalizeSpokenPhone(rawVisibleUserText || aggregatedUserTranscript);
+      const autoEmailCandidate = normalizeSpokenEmail(rawVisibleUserText || aggregatedUserTranscript);
 
       // Detect garbled/nonsensical text — too many repeated syllables, very short words, gibberish
-      const words = text.split(/\s+/);
+      const words = aggregatedUserTranscript.split(/\s+/);
       const avgWordLen = words.reduce((s, w) => s + w.length, 0) / (words.length || 1);
-      const hasRepeatedPattern = /(.{2,})\1{3,}/i.test(text); // "бобобобобо..."
+      const hasRepeatedPattern = /(.{2,})\1{3,}/i.test(aggregatedUserTranscript); // "бобобобобо..."
       const tooManyShortWords = words.length >= 4 && avgWordLen < 2.5;
       const likelyGarbled = hasRepeatedPattern || tooManyShortWords;
 
