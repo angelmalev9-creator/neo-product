@@ -125,6 +125,12 @@ const VoiceTest = ({
         } else {
           setLiveAssistantTranscript('');
         }
+      } else if (role === 'user') {
+        if (!isFinal) {
+          setLiveUserTranscript(transcript);
+        } else {
+          setLiveUserTranscript('');
+        }
       }
     },
   });
