@@ -45,6 +45,7 @@ const VoiceTest = ({
   const [textInput, setTextInput] = useState<string>('');
   const [textOnlyMode, setTextOnlyMode] = useState(false);
   const [liveAssistantTranscript, setLiveAssistantTranscript] = useState<string>('');
+  const [liveUserTranscript, setLiveUserTranscript] = useState<string>('');
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -123,6 +124,12 @@ const VoiceTest = ({
           setLiveAssistantTranscript(transcript);
         } else {
           setLiveAssistantTranscript('');
+        }
+      } else if (role === 'user') {
+        if (!isFinal) {
+          setLiveUserTranscript(transcript);
+        } else {
+          setLiveUserTranscript('');
         }
       }
     },
@@ -410,10 +417,10 @@ const VoiceTest = ({
         </div>
 
         {/* Messages */}
-        {(messages.length > 0 || liveAssistantTranscript) && (
+        {(messages.length > 0 || liveAssistantTranscript || liveUserTranscript) && (
           <div
             ref={messagesContainerRef}
-            className="mt-4 max-h-72 overflow-y-auto space-y-2 text-left"
+            className="mt-4 max-h-[60vh] overflow-y-auto space-y-2 text-left"
           >
             {messages.map((msg, i) => (
               <div
@@ -430,6 +437,12 @@ const VoiceTest = ({
                 {msg.content}
               </div>
             ))}
+            {liveUserTranscript && (
+              <div className="p-3 rounded-lg text-sm bg-muted/30 border border-border/20 animate-pulse italic">
+                <span className="font-medium text-xs text-muted-foreground block mb-1">Вие</span>
+                {liveUserTranscript}
+              </div>
+            )}
             {liveAssistantTranscript && (
               <div className="p-3 rounded-lg text-sm bg-primary/10 border border-primary/20 animate-pulse">
                 <span className="font-medium text-xs text-muted-foreground block mb-1">NEO</span>
