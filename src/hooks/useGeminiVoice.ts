@@ -1844,13 +1844,24 @@ export const useGeminiVoice = ({
 
         if (hasNonFinal) {
           const interimClean = sanitizeUserTranscriptForUi(transcript);
+          const previousLongest = longestInterimTranscriptRef.current;
           lastInterimTranscriptRef.current = interimClean;
-          const preview = [finalChunksRef.current.join(" "), interimClean]
+
+          if (
+            !previousLongest ||
+            interimClean.length >= previousLongest.length ||
+            interimClean.toLowerCase().startsWith(previousLongest.toLowerCase())
+          ) {
+            longestInterimTranscriptRef.current = interimClean;
+          }
+
+          const stableInterim = longestInterimTranscriptRef.current || interimClean;
+          const preview = [finalChunksRef.current.join(" "), stableInterim]
             .filter(Boolean)
             .join(" ")
             .replace(/\s+/g, " ")
             .trim();
-          onTranscript?.(preview || interimClean, false, "user");
+          onTranscript?.(preview || stableInterim || interimClean, false, "user");
         }
 
         if (!hasFinal) {
@@ -1888,6 +1899,7 @@ export const useGeminiVoice = ({
           }
           lastFinalChunkTsRef.current = nowTs;
           lastInterimTranscriptRef.current = cleanFinalTranscript;
+          longestInterimTranscriptRef.current = cleanFinalTranscript;
           const prevFinalChunk = finalChunksRef.current[finalChunksRef.current.length - 1] || "";
           if (!prevFinalChunk) {
             finalChunksRef.current.push(cleanFinalTranscript);
