@@ -437,6 +437,12 @@ const VoiceTest = ({
                 {msg.content}
               </div>
             ))}
+            {liveUserTranscript && (
+              <div className="p-3 rounded-lg text-sm bg-muted/30 border border-border/20 animate-pulse italic">
+                <span className="font-medium text-xs text-muted-foreground block mb-1">Вие</span>
+                {liveUserTranscript}
+              </div>
+            )}
             {liveAssistantTranscript && (
               <div className="p-3 rounded-lg text-sm bg-primary/10 border border-primary/20 animate-pulse">
                 <span className="font-medium text-xs text-muted-foreground block mb-1">NEO</span>
