@@ -91,7 +91,7 @@ const NeoPage = ({
 
       {section === 'test' && (
         <div className="flex-1 min-h-0 overflow-y-auto">
-          <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5">
+          <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5 min-h-0">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                 <Mic className="w-5 h-5 text-primary" />
