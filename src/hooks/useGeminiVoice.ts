@@ -79,7 +79,7 @@ const VAD_BARGE_IN_FRAMES_REQUIRED = 15;
 
 // VAD (client-side) is only a fallback safety layer.
 // Server-final tokens should end the turn first.
-const VAD_SILENCE_MS = 3000;
+const VAD_SILENCE_MS = 4200;
 const VAD_NOISE_PROFILE_MS = 2500;
 const VAD_MIN_SPEECH_THRESHOLD = 0.009;
 const VAD_MAX_SPEECH_THRESHOLD = 0.036;
@@ -2833,8 +2833,33 @@ export const useGeminiVoice = ({
           vadTimerRef.current = window.setTimeout(() => {
             vadTimerRef.current = null;
             vadIsSpeakingRef.current = false;
+
+            const built = buildStableTranscriptFromBuffers();
+            const expectedMode = expectedSensitiveInputModeRef.current;
+            const inferredMode = detectContactLikeMode(built || "");
+            const contactLike =
+              expectedMode !== "general" || inferredMode !== "general" || looksLikeGeneralContactInput(built || "");
+
+            if (contactLike && built && shouldHoldForContinuation(built)) {
+              console.log("[VAD] 🔇 contact-like continuation detected → extend wait", {
+                threshold: vadThresholdRef.current,
+                built,
+                expectedMode,
+                inferredMode,
+              });
+              vadTimerRef.current = window.setTimeout(() => {
+                vadTimerRef.current = null;
+                console.log("[VAD] 🔇 extended silence → flush utterance", {
+                  threshold: vadThresholdRef.current,
+                });
+                flushBufferedUtterance();
+              }, 1400);
+              return;
+            }
+
             console.log("[VAD] 🔇 silence detected → flush utterance", {
               threshold: vadThresholdRef.current,
+              contactLike,
             });
 
             flushBufferedUtterance();
