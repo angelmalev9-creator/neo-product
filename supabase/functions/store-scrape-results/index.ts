@@ -276,7 +276,7 @@ function normalizeLine(s: string) {
     .trim();
 }
 
-function splitLines(text: string) {
+function splitTextLines(text: string) {
   return String(text || "")
     .split(/\n+/g)
     .map((x) => normalizeLine(x))
@@ -296,7 +296,7 @@ function extractContactsFromText(text: string) {
 }
 
 function extractAddressesFromText(text: string) {
-  const lines = splitLines(text);
+  const lines = splitTextLines(text);
   const out: string[] = [];
 
   for (const ln of lines) {
@@ -407,7 +407,7 @@ function buildCleanedSummaryFromScrapedContent(pages: any[], siteUrl: string) {
     if (url) pageHead.push(url);
     if (pageHead.length) out.push(`=== ${pageHead.join(" — ")} ===`);
 
-    const lines = splitLines(content);
+    const lines = splitTextLines(content);
 
     for (const ln of lines) {
       const cleaned = normalizeLine(ln);
