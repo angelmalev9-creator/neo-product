@@ -1706,6 +1706,61 @@ export const useGeminiVoice = ({
     }
   }, []);
 
+  const mergeTranscriptCandidates = useCallback((...candidates: string[]) => {
+    const cleaned = candidates
+      .map((candidate) => sanitizeUserTranscriptForUi(candidate))
+      .map((candidate) => candidate.replace(/\s+/g, " ").trim())
+      .filter(Boolean);
+
+    if (cleaned.length === 0) return "";
+
+    let best = cleaned[0];
+
+    for (let i = 1; i < cleaned.length; i++) {
+      const candidate = cleaned[i];
+      const bestNorm = best.toLowerCase();
+      const candidateNorm = candidate.toLowerCase();
+
+      if (candidateNorm === bestNorm) continue;
+
+      if (candidateNorm.includes(bestNorm) && candidate.length >= best.length) {
+        best = candidate;
+        continue;
+      }
+
+      if (bestNorm.includes(candidateNorm)) {
+        continue;
+      }
+
+      const overlapForward = getSuffixPrefixOverlap(bestNorm, candidateNorm);
+      if (overlapForward >= 4) {
+        best = `${best} ${candidate.slice(overlapForward)}`.replace(/\s+/g, " ").trim();
+        continue;
+      }
+
+      const overlapBackward = getSuffixPrefixOverlap(candidateNorm, bestNorm);
+      if (overlapBackward >= 4) {
+        best = `${candidate} ${best.slice(overlapBackward)}`.replace(/\s+/g, " ").trim();
+        continue;
+      }
+
+      if (candidateNorm.endsWith(bestNorm) && candidate.length > best.length) {
+        best = candidate;
+        continue;
+      }
+
+      if (bestNorm.endsWith(candidateNorm)) {
+        continue;
+      }
+
+      if (candidate.length > best.length) {
+        best = candidate;
+      }
+    }
+
+    return best;
+  }, []);
+
   const buildStableTranscriptFromBuffers = useCallback(() => {
     const finalJoined = finalChunksRef.current.join(" ").trim();
     const fallbackJoined = utteranceBufferRef.current
@@ -1714,8 +1769,8 @@ export const useGeminiVoice = ({
       .trim();
     const longestInterimFallback = longestInterimTranscriptRef.current.trim();
     const interimFallback = lastInterimTranscriptRef.current.trim();
-    return (finalJoined || fallbackJoined || longestInterimFallback || interimFallback).replace(/\s+/g, " ").trim();
-  }, []);
+    return mergeTranscriptCandidates(finalJoined, fallbackJoined, longestInterimFallback, interimFallback);
+  }, [mergeTranscriptCandidates]);
 
   /** Immediately stop assistant playback + mark turn canceled (speech-only barge-in) */
   const performEarlyBargeIn = useCallback(() => {
@@ -2045,11 +2100,7 @@ export const useGeminiVoice = ({
           }
 
           const stableInterim = longestInterimTranscriptRef.current || interimClean;
-          const preview = [finalChunksRef.current.join(" "), stableInterim]
-            .filter(Boolean)
-            .join(" ")
-            .replace(/\s+/g, " ")
-            .trim();
+          const preview = mergeTranscriptCandidates(finalChunksRef.current.join(" "), stableInterim, interimClean);
           onTranscript?.(preview || stableInterim || interimClean, false, "user");
         }
 
@@ -2123,8 +2174,11 @@ export const useGeminiVoice = ({
           }
         }
 
-        const uiTranscript =
-          buildStableTranscriptFromBuffers() || sanitizeUserTranscriptForUi(utteranceBufferRef.current.join(" "));
+        const uiTranscript = mergeTranscriptCandidates(
+          buildStableTranscriptFromBuffers(),
+          utteranceBufferRef.current.join(" "),
+          transcript,
+        );
         if (uiTranscript) {
           onTranscript?.(uiTranscript, false, "user");
         }
@@ -2265,7 +2319,7 @@ export const useGeminiVoice = ({
       }
 
       let sensitiveMode = expectedSensitiveInputModeRef.current;
-      const aggregatedUserTranscript = buildStableTranscriptFromBuffers() || text;
+      const aggregatedUserTranscript = mergeTranscriptCandidates(buildStableTranscriptFromBuffers(), text);
       const rawVisibleUserText = sanitizeUserTranscriptForUi(aggregatedUserTranscript);
       const autoDetectedIncomingMode = detectContactLikeMode(rawVisibleUserText || text);
       if (sensitiveMode !== "general" && autoDetectedIncomingMode === "general") {
@@ -2456,7 +2510,15 @@ export const useGeminiVoice = ({
         sendToGemini(`${todayCtx}\n${focusBlock}\n${cleanText}`);
       }
     },
-    [clearSilenceWatchdog, updateSpeaking, onMessage, onTranscript, sendToGemini, updateConversationFocusFromUser],
+    [
+      clearSilenceWatchdog,
+      updateSpeaking,
+      onMessage,
+      onTranscript,
+      sendToGemini,
+      updateConversationFocusFromUser,
+      mergeTranscriptCandidates,
+    ],
   );
 
   useEffect(() => {

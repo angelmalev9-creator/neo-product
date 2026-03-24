@@ -436,6 +436,14 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     async (message: Message) => {
       let content = message.content;
 
+      if (message.role === "user") {
+        setLiveUserTranscript("");
+      }
+
+      if (message.role === "assistant") {
+        setLiveAssistantTranscript("");
+      }
+
       // ✅ SPEED FIX: Assistant transcripts are already clean from Gemini - NEVER clean them
       // cleanTranscript was adding ~1-2s latency on EVERY turn (edge function + Gemini REST)
       if (message.role === "assistant") {
@@ -726,11 +734,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
           setLiveAssistantTranscript('');
         }
       } else if (role === 'user') {
-        if (!isFinal) {
-          setLiveUserTranscript(transcript);
-        } else {
-          setLiveUserTranscript('');
-        }
+        setLiveUserTranscript(transcript);
       }
     },
   });
@@ -1152,15 +1156,20 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     if (timerRef.current) window.clearInterval(timerRef.current);
     playDisconnectSound();
     stopAmbient();
+    const pendingUser = liveUserTranscript.trim();
+    if (pendingUser) {
+      setMessages(prev => [...prev, { role: 'user', content: pendingUser }]);
+    }
     // Commit any partial assistant transcript before disconnecting
     const pendingAssistant = liveAssistantTranscript.trim();
     if (pendingAssistant) {
       setMessages(prev => [...prev, { role: 'assistant', content: pendingAssistant }]);
     }
     setLiveAssistantTranscript('');
+    setLiveUserTranscript('');
     disconnect();
     setTextOnlyMode(false);
-  }, [disconnect, playDisconnectSound, stopAmbient, liveAssistantTranscript]);
+  }, [disconnect, playDisconnectSound, stopAmbient, liveAssistantTranscript, liveUserTranscript]);
 
   const handleTryAgain = useCallback(() => {
     setShowEndModal(false);

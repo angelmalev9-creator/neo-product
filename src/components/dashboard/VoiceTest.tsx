@@ -81,6 +81,14 @@ const VoiceTest = ({
     let content = message.content;
     if (!content || content.trim().length < 2) return;
 
+    if (message.role === 'user') {
+      setLiveUserTranscript('');
+    }
+
+    if (message.role === 'assistant') {
+      setLiveAssistantTranscript('');
+    }
+
     // Skip duplicate typed user messages
     if (message.role === 'user' && typedMessageAddedRef.current === content) {
       typedMessageAddedRef.current = null;
@@ -126,11 +134,7 @@ const VoiceTest = ({
           setLiveAssistantTranscript('');
         }
       } else if (role === 'user') {
-        if (!isFinal) {
-          setLiveUserTranscript(transcript);
-        } else {
-          setLiveUserTranscript('');
-        }
+        setLiveUserTranscript(transcript);
       }
     },
   });
@@ -145,7 +149,7 @@ const VoiceTest = ({
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, liveAssistantTranscript, liveUserTranscript]);
 
   // Timer and usage tracking
   useEffect(() => {
@@ -249,6 +253,11 @@ const VoiceTest = ({
     isDisconnectingRef.current = true;
     playDisconnectSound();
     stopAmbient();
+
+    const pendingUser = liveUserTranscript.trim();
+    if (pendingUser) {
+      setMessages(prev => [...prev, { role: 'user' as const, content: pendingUser }]);
+    }
     
     // Commit any partial assistant transcript before disconnecting
     const pendingAssistant = liveAssistantTranscript.trim();
@@ -256,6 +265,7 @@ const VoiceTest = ({
       setMessages(prev => [...prev, { role: 'assistant' as const, content: pendingAssistant }]);
     }
     setLiveAssistantTranscript('');
+    setLiveUserTranscript('');
     
     disconnect();
     setTextOnlyMode(false);
@@ -285,7 +295,7 @@ const VoiceTest = ({
         }).catch(console.error);
       }
     }
-  }, [disconnect, onUsageUpdate, playDisconnectSound, stopAmbient, liveAssistantTranscript]);
+  }, [disconnect, onUsageUpdate, playDisconnectSound, stopAmbient, liveAssistantTranscript, liveUserTranscript]);
 
   // Send text (same as demo - useGeminiVoice handles worker proxy internally)
   const handleSendText = useCallback(async () => {

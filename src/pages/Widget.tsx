@@ -151,7 +151,7 @@ const Widget = () => {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, liveTranscript, liveAssistantTranscript]);
 
   useEffect(() => {
     if (!isListening) {
@@ -222,6 +222,16 @@ const Widget = () => {
 
   const endCall = useCallback(async () => {
     // FIRST: Capture pending transcript BEFORE disconnect clears state
+    const pendingUser = liveTranscript.trim();
+    if (pendingUser) {
+      setMessages(prev => {
+        const next = [...prev, { role: 'user' as const, content: pendingUser }];
+        messagesRef.current = next;
+        return next;
+      });
+      void persistTranscriptMessage('user', pendingUser);
+    }
+
     const pendingAssistant = liveAssistantTranscript.trim();
     if (pendingAssistant) {
       setMessages(prev => {
@@ -257,7 +267,7 @@ const Widget = () => {
       lastTrackedTimeRef.current = 0;
     }
     // DON'T clear messages - keep them visible after disconnect
-  }, [disconnect, conversationId, trackConversation, leadSubmitted, stopAmbient, playDisconnectSound, liveAssistantTranscript, persistTranscriptMessage]);
+  }, [disconnect, conversationId, trackConversation, leadSubmitted, stopAmbient, playDisconnectSound, liveAssistantTranscript, liveTranscript, persistTranscriptMessage]);
 
   const handleLeadSubmit = useCallback(async (data: LeadData) => {
     const { error } = await supabase.functions.invoke('widget-capture-lead', {
