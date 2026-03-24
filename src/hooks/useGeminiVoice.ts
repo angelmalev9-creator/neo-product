@@ -2671,7 +2671,61 @@ export const useGeminiVoice = ({
     } finally {
       reservationCheckInFlightRef.current = false;
     }
-  }, [onMessage, onTranscript, sendToGemini]);
+   }, [onMessage, onTranscript, sendToGemini]);
+
+  // --- Audio helper functions for spatial/ambient effects ---
+  const createReverbImpulse = (ctx: AudioContext, decay: number, duration: number): AudioBuffer => {
+    const sampleRate = ctx.sampleRate;
+    const length = sampleRate * duration;
+    const impulse = ctx.createBuffer(2, length, sampleRate);
+    for (let channel = 0; channel < 2; channel++) {
+      const channelData = impulse.getChannelData(channel);
+      for (let i = 0; i < length; i++) {
+        channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+      }
+    }
+    return impulse;
+  };
+
+  const startAmbientBackground = (ctx: AudioContext, destination: AudioNode) => {
+    const bufferSize = 2 * ctx.sampleRate;
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    let lastOut = 0;
+    for (let i = 0; i < bufferSize; i++) {
+      const white = Math.random() * 2 - 1;
+      output[i] = (lastOut + 0.02 * white) / 1.02;
+      lastOut = output[i];
+      output[i] *= 3.5;
+    }
+    const source = ctx.createBufferSource();
+    source.buffer = noiseBuffer;
+    source.loop = true;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 80;
+    const gain = ctx.createGain();
+    gain.gain.value = 0.015;
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(destination);
+    source.start();
+    return { source, gain };
+  };
+
+  const createBreathSound = (ctx: AudioContext): AudioBuffer => {
+    const duration = 0.08;
+    const sampleRate = ctx.sampleRate;
+    const length = Math.floor(sampleRate * duration);
+    const buffer = ctx.createBuffer(1, length, sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < length; i++) {
+      const t = i / length;
+      const envelope = Math.sin(Math.PI * t);
+      data[i] = (Math.random() * 2 - 1) * envelope * 0.02;
+    }
+    return buffer;
+  };
 
   const processAudioQueue = useCallback(async () => {
     if (isProcessingQueueRef.current || audioQueueRef.current.length === 0 || !audioContextRef.current) return;
