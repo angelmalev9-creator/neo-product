@@ -114,6 +114,75 @@ function resampleTo16k(inputData: Float32Array, inputSampleRate: number): Float3
 }
 
 function float32ToInt16Buffer(float32Array: Float32Array): ArrayBuffer {
+  // === VOICE NATURALNESS: Helper functions ===
+
+  /** Creates a subtle room reverb impulse response */
+  function createReverbImpulse(ctx: AudioContext, duration = 0.25, decay = 2.0): AudioBuffer {
+    const length = Math.floor(ctx.sampleRate * duration);
+    const impulse = ctx.createBuffer(1, length, ctx.sampleRate);
+    const data = impulse.getChannelData(0);
+    for (let i = 0; i < length; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+    }
+    return impulse;
+  }
+
+  /** Creates a subtle breath sound (micro inhale between phrases) */
+  function createBreathSound(ctx: AudioContext): AudioBuffer {
+    const duration = 0.12 + Math.random() * 0.1; // 120-220ms
+    const length = Math.floor(ctx.sampleRate * duration);
+    const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    // Previous sample for brownian noise (more natural than white noise for breath)
+    let prev = 0;
+    for (let i = 0; i < length; i++) {
+      const t = i / length;
+      // Envelope: fast attack, slow release — like a real inhale
+      const envelope = Math.sin(t * Math.PI) * 0.012;
+      // Brownian (red) noise — sounds more like breath than white noise
+      const white = (Math.random() * 2 - 1) * 0.5;
+      prev = (prev + white) * 0.5;
+      data[i] = prev * envelope;
+    }
+    return buffer;
+  }
+
+  /** Creates subtle ambient background (very quiet office hum) */
+  function createAmbientBuffer(ctx: AudioContext): AudioBuffer {
+    const length = Math.floor(ctx.sampleRate * 3); // 3 second loop
+    const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    let lastOut = 0;
+    for (let i = 0; i < length; i++) {
+      // Brownian noise for warm, non-harsh ambient
+      const white = Math.random() * 2 - 1;
+      lastOut = (lastOut + 0.02 * white) / 1.02;
+      data[i] = lastOut;
+    }
+    return buffer;
+  }
+
+  function startAmbientBackground(
+    ctx: AudioContext,
+    destNode: AudioNode,
+  ): { source: AudioBufferSourceNode; gain: GainNode } {
+    const source = ctx.createBufferSource();
+    source.buffer = createAmbientBuffer(ctx);
+    source.loop = true;
+
+    const gain = ctx.createGain();
+    gain.gain.value = 0.003; // Почти нечуваемо, но добавя "живост"
+
+    source.connect(gain);
+    gain.connect(destNode);
+    source.start();
+
+    return { source, gain };
+  }
+
+  // === END VOICE NATURALNESS helpers ===
   const int16Array = new Int16Array(float32Array.length);
   for (let i = 0; i < float32Array.length; i++) {
     const s = Math.max(-1, Math.min(1, float32Array[i]));
@@ -1518,6 +1587,14 @@ export const useGeminiVoice = ({
   const vadBargeInFramesRef = useRef<number>(0);
   const lastCalendarCheckedDateRef = useRef("");
   const earlyActionFiredRef = useRef(false);
+
+  // === VOICE NATURALNESS: Audio processing refs ===
+  const reverbNodeRef = useRef<ConvolverNode | null>(null);
+  const reverbGainNodeRef = useRef<GainNode | null>(null);
+  const dryGainNodeRef = useRef<GainNode | null>(null);
+  const ambientSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const ambientGainNodeRef = useRef<GainNode | null>(null);
+  const audioChunkCounterRef = useRef<number>(0);
   const calendarFallbackFiredAtRef = useRef(0);
   const lastCalendarNextAvailableDateRef = useRef("");
   const lastCalendarSlotsRef = useRef<string[]>([]);
@@ -1537,7 +1614,10 @@ export const useGeminiVoice = ({
       setIsSpeaking(speaking);
       onSpeakingChange?.(speaking);
       if (speaking) speakStartRef.current = Date.now();
-      else speakEndRef.current = Date.now();
+      else {
+        speakEndRef.current = Date.now();
+        audioChunkCounterRef.current = 0; // Reset breathing counter for next turn
+      }
     },
     [onSpeakingChange],
   );
@@ -2601,11 +2681,43 @@ export const useGeminiVoice = ({
     updateListening(false);
 
     const ctx = audioContextRef.current;
+
+    // === SETUP AUDIO CHAIN (once) with subtle reverb for room feel ===
     if (!gainRef.current) {
+      // Master output gain
       gainRef.current = ctx.createGain();
-      gainRef.current.gain.value = 1.3;
+      gainRef.current.gain.value = 1.0;
       gainRef.current.connect(ctx.destination);
+
+      // Dry path (main voice, slightly boosted)
+      dryGainNodeRef.current = ctx.createGain();
+      dryGainNodeRef.current.gain.value = 1.25;
+      dryGainNodeRef.current.connect(gainRef.current);
+
+      // Wet path (subtle reverb for spatial presence)
+      try {
+        reverbNodeRef.current = ctx.createConvolver();
+        reverbNodeRef.current.buffer = createReverbImpulse(ctx, 0.25, 2.0);
+        reverbGainNodeRef.current = ctx.createGain();
+        reverbGainNodeRef.current.gain.value = 0.07; // Very subtle
+        reverbNodeRef.current.connect(reverbGainNodeRef.current);
+        reverbGainNodeRef.current.connect(gainRef.current);
+      } catch (e) {
+        console.warn("[AUDIO] Reverb setup failed, using dry only:", e);
+        reverbNodeRef.current = null;
+        reverbGainNodeRef.current = null;
+      }
+
+      // Start ambient background
+      try {
+        const ambient = startAmbientBackground(ctx, ctx.destination);
+        ambientSourceRef.current = ambient.source;
+        ambientGainNodeRef.current = ambient.gain;
+      } catch (e) {
+        console.warn("[AUDIO] Ambient setup failed:", e);
+      }
     }
+
     if (nextPlayTimeRef.current < ctx.currentTime) nextPlayTimeRef.current = ctx.currentTime + 0.005;
 
     while (audioQueueRef.current.length > 0) {
@@ -2617,10 +2729,30 @@ export const useGeminiVoice = ({
       source.buffer = buffer;
       source.playbackRate.value = 1.0;
       activeSourceRef.current = source;
-      source.connect(gainRef.current!);
+
+      // Connect to dry path (always) and reverb path (if available)
+      source.connect(dryGainNodeRef.current!);
+      if (reverbNodeRef.current) {
+        source.connect(reverbNodeRef.current);
+      }
+
       source.start(nextPlayTimeRef.current);
       scheduledSourcesRef.current.push(source);
-      nextPlayTimeRef.current += buffer.duration / 1.0;
+      nextPlayTimeRef.current += buffer.duration;
+
+      // === BREATHING: insert subtle breath sound every ~4 chunks ===
+      audioChunkCounterRef.current++;
+      if (audioChunkCounterRef.current % 4 === 0 && audioQueueRef.current.length > 0) {
+        try {
+          const breathBuffer = createBreathSound(ctx);
+          const breathSource = ctx.createBufferSource();
+          breathSource.buffer = breathBuffer;
+          breathSource.connect(dryGainNodeRef.current!);
+          breathSource.start(nextPlayTimeRef.current);
+          // Overlap slightly so it doesn't feel like a hard cut
+          nextPlayTimeRef.current += breathBuffer.duration * 0.4;
+        } catch {}
+      }
 
       source.onended = () => {
         const idx = scheduledSourcesRef.current.indexOf(source);
@@ -3078,6 +3210,26 @@ export const useGeminiVoice = ({
       streamRef.current = null;
     }
     if (audioContextRef.current) {
+      // === VOICE NATURALNESS: cleanup ambient & reverb ===
+      try {
+        ambientSourceRef.current?.stop();
+      } catch {}
+      ambientSourceRef.current = null;
+      ambientGainNodeRef.current = null;
+      try {
+        reverbNodeRef.current?.disconnect();
+      } catch {}
+      reverbNodeRef.current = null;
+      try {
+        reverbGainNodeRef.current?.disconnect();
+      } catch {}
+      reverbGainNodeRef.current = null;
+      try {
+        dryGainNodeRef.current?.disconnect();
+      } catch {}
+      dryGainNodeRef.current = null;
+      audioChunkCounterRef.current = 0;
+      // === END cleanup ===
       try {
         audioContextRef.current.close();
       } catch {}
