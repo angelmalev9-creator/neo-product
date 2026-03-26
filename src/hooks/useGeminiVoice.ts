@@ -17,6 +17,12 @@ type SessionData = {
   apiKey: string;
   model: string;
   systemInstruction: string;
+  // ★ SEARCH WORKER
+  tools?: any[];
+  searchWorkerUrl?: string | null;
+  searchWorkerSecret?: string | null;
+  searchSessionSiteUrl?: string;
+  hasSearchWorker?: boolean;
 };
 
 interface DgSTTState {
@@ -2733,7 +2739,7 @@ export const useGeminiVoice = ({
     } finally {
       reservationCheckInFlightRef.current = false;
     }
-   }, [onMessage, onTranscript, sendToGemini]);
+  }, [onMessage, onTranscript, sendToGemini]);
 
   // --- Audio helper functions for spatial/ambient effects ---
   const createReverbImpulse = (ctx: AudioContext, decay: number, duration: number): AudioBuffer => {
@@ -2764,7 +2770,7 @@ export const useGeminiVoice = ({
     source.buffer = noiseBuffer;
     source.loop = true;
     const filter = ctx.createBiquadFilter();
-    filter.type = 'lowpass';
+    filter.type = "lowpass";
     filter.frequency.value = 80;
     const gain = ctx.createGain();
     gain.gain.value = 0.015;
@@ -3204,6 +3210,13 @@ export const useGeminiVoice = ({
           // keep schemas if present, but do NOT depend on them for auto reservation check
           ...(data.formSchemas ? { formSchemas: data.formSchemas } : {}),
           ...(data.form_schemas ? { form_schemas: data.form_schemas } : {}),
+
+          // ★ SEARCH WORKER — запази tool config от geminisession
+          tools: Array.isArray(data.tools) && data.tools.length ? data.tools : undefined,
+          searchWorkerUrl: data.searchWorkerUrl || null,
+          searchWorkerSecret: data.searchWorkerSecret || null,
+          searchSessionSiteUrl: data.searchSessionSiteUrl || "",
+          hasSearchWorker: !!data.hasSearchWorker,
         } as any;
 
         const inferredSubmitTarget = pickPreferredSubmitFormTarget(
@@ -4205,13 +4218,15 @@ export const useGeminiVoice = ({
                 thinking_config: { thinking_budget: 0 },
               },
               system_instruction: { parts: [{ text: session.systemInstruction }] },
+              // ★ SEARCH WORKER — подай tools ако са налични
+              ...(session.tools?.length ? { tools: session.tools } : {}),
             },
           };
 
           if (isNativeAudio) setupPayload.setup.output_audio_transcription = {};
 
           ws.send(JSON.stringify(setupPayload));
-          console.log(`[GEMINI] Setup sent — thinking=OFF, voice=${voiceName}`);
+          console.log(`[GEMINI] Setup sent — thinking=OFF, voice=${voiceName}, tools=${session.tools?.length ?? 0}`);
         };
 
         ws.onmessage = async (event) => {
@@ -4240,6 +4255,78 @@ export const useGeminiVoice = ({
           }
 
           const content = data?.serverContent || data?.server_content;
+
+          // ★ SEARCH WORKER — handle Gemini function calling
+          const toolCall = data?.toolCall || data?.tool_call;
+          if (toolCall?.functionCalls?.length) {
+            for (const fc of toolCall.functionCalls) {
+              if (fc.name === "search_site_content") {
+                const query = String(fc.args?.query || "").trim();
+                const workerUrl = (sessionDataRef.current as any)?.searchWorkerUrl;
+                const workerSecret = (sessionDataRef.current as any)?.searchWorkerSecret;
+                const siteUrl = (sessionDataRef.current as any)?.searchSessionSiteUrl || "";
+                const sid =
+                  (sessionDataRef.current as any)?.sessionId || (sessionDataRef.current as any)?.session_id || "";
+
+                console.log("[SEARCH WORKER] functionCall query:", query);
+
+                if (!workerUrl || !workerSecret || !query) {
+                  ws.send(
+                    JSON.stringify({
+                      tool_response: {
+                        function_responses: [{ id: fc.id, name: fc.name, response: { results: [], elapsed_ms: 0 } }],
+                      },
+                    }),
+                  );
+                  continue;
+                }
+
+                (async () => {
+                  try {
+                    const res = await fetch(`${workerUrl}/search`, {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${workerSecret}`,
+                      },
+                      body: JSON.stringify({ session_id: sid, query, site_url: siteUrl }),
+                    });
+                    const result = res.ok ? await res.json().catch(() => ({})) : {};
+                    console.log("[SEARCH WORKER] result:", JSON.stringify(result).slice(0, 300));
+                    ws.send(
+                      JSON.stringify({
+                        tool_response: {
+                          function_responses: [
+                            {
+                              id: fc.id,
+                              name: fc.name,
+                              response: {
+                                results: result.results || [],
+                                elapsed_ms: result.elapsed_ms || 0,
+                              },
+                            },
+                          ],
+                        },
+                      }),
+                    );
+                  } catch (e) {
+                    console.warn("[SEARCH WORKER] fetch failed:", e);
+                    ws.send(
+                      JSON.stringify({
+                        tool_response: {
+                          function_responses: [
+                            { id: fc.id, name: fc.name, response: { results: [], error: String(e) } },
+                          ],
+                        },
+                      }),
+                    );
+                  }
+                })();
+              }
+            }
+            return; // не обработвай като нормален content
+          }
+          // ★ END SEARCH WORKER
           if (!content) return;
 
           const modelTurn = content.modelTurn || content.model_turn;
