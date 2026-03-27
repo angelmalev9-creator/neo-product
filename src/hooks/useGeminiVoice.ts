@@ -118,6 +118,7 @@ async function callSearchWorkerProxy(params: {
     headers: {
       "Content-Type": "application/json",
       apikey: params.anonKey,
+      Authorization: `Bearer ${params.anonKey}`,
     },
     body: JSON.stringify({
       session_id: params.session_id,
@@ -136,6 +137,13 @@ async function callSearchWorkerProxy(params: {
   }
 
   if (!res.ok) {
+    console.error("[SEARCH WORKER] proxy failed", {
+      url: params.searchProxyUrl,
+      status: res.status,
+      response: data,
+      raw: text,
+      hasAuthorization: true,
+    });
     throw new Error(data?.error || `search-worker-proxy failed (${res.status})`);
   }
 
@@ -3998,11 +4006,7 @@ export const useGeminiVoice = ({
 
             const calRes = await fetch(SUPABASE_BASE, {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                apikey: params.anonKey,
-                Authorization: `Bearer ${params.anonKey}`,
-              },
+              headers: { "Content-Type": "application/json", apikey: anonKey },
               body: JSON.stringify(calBody),
             });
 
