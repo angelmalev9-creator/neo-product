@@ -3998,7 +3998,11 @@ export const useGeminiVoice = ({
 
             const calRes = await fetch(SUPABASE_BASE, {
               method: "POST",
-              headers: { "Content-Type": "application/json", apikey: anonKey },
+              headers: {
+                "Content-Type": "application/json",
+                apikey: params.anonKey,
+                Authorization: `Bearer ${params.anonKey}`,
+              },
               body: JSON.stringify(calBody),
             });
 
