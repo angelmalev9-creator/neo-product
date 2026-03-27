@@ -17,12 +17,14 @@ type SessionData = {
   apiKey: string;
   model: string;
   systemInstruction: string;
-  // ★ SEARCH WORKER
   tools?: any[];
-  searchWorkerUrl?: string | null;
-  searchWorkerSecret?: string | null;
+  searchProxyUrl?: string | null;
   searchSessionSiteUrl?: string;
   hasSearchWorker?: boolean;
+  sessionId?: string;
+  session_id?: string;
+  formSchemas?: any[];
+  form_schemas?: any[];
 };
 
 interface DgSTTState {
@@ -103,6 +105,43 @@ const clampInstruction = (text: string, maxChars: number) => {
   const tail = t.slice(-Math.floor(maxChars * 0.25));
   return `${head}\n\n[...СЪКРАТЕНО...]\n\n${tail}`;
 };
+
+async function callSearchWorkerProxy(params: {
+  searchProxyUrl: string;
+  anonKey: string;
+  session_id: string;
+  query: string;
+  site_url?: string;
+}) {
+  const res = await fetch(params.searchProxyUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: params.anonKey,
+      Authorization: `Bearer ${params.anonKey}`,
+    },
+    body: JSON.stringify({
+      session_id: params.session_id,
+      query: params.query,
+      site_url: params.site_url || "",
+    }),
+  });
+
+  const text = await res.text().catch(() => "");
+  let data: any = {};
+
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { raw: text };
+  }
+
+  if (!res.ok) {
+    throw new Error(data?.error || `search-worker-proxy failed (${res.status})`);
+  }
+
+  return data;
+}
 
 function resampleTo16k(inputData: Float32Array, inputSampleRate: number): Float32Array {
   if (inputSampleRate === AUDIO_SAMPLE_RATE_IN) return new Float32Array(inputData);
@@ -3211,10 +3250,8 @@ export const useGeminiVoice = ({
           ...(data.formSchemas ? { formSchemas: data.formSchemas } : {}),
           ...(data.form_schemas ? { form_schemas: data.form_schemas } : {}),
 
-          // ★ SEARCH WORKER — запази tool config от geminisession
           tools: Array.isArray(data.tools) && data.tools.length ? data.tools : undefined,
-          searchWorkerUrl: data.searchWorkerUrl || null,
-          searchWorkerSecret: data.searchWorkerSecret || null,
+          searchProxyUrl: data.searchProxyUrl || null,
           searchSessionSiteUrl: data.searchSessionSiteUrl || "",
           hasSearchWorker: !!data.hasSearchWorker,
         } as any;
@@ -4256,73 +4293,100 @@ export const useGeminiVoice = ({
 
           const content = data?.serverContent || data?.server_content;
 
-          // ★ SEARCH WORKER — handle Gemini function calling
+          // ★ SEARCH WORKER — handle Gemini function calling via HTTPS edge proxy
           const toolCall = data?.toolCall || data?.tool_call;
           if (toolCall?.functionCalls?.length) {
             for (const fc of toolCall.functionCalls) {
-              if (fc.name === "search_site_content") {
-                const query = String(fc.args?.query || "").trim();
-                const workerUrl = (sessionDataRef.current as any)?.searchWorkerUrl;
-                const workerSecret = (sessionDataRef.current as any)?.searchWorkerSecret;
-                const siteUrl = (sessionDataRef.current as any)?.searchSessionSiteUrl || "";
-                const sid =
-                  (sessionDataRef.current as any)?.sessionId || (sessionDataRef.current as any)?.session_id || "";
+              if (fc.name !== "search_site_content") continue;
 
-                console.log("[SEARCH WORKER] functionCall query:", query);
+              const query = String(fc.args?.query || "").trim();
+              const searchProxyUrl = (sessionDataRef.current as any)?.searchProxyUrl || "";
+              const siteUrl = (sessionDataRef.current as any)?.searchSessionSiteUrl || "";
+              const sid =
+                (sessionDataRef.current as any)?.sessionId || (sessionDataRef.current as any)?.session_id || "";
 
-                if (!workerUrl || !workerSecret || !query) {
+              const anonKey =
+                (import.meta as any)?.env?.VITE_SUPABASE_ANON_KEY ||
+                (import.meta as any)?.env?.VITE_SUPABASE_PUBLISHABLE_KEY ||
+                "";
+
+              console.log("[SEARCH WORKER] functionCall query:", query);
+
+              if (!searchProxyUrl || !anonKey || !query || !sid) {
+                ws.send(
+                  JSON.stringify({
+                    tool_response: {
+                      function_responses: [
+                        {
+                          id: fc.id,
+                          name: fc.name,
+                          response: {
+                            results: [],
+                            keywords: [],
+                            elapsed_ms: 0,
+                            error: "missing search proxy config",
+                          },
+                        },
+                      ],
+                    },
+                  }),
+                );
+                continue;
+              }
+
+              (async () => {
+                try {
+                  const result = await callSearchWorkerProxy({
+                    searchProxyUrl,
+                    anonKey,
+                    session_id: sid,
+                    query,
+                    site_url: siteUrl,
+                  });
+
+                  console.log("[SEARCH WORKER] proxy result:", JSON.stringify(result).slice(0, 500));
+
                   ws.send(
                     JSON.stringify({
                       tool_response: {
-                        function_responses: [{ id: fc.id, name: fc.name, response: { results: [], elapsed_ms: 0 } }],
+                        function_responses: [
+                          {
+                            id: fc.id,
+                            name: fc.name,
+                            response: {
+                              results: Array.isArray(result?.results) ? result.results : [],
+                              keywords: Array.isArray(result?.keywords) ? result.keywords : [],
+                              elapsed_ms: Number(result?.elapsed_ms || 0),
+                            },
+                          },
+                        ],
                       },
                     }),
                   );
-                  continue;
-                }
+                } catch (e) {
+                  const msg = e instanceof Error ? e.message : String(e);
+                  console.warn("[SEARCH WORKER] proxy fetch failed:", msg);
 
-                (async () => {
-                  try {
-                    const res = await fetch(`${workerUrl}/search`, {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${workerSecret}`,
-                      },
-                      body: JSON.stringify({ session_id: sid, query, site_url: siteUrl }),
-                    });
-                    const result = res.ok ? await res.json().catch(() => ({})) : {};
-                    console.log("[SEARCH WORKER] result:", JSON.stringify(result).slice(0, 300));
-                    ws.send(
-                      JSON.stringify({
-                        tool_response: {
-                          function_responses: [
-                            {
-                              id: fc.id,
-                              name: fc.name,
-                              response: {
-                                results: result.results || [],
-                                elapsed_ms: result.elapsed_ms || 0,
-                              },
+                  ws.send(
+                    JSON.stringify({
+                      tool_response: {
+                        function_responses: [
+                          {
+                            id: fc.id,
+                            name: fc.name,
+                            response: {
+                              results: [],
+                              keywords: [],
+                              elapsed_ms: 0,
+                              error: msg,
                             },
-                          ],
-                        },
-                      }),
-                    );
-                  } catch (e) {
-                    console.warn("[SEARCH WORKER] fetch failed:", e);
-                    ws.send(
-                      JSON.stringify({
-                        tool_response: {
-                          function_responses: [
-                            { id: fc.id, name: fc.name, response: { results: [], error: String(e) } },
-                          ],
-                        },
-                      }),
-                    );
-                  }
-                })();
-              }
+                          },
+                        ],
+                      },
+                    }),
+                  );
+                }
+              })();
             }
             return; // не обработвай като нормален content
           }
