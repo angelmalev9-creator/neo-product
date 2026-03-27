@@ -118,7 +118,6 @@ async function callSearchWorkerProxy(params: {
     headers: {
       "Content-Type": "application/json",
       apikey: params.anonKey,
-      Authorization: `Bearer ${params.anonKey}`,
     },
     body: JSON.stringify({
       session_id: params.session_id,
