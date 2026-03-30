@@ -118,11 +118,11 @@
     "trust3": "GDPR compliant & encrypted data"
   },
   "demo": {
-    "title1": "Hear how",
-    "title2": "your NEO sounds",
-    "description": "30 seconds and you have an AI assistant trained with your business.",
-    "testAsClient": "Test it as a real client",
-    "testDetails": "— ask about prices, services, working hours. NEO responds only with information from your website.",
+    "title1": "See how NEO",
+    "title2": "will work for you",
+    "description": "Enter your website address — in seconds NEO will know your business and be ready to talk.",
+    "testAsClient": "Ask it about",
+    "testDetails": "prices, services or working hours. NEO answers only with facts from your site — no improvisation.",
     "howItWorks": "How it works?",
     "step1": "Enter your website address",
     "step2": "NEO reads all content (30 sec)",
