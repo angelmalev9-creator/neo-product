@@ -259,10 +259,10 @@
     "paymentError": "Failed to create payment. Try again."
   },
   "footer": {
-    "ctaTitle": "How many clients did you lose this week?",
-    "ctaSubtitle": "Find out in 30 seconds. Free.",
-    "ctaButton": "Test NEO",
-    "description": "Virtual assistant for your business.",
+    "ctaTitle": "Your business deserves an intelligent voice.",
+    "ctaSubtitle": "NEO responds instantly, books meetings and qualifies leads — while you focus on growth.",
+    "ctaButton": "Get started in 5 minutes",
+    "description": "The intelligent AI assistant for your business. No-code setup, real-time analytics.",
     "platform": "Platform",
     "howItWorks": "How it works",
     "features": "Features",
