@@ -1660,6 +1660,9 @@ export const useGeminiVoice = ({
     lastEntityNames: [],
     lastAssistantSummary: "",
   });
+  const liveAssistantTranscriptRef = useRef("");
+  const lastCommittedAssistantRef = useRef<{ text: string; ts: number }>({ text: "", ts: 0 });
+  const lastCommittedUserRef = useRef<{ text: string; ts: number }>({ text: "", ts: 0 });
 
   const updateSpeaking = useCallback(
     (speaking: boolean) => {
@@ -1739,6 +1742,70 @@ export const useGeminiVoice = ({
       );
     }
   }, []);
+
+  const clearAssistantLiveTranscript = useCallback(() => {
+    liveAssistantTranscriptRef.current = "";
+    onTranscript?.("", false, "assistant");
+  }, [onTranscript]);
+
+  const clearUserLiveTranscript = useCallback(() => {
+    onTranscript?.("", false, "user");
+  }, [onTranscript]);
+
+  const commitAssistantMessage = useCallback(
+    (text: string, options?: { force?: boolean }) => {
+      const clean = String(text || "")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (!clean) {
+        clearAssistantLiveTranscript();
+        return false;
+      }
+
+      const now = Date.now();
+      const last = lastCommittedAssistantRef.current;
+      const isDuplicate = !options?.force && last.text === clean && now - last.ts < 2500;
+      if (isDuplicate) {
+        console.log("[ASSISTANT][DEDUPED]", clean.slice(0, 120));
+        clearAssistantLiveTranscript();
+        return false;
+      }
+
+      updateConversationFocusFromAssistant(clean);
+      onMessage?.({ role: "assistant", content: clean });
+      lastCommittedAssistantRef.current = { text: clean, ts: now };
+      clearAssistantLiveTranscript();
+      return true;
+    },
+    [onMessage, clearAssistantLiveTranscript, updateConversationFocusFromAssistant],
+  );
+
+  const commitUserMessage = useCallback(
+    (text: string) => {
+      const clean = String(text || "")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (!clean) {
+        clearUserLiveTranscript();
+        return false;
+      }
+
+      const now = Date.now();
+      const last = lastCommittedUserRef.current;
+      const isDuplicate = last.text === clean && now - last.ts < 1500;
+      if (isDuplicate) {
+        console.log("[USER][DEDUPED]", clean.slice(0, 120));
+        clearUserLiveTranscript();
+        return false;
+      }
+
+      onMessage?.({ role: "user", content: clean });
+      lastCommittedUserRef.current = { text: clean, ts: now };
+      clearUserLiveTranscript();
+      return true;
+    },
+    [onMessage, clearUserLiveTranscript],
+  );
 
   const handleUtteranceRef = useRef<(text: string) => void>(() => {});
 
@@ -1852,8 +1919,9 @@ export const useGeminiVoice = ({
     const partialAssistantText = currentResponseTextRef.current.trim();
     if (partialAssistantText.length > 2) {
       console.log("[BARGE-IN] ⚡ Committing partial assistant transcript:", partialAssistantText.slice(0, 100));
-      onMessage?.({ role: "assistant", content: partialAssistantText });
-      onTranscript?.(partialAssistantText, true, "assistant");
+      commitAssistantMessage(partialAssistantText);
+    } else {
+      clearAssistantLiveTranscript();
     }
 
     // ★ FIX 2: При barge-in веднага изпращаме натрупаната транскрипция — НЕ я губим
@@ -1868,7 +1936,7 @@ export const useGeminiVoice = ({
       longestInterimTranscriptRef.current = "";
       handleUtteranceRef.current(builtTranscript);
     }
-  }, [updateSpeaking, buildStableTranscriptFromBuffers, onMessage, onTranscript]);
+  }, [updateSpeaking, buildStableTranscriptFromBuffers, commitAssistantMessage, clearAssistantLiveTranscript]);
 
   const flushBufferedUtterance = useCallback(() => {
     if (utteranceDebounceRef.current) {
@@ -2383,8 +2451,9 @@ export const useGeminiVoice = ({
         const partialAssistantText = currentResponseTextRef.current.trim();
         if (partialAssistantText.length > 2) {
           console.log("[BARGE-IN] Committing partial assistant transcript:", partialAssistantText.slice(0, 100));
-          onMessage?.({ role: "assistant", content: partialAssistantText });
-          onTranscript?.(partialAssistantText, true, "assistant");
+          commitAssistantMessage(partialAssistantText);
+        } else {
+          clearAssistantLiveTranscript();
         }
       }
 
@@ -2460,8 +2529,7 @@ export const useGeminiVoice = ({
         }
       }
 
-      onMessage?.({ role: "user", content: visibleUserText || aggregatedUserTranscript });
-      onTranscript?.(visibleUserText || aggregatedUserTranscript, true, "user");
+      commitUserMessage(visibleUserText || aggregatedUserTranscript);
 
       console.log("[VOICE] → Gemini:", geminiPayloadText.substring(0, 120));
       currentResponseTextRef.current = "";
@@ -2658,7 +2726,7 @@ export const useGeminiVoice = ({
       // Показваме само в чата като assistant съобщение
       updateConversationFocusFromAssistant(_checkPhrase);
       onMessage?.({ role: "assistant", content: _checkPhrase });
-      onTranscript?.(_checkPhrase, true, "assistant");
+      clearAssistantLiveTranscript();
 
       const payload = {
         type: "action_request",
@@ -3627,7 +3695,7 @@ export const useGeminiVoice = ({
             // Само в чата — НЕ към Gemini
             updateConversationFocusFromAssistant(_wp);
             onMessage?.({ role: "assistant", content: _wp });
-            onTranscript?.(_wp, true, "assistant");
+            clearAssistantLiveTranscript();
           }
 
           let result: any = {};
@@ -4518,7 +4586,8 @@ export const useGeminiVoice = ({
                 currentResponseTextRef.current += txt;
                 // Only stream live transcript if not interrupted — but always accumulate
                 if (!assistantTurnCanceledRef.current) {
-                  onTranscript?.(currentResponseTextRef.current, false, "assistant");
+                  liveAssistantTranscriptRef.current = currentResponseTextRef.current;
+                  onTranscript?.(liveAssistantTranscriptRef.current, false, "assistant");
                 }
               }
             }
@@ -4544,6 +4613,7 @@ export const useGeminiVoice = ({
                   console.log("[TURN_COMPLETE] action already fired during streaming, skipping");
                   earlyActionFiredRef.current = false;
                   currentResponseTextRef.current = "";
+                  clearAssistantLiveTranscript();
                   return;
                 }
                 console.log("[TURN_COMPLETE] action JSON (wasCanceled=%s):", wasCanceled, responseText.slice(0, 200));
@@ -4556,6 +4626,7 @@ export const useGeminiVoice = ({
                 }
                 if (handled) {
                   currentResponseTextRef.current = "";
+                  clearAssistantLiveTranscript();
                   return;
                 }
               }
@@ -4597,10 +4668,7 @@ export const useGeminiVoice = ({
                 }
 
                 if (!handled) {
-                  updateConversationFocusFromAssistant(responseText);
-                  updateConversationFocusFromAssistant(responseText);
-                  onMessage?.({ role: "assistant", content: responseText });
-                  onTranscript?.(responseText, true, "assistant");
+                  commitAssistantMessage(responseText);
                   expectedSensitiveInputModeRef.current = detectExpectedSensitiveInputMode(responseText);
                   if (expectedSensitiveInputModeRef.current !== "general") {
                     pendingSensitiveCaptureRef.current = null;
@@ -4611,10 +4679,11 @@ export const useGeminiVoice = ({
                     }
                     console.log("[STT] sensitive capture mode:", expectedSensitiveInputModeRef.current);
                   }
+                } else {
+                  clearAssistantLiveTranscript();
                 }
               } else {
-                // Was canceled (barge-in) — partial transcript already committed during barge-in,
-                // just update conversation focus but don't re-deliver to avoid duplicates.
+                // Was canceled (barge-in) — partial transcript already committed during barge-in.
                 if (responseText.trim().length > 5) {
                   console.log(
                     "[TURN_COMPLETE] canceled turn already committed at barge-in, skipping duplicate:",
@@ -4624,7 +4693,10 @@ export const useGeminiVoice = ({
                 } else {
                   console.log("[TURN_COMPLETE] suppressed tiny canceled fragment:", responseText.slice(0, 50));
                 }
+                clearAssistantLiveTranscript();
               }
+            } else {
+              clearAssistantLiveTranscript();
             }
 
             currentResponseTextRef.current = "";
@@ -5022,8 +5094,9 @@ export const useGeminiVoice = ({
       // ★ FIX: Commit partial assistant transcript so it doesn't vanish
       const partialText = currentResponseTextRef.current.trim();
       if (partialText.length > 2) {
-        onMessage?.({ role: "assistant", content: partialText });
-        onTranscript?.(partialText, true, "assistant");
+        commitAssistantMessage(partialText);
+      } else {
+        clearAssistantLiveTranscript();
       }
     },
   };
