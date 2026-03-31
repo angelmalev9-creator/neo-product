@@ -1847,6 +1847,15 @@ export const useGeminiVoice = ({
     nextPlayTimeRef.current = 0;
     updateSpeaking(false);
 
+    // ★ FIX: При barge-in веднага комитваме частичната асистентска транскрипция като final,
+    // за да не изчезва от UI-а. Каквото NEO е казал до момента — остава видимо.
+    const partialAssistantText = currentResponseTextRef.current.trim();
+    if (partialAssistantText.length > 2) {
+      console.log("[BARGE-IN] ⚡ Committing partial assistant transcript:", partialAssistantText.slice(0, 100));
+      onMessage?.({ role: "assistant", content: partialAssistantText });
+      onTranscript?.(partialAssistantText, true, "assistant");
+    }
+
     // ★ FIX 2: При barge-in веднага изпращаме натрупаната транскрипция — НЕ я губим
     const builtTranscript = buildStableTranscriptFromBuffers();
     if (builtTranscript && builtTranscript.trim().length >= 3) {
@@ -1859,7 +1868,7 @@ export const useGeminiVoice = ({
       longestInterimTranscriptRef.current = "";
       handleUtteranceRef.current(builtTranscript);
     }
-  }, [updateSpeaking, buildStableTranscriptFromBuffers]);
+  }, [updateSpeaking, buildStableTranscriptFromBuffers, onMessage, onTranscript]);
 
   const flushBufferedUtterance = useCallback(() => {
     if (utteranceDebounceRef.current) {
@@ -2368,6 +2377,15 @@ export const useGeminiVoice = ({
         isPlayingRef.current = false;
         nextPlayTimeRef.current = 0;
         updateSpeaking(false);
+
+        // ★ FIX: При barge-in веднага комитваме частичната асистентска транскрипция,
+        // за да не изчезва от UI-а. Изпращаме каквото е натрупано до момента като final.
+        const partialAssistantText = currentResponseTextRef.current.trim();
+        if (partialAssistantText.length > 2) {
+          console.log("[BARGE-IN] Committing partial assistant transcript:", partialAssistantText.slice(0, 100));
+          onMessage?.({ role: "assistant", content: partialAssistantText });
+          onTranscript?.(partialAssistantText, true, "assistant");
+        }
       }
 
       let sensitiveMode = expectedSensitiveInputModeRef.current;
@@ -2447,6 +2465,9 @@ export const useGeminiVoice = ({
 
       console.log("[VOICE] → Gemini:", geminiPayloadText.substring(0, 120));
       currentResponseTextRef.current = "";
+      // ★ FIX: Изчистваме live assistant транскрипта, за да спре премигването
+      // на последната реплика след като потребителят е изпратил своята.
+      onTranscript?.("", false, "assistant");
       // ★ New user input → NEO must respond — clear any lingering barge-in cancel flag
       assistantTurnCanceledRef.current = false;
 
@@ -4592,12 +4613,14 @@ export const useGeminiVoice = ({
                   }
                 }
               } else {
-                // Was canceled (barge-in) but still deliver partial text so it doesn't vanish
+                // Was canceled (barge-in) — partial transcript already committed during barge-in,
+                // just update conversation focus but don't re-deliver to avoid duplicates.
                 if (responseText.trim().length > 5) {
-                  console.log("[TURN_COMPLETE] delivering canceled assistant turn:", responseText.slice(0, 100));
+                  console.log(
+                    "[TURN_COMPLETE] canceled turn already committed at barge-in, skipping duplicate:",
+                    responseText.slice(0, 100),
+                  );
                   updateConversationFocusFromAssistant(responseText);
-                  onMessage?.({ role: "assistant", content: responseText });
-                  onTranscript?.(responseText, true, "assistant");
                 } else {
                   console.log("[TURN_COMPLETE] suppressed tiny canceled fragment:", responseText.slice(0, 50));
                 }
@@ -4995,6 +5018,13 @@ export const useGeminiVoice = ({
       isPlayingRef.current = false;
       nextPlayTimeRef.current = 0;
       updateSpeaking(false);
+
+      // ★ FIX: Commit partial assistant transcript so it doesn't vanish
+      const partialText = currentResponseTextRef.current.trim();
+      if (partialText.length > 2) {
+        onMessage?.({ role: "assistant", content: partialText });
+        onTranscript?.(partialText, true, "assistant");
+      }
     },
   };
 };
