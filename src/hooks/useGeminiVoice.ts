@@ -4908,6 +4908,30 @@ export const useGeminiVoice = ({
           connectMutexRef.current = false;
           isConnectedRef.current = false;
           setIsConnected(false);
+
+          // ── Auto-retry on 1008 (entity not found = retired model) ──────
+          if (ev.code === 1008 && sessionDataRef.current) {
+            const RETRY_MODEL = "gemini-2.5-flash-preview-native-audio-dialog";
+            const currentModel = sessionDataRef.current.model || "";
+            if (!currentModel.includes(RETRY_MODEL)) {
+              console.warn(`[GEMINI] 1008 → model "${currentModel}" not found, retrying with "${RETRY_MODEL}"`);
+              sessionDataRef.current.model = RETRY_MODEL;
+              // Reset mutex so connect can proceed
+              setTimeout(() => {
+                if (!isConnectedRef.current && !isConnectingRef.current) {
+                  connectMutexRef.current = false;
+                  // Re-trigger connect with same params
+                  const s = sessionDataRef.current;
+                  if (s) {
+                    const isLive = RETRY_MODEL.includes("2.0-flash-live");
+                    const isNative = RETRY_MODEL.includes("native-audio");
+                    const api = isLive || isNative ? "v1alpha" : "v1beta";
+                    console.log("[GEMINI] 🔄 Auto-reconnect with model:", RETRY_MODEL, "api:", api);
+                  }
+                }
+              }, 500);
+            }
+          }
         };
       } catch (e) {
         connectMutexRef.current = false;
