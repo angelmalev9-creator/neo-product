@@ -264,26 +264,28 @@ const Widget = () => {
     playDisconnectSound();
     disconnect();
     if (!leadSubmitted) setShowLeadModal(true);
-    if (conversationId) {
+    const cid = conversationIdRef.current;
+    if (cid) {
       // Persist any unsaved messages from state before ending
       const currentMessages = messagesRef.current;
       for (const msg of currentMessages) {
-        const key = `${conversationId}:${msg.role}:${msg.content.replace(/\s+/g, ' ').trim()}`;
+        const key = `${cid}:${msg.role}:${msg.content.replace(/\s+/g, ' ').trim()}`;
         if (!persistedTranscriptKeysRef.current.has(key) && msg.content.trim()) {
           persistedTranscriptKeysRef.current.add(key);
           trackConversation('message', msg.role === 'user'
-            ? { userMessage: msg.content.trim() }
-            : { assistantMessage: msg.content.trim() }
+            ? { userMessage: msg.content.trim(), conversationId: cid }
+            : { assistantMessage: msg.content.trim(), conversationId: cid }
           ).catch(() => {});
         }
       }
-      await trackConversation('end', { conversationId });
+      await trackConversation('end', { conversationId: cid });
+      conversationIdRef.current = null;
       setConversationId(null);
       callStartTimeRef.current = null;
       lastTrackedTimeRef.current = 0;
     }
     // DON'T clear messages - keep them visible after disconnect
-  }, [disconnect, conversationId, trackConversation, leadSubmitted, stopAmbient, playDisconnectSound, liveAssistantTranscript, liveTranscript, persistTranscriptMessage]);
+  }, [disconnect, trackConversation, leadSubmitted, stopAmbient, playDisconnectSound, liveAssistantTranscript, liveTranscript, persistTranscriptMessage]);
 
   const handleLeadSubmit = useCallback(async (data: LeadData) => {
     const { error } = await supabase.functions.invoke('widget-capture-lead', {
