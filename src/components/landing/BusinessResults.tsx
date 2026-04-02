@@ -118,7 +118,7 @@ const BusinessResults = () => {
             <Sparkles className="w-3.5 h-3.5" />
             Какво може NEO
           </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-black text-foreground mb-5 leading-[1.08] tracking-wide max-w-4xl mx-auto">
+          <h2 className="text-xl sm:text-2xl md:text-[1.75rem] font-display font-black text-foreground mb-5 leading-[1.08] tracking-tight max-w-4xl mx-auto">
             Вашият AI асистент за{' '}
             <span className="neo-gradient-text">продажби и резервации</span>
           </h2>
@@ -156,7 +156,7 @@ const BusinessResults = () => {
         {/* Dashboard Features with Real Screenshots */}
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-6 sm:mb-8">
-            <h3 className="text-2xl sm:text-3xl md:text-4xl font-display font-black text-foreground mb-3 leading-tight">
+            <h3 className="text-lg sm:text-xl md:text-2xl font-display font-black text-foreground mb-3 leading-tight">
               Всичко на{' '}
               <span className="neo-gradient-text">едно табло</span>
             </h3>

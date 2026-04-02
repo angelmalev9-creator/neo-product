@@ -46,7 +46,7 @@ const Features = () => {
       <div className="container mx-auto px-5 sm:px-4 lg:px-8 relative z-10">
         {/* Header */}
         <div className="text-center mb-12 sm:mb-10 lg:mb-16">
-          <h2 className="text-[2rem] sm:text-4xl md:text-5xl lg:text-6xl font-display font-black text-foreground mb-4 max-w-3xl mx-auto leading-[1.08] sm:leading-[1.1] tracking-wide">
+          <h2 className="text-xl sm:text-2xl md:text-[1.75rem] font-display font-black text-foreground mb-4 max-w-3xl mx-auto leading-[1.08] tracking-tight">
             <PencilUnderline>{t('features.title1')}</PencilUnderline> <span className="neo-gradient-text whitespace-nowrap">{t('features.title2')}</span>
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto mb-4 leading-relaxed">
