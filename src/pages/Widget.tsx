@@ -45,6 +45,7 @@ const Widget = () => {
   const messagesRef = useRef<Message[]>([]);
   
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const conversationIdRef = useRef<string | null>(null);
   const callStartTimeRef = useRef<number | null>(null);
   const lastTrackedTimeRef = useRef<number>(0);
   const persistedTranscriptKeysRef = useRef<Set<string>>(new Set());
@@ -98,42 +99,53 @@ const Widget = () => {
   const trackConversation = useCallback(async (action: string, data: Record<string, unknown> = {}) => {
     if (!userId) return null;
     try {
+      const cid = data.conversationId || conversationIdRef.current;
       const { data: result, error: trackError } = await supabase.functions.invoke('widget-track-conversation', {
-        body: { action, userId, conversationId: data.conversationId || conversationId, ...data },
+        body: { action, userId, conversationId: cid, ...data },
       });
-      if (trackError) return null;
+      if (trackError) {
+        console.error('[WIDGET-TRACK] Error:', trackError);
+        return null;
+      }
       return result;
-    } catch { return null; }
-  }, [userId, conversationId]);
+    } catch (e) {
+      console.error('[WIDGET-TRACK] Exception:', e);
+      return null;
+    }
+  }, [userId]);
 
   const persistTranscriptMessage = useCallback(async (role: Message['role'], content: string) => {
     const cleaned = cleanTranscriptForStorage(content);
     const normalized = cleaned.replace(/\s+/g, ' ').trim();
-    if (!conversationId || !normalized) return;
+    const cid = conversationIdRef.current;
+    if (!cid || !normalized) {
+      console.warn('[WIDGET-PERSIST] Skipped: no conversationId or empty content', { cid, normalized: normalized?.slice(0, 30) });
+      return;
+    }
 
-    const key = `${conversationId}:${role}:${normalized}`;
+    const key = `${cid}:${role}:${normalized}`;
     if (persistedTranscriptKeysRef.current.has(key)) return;
     persistedTranscriptKeysRef.current.add(key);
 
     const result = await trackConversation('message', role === 'user'
-      ? { userMessage: normalized }
-      : { assistantMessage: normalized }
+      ? { userMessage: normalized, conversationId: cid }
+      : { assistantMessage: normalized, conversationId: cid }
     );
 
     if (!result) {
       persistedTranscriptKeysRef.current.delete(key);
     }
-  }, [conversationId, trackConversation]);
+  }, [trackConversation]);
 
   // Lead modal only shows on disconnect (endCall), not during conversation
 
   useEffect(() => {
-    if (!isConnected || !conversationId || !callStartTimeRef.current) return;
+    if (!isConnected || !conversationIdRef.current || !callStartTimeRef.current) return;
     const interval = setInterval(() => {
       const elapsed = (Date.now() - callStartTimeRef.current!) / 1000;
       const sinceLast = elapsed - lastTrackedTimeRef.current;
       if (sinceLast >= 10) {
-        trackConversation('add_usage', { durationSeconds: sinceLast });
+        trackConversation('add_usage', { durationSeconds: sinceLast, conversationId: conversationIdRef.current });
         lastTrackedTimeRef.current = elapsed;
       }
     }, 10000);
@@ -141,9 +153,11 @@ const Widget = () => {
   }, [isConnected, conversationId]);
 
   useEffect(() => {
-    if (!conversationId) return;
+    if (!conversationIdRef.current) return;
     const handleVis = () => {
-      if (document.hidden && isConnected) trackConversation('end', { conversationId });
+      if (document.hidden && isConnected) {
+        trackConversation('end', { conversationId: conversationIdRef.current });
+      }
     };
     window.addEventListener('visibilitychange', handleVis);
     return () => window.removeEventListener('visibilitychange', handleVis);
@@ -209,10 +223,14 @@ const Widget = () => {
     }
     const result = await trackConversation('start');
     if (result?.conversationId) {
+      conversationIdRef.current = result.conversationId;
       setConversationId(result.conversationId);
       callStartTimeRef.current = Date.now();
       lastTrackedTimeRef.current = 0;
       persistedTranscriptKeysRef.current.clear();
+      console.log('[WIDGET] Conversation started:', result.conversationId);
+    } else {
+      console.warn('[WIDGET] Failed to start conversation tracking');
     }
     if (window.parent !== window) window.parent.postMessage({ type: 'NEO_CONVERSATION_STARTED' }, '*');
     playConnectSound();
@@ -248,34 +266,36 @@ const Widget = () => {
     playDisconnectSound();
     disconnect();
     if (!leadSubmitted) setShowLeadModal(true);
-    if (conversationId) {
+    const cid = conversationIdRef.current;
+    if (cid) {
       // Persist any unsaved messages from state before ending
       const currentMessages = messagesRef.current;
       for (const msg of currentMessages) {
-        const key = `${conversationId}:${msg.role}:${msg.content.replace(/\s+/g, ' ').trim()}`;
+        const key = `${cid}:${msg.role}:${msg.content.replace(/\s+/g, ' ').trim()}`;
         if (!persistedTranscriptKeysRef.current.has(key) && msg.content.trim()) {
           persistedTranscriptKeysRef.current.add(key);
           trackConversation('message', msg.role === 'user'
-            ? { userMessage: msg.content.trim() }
-            : { assistantMessage: msg.content.trim() }
+            ? { userMessage: msg.content.trim(), conversationId: cid }
+            : { assistantMessage: msg.content.trim(), conversationId: cid }
           ).catch(() => {});
         }
       }
-      await trackConversation('end', { conversationId });
+      await trackConversation('end', { conversationId: cid });
+      conversationIdRef.current = null;
       setConversationId(null);
       callStartTimeRef.current = null;
       lastTrackedTimeRef.current = 0;
     }
     // DON'T clear messages - keep them visible after disconnect
-  }, [disconnect, conversationId, trackConversation, leadSubmitted, stopAmbient, playDisconnectSound, liveAssistantTranscript, liveTranscript, persistTranscriptMessage]);
+  }, [disconnect, trackConversation, leadSubmitted, stopAmbient, playDisconnectSound, liveAssistantTranscript, liveTranscript, persistTranscriptMessage]);
 
   const handleLeadSubmit = useCallback(async (data: LeadData) => {
     const { error } = await supabase.functions.invoke('widget-capture-lead', {
-      body: { userId, firstName: data.firstName, lastName: data.lastName, email: data.email, service: data.service, conversationId },
+      body: { userId, firstName: data.firstName, lastName: data.lastName, email: data.email, service: data.service, conversationId: conversationIdRef.current },
     });
     if (error) throw error;
     setLeadSubmitted(true);
-  }, [userId, conversationId]);
+  }, [userId]);
 
   const handleSendText = useCallback(async () => {
     if (!textInput.trim() || !isConnected) return;

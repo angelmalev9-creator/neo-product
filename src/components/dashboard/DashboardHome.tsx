@@ -2,14 +2,16 @@ import { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import {
-  Crown, Globe, CalendarDays, Mic, MessageSquare, Users, CalendarCheck,
+  Crown, Globe, CalendarDays, Mic, Users, CalendarCheck,
   CheckCircle2, Zap, ArrowRight, TrendingUp, Clock, Activity,
-  Sparkles,
+  Sparkles, BarChart3, Target, PhoneCall, Timer, Star, Rocket,
+  Shield, HeadphonesIcon, BrainCircuit, ArrowUpRight, X,
+  MessageCircle, UserCheck, LineChart,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
-import { motion } from 'framer-motion';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, AreaChart, Area } from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface DashboardHomeProps {
   subscribed: boolean;
@@ -51,6 +53,22 @@ const fadeUp = {
   }),
 };
 
+// Tier upgrade info
+const TIER_UPGRADES: Record<string, { nextTier: string; nextLabel: string; features: string[]; price: string }> = {
+  'NEO Старт': {
+    nextTier: 'growth',
+    nextLabel: 'NEO Растеж',
+    features: ['500 мин/месец', 'AI имейл автоматизация', 'Приоритетна поддръжка'],
+    price: '149 лв/мес',
+  },
+  'NEO Растеж': {
+    nextTier: 'empire',
+    nextLabel: 'NEO Империя',
+    features: ['2500 мин/месец', 'API достъп', 'Без брандиране', 'Персонален мениджър'],
+    price: '349 лв/мес',
+  },
+};
+
 const DashboardHome = ({
   subscribed, tierName, subscriptionEnd, usedMinutes, planLimit,
   onManageSubscription, portalLoading, onTabChange,
@@ -67,6 +85,9 @@ const DashboardHome = ({
   const [weekData, setWeekData] = useState<{ label: string; conversations: number; clients: number }[]>([]);
   const [totalConversations, setTotalConversations] = useState(0);
   const [totalLeads, setTotalLeads] = useState(0);
+  const [avgDuration, setAvgDuration] = useState(0);
+  const [showUpsell, setShowUpsell] = useState(true);
+  const [totalBookings, setTotalBookings] = useState(0);
 
   const getTodayStart = () => {
     const now = new Date();
@@ -77,18 +98,28 @@ const DashboardHome = ({
   const fetchTodayStats = async () => {
     if (!userId) return;
     const todayStart = getTodayStart();
-    const [convRes, clientConvRes, bookingsRes, totalConvRes, totalClientConvRes] = await Promise.all([
+    const [convRes, clientConvRes, bookingsRes, totalConvRes, totalClientConvRes, totalBookRes, avgDurRes] = await Promise.all([
       supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', todayStart),
       supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('lead_captured', true).gte('created_at', todayStart),
       supabase.from('calendar_bookings').select('id', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', todayStart),
       supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId),
       supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('lead_captured', true),
+      supabase.from('calendar_bookings').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+      supabase.from('conversations').select('duration_seconds').eq('user_id', userId).not('duration_seconds', 'is', null),
     ]);
     setTodayConversations(convRes.count ?? 0);
     setTodayClients(clientConvRes.count ?? 0);
     setTodayBookings(bookingsRes.count ?? 0);
     setTotalConversations(totalConvRes.count ?? 0);
     setTotalLeads(totalClientConvRes.count ?? 0);
+    setTotalBookings(totalBookRes.count ?? 0);
+
+    // Calculate avg duration
+    if (avgDurRes.data && avgDurRes.data.length > 0) {
+      const total = avgDurRes.data.reduce((sum: number, c: any) => sum + (c.duration_seconds || 0), 0);
+      setAvgDuration(Math.round(total / avgDurRes.data.length));
+    }
+
     setStatsLoading(false);
   };
 
@@ -129,6 +160,7 @@ const DashboardHome = ({
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'calendar_bookings', filter: `user_id=eq.${userId}` }, () => {
         setTodayBookings(prev => prev + 1);
+        setTotalBookings(prev => prev + 1);
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
@@ -159,9 +191,12 @@ const DashboardHome = ({
   }
 
   const conversionRate = totalConversations > 0 ? Math.round((totalLeads / totalConversations) * 100) : 0;
+  const bookingRate = totalConversations > 0 ? Math.round((totalBookings / totalConversations) * 100) : 0;
+  const avgDurationMin = avgDuration > 0 ? `${Math.floor(avgDuration / 60)}:${String(avgDuration % 60).padStart(2, '0')}` : '—';
+  const upgradeInfo = TIER_UPGRADES[tierName];
 
   return (
-    <div className="h-full flex flex-col p-4 lg:p-6 gap-4 overflow-y-auto lg:overflow-hidden">
+    <div className="h-full flex flex-col p-4 lg:p-6 gap-3 overflow-y-auto lg:overflow-hidden">
       {/* Row 1: Header + Status */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -186,25 +221,13 @@ const DashboardHome = ({
         </div>
       </motion.div>
 
-      {/* Row 2: Live Stats (3 cards) + Plan mini */}
+      {/* Row 2: Live Stats (4 cards) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
-        {[
-          { icon: MessageSquare, label: 'Разговори днес', value: statsLoading ? '—' : String(todayConversations), gradient: 'from-primary/20 via-primary/8 to-transparent', iconColor: 'text-primary', glow: 'shadow-[0_0_30px_hsl(var(--primary)/0.12)]' },
-          { icon: Users, label: 'Нови клиенти', value: statsLoading ? '—' : String(todayClients), gradient: 'from-[hsl(var(--neo-success))]/20 via-[hsl(var(--neo-success))]/8 to-transparent', iconColor: 'text-[hsl(var(--neo-success))]', glow: 'shadow-[0_0_30px_hsl(var(--neo-success)/0.12)]' },
-          { icon: CalendarCheck, label: 'Резервации', value: statsLoading ? '—' : String(todayBookings), gradient: 'from-[hsl(var(--neo-blue))]/20 via-[hsl(var(--neo-blue))]/8 to-transparent', iconColor: 'text-[hsl(var(--neo-blue))]', glow: 'shadow-[0_0_30px_hsl(var(--neo-blue)/0.12)]' },
-        ].map((card, i) => (
-          <motion.div
-            key={card.label}
-            custom={i}
-            initial="hidden"
-            animate="visible"
-            variants={fadeUp}
-          >
-            <LiveStatCard {...card} />
-          </motion.div>
-        ))}
+        <StatCard i={0} icon={MessageCircle} label="Разговори днес" value={statsLoading ? '—' : String(todayConversations)} subLabel={`${totalConversations} общо`} color="primary" />
+        <StatCard i={1} icon={UserCheck} label="Нови клиенти" value={statsLoading ? '—' : String(todayClients)} subLabel={`${conversionRate}% конверсия`} color="success" />
+        <StatCard i={2} icon={CalendarCheck} label="Резервации" value={statsLoading ? '—' : String(todayBookings)} subLabel={`${totalBookings} общо`} color="blue" />
         <motion.div custom={3} initial="hidden" animate="visible" variants={fadeUp}
-          className={`rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-4 flex flex-col justify-between relative overflow-hidden`}
+          className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-4 flex flex-col justify-between relative overflow-hidden group hover:border-border/30 transition-all duration-500"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
           <div className="relative flex items-center justify-between">
@@ -218,14 +241,21 @@ const DashboardHome = ({
           </div>
           <div className="mt-2 relative">
             <Progress value={Math.min(usagePercent, 100)} className="h-1.5" />
-            <p className="text-[10px] text-muted-foreground mt-1">{usedMinutes.toFixed(0)}/{planLimit} мин</p>
+            <div className="flex justify-between mt-1">
+              <p className="text-[10px] text-muted-foreground">{usedMinutes.toFixed(0)}/{planLimit} мин</p>
+              {usagePercent > 80 && (
+                <span className="text-[9px] text-[hsl(var(--neo-warning))] font-medium animate-pulse">
+                  {usagePercent >= 100 ? 'Лимит достигнат!' : 'Наближава лимит'}
+                </span>
+              )}
+            </div>
           </div>
         </motion.div>
       </div>
 
-      {/* Row 3: Main content - Chart + Totals + Actions */}
+      {/* Row 3: Chart + Right panel */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 min-h-0">
-        {/* Chart - takes 3 cols */}
+        {/* Chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -235,6 +265,7 @@ const DashboardHome = ({
           <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] to-transparent pointer-events-none" />
           <div className="relative flex items-center justify-between mb-3 shrink-0">
             <div className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-muted-foreground" />
               <h2 className="text-xs font-semibold text-foreground">Седмичен преглед</h2>
               <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
@@ -269,50 +300,100 @@ const DashboardHome = ({
           </div>
         </motion.div>
 
-        {/* Right panel - Totals + Quick actions */}
+        {/* Right panel */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4, duration: 0.5 }}
           className="lg:col-span-2 flex flex-col gap-3 min-h-0"
         >
-          {/* Totals grid */}
+          {/* Performance metrics */}
           <div className="grid grid-cols-2 gap-2 shrink-0">
             <MiniStat icon={Activity} label="Общо разговори" value={String(totalConversations)} color="text-primary" />
-            <MiniStat icon={Users} label="Общо клиенти" value={String(totalLeads)} color="text-[hsl(var(--neo-success))]" />
-            <MiniStat icon={Clock} label="Минути" value={`${usedMinutes.toFixed(0)}`} color="text-[hsl(var(--neo-blue))]" />
-            <MiniStat icon={TrendingUp} label="Конверсия" value={conversionRate > 0 ? `${conversionRate}%` : '—'} color="text-[hsl(var(--neo-purple))]" />
+            <MiniStat icon={Target} label="Конверсия" value={conversionRate > 0 ? `${conversionRate}%` : '—'} color="text-[hsl(var(--neo-purple))]" />
+            <MiniStat icon={Timer} label="Ср. дължина" value={avgDurationMin} color="text-[hsl(var(--neo-blue))]" />
+            <MiniStat icon={LineChart} label="Резерв. %"  value={bookingRate > 0 ? `${bookingRate}%` : '—'} color="text-[hsl(var(--neo-orange))]" />
           </div>
 
-          {/* Quick actions */}
-          <div className="flex-1 rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-4 flex flex-col gap-1.5 min-h-0 overflow-y-auto relative">
-            <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.02] to-transparent pointer-events-none rounded-2xl" />
-            <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider shrink-0 relative mb-1">Бързи действия</h3>
-            <ActionRow icon={Globe} title="Добави сайт" done={!!websiteUrl} onClick={() => onTabChange('setup-website')} />
-            <ActionRow icon={CalendarDays} title="Свържи календар" done={calendarConnected} onClick={() => onTabChange('setup-calendar')} />
-            <ActionRow icon={Mic} title="Тествай NEO" done={hasTestedNeo} onClick={() => onTabChange('neo-test')} />
-            <ActionRow icon={Sparkles} title="Персонализирай" done={false} onClick={() => onTabChange('neo-behavior')} />
-          </div>
+          {/* Upsell banner or Quick actions */}
+          {upgradeInfo && showUpsell ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5, duration: 0.4 }}
+              className="flex-1 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card/80 to-[hsl(var(--neo-purple))]/5 backdrop-blur-sm p-4 flex flex-col relative overflow-hidden min-h-0"
+            >
+              <button onClick={() => setShowUpsell(false)} className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors z-10">
+                <X className="w-3.5 h-3.5" />
+              </button>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-primary/10 to-transparent rounded-bl-full pointer-events-none" />
+              <div className="flex items-center gap-2 mb-2 relative">
+                <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center">
+                  <Rocket className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-foreground">Надградете до {upgradeInfo.nextLabel}</p>
+                  <p className="text-[9px] text-muted-foreground">{upgradeInfo.price}</p>
+                </div>
+              </div>
+              <div className="flex-1 flex flex-col gap-1 my-2 overflow-y-auto">
+                {upgradeInfo.features.map(f => (
+                  <div key={f} className="flex items-center gap-1.5">
+                    <Star className="w-3 h-3 text-primary shrink-0" />
+                    <span className="text-[10px] text-foreground/80">{f}</span>
+                  </div>
+                ))}
+              </div>
+              <Button
+                size="sm"
+                onClick={() => navigate('/#pricing')}
+                className="gap-1.5 text-[11px] h-8 bg-primary hover:bg-primary/90 relative"
+              >
+                Надградете сега <ArrowUpRight className="w-3.5 h-3.5" />
+              </Button>
+            </motion.div>
+          ) : (
+            <div className="flex-1 rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-4 flex flex-col gap-1.5 min-h-0 overflow-y-auto relative">
+              <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.02] to-transparent pointer-events-none rounded-2xl" />
+              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider shrink-0 relative mb-1">Бързи действия</h3>
+              <ActionRow icon={Globe} title="Добави сайт" done={!!websiteUrl} onClick={() => onTabChange('setup-website')} />
+              <ActionRow icon={CalendarDays} title="Свържи календар" done={calendarConnected} onClick={() => onTabChange('setup-calendar')} />
+              <ActionRow icon={Mic} title="Тествай NEO" done={hasTestedNeo} onClick={() => onTabChange('neo-test')} />
+              <ActionRow icon={BrainCircuit} title="Персонализирай" done={false} onClick={() => onTabChange('neo-behavior')} />
+            </div>
+          )}
         </motion.div>
       </div>
     </div>
   );
 };
 
-function LiveStatCard({ icon: Icon, label, value, gradient, iconColor, glow }: {
-  icon: React.ElementType; label: string; value: string; gradient: string; iconColor: string; glow: string;
+function StatCard({ i, icon: Icon, label, value, subLabel, color }: {
+  i: number; icon: React.ElementType; label: string; value: string; subLabel: string; color: 'primary' | 'success' | 'blue';
 }) {
+  const colorMap = {
+    primary: { gradient: 'from-primary/20 via-primary/8 to-transparent', iconColor: 'text-primary', glow: 'shadow-[0_0_30px_hsl(var(--primary)/0.12)]', iconBg: 'bg-primary/15' },
+    success: { gradient: 'from-[hsl(var(--neo-success))]/20 via-[hsl(var(--neo-success))]/8 to-transparent', iconColor: 'text-[hsl(var(--neo-success))]', glow: 'shadow-[0_0_30px_hsl(var(--neo-success)/0.12)]', iconBg: 'bg-[hsl(var(--neo-success))]/15' },
+    blue: { gradient: 'from-[hsl(var(--neo-blue))]/20 via-[hsl(var(--neo-blue))]/8 to-transparent', iconColor: 'text-[hsl(var(--neo-blue))]', glow: 'shadow-[0_0_30px_hsl(var(--neo-blue)/0.12)]', iconBg: 'bg-[hsl(var(--neo-blue))]/15' },
+  };
+  const c = colorMap[color];
+
   return (
-    <div className={`rounded-2xl border border-border/10 bg-gradient-to-br ${gradient} backdrop-blur-sm p-4 relative overflow-hidden group hover:border-border/30 transition-all duration-500 ${glow}`}>
-      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-primary/[0.04] to-transparent rounded-bl-full pointer-events-none" />
-      <div className="flex items-center gap-2 mb-2 relative">
-        <div className="w-9 h-9 rounded-xl bg-background/60 backdrop-blur-sm flex items-center justify-center border border-border/10 group-hover:scale-105 transition-transform duration-300">
-          <Icon className={`w-4 h-4 ${iconColor}`} />
+    <motion.div custom={i} initial="hidden" animate="visible" variants={fadeUp}>
+      <div className={`rounded-2xl border border-border/10 bg-gradient-to-br ${c.gradient} backdrop-blur-sm p-4 relative overflow-hidden group hover:border-border/30 transition-all duration-500 ${c.glow}`}>
+        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-primary/[0.04] to-transparent rounded-bl-full pointer-events-none" />
+        <div className="flex items-center gap-2 mb-2 relative">
+          <div className={`w-9 h-9 rounded-xl ${c.iconBg} backdrop-blur-sm flex items-center justify-center border border-border/10 group-hover:scale-105 transition-transform duration-300`}>
+            <Icon className={`w-4 h-4 ${c.iconColor}`} />
+          </div>
         </div>
+        <p className="text-2xl font-black text-foreground tracking-tight relative">{value}</p>
+        <p className="text-[10px] text-muted-foreground mt-0.5 relative">{label}</p>
+        {subLabel && (
+          <p className="text-[9px] text-muted-foreground/60 mt-0.5 relative">{subLabel}</p>
+        )}
       </div>
-      <p className="text-2xl font-black text-foreground tracking-tight relative">{value}</p>
-      <p className="text-[10px] text-muted-foreground mt-0.5 relative">{label}</p>
-    </div>
+    </motion.div>
   );
 }
 
