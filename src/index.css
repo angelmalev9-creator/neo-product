@@ -2,99 +2,97 @@
 @tailwind components;
 @tailwind utilities;
 
-/* NEO AI - FUTURISTIC Design System */
-/* Deep Black | Neon Red | Cyberpunk Luxury */
+/* NEO AI — PolyAI-inspired Premium SaaS Design System */
+/* Deep Dark + Lime Accent + Satoshi Typography */
 
 @layer base {
   :root {
-    /* PREMIUM SaaS: Deep rich dark + Vivid saturated accents */
-    --background: 240 15% 3%;
+    --background: 220 16% 4%;
     --foreground: 0 0% 98%;
 
-    --card: 240 12% 6%;
+    --card: 220 14% 7%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 240 12% 6%;
+    --popover: 220 14% 7%;
     --popover-foreground: 0 0% 98%;
 
-    /* PRIMARY: Vivid Crimson — punchy, luxurious */
-    --primary: 355 92% 56%;
-    --primary-foreground: 0 0% 100%;
+    /* PRIMARY: Lime / Neon Green */
+    --primary: 75 100% 50%;
+    --primary-foreground: 0 0% 5%;
 
-    --secondary: 240 10% 10%;
+    --secondary: 220 12% 10%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 240 8% 14%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 220 10% 14%;
+    --muted-foreground: 220 10% 50%;
 
-    /* ACCENT: Electric Rose-Magenta */
-    --accent: 335 90% 58%;
-    --accent-foreground: 0 0% 100%;
+    /* ACCENT: Warm Lime */
+    --accent: 80 90% 55%;
+    --accent-foreground: 0 0% 5%;
 
     --destructive: 0 80% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 8% 18%;
-    --input: 240 10% 8%;
-    --ring: 355 92% 56%;
+    --border: 220 10% 16%;
+    --input: 220 12% 8%;
+    --ring: 75 100% 50%;
 
     --radius: 0.75rem;
 
-    /* NEO Custom Colors - PREMIUM Saturated Palette */
-    --neo-red: 355 92% 56%;
-    --neo-red-glow: 345 100% 65%;
-    --neo-red-dark: 355 75% 38%;
-    --neo-red-light: 350 85% 72%;
-    --neo-orange: 20 95% 58%;
-    --neo-orange-glow: 28 100% 65%;
-    --neo-dark: 240 15% 3%;
-    --neo-dark-lighter: 240 12% 7%;
-    --neo-glass: 240 10% 8%;
-    --neo-glass-border: 240 8% 22%;
-    --neo-text-muted: 220 10% 55%;
+    /* NEO Custom Colors */
+    --neo-lime: 75 100% 50%;
+    --neo-lime-glow: 80 100% 60%;
+    --neo-lime-dark: 75 80% 35%;
+    --neo-dark: 220 16% 4%;
+    --neo-dark-lighter: 220 14% 8%;
+    --neo-glass: 220 12% 8%;
+    --neo-glass-border: 220 10% 18%;
+    --neo-text-muted: 220 10% 50%;
     --neo-text-bright: 0 0% 96%;
     --neo-success: 160 85% 45%;
     --neo-success-glow: 160 95% 52%;
     --neo-warning: 45 100% 55%;
-    --neo-warning-glow: 50 100% 62%;
     --neo-purple: 270 85% 62%;
-    --neo-purple-glow: 270 95% 72%;
     --neo-blue: 220 100% 62%;
-    --neo-blue-glow: 220 100% 72%;
     --neo-cyan: 185 95% 48%;
+    --neo-red: 355 92% 56%;
+    --neo-red-glow: 345 100% 65%;
+    --neo-red-dark: 355 75% 38%;
+    --neo-orange: 20 95% 58%;
+    --neo-orange-glow: 28 100% 65%;
     --neo-gold: 40 100% 55%;
 
-    /* Sidebar - Enhanced depth */
-    --sidebar-background: 240 15% 4%;
+    /* Sidebar */
+    --sidebar-background: 220 16% 5%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 355 92% 56%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 10% 12%;
+    --sidebar-primary: 75 100% 50%;
+    --sidebar-primary-foreground: 0 0% 5%;
+    --sidebar-accent: 220 12% 12%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 240 8% 18%;
-    --sidebar-ring: 355 92% 56%;
+    --sidebar-border: 220 10% 16%;
+    --sidebar-ring: 75 100% 50%;
   }
 
   .light {
     --background: 220 14% 96%;
-    --foreground: 240 20% 6%;
+    --foreground: 220 20% 8%;
 
     --card: 0 0% 100%;
-    --card-foreground: 240 20% 6%;
+    --card-foreground: 220 20% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 20% 6%;
+    --popover-foreground: 220 20% 8%;
 
-    --primary: 355 85% 48%;
+    --primary: 75 85% 40%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 220 14% 90%;
-    --secondary-foreground: 240 15% 12%;
+    --secondary-foreground: 220 15% 12%;
 
     --muted: 220 12% 90%;
     --muted-foreground: 220 12% 35%;
 
-    --accent: 335 80% 48%;
+    --accent: 80 80% 42%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 48%;
@@ -102,63 +100,62 @@
 
     --border: 220 14% 80%;
     --input: 220 14% 88%;
-    --ring: 355 85% 48%;
+    --ring: 75 85% 40%;
 
-    --neo-red: 355 85% 48%;
-    --neo-red-glow: 345 85% 55%;
-    --neo-red-dark: 355 70% 38%;
-    --neo-red-light: 350 75% 62%;
+    --neo-lime: 75 85% 40%;
+    --neo-lime-glow: 80 85% 50%;
+    --neo-lime-dark: 75 70% 30%;
     --neo-dark: 220 14% 96%;
     --neo-dark-lighter: 220 12% 93%;
     --neo-glass: 220 10% 94%;
     --neo-glass-border: 220 14% 78%;
     --neo-text-muted: 220 12% 35%;
-    --neo-text-bright: 240 20% 8%;
+    --neo-text-bright: 220 20% 10%;
     --neo-success: 160 70% 32%;
     --neo-warning: 45 85% 42%;
     --neo-purple: 270 70% 48%;
     --neo-blue: 220 85% 48%;
-    --neo-cyan: 185 75% 35%;
-    --neo-gold: 40 85% 42%;
+    --neo-red: 355 85% 48%;
+    --neo-orange: 20 85% 48%;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 240 20% 6%;
-    --sidebar-primary: 355 85% 48%;
+    --sidebar-foreground: 220 20% 8%;
+    --sidebar-primary: 75 85% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 14% 92%;
-    --sidebar-accent-foreground: 240 15% 10%;
+    --sidebar-accent-foreground: 220 15% 10%;
     --sidebar-border: 220 14% 82%;
-    --sidebar-ring: 355 85% 48%;
+    --sidebar-ring: 75 85% 40%;
   }
 
   .dark {
-    --background: 240 15% 3%;
+    --background: 220 16% 4%;
     --foreground: 0 0% 98%;
-    --card: 240 12% 6%;
+    --card: 220 14% 7%;
     --card-foreground: 0 0% 98%;
-    --popover: 240 12% 6%;
+    --popover: 220 14% 7%;
     --popover-foreground: 0 0% 98%;
-    --primary: 355 92% 56%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 10% 10%;
+    --primary: 75 100% 50%;
+    --primary-foreground: 0 0% 5%;
+    --secondary: 220 12% 10%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 8% 14%;
-    --muted-foreground: 220 10% 55%;
-    --accent: 335 90% 58%;
-    --accent-foreground: 0 0% 100%;
+    --muted: 220 10% 14%;
+    --muted-foreground: 220 10% 50%;
+    --accent: 80 90% 55%;
+    --accent-foreground: 0 0% 5%;
     --destructive: 0 80% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 8% 18%;
-    --input: 240 10% 8%;
-    --ring: 355 92% 56%;
-    --sidebar-background: 240 15% 4%;
+    --border: 220 10% 16%;
+    --input: 220 12% 8%;
+    --ring: 75 100% 50%;
+    --sidebar-background: 220 16% 5%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 355 92% 56%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 10% 12%;
+    --sidebar-primary: 75 100% 50%;
+    --sidebar-primary-foreground: 0 0% 5%;
+    --sidebar-accent: 220 12% 12%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 240 8% 18%;
-    --sidebar-ring: 355 92% 56%;
+    --sidebar-border: 220 10% 16%;
+    --sidebar-ring: 75 100% 50%;
   }
 }
 
@@ -177,27 +174,12 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Montserrat', system-ui, sans-serif;
-    font-weight: 700;
-    background: 
-      radial-gradient(ellipse 100% 60% at 50% -30%, hsl(var(--neo-red) / 0.12) 0%, transparent 50%),
-      radial-gradient(ellipse 80% 50% at 0% 50%, hsl(var(--neo-purple) / 0.06) 0%, transparent 40%),
-      radial-gradient(ellipse 80% 50% at 100% 80%, hsl(var(--neo-red-dark) / 0.08) 0%, transparent 40%),
-      hsl(var(--background));
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 400;
+    background: hsl(var(--background));
     min-height: 100vh;
     overflow-x: hidden;
     max-width: 100vw;
-  }
-
-  @media (max-width: 768px) {
-    body {
-      font-size: 16px;
-      line-height: 1.6;
-      background:
-        radial-gradient(ellipse 140% 50% at 50% -20%, hsl(var(--neo-red) / 0.15) 0%, transparent 55%),
-        radial-gradient(ellipse 100% 60% at 100% 80%, hsl(var(--neo-purple) / 0.08) 0%, transparent 50%),
-        hsl(var(--background));
-    }
   }
 
   #root {
@@ -208,23 +190,22 @@
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, hsl(var(--primary) / 0.6), hsl(var(--accent) / 0.4));
+    background: hsl(var(--primary) / 0.4);
     border-radius: 10px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, hsl(var(--primary)), hsl(var(--accent)));
+    background: hsl(var(--primary) / 0.7);
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Montserrat', system-ui, sans-serif;
-    font-weight: 800;
+    font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
+    font-weight: 700;
     letter-spacing: -0.02em;
   }
   h1 { letter-spacing: -0.03em; }
 
   @media (max-width: 768px) {
-    h1, h2 { letter-spacing: -0.01em; line-height: 1.08; }
-    h3, h4, h5, h6 { letter-spacing: 0; }
+    h1, h2 { letter-spacing: -0.02em; line-height: 1.08; }
   }
 
   code, pre { font-family: 'JetBrains Mono', monospace; }
@@ -236,135 +217,90 @@
 }
 
 @layer components {
+  /* Grain overlay */
   .neo-grain { position: relative; }
   .neo-grain::before {
     content: '';
     position: fixed;
     inset: 0;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-    opacity: 0.035;
+    opacity: 0.02;
     pointer-events: none;
     z-index: 9999;
   }
 
   .neo-grid-bg {
     background-image: 
-      linear-gradient(hsl(var(--neo-red) / 0.04) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--neo-red) / 0.04) 1px, transparent 1px);
-    background-size: 50px 50px;
-    animation: grid-move 30s linear infinite;
+      linear-gradient(hsl(var(--primary) / 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--primary) / 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
     mask-image: radial-gradient(ellipse 70% 50% at 50% 50%, black 20%, transparent 75%);
   }
-  @keyframes grid-move { 0% { background-position: 0 0; } 100% { background-position: 50px 50px; } }
 
+  /* Glass cards */
   .neo-glass {
-    @apply backdrop-blur-xl border rounded-xl relative overflow-hidden;
-    background: linear-gradient(145deg, hsl(240 12% 10% / 0.95) 0%, hsl(240 15% 6% / 0.92) 100%);
-    border-color: hsl(240 8% 20% / 0.5);
-    box-shadow: 0 0 40px hsl(var(--neo-red) / 0.08), 0 15px 40px hsl(240 15% 2% / 0.6), inset 0 1px 0 0 hsl(0 0% 100% / 0.05);
-  }
-  .neo-glass::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, hsl(var(--neo-red) / 0.35), hsl(var(--neo-purple) / 0.2), transparent);
-    pointer-events: none;
+    @apply backdrop-blur-xl border rounded-2xl relative overflow-hidden;
+    background: hsl(220 14% 8% / 0.9);
+    border-color: hsl(0 0% 100% / 0.06);
+    box-shadow: 0 15px 40px hsl(220 16% 2% / 0.5);
   }
 
   .neo-glass-subtle {
-    @apply backdrop-blur-lg border rounded-lg;
-    background: linear-gradient(145deg, hsl(240 10% 10% / 0.8) 0%, hsl(240 12% 6% / 0.6) 100%);
-    border-color: hsl(240 8% 18% / 0.4);
-    box-shadow: 0 0 20px hsl(var(--neo-red) / 0.05), 0 4px 16px hsl(240 15% 2% / 0.3);
+    @apply backdrop-blur-lg border rounded-xl;
+    background: hsl(220 12% 8% / 0.7);
+    border-color: hsl(0 0% 100% / 0.05);
+    box-shadow: 0 4px 16px hsl(220 16% 2% / 0.3);
   }
 
   .neo-glass-premium {
     @apply backdrop-blur-2xl border rounded-2xl relative overflow-hidden;
-    background: linear-gradient(145deg, hsl(240 10% 12% / 0.7) 0%, hsl(240 12% 7% / 0.6) 100%);
+    background: hsl(220 12% 9% / 0.8);
     border-color: hsl(0 0% 100% / 0.08);
-    box-shadow: 0 0 60px hsl(var(--neo-red) / 0.1), 0 20px 50px hsl(240 15% 2% / 0.5), inset 0 1px 0 0 hsl(0 0% 100% / 0.07), inset 0 -1px 0 0 hsl(240 15% 2% / 0.2);
-  }
-  .neo-glass-premium::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.18), transparent);
-    pointer-events: none;
+    box-shadow: 0 20px 50px hsl(220 16% 2% / 0.5), inset 0 1px 0 0 hsl(0 0% 100% / 0.06);
   }
 
   .nav-glass-scrolled {
     @apply backdrop-blur-2xl;
-    background: hsl(0 0% 6% / 0.85);
-    border-color: hsl(0 0% 100% / 0.08);
+    background: hsl(220 16% 5% / 0.85);
+    border-color: hsl(0 0% 100% / 0.06);
     border-radius: 9999px;
-    box-shadow: 0 4px 30px hsl(0 0% 0% / 0.4), inset 0 1px 0 0 hsl(0 0% 100% / 0.05);
+    box-shadow: 0 4px 30px hsl(0 0% 0% / 0.3);
   }
 
+  /* Glows — lime-based */
   .neo-glow {
-    box-shadow: 0 0 20px hsl(var(--neo-red) / 0.4), 0 0 40px hsl(var(--neo-red) / 0.25), 0 0 80px hsl(var(--neo-red) / 0.15), 0 20px 40px hsl(240 10% 3.5% / 0.5);
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3), 0 0 40px hsl(var(--primary) / 0.15), 0 20px 40px hsl(220 16% 2% / 0.4);
     transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .neo-glow:hover {
-    box-shadow: 0 0 30px hsl(var(--neo-red) / 0.5), 0 0 60px hsl(var(--neo-red) / 0.35), 0 0 100px hsl(var(--neo-red) / 0.2), 0 30px 60px hsl(240 10% 3.5% / 0.6);
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.4), 0 0 60px hsl(var(--primary) / 0.25), 0 30px 60px hsl(220 16% 2% / 0.5);
     transform: translateY(-2px);
   }
 
-  .neo-glow-intense {
-    box-shadow: 0 0 40px hsl(var(--neo-red) / 0.6), 0 0 80px hsl(var(--neo-red) / 0.4), 0 0 120px hsl(var(--neo-red) / 0.25), 0 0 200px hsl(var(--neo-red) / 0.15);
-  }
-
   .neo-glow-soft {
-    box-shadow: 0 0 15px hsl(var(--neo-red) / 0.25), 0 0 30px hsl(var(--neo-red) / 0.1), 0 10px 30px hsl(240 10% 3.5% / 0.3);
+    box-shadow: 0 0 15px hsl(var(--primary) / 0.2), 0 10px 30px hsl(220 16% 2% / 0.3);
   }
 
-  .neo-text-glow { text-shadow: 0 0 10px hsl(var(--neo-red) / 0.6), 0 0 30px hsl(var(--neo-red) / 0.4), 0 0 50px hsl(var(--neo-red) / 0.2); }
-
+  /* Gradient text — lime */
   .neo-gradient-text {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(var(--neo-red)) 0%, hsl(var(--neo-orange)) 50%, hsl(var(--accent)) 100%);
+    background-image: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--neo-lime-glow)) 100%);
   }
 
   .neo-gradient-text-animated {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(var(--neo-red)) 0%, hsl(var(--neo-orange)) 25%, hsl(var(--accent)) 50%, hsl(var(--neo-orange)) 75%, hsl(var(--neo-red)) 100%);
+    background-image: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--neo-lime-glow)) 50%, hsl(var(--primary)) 100%);
     background-size: 300% auto;
     animation: gradient-shift 6s ease infinite;
   }
   @keyframes gradient-shift { 0%, 100% { background-position: 0% center; } 50% { background-position: 100% center; } }
 
-  .neo-text-premium {
-    @apply bg-clip-text text-transparent relative;
-    background-image: linear-gradient(90deg, hsl(var(--foreground)) 0%, hsl(var(--foreground) / 0.8) 50%, hsl(var(--foreground)) 100%);
-    background-size: 200% auto;
-    animation: text-shine 8s linear infinite;
-  }
-  @keyframes text-shine { 0%, 100% { background-position: 0% center; } 50% { background-position: 100% center; } }
-
-  .neo-shimmer { position: relative; overflow: hidden; }
-  .neo-shimmer::after {
-    content: '';
-    position: absolute;
-    top: 0; left: -100%;
-    width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, hsl(30 20% 95% / 0.08), transparent);
-    animation: shimmer 3s infinite;
-  }
-  @keyframes shimmer { 100% { left: 100%; } }
-
-  .neo-fade-in { animation: neo-fade-in 0.4s ease-out forwards; }
-  @keyframes neo-fade-in { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+  /* Animations */
+  .neo-fade-in { animation: neo-fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  @keyframes neo-fade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
   .neo-slide-up { animation: neo-slide-up 0.5s ease-out forwards; }
   @keyframes neo-slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-  .neo-reveal { animation: neo-reveal 0.5s ease-out forwards; }
-  @keyframes neo-reveal { from { opacity: 0; transform: translateY(25px); } to { opacity: 1; transform: translateY(0); } }
-
-  .pencil-underline-path { filter: drop-shadow(0 0 3px hsl(var(--primary) / 0.5)); }
-  .pencil-underline-animate { animation: pencil-wiggle 0.1s ease-in-out 2; animation-delay: 0.8s; }
-  @keyframes pencil-wiggle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
 
   .neo-section-hidden, .neo-section-visible,
   .neo-section-flip-left, .neo-section-flip-left.neo-section-visible,
@@ -380,119 +316,74 @@
   .neo-stagger > *:nth-child(4) { animation-delay: 0.2s; }
   .neo-stagger > *:nth-child(5) { animation-delay: 0.25s; }
   .neo-stagger > *:nth-child(6) { animation-delay: 0.3s; }
-  .neo-stagger > *:nth-child(7) { animation-delay: 0.35s; }
-  .neo-stagger > *:nth-child(8) { animation-delay: 0.4s; }
 
   .neo-hover-lift { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-  .neo-hover-lift:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 20px 40px hsl(220 15% 4% / 0.5), 0 0 40px hsl(var(--neo-blue) / 0.25); }
+  .neo-hover-lift:hover { transform: translateY(-8px); box-shadow: 0 20px 40px hsl(220 16% 2% / 0.5); }
 
-  .neo-pulse { animation: neo-pulse 3s ease-in-out infinite; }
-  @keyframes neo-pulse {
-    0%, 100% { box-shadow: 0 0 20px hsl(var(--neo-red) / 0.4), 0 0 40px hsl(var(--neo-red) / 0.2); transform: scale(1); }
-    50% { box-shadow: 0 0 40px hsl(var(--neo-red) / 0.6), 0 0 80px hsl(var(--neo-red) / 0.4), 0 0 120px hsl(var(--neo-red) / 0.2); transform: scale(1.02); }
-  }
+  .pencil-underline-path { filter: drop-shadow(0 0 3px hsl(var(--primary) / 0.5)); }
+  .pencil-underline-animate { animation: pencil-wiggle 0.1s ease-in-out 2; animation-delay: 0.8s; }
+  @keyframes pencil-wiggle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
 
-  .neo-breathe { animation: neo-breathe 4s ease-in-out infinite; }
-  @keyframes neo-breathe { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.9; } }
-
-  .neo-float { animation: neo-float 6s ease-in-out infinite; }
-  @keyframes neo-float { 0%, 100% { transform: translateY(0) rotate(0deg); } 25% { transform: translateY(-10px) rotate(1deg); } 75% { transform: translateY(10px) rotate(-1deg); } }
-
-  .neo-particle { animation: neo-particle 15s linear infinite; }
-  @keyframes neo-particle { 0% { transform: translateY(100vh) rotate(0deg); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; } }
-
-  .neo-border-gradient { position: relative; }
-  .neo-border-gradient::before {
-    content: '';
-    position: absolute; inset: 0;
-    border-radius: inherit; padding: 1.5px;
-    background: linear-gradient(135deg, hsl(var(--neo-red) / 0.8) 0%, hsl(var(--neo-orange) / 0.4) 50%, hsl(var(--neo-red) / 0.6) 100%);
-    background-size: 300% 300%;
-    animation: border-glow 5s ease infinite;
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-  }
-  @keyframes border-glow { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-
+  /* Badge */
   .neo-badge {
-    @apply inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest;
-    background: linear-gradient(145deg, hsl(240 8% 12% / 0.98) 0%, hsl(240 10% 8% / 0.95) 100%);
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold;
+    background: hsl(220 12% 10% / 0.9);
     border: 1px solid hsl(var(--border) / 0.4);
-    box-shadow: 0 8px 32px hsl(240 10% 3.5% / 0.5), 0 0 0 1px hsl(60 9% 98% / 0.04) inset, inset 0 1px 0 0 hsl(60 9% 98% / 0.08);
   }
 
+  /* Feature card */
   .neo-feature-card {
-    @apply neo-glass p-8 transition-all duration-700;
-    transform-style: preserve-3d; perspective: 1000px;
+    @apply neo-glass p-8 transition-all duration-500;
   }
   .neo-feature-card:hover {
-    @apply border-primary/40;
-    transform: translateY(-12px) rotateX(2deg) scale(1.01);
-    box-shadow: 0 40px 80px hsl(240 10% 3.5% / 0.7), 0 0 60px hsl(var(--neo-red) / 0.2), inset 0 1px 0 0 hsl(60 9% 98% / 0.1);
+    @apply border-primary/30;
+    transform: translateY(-8px);
+    box-shadow: 0 30px 60px hsl(220 16% 2% / 0.6), 0 0 40px hsl(var(--primary) / 0.08);
   }
 
-  .neo-spotlight-card { position: relative; overflow: hidden; }
-  .neo-spotlight-card::after {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), hsl(var(--primary) / 0.06), transparent 40%);
-    pointer-events: none; opacity: 0; transition: opacity 0.5s ease;
-  }
-  .neo-spotlight-card:hover::after { opacity: 1; }
-
+  /* Pricing card */
   .neo-pricing-card {
-    @apply neo-glass p-10 transition-all duration-500 relative;
-    transform-style: preserve-3d;
+    @apply neo-glass p-8 transition-all duration-500 relative;
   }
   .neo-pricing-card.featured {
-    @apply border-primary/70;
-    box-shadow: 0 0 100px hsl(var(--neo-red) / 0.3), 0 30px 60px hsl(0 0% 0% / 0.6);
-  }
-  .neo-pricing-card.featured::after {
-    content: '';
-    position: absolute; inset: -2px; border-radius: inherit;
-    background: linear-gradient(135deg, hsl(var(--neo-red) / 0.5), hsl(var(--neo-orange) / 0.3), transparent 50%);
-    z-index: -1; filter: blur(25px);
+    @apply border-primary/50;
+    box-shadow: 0 0 60px hsl(var(--primary) / 0.15), 0 30px 60px hsl(0 0% 0% / 0.4);
   }
 
+  /* Input */
   .neo-input {
-    @apply w-full px-5 py-4 rounded-xl text-foreground placeholder:text-muted-foreground/50 transition-all duration-300;
-    background: hsl(0 0% 4%);
+    @apply w-full px-5 py-4 rounded-xl text-foreground placeholder:text-muted-foreground/40 transition-all duration-300;
+    background: hsl(220 14% 6%);
     border: 1.5px solid hsl(var(--border) / 0.5);
-    font-family: 'Montserrat', system-ui, sans-serif;
-    font-weight: 500;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 400;
   }
   .neo-input:focus {
     @apply outline-none;
-    border-color: hsl(var(--primary) / 0.8);
-    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.15), 0 0 30px hsl(var(--neo-red) / 0.25);
+    border-color: hsl(var(--primary) / 0.6);
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.1), 0 0 20px hsl(var(--primary) / 0.1);
   }
 
+  /* Primary Button — Lime pill */
   .neo-btn-primary {
-    @apply rounded-xl font-bold uppercase tracking-wider text-primary-foreground transition-all duration-400 relative overflow-hidden inline-flex items-center justify-center gap-2;
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--neo-red-dark)) 100%);
-    box-shadow: 0 4px 30px hsl(var(--neo-red) / 0.5), 0 2px 4px hsl(0 0% 0% / 0.4);
-  }
-  .neo-btn-primary::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(135deg, hsl(0 0% 100% / 0.2) 0%, transparent 50%);
-    opacity: 0; transition: opacity 0.3s;
+    @apply rounded-full font-semibold text-primary-foreground transition-all duration-300 relative overflow-hidden inline-flex items-center justify-center gap-2;
+    background: hsl(var(--primary));
+    box-shadow: 0 4px 20px hsl(var(--primary) / 0.3);
+    font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
   }
   .neo-btn-primary:hover {
-    transform: translateY(-4px) scale(1.03);
-    box-shadow: 0 15px 50px hsl(var(--neo-red) / 0.6), 0 5px 15px hsl(0 0% 0% / 0.5);
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 10px 30px hsl(var(--primary) / 0.4);
+    background: hsl(75 100% 55%);
   }
-  .neo-btn-primary:hover::before { opacity: 1; }
 
+  /* Speaking animation */
   .neo-speaking { animation: neo-speaking 1s ease-in-out infinite; }
   @keyframes neo-speaking { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
 
   .neo-waveform-bar {
     animation: neo-waveform 0.5s ease-in-out infinite;
-    background: linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--neo-orange)) 100%);
+    background: linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--neo-lime-glow)) 100%);
   }
   @keyframes neo-waveform { 0%, 100% { height: 8px; } 50% { height: 32px; } }
 
@@ -501,30 +392,32 @@
 
   .neo-call-btn {
     @apply relative transition-all duration-300;
-    background: radial-gradient(circle at 30% 30%, hsl(347 100% 65%) 0%, hsl(var(--primary)) 40%, hsl(var(--neo-red-dark)) 100%);
+    background: radial-gradient(circle at 30% 30%, hsl(80 100% 60%) 0%, hsl(var(--primary)) 40%, hsl(var(--neo-lime-dark)) 100%);
   }
-  .neo-call-btn::before {
-    content: '';
-    @apply absolute inset-0 rounded-full opacity-0 transition-opacity duration-300;
-    background: radial-gradient(circle at center, hsl(0 0% 100% / 0.3) 0%, transparent 60%);
+  .neo-call-btn:hover {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.5);
   }
-  .neo-call-btn:hover::before { opacity: 1; }
 
-  .neo-orb {
-    position: absolute; border-radius: 50%;
-    filter: blur(100px); opacity: 0.6;
-    animation: orb-float 12s ease-in-out infinite;
+  .neo-pulse { animation: neo-pulse 3s ease-in-out infinite; }
+  @keyframes neo-pulse {
+    0%, 100% { box-shadow: 0 0 20px hsl(var(--primary) / 0.3); transform: scale(1); }
+    50% { box-shadow: 0 0 40px hsl(var(--primary) / 0.5), 0 0 80px hsl(var(--primary) / 0.2); transform: scale(1.02); }
   }
-  @keyframes orb-float { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(30px, -40px) scale(1.15); } 66% { transform: translate(-30px, 30px) scale(0.85); } }
 
-  .neo-spotlight { position: relative; }
-  .neo-spotlight::before {
+  .neo-float { animation: neo-float 6s ease-in-out infinite; }
+  @keyframes neo-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+  .neo-breathe { animation: neo-breathe 4s ease-in-out infinite; }
+  @keyframes neo-breathe { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.9; } }
+
+  .neo-spotlight-card { position: relative; overflow: hidden; }
+  .neo-spotlight-card::after {
     content: '';
-    position: absolute; top: -50%; left: 50%; transform: translateX(-50%);
-    width: 150%; height: 100%;
-    background: radial-gradient(ellipse at center, hsl(var(--neo-red) / 0.1) 0%, transparent 60%);
-    pointer-events: none;
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), hsl(var(--primary) / 0.04), transparent 40%);
+    pointer-events: none; opacity: 0; transition: opacity 0.5s ease;
   }
+  .neo-spotlight-card:hover::after { opacity: 1; }
 
   .neo-marquee { animation: marquee 30s linear infinite; }
   @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
@@ -532,77 +425,41 @@
   .neo-typing::after { content: '|'; animation: blink 1s step-end infinite; }
   @keyframes blink { 50% { opacity: 0; } }
 
-  .neo-tilt {
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    transform-style: preserve-3d;
-  }
-  .neo-tilt:hover {
-    transform: perspective(1000px) rotateX(3deg) rotateY(-3deg) translateZ(15px);
-  }
-
+  /* Mobile overrides */
   @media (max-width: 768px) {
     .neo-glass {
-      background: linear-gradient(145deg, hsl(240 12% 11% / 0.97) 0%, hsl(240 15% 5% / 0.95) 100%);
-      border-color: hsl(240 8% 22% / 0.6);
-      box-shadow: 0 0 30px hsl(var(--neo-red) / 0.06), 0 8px 32px hsl(240 15% 2% / 0.5), inset 0 1px 0 0 hsl(0 0% 100% / 0.06);
+      background: hsl(220 14% 9% / 0.95);
+      border-color: hsl(0 0% 100% / 0.06);
     }
     .neo-glass-subtle {
-      background: linear-gradient(145deg, hsl(240 10% 11% / 0.9) 0%, hsl(240 12% 6% / 0.75) 100%);
-      border-color: hsl(240 8% 20% / 0.5);
-      box-shadow: 0 0 16px hsl(var(--neo-red) / 0.04), 0 4px 16px hsl(240 15% 2% / 0.4);
+      background: hsl(220 12% 9% / 0.85);
+      border-color: hsl(0 0% 100% / 0.05);
     }
-    .neo-glass-premium {
-      background: linear-gradient(145deg, hsl(240 10% 13% / 0.8) 0%, hsl(240 12% 7% / 0.7) 100%);
-      border-color: hsl(0 0% 100% / 0.1);
-      box-shadow: 0 0 40px hsl(var(--neo-red) / 0.08), 0 12px 40px hsl(240 15% 2% / 0.45), inset 0 1px 0 0 hsl(0 0% 100% / 0.08);
-    }
-    .neo-gradient-text {
-      background-image: linear-gradient(135deg, hsl(var(--neo-red)) 0%, hsl(var(--neo-red-glow)) 35%, hsl(var(--neo-orange)) 65%, hsl(var(--accent)) 100%);
-    }
-    .neo-glow-soft {
-      box-shadow: 0 0 20px hsl(var(--neo-red) / 0.3), 0 0 40px hsl(var(--neo-red) / 0.12), 0 12px 32px hsl(240 15% 2% / 0.4);
-    }
-    .neo-grain::before { opacity: 0.025; }
+    .neo-grain::before { opacity: 0.015; }
   }
 
   @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-    .neo-grain::before { opacity: 0.02; }
+    .neo-grain::before { opacity: 0.015; }
     .neo-glass, .neo-glass-subtle, .neo-glass-premium {
-      -webkit-backdrop-filter: blur(20px) saturate(1.3);
-      backdrop-filter: blur(20px) saturate(1.3);
+      -webkit-backdrop-filter: blur(20px) saturate(1.2);
+      backdrop-filter: blur(20px) saturate(1.2);
     }
   }
 }
-
-  .neo-blur-layer {
-    @apply absolute inset-0 pointer-events-none;
-    background: radial-gradient(ellipse 100% 50% at 50% 0%, hsl(var(--neo-red) / 0.12) 0%, transparent 50%);
-  }
-
-  .neo-noise { position: relative; }
-  .neo-noise::before {
-    content: '';
-    position: absolute; inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-    opacity: 0.03;
-    pointer-events: none;
-    z-index: 1;
-  }
 
 @layer utilities {
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-  .font-display { font-family: 'Montserrat', system-ui, sans-serif; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; }
-  .font-headline { font-family: 'Montserrat', system-ui, sans-serif; font-weight: 800; letter-spacing: 0.02em; }
-  .font-sans { font-family: 'Montserrat', system-ui, sans-serif; }
-  .font-mono { font-family: 'Montserrat', monospace; }
+  .font-display { font-family: 'Satoshi', 'Inter', system-ui, sans-serif; font-weight: 800; letter-spacing: -0.02em; }
+  .font-headline { font-family: 'Satoshi', 'Inter', system-ui, sans-serif; font-weight: 700; letter-spacing: -0.01em; }
+  .font-sans { font-family: 'Inter', system-ui, sans-serif; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
   .duration-400 { transition-duration: 400ms; }
   .text-balance { text-wrap: balance; }
   .gradient-border {
     background: linear-gradient(var(--background), var(--background)) padding-box,
-                linear-gradient(135deg, hsl(var(--primary)), hsl(var(--neo-orange))) border-box;
+                linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent))) border-box;
     border: 1px solid transparent;
   }
-  .luxury-text { text-transform: uppercase; letter-spacing: 0.15em; font-weight: 700; }
 }
