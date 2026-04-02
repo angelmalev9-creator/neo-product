@@ -120,7 +120,7 @@ const BusinessResults = () => {
           </span>
           <h2 className="text-xl sm:text-2xl md:text-[1.75rem] font-display font-black text-foreground mb-5 leading-[1.08] tracking-tight max-w-4xl mx-auto">
             Вашият AI асистент за{' '}
-            <span className="neo-gradient-text">продажби и резервации</span>
+            <span className="text-primary">продажби и резервации</span>
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             NEO не е просто чатбот — той е вашият дигитален търговец, рецепционист и маркетолог в едно.
