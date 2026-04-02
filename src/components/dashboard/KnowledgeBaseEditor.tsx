@@ -27,6 +27,15 @@ interface KnowledgeBaseEditorProps {
   onCompanyNameExtracted?: (name: string) => void;
 }
 
+interface UploadedFile {
+  name: string;
+  content: string;
+  size: number;
+}
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ACCEPTED_TYPES = ['.txt', '.md', '.csv', '.json', '.pdf'];
+
 const KnowledgeBaseEditor = ({ userId, currentSession, onSessionUpdate, onCompanyNameExtracted }: KnowledgeBaseEditorProps) => {
   const [url, setUrl] = useState(currentSession?.url || '');
   const [status, setStatus] = useState<'idle' | 'scraping' | 'processing' | 'ready'>('idle');
@@ -35,6 +44,9 @@ const KnowledgeBaseEditor = ({ userId, currentSession, onSessionUpdate, onCompan
   const [isEditing, setIsEditing] = useState(false);
   const [editedSummary, setEditedSummary] = useState('');
   const [saving, setSaving] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const handleScrape = async (e: React.FormEvent) => {
