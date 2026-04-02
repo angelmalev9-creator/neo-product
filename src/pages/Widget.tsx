@@ -99,13 +99,20 @@ const Widget = () => {
   const trackConversation = useCallback(async (action: string, data: Record<string, unknown> = {}) => {
     if (!userId) return null;
     try {
+      const cid = data.conversationId || conversationIdRef.current;
       const { data: result, error: trackError } = await supabase.functions.invoke('widget-track-conversation', {
-        body: { action, userId, conversationId: data.conversationId || conversationId, ...data },
+        body: { action, userId, conversationId: cid, ...data },
       });
-      if (trackError) return null;
+      if (trackError) {
+        console.error('[WIDGET-TRACK] Error:', trackError);
+        return null;
+      }
       return result;
-    } catch { return null; }
-  }, [userId, conversationId]);
+    } catch (e) {
+      console.error('[WIDGET-TRACK] Exception:', e);
+      return null;
+    }
+  }, [userId]);
 
   const persistTranscriptMessage = useCallback(async (role: Message['role'], content: string) => {
     const cleaned = cleanTranscriptForStorage(content);
