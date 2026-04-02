@@ -1,5 +1,5 @@
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
-import { PencilUnderline } from '@/components/ui/PencilUnderline';
+
 import { Mail, ArrowRight, Quote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
