@@ -173,22 +173,25 @@ const DashboardHome = ({
     setStatsLoading(false);
   };
 
-  const fetchWeeklyStats = async () => {
+  const [chartFilter, setChartFilter] = useState<TimeFilter>('week');
+  const [chartData, setChartData] = useState<{ label: string; conversations: number; clients: number }[]>([]);
+
+  const fetchChartData = async (filter: TimeFilter) => {
     if (!userId) return;
-    const days = getLast7Days();
-    const weekStart = days[0].dayStart;
+    const { start, end } = getFilterRange(filter);
+    const labels = getBucketLabels(filter);
     const [convRes, clientConvRes] = await Promise.all([
-      supabase.from('conversations').select('created_at').eq('user_id', userId).gte('created_at', weekStart),
-      supabase.from('conversations').select('created_at').eq('user_id', userId).eq('lead_captured', true).gte('created_at', weekStart),
+      supabase.from('conversations').select('created_at').eq('user_id', userId).gte('created_at', start).lt('created_at', end),
+      supabase.from('conversations').select('created_at').eq('user_id', userId).eq('lead_captured', true).gte('created_at', start).lt('created_at', end),
     ]);
     const convos = convRes.data || [];
     const clientConvos = clientConvRes.data || [];
-    const result = days.map(day => ({
-      label: day.label,
-      conversations: convos.filter(c => c.created_at >= day.dayStart && c.created_at < day.dayEnd).length,
-      clients: clientConvos.filter(c => c.created_at >= day.dayStart && c.created_at < day.dayEnd).length,
+    const result = labels.map((lbl, i) => ({
+      label: lbl,
+      conversations: convos.filter(c => bucketIndex(c.created_at, filter, start) === i).length,
+      clients: clientConvos.filter(c => bucketIndex(c.created_at, filter, start) === i).length,
     }));
-    setWeekData(result);
+    setChartData(result);
   };
 
   useEffect(() => {
