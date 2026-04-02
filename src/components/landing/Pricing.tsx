@@ -202,7 +202,7 @@ const Pricing = () => {
                   <span className="text-xs text-muted-foreground">({plan.callsPerDay})</span>
                 </div>
 
-                <div className="text-sm text-emerald-400 font-medium mb-6 flex items-center gap-2">
+                <div className="text-sm text-primary font-medium mb-6 flex items-center gap-2">
                   <PiggyBank className="w-4 h-4" />
                   {t('pricing.savingsPrefix')} {plan.savings} {t('pricing.savingsSuffix')}
                 </div>
