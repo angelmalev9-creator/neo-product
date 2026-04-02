@@ -449,8 +449,7 @@ const LiveStepCard = ({ icon, title, description, state, step }: LiveStepCardPro
         isActive
           ? "border-primary/20 bg-primary/[0.03]"
           : isDone
-                ? "border-neo-success/15 bg-neo-success/[0.02]"
-                : "border-border/5 bg-card/20"
+            ? "border-neo-success/15 bg-neo-success/[0.02]"
             : "border-border/5 bg-card/20"
       }`}
       animate={isActive ? { scale: [1, 1.01, 1] } : {}}
@@ -462,7 +461,7 @@ const LiveStepCard = ({ icon, title, description, state, step }: LiveStepCardPro
             isActive
               ? "bg-primary/10 text-primary"
               : isDone
-                ? "bg-emerald-500/10 text-emerald-400"
+                ? "bg-neo-success/10 text-neo-success"
                 : "bg-muted/20 text-muted-foreground/30"
           }`}
         >
