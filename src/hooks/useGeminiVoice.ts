@@ -3320,6 +3320,23 @@ export const useGeminiVoice = ({
         // Step 1: Read instruction from gemini-session (field may be "systemInstruction" or "instruction")
         let resolvedInstruction = data.systemInstruction || data.instruction || "";
 
+        // ── BG Voice Persona Prefix ───────────────────────────────────────────
+        // Native-audio не поддържа language_code, но чита system instruction.
+        // Тези инструкции карат модела да говори с естествена BG интонация,
+        // правилни ударения и спокоен, уважителен тон.
+        const BG_VOICE_PREFIX =
+          `Говориш единствено на български език. ` +
+          `Произнасяй всяка дума с правилно българско ударение и естествена интонация — ` +
+          `като роден говорител, не като преводач. ` +
+          `Темпото на речта е спокойно и уверено — не бързо, не монотонно. ` +
+          `Тонът е топъл, уважителен и приятелски — като внимателен и грижовен консултант. ` +
+          `Използвай естествени паузи между изреченията. ` +
+          `Никога не произнасяй думи на английски освен ако клиентът не го изисква изрично.\n\n`;
+
+        if (resolvedInstruction && !resolvedInstruction.startsWith("Говориш единствено")) {
+          resolvedInstruction = BG_VOICE_PREFIX + resolvedInstruction;
+        }
+
         // Step 2: If the original systemPrompt contains calendar instructions, append them
         // This ensures the calendar block from widget-session survives even if gemini-session discards it
         const calendarMarkerIdx = systemPrompt.indexOf("##############################");
@@ -4359,9 +4376,9 @@ export const useGeminiVoice = ({
                       voice_name: voiceName,
                     },
                   },
-                  // language_code е критично за правилна BG интонация, ударения и произношение
-                  // Без него Gemini ползва EN-US prosody върху BG текст → чужд акцент
-                  language_code: "bg-BG",
+                  // NOTE: language_code не се поддържа от native-audio модели (грешка 1007)
+                  // За non-native модели може да се добави, но native-audio игнорира/отхвърля
+                  // language_code: "bg-BG",
                 },
                 thinking_config: { thinking_budget: 0 },
               },
