@@ -93,7 +93,7 @@ const Testimonials = () => {
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="testimonials"
-      className={`py-10 sm:py-14 lg:py-20 relative overflow-hidden neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
+      className={`py-28 sm:py-36 lg:py-40 relative overflow-hidden neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
     >
       <div className="container mx-auto px-5 sm:px-4 lg:px-8 relative z-10">
         {/* Header */}
@@ -101,11 +101,11 @@ const Testimonials = () => {
           <span className="inline-block px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
             Доверието говори
           </span>
-          <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-black text-foreground mb-3 sm:mb-4 max-w-3xl mx-auto leading-[1.1] tracking-wide">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-semibold text-foreground mb-3 sm:mb-4 max-w-2xl mx-auto leading-[1.1] tracking-[-0.5px]">
             <PencilUnderline>Какво казват</PencilUnderline>{' '}
             <span className="neo-gradient-text">клиентите</span>
           </h2>
-          <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base text-foreground/40 max-w-md mx-auto leading-[1.6]">
             Реални бизнеси. Реални резултати. Без филтри.
           </p>
         </div>
