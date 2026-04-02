@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Globe, Loader2, CheckCircle, RefreshCw, FileText, Calendar, Edit3, Save, X } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Globe, Loader2, CheckCircle, RefreshCw, FileText, Calendar, Edit3, Save, X, Upload, File, Trash2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
