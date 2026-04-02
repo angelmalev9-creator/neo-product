@@ -28,7 +28,7 @@ const BusinessResults = () => {
   ];
 
   const containerVariants = { hidden: {}, visible: { transition: { staggerChildren: 0.1 } } };
-  const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } } };
+  const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } } };
 
   return (
     <section ref={ref as React.RefObject<HTMLElement>} id="features" className="py-24 sm:py-32 lg:py-40 relative overflow-hidden">
