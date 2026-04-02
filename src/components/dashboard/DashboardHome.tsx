@@ -197,11 +197,12 @@ const DashboardHome = ({
   useEffect(() => {
     if (!userId || !subscribed) return;
     fetchTodayStats();
-    fetchWeeklyStats();
+    fetchChartData(chartFilter);
     const channel = supabase.channel('today-stats-realtime')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'conversations', filter: `user_id=eq.${userId}` }, () => {
         setTodayConversations(prev => prev + 1);
         setTotalConversations(prev => prev + 1);
+        fetchChartData(chartFilter);
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'conversations', filter: `user_id=eq.${userId}` }, (payload) => {
         const newRow = payload.new as any;
@@ -217,7 +218,7 @@ const DashboardHome = ({
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [userId, subscribed]);
+  }, [userId, subscribed, chartFilter]);
 
   if (!subscribed) {
     return (
