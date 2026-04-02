@@ -183,11 +183,11 @@ const BusinessResults = () => {
                     src={feature.image} 
                     alt={feature.title}
                     loading="lazy"
-                    className="w-full h-full object-cover object-top transition-all duration-700 group-hover:scale-[1.03]"
+                    className="w-full h-full object-cover object-top transition-all duration-700 group-hover:scale-[1.03] brightness-125 contrast-[1.05]"
                   />
-                  {/* Gradient overlay */}
-                  <div className={`absolute inset-0 bg-gradient-to-t ${feature.accent}`} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
+                  {/* Gradient overlay — lighter for better visibility */}
+                  <div className={`absolute inset-0 bg-gradient-to-t ${feature.accent} opacity-40`} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
                 </div>
 
                 {/* Content */}

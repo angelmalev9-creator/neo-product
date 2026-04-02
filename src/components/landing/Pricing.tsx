@@ -175,7 +175,7 @@ const Pricing = () => {
                 )}
 
                 {isYearly && yearlySavings > 0 && (
-                  <div className="absolute -top-2 -right-2 z-10 bg-emerald-500 text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-lg">
+                  <div className="absolute -top-2 -right-2 z-10 bg-primary text-primary-foreground px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-lg">
                     -{yearlySavings}%
                   </div>
                 )}
