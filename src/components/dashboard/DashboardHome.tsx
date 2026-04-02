@@ -28,21 +28,71 @@ interface DashboardHomeProps {
   userId: string;
 }
 
-const WEEKDAY_LABELS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
+type TimeFilter = 'today' | 'week' | 'month' | 'last_month';
 
-function getLast7Days() {
-  const days: { date: string; label: string; dayStart: string; dayEnd: string }[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
-    const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
-    const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).toISOString();
-    const dow = d.getDay();
-    const label = WEEKDAY_LABELS[dow === 0 ? 6 : dow - 1];
-    days.push({ date: dateStr, label, dayStart, dayEnd });
+const TIME_FILTER_LABELS: Record<TimeFilter, string> = {
+  today: 'Днес',
+  week: 'Седмица',
+  month: 'Месец',
+  last_month: 'Мин. месец',
+};
+
+function getFilterRange(filter: TimeFilter): { start: string; end: string; bucketCount: number } {
+  const now = new Date();
+  if (filter === 'today') {
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const end = new Date(start.getTime() + 86400000);
+    return { start: start.toISOString(), end: end.toISOString(), bucketCount: 24 };
   }
-  return days;
+  if (filter === 'week') {
+    const start = new Date(now);
+    start.setDate(start.getDate() - 6);
+    start.setHours(0, 0, 0, 0);
+    return { start: start.toISOString(), end: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString(), bucketCount: 7 };
+  }
+  if (filter === 'month') {
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return { start: start.toISOString(), end: end.toISOString(), bucketCount: now.getDate() };
+  }
+  // last_month
+  const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const end = new Date(now.getFullYear(), now.getMonth(), 1);
+  return { start: start.toISOString(), end: end.toISOString(), bucketCount: new Date(now.getFullYear(), now.getMonth(), 0).getDate() };
+}
+
+function getBucketLabels(filter: TimeFilter): string[] {
+  const WEEKDAY_LABELS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
+  if (filter === 'today') {
+    return Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
+  }
+  if (filter === 'week') {
+    const labels: string[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dow = d.getDay();
+      labels.push(WEEKDAY_LABELS[dow === 0 ? 6 : dow - 1]);
+    }
+    return labels;
+  }
+  if (filter === 'month') {
+    const now = new Date();
+    return Array.from({ length: now.getDate() }, (_, i) => String(i + 1));
+  }
+  // last_month
+  const now = new Date();
+  const daysInLastMonth = new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+  return Array.from({ length: daysInLastMonth }, (_, i) => String(i + 1));
+}
+
+function bucketIndex(createdAt: string, filter: TimeFilter, rangeStart: string): number {
+  const d = new Date(createdAt);
+  const s = new Date(rangeStart);
+  if (filter === 'today') return d.getHours();
+  if (filter === 'week') return Math.floor((d.getTime() - s.getTime()) / 86400000);
+  // month or last_month
+  return d.getDate() - 1;
 }
 
 const fadeUp = {

@@ -38,10 +38,10 @@ const Navigation = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-4 lg:px-6 py-2 sm:py-2 lg:py-3">
       <div 
-        className={`mx-auto max-w-6xl border transition-all duration-500 rounded-full ${
+        className={`mx-auto max-w-6xl border transition-all duration-500 rounded-full bg-background/85 backdrop-blur-2xl border-foreground/8 ${
           isScrolled 
-            ? 'bg-background/85 backdrop-blur-2xl border-foreground/8 shadow-[0_4px_30px_hsl(0_0%_0%/0.5),0_0_60px_hsl(0_90%_58%/0.05)]' 
-            : 'bg-transparent border-transparent'
+            ? 'shadow-[0_4px_30px_hsl(0_0%_0%/0.5),0_0_60px_hsl(0_90%_58%/0.05)]' 
+            : 'shadow-[0_2px_20px_hsl(0_0%_0%/0.3)]'
         }`}
       >
         <div className="flex items-center justify-between h-12 sm:h-12 lg:h-14 px-4 sm:px-4 lg:px-6">
