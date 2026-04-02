@@ -323,29 +323,44 @@ const DashboardHome = ({
           className="lg:col-span-3 rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-4 flex flex-col min-h-[200px] relative overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] to-transparent pointer-events-none" />
-          <div className="relative flex items-center justify-between mb-3 shrink-0">
+          <div className="relative flex items-center justify-between mb-3 shrink-0 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-muted-foreground" />
-              <h2 className="text-xs font-semibold text-foreground">Седмичен преглед</h2>
+              <h2 className="text-xs font-semibold text-foreground">Анализи</h2>
               <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                 <span className="text-[9px] text-primary font-medium">Live</span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
-                <div className="w-2 h-2 rounded-sm bg-primary" /> Разговори
-              </div>
-              <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
-                <div className="w-2 h-2 rounded-sm bg-[hsl(var(--neo-success))]" /> Клиенти
-              </div>
+            <div className="flex items-center gap-1">
+              {(Object.keys(TIME_FILTER_LABELS) as TimeFilter[]).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => { setChartFilter(f); fetchChartData(f); }}
+                  className={`text-[10px] px-2.5 py-1 rounded-full transition-all duration-200 ${
+                    chartFilter === f
+                      ? 'bg-primary text-primary-foreground font-semibold'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                  }`}
+                >
+                  {TIME_FILTER_LABELS[f]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="relative flex items-center gap-3 mb-2 shrink-0">
+            <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
+              <div className="w-2 h-2 rounded-sm bg-primary" /> Разговори
+            </div>
+            <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
+              <div className="w-2 h-2 rounded-sm bg-[hsl(var(--neo-success))]" /> Клиенти
             </div>
           </div>
           <div className="flex-1 min-h-0 relative">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weekData} barGap={2}>
+              <BarChart data={chartData} barGap={2}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.15} vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} interval={chartFilter === 'today' ? 3 : chartFilter === 'month' || chartFilter === 'last_month' ? 4 : 0} />
                 <YAxis hide allowDecimals={false} />
                 <Tooltip
                   contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 12, fontSize: 11, boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}
