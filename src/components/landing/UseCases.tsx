@@ -57,7 +57,7 @@ const UseCases = () => {
         <div className="text-center mb-14">
           <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground leading-[1.08] tracking-tight mb-4">
             За всеки бизнес,{' '}
-            <span className="neo-gradient-text">който говори с клиенти</span>
+            <span className="text-primary">който говори с клиенти</span>
           </h2>
           <p className="text-muted-foreground text-base max-w-xl mx-auto">
             NEO се адаптира към вашата индустрия за минути.

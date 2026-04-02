@@ -52,7 +52,7 @@ const HowItWorks = () => {
           </span>
           <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground leading-[1.08] tracking-tight">
             3 стъпки.{' '}
-            <span className="neo-gradient-text">5 минути. Готово.</span>
+            <span className="text-primary">5 минути. Готово.</span>
           </h2>
         </div>
 
