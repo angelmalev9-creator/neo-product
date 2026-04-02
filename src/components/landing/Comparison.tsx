@@ -98,7 +98,7 @@ const Comparison = () => {
     <section 
       ref={ref as React.RefObject<HTMLElement>}
       id="comparison"
-      className={`py-10 sm:py-14 lg:py-16 neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
+      className={`py-28 sm:py-36 lg:py-40 neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
     >
       <div className="container mx-auto px-4 lg:px-8">
         {/* Title */}
