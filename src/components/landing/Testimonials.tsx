@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Star, Quote, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
+import { PencilUnderline } from '@/components/ui/PencilUnderline';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const testimonials = [
@@ -33,55 +34,56 @@ const Testimonials = () => {
   };
 
   return (
-    <section ref={ref as React.RefObject<HTMLElement>} id="testimonials" className="py-24 sm:py-32 lg:py-40 relative overflow-hidden">
-      <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10 max-w-6xl">
-        <div className="text-center mb-12 sm:mb-16">
-          <span className="inline-block px-4 py-2 rounded-full border border-border/20 bg-card/50 text-primary text-sm font-medium mb-6">
+    <section ref={ref as React.RefObject<HTMLElement>} id="testimonials"
+      className={`py-20 sm:py-24 lg:py-28 relative overflow-hidden neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}>
+      <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10 max-w-5xl">
+        <div className="text-center mb-8 sm:mb-12">
+          <span className="inline-block px-3.5 py-1.5 rounded-full bg-primary/8 text-primary text-xs font-medium mb-3">
             Доверието говори
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-foreground mb-4 max-w-2xl mx-auto leading-[1.1] tracking-tight">
-            Какво казват{' '}
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-display font-black text-foreground mb-2 max-w-2xl mx-auto leading-tight tracking-tight">
+            <PencilUnderline>Какво казват</PencilUnderline>{' '}
             <span className="neo-gradient-text">клиентите</span>
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-lg mx-auto">
+          <p className="text-sm text-muted-foreground max-w-lg mx-auto">
             Реални бизнеси. Реални резултати. Без филтри.
           </p>
         </div>
 
         <div className="max-w-3xl mx-auto" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
-          <div className="relative min-h-[320px] sm:min-h-[280px]">
+          <div className="relative min-h-[280px] sm:min-h-[260px]">
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div key={current} custom={direction} variants={variants} initial="enter" animate="center" exit="exit"
-                transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }} className="absolute inset-0">
-                <div className="relative rounded-2xl border border-border/15 bg-card/40 backdrop-blur-lg p-8 sm:p-10">
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="px-4 py-2 rounded-xl bg-primary/10 border border-primary/15">
-                        <span className="text-2xl font-display font-bold text-primary">{t.metric}</span>
+                transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }} className="absolute inset-0">
+                <div className="relative rounded-xl sm:rounded-2xl border border-border/25 bg-card/40 backdrop-blur-lg p-5 sm:p-8">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-2.5">
+                      <div className="px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/15">
+                        <span className="text-xl font-black text-primary">{t.metric}</span>
                       </div>
-                      <span className="text-sm text-muted-foreground">{t.metricLabel}</span>
+                      <span className="text-xs text-muted-foreground">{t.metricLabel}</span>
                     </div>
-                    <Quote className="w-10 h-10 text-border/20 shrink-0" />
+                    <Quote className="w-8 h-8 text-primary/8 shrink-0" />
                   </div>
 
-                  <div className="flex gap-1 mb-5">
+                  <div className="flex gap-0.5 mb-4">
                     {Array.from({ length: t.rating }).map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                      <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                     ))}
                   </div>
 
-                  <blockquote className="text-base sm:text-lg text-foreground/85 leading-relaxed mb-6 font-normal">
+                  <blockquote className="text-sm sm:text-base text-foreground/85 leading-relaxed mb-5 font-medium">
                     "{t.content}"
                   </blockquote>
 
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-sm font-display font-bold text-primary">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/25 to-accent/15 flex items-center justify-center text-sm font-black text-foreground">
                       {t.initials}
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground text-base">{t.name}</p>
-                      <p className="text-sm text-muted-foreground">{t.role}</p>
-                      <p className="text-sm text-primary font-medium">{t.business}</p>
+                      <p className="font-bold text-foreground text-sm">{t.name}</p>
+                      <p className="text-xs text-muted-foreground">{t.role}</p>
+                      <p className="text-xs text-primary font-semibold">{t.business}</p>
                     </div>
                   </div>
                 </div>
@@ -89,19 +91,19 @@ const Testimonials = () => {
             </AnimatePresence>
           </div>
 
-          <div className="flex items-center justify-center gap-6 mt-8">
-            <button onClick={prev} className="w-10 h-10 rounded-full border border-border/20 bg-card/30 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all">
-              <ChevronLeft className="w-5 h-5" />
+          <div className="flex items-center justify-center gap-5 mt-6">
+            <button onClick={prev} className="w-9 h-9 rounded-full border border-border/25 bg-card/40 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all">
+              <ChevronLeft className="w-4 h-4" />
             </button>
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               {testimonials.map((_, idx) => (
                 <button key={idx} onClick={() => { setDirection(idx > current ? 1 : -1); setCurrent(idx); }} className="p-1">
-                  <div className={`h-2 rounded-full transition-all duration-400 ${idx === current ? 'w-8 bg-primary' : 'w-2 bg-muted-foreground/20'}`} />
+                  <div className={`h-1.5 rounded-full transition-all duration-400 ${idx === current ? 'w-6 bg-primary' : 'w-1.5 bg-muted-foreground/25'}`} />
                 </button>
               ))}
             </div>
-            <button onClick={next} className="w-10 h-10 rounded-full border border-border/20 bg-card/30 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all">
-              <ChevronRight className="w-5 h-5" />
+            <button onClick={next} className="w-9 h-9 rounded-full border border-border/25 bg-card/40 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all">
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
