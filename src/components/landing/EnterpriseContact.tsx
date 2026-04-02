@@ -49,7 +49,7 @@ const EnterpriseContact = () => {
               <MessageSquare className="w-3.5 h-3.5" />
               Контакт
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-black text-foreground leading-[1.1] tracking-wide">
+            <h2 className="text-xl sm:text-2xl md:text-[1.75rem] font-display font-black text-foreground leading-[1.1] tracking-tight">
               {t('contact.title1')}
               <br />
               <span className="neo-gradient-text">{t('contact.title2')}</span>

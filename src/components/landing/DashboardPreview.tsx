@@ -20,7 +20,7 @@ const DashboardPreview = () => {
             <Activity className="w-3.5 h-3.5" />
             {t('dashboardPreview.badge')}
           </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-black text-foreground mb-4 leading-[1.1] tracking-wide">
+          <h2 className="text-xl sm:text-2xl md:text-[1.75rem] font-display font-black text-foreground mb-4 leading-[1.1] tracking-tight">
             {t('dashboardPreview.title')}{' '}
             <span className="neo-gradient-text">{t('dashboardPreview.titleHighlight')}</span>
           </h2>

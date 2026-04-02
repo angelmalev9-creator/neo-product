@@ -110,7 +110,7 @@ const Pricing = () => {
             <Sparkles className="w-3.5 h-3.5" />
             Ценови планове
           </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-black text-foreground mb-4 max-w-3xl mx-auto leading-[1.1] tracking-wide">
+          <h2 className="text-xl sm:text-2xl md:text-[1.75rem] font-display font-black text-foreground mb-4 max-w-3xl mx-auto leading-[1.1] tracking-tight">
             <PencilUnderline>{t('pricing.title1')}</PencilUnderline> <span className="neo-gradient-text whitespace-nowrap">{t('pricing.title2')}</span>
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground mb-8">
