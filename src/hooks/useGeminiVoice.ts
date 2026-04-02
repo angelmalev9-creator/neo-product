@@ -4336,17 +4336,32 @@ export const useGeminiVoice = ({
 
         ws.onopen = () => {
           const isNativeAudio = session.model.includes("native-audio");
-          const voiceName = isNativeAudio ? "Charon" : "Charon";
+
+          // ── Voice selection ───────────────────────────────────────────────
+          // Aoede  = топъл женски глас, естествен, уютен — идеален за BG клиентски опит
+          // Charon = по-нисък мъжки глас (резервен вариант)
+          // Kore   = по-формален женски (за корпоративен тон)
+          // Puck   = по-млад/енергичен (за по-динамични brands)
+          const voiceName = isNativeAudio ? "Aoede" : "Aoede";
 
           const setupPayload: any = {
             setup: {
               model: `models/${session.model}`,
               generation_config: {
                 response_modalities: ["AUDIO"],
-                temperature: 0.3,
+                // temperature 0.7 — достатъчно естествена variability без хаос
+                // По-ниско (0.3) звучи роботизирано; по-високо (0.9+) е непредсказуемо
+                temperature: 0.7,
                 max_output_tokens: 1500,
                 speech_config: {
-                  voice_config: { prebuilt_voice_config: { voice_name: voiceName } },
+                  voice_config: {
+                    prebuilt_voice_config: {
+                      voice_name: voiceName,
+                    },
+                  },
+                  // language_code е критично за правилна BG интонация, ударения и произношение
+                  // Без него Gemini ползва EN-US prosody върху BG текст → чужд акцент
+                  language_code: "bg-BG",
                 },
                 thinking_config: { thinking_budget: 0 },
               },
@@ -4359,7 +4374,9 @@ export const useGeminiVoice = ({
           if (isNativeAudio) setupPayload.setup.output_audio_transcription = {};
 
           ws.send(JSON.stringify(setupPayload));
-          console.log(`[GEMINI] Setup sent — thinking=OFF, voice=${voiceName}, tools=${session.tools?.length ?? 0}`);
+          console.log(
+            `[GEMINI] Setup sent — thinking=OFF, voice=${voiceName} (bg-BG), tools=${session.tools?.length ?? 0}`,
+          );
         };
 
         ws.onmessage = async (event) => {
@@ -4382,7 +4399,9 @@ export const useGeminiVoice = ({
               greetingSentRef.current = true;
               currentResponseTextRef.current = "";
               sendToGemini(
-                `Нов клиент се обади. Поздрави го кратко — ти си НЕО от ${companyNameRef.current}. Питай с какво можеш да помогнеш. Максимум 2 изречения.`,
+                `Нов клиент се свърза. Поздрави го топло и естествено — ти си НЕО от ${companyNameRef.current}. ` +
+                  `Говори на спокоен, приятелски тон — като да говориш с познат, не като робот. ` +
+                  `Поздравяването да е кратко и естествено (1-2 изречения). Питай с какво можеш да помогнеш.`,
               );
             }
           }
