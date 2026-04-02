@@ -238,8 +238,11 @@ const Pricing = () => {
         </div>
 
         {/* Bottom */}
-        <div className="text-center mt-12">
-          <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+        <div className="text-center mt-16">
+          <p className="text-lg font-semibold text-foreground/50 mb-3">
+            👉 По-евтино от 1 изпуснат клиент
+          </p>
+          <p className="text-sm text-foreground/30 flex items-center justify-center gap-2">
             <ShieldCheck className="w-5 h-5 text-emerald-400" />
             {t('pricing.guarantee')}
           </p>
