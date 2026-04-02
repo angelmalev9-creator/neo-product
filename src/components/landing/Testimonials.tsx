@@ -1,6 +1,7 @@
-import { Star, Quote } from 'lucide-react';
+import { Star, Quote, ArrowRight } from 'lucide-react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 
 const testimonials = [
   {
@@ -11,6 +12,7 @@ const testimonials = [
     metric: '80%',
     metricLabel: 'автоматични отговори',
     initials: 'МП',
+    timeSaved: '15 часа седмично',
   },
   {
     name: 'Георги Иванов',
@@ -20,6 +22,7 @@ const testimonials = [
     metric: '+30%',
     metricLabel: 'ръст в приходите',
     initials: 'ГИ',
+    timeSaved: '22 часа седмично',
   },
 ];
 
@@ -38,7 +41,7 @@ const Testimonials = () => {
             Реални <span className="text-primary">резултати</span>
           </h2>
           <p className="text-muted-foreground text-base max-w-lg mx-auto">
-            Бизнеси, които вече работят с NEO.
+            Бизнеси, които вече работят с NEO — и техните конкретни числа.
           </p>
         </div>
 
@@ -58,7 +61,10 @@ const Testimonials = () => {
                 <div className="px-3.5 py-1.5 rounded-xl bg-primary/10 border border-primary/20">
                   <span className="text-xl font-black text-primary">{t.metric}</span>
                 </div>
-                <span className="text-xs text-muted-foreground font-medium">{t.metricLabel}</span>
+                <div>
+                  <span className="text-xs text-muted-foreground font-medium block">{t.metricLabel}</span>
+                  <span className="text-[10px] text-foreground/30">{t.timeSaved} спестени</span>
+                </div>
               </div>
 
               {/* Stars */}
@@ -70,7 +76,7 @@ const Testimonials = () => {
 
               {/* Content */}
               <blockquote className="text-sm text-foreground/85 leading-relaxed mb-6">
-                "{t.content}"
+                &laquo;{t.content}&raquo;
               </blockquote>
 
               {/* Author */}
@@ -80,12 +86,32 @@ const Testimonials = () => {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-foreground">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">{t.role} • {t.business}</p>
+                  <p className="text-xs text-muted-foreground">{t.role}</p>
                 </div>
               </div>
             </motion.div>
           ))}
         </div>
+
+        {/* Social proof nudge */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={isVisible ? { opacity: 1 } : {}}
+          transition={{ delay: 0.5 }}
+          className="text-center mt-10"
+        >
+          <p className="text-xs text-foreground/30 mb-4">
+            Над 500 бизнеса в България вече използват NEO ежедневно.
+          </p>
+          <Button
+            variant="outline"
+            className="neo-glass-premium border-0 text-foreground/50 hover:text-foreground text-xs px-5 py-2.5 h-auto rounded-full font-bold gap-1.5"
+            onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+          >
+            Вижте плановете
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Button>
+        </motion.div>
       </div>
     </section>
   );

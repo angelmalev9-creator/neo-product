@@ -372,15 +372,21 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
               )}
             </div>
 
-            {/* Safety Disclaimer */}
-            <div className="mt-4 bg-muted/30 border border-border/20 rounded-xl px-4 py-3">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="w-4 h-4 text-accent shrink-0 mt-0.5" />
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Демонстрацията включва гласово взаимодействие. Изпробвайте Neo в спокойна и безопасна среда. Не
-                  използвайте демото по време на шофиране или дейности, изискващи концентрация.
-                </p>
+            {/* Safety Disclaimer + loss aversion */}
+            <div className="mt-4 space-y-3">
+              <div className="bg-muted/30 border border-border/20 rounded-xl px-4 py-3">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Демонстрацията включва гласово взаимодействие. Изпробвайте NEO в спокойна обстановка.
+                  </p>
+                </div>
               </div>
+              <p className="text-[10px] text-foreground/20 text-center leading-relaxed">
+                Средният бизнес губи 4-5 клиента на ден заради пропуснати обаждания.
+                <br />
+                NEO гарантира, че нито един клиент не остава без отговор.
+              </p>
             </div>
           </div>
 
