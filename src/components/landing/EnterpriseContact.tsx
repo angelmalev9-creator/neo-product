@@ -52,7 +52,7 @@ const EnterpriseContact = () => {
             <h2 className="text-xl sm:text-2xl md:text-[1.75rem] font-display font-black text-foreground leading-[1.1] tracking-tight">
               {t('contact.title1')}
               <br />
-              <span className="neo-gradient-text">{t('contact.title2')}</span>
+              <span className="text-primary">{t('contact.title2')}</span>
             </h2>
           </div>
 
