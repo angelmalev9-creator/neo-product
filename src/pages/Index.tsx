@@ -2,7 +2,6 @@ import { useState, lazy, Suspense } from 'react';
 import Navigation from '@/components/landing/Navigation';
 import Hero from '@/components/landing/Hero';
 import AnimatedBackground from '@/components/landing/AnimatedBackground';
-import CustomCursor from '@/components/landing/CustomCursor';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 
@@ -30,7 +29,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen text-foreground neo-grain relative flex flex-col items-center">
-      <CustomCursor />
+      
       
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-background" />

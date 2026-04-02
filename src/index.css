@@ -218,13 +218,12 @@
   /* Premium Typography: lighter weights, tighter tracking */
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Montserrat', system-ui, sans-serif;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1.1;
   }
-  h1 { letter-spacing: -0.03em; font-weight: 500; }
-  h2 { font-weight: 600; }
-  h3, h4 { font-weight: 500; }
+  h1 { letter-spacing: -0.03em; }
+  h3, h4 { font-weight: 600; }
 
   @media (max-width: 768px) {
     h1, h2 { letter-spacing: -0.015em; line-height: 1.08; }
@@ -240,37 +239,6 @@
 }
 
 @layer components {
-  /* Custom SaaS cursor */
-  .neo-cursor {
-    cursor: none;
-  }
-  .neo-cursor-dot {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 8px;
-    height: 8px;
-    background: hsl(var(--foreground));
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 99999;
-    transition: transform 0.15s ease, width 0.2s ease, height 0.2s ease;
-    transform: translate(-50%, -50%);
-    mix-blend-mode: difference;
-  }
-  .neo-cursor-ring {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 36px;
-    height: 36px;
-    border: 1.5px solid hsl(var(--foreground) / 0.3);
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 99998;
-    transition: transform 0.08s ease, width 0.3s ease, height 0.3s ease, border-color 0.3s ease;
-    transform: translate(-50%, -50%);
-  }
 
   .neo-grain { position: relative; }
   .neo-grain::before {
@@ -620,8 +588,8 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-  .font-display { font-family: 'Montserrat', system-ui, sans-serif; font-weight: 600; letter-spacing: -0.02em; }
-  .font-headline { font-family: 'Montserrat', system-ui, sans-serif; font-weight: 500; letter-spacing: -0.01em; }
+  .font-display { font-family: 'Montserrat', system-ui, sans-serif; font-weight: 700; letter-spacing: -0.02em; }
+  .font-headline { font-family: 'Montserrat', system-ui, sans-serif; font-weight: 700; letter-spacing: -0.01em; }
   .font-sans { font-family: 'Montserrat', system-ui, sans-serif; }
   .font-mono { font-family: 'Montserrat', monospace; }
   .duration-400 { transition-duration: 400ms; }
