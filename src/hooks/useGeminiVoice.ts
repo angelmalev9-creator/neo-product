@@ -1664,6 +1664,11 @@ export const useGeminiVoice = ({
   const lastCommittedAssistantRef = useRef<{ text: string; ts: number }>({ text: "", ts: 0 });
   const lastCommittedUserRef = useRef<{ text: string; ts: number }>({ text: "", ts: 0 });
 
+  // ── Filler words refs ─────────────────────────────────────────────────────
+  // Таймер който пуска filler звук ако Gemini не отговори в рамките на ~350ms
+  const fillerTimeoutRef = useRef<number | null>(null);
+  const fillerPlayedRef = useRef(false);
+
   const updateSpeaking = useCallback(
     (speaking: boolean) => {
       setIsSpeaking(speaking);
@@ -1691,6 +1696,79 @@ export const useGeminiVoice = ({
       silenceWatchdogRef.current = null;
     }
   }, []);
+
+  // ── Filler words: естествени БГ реакции докато Gemini генерира отговор ──────
+  // Ако след ~380ms няма аудио от Gemini → изпускаме кратка устна реакция.
+  // Използваме Web Speech API (SpeechSynthesis) за незабавен TTS без латентност.
+  const BG_FILLERS = [
+    "Да...",
+    "Разбира се...",
+    "Момент...",
+    "Разбирам...",
+    "Добре...",
+    "Да, разбира се...",
+    "Ясно...",
+    "Да, момент...",
+  ];
+
+  const playFillerWord = useCallback(() => {
+    if (fillerPlayedRef.current) return;
+    if (isPlayingRef.current) return; // вече говори
+    if (!window.speechSynthesis) return;
+
+    fillerPlayedRef.current = true;
+    const filler = BG_FILLERS[Math.floor(Math.random() * BG_FILLERS.length)];
+
+    const utt = new SpeechSynthesisUtterance(filler);
+    utt.lang = "bg-BG";
+    utt.rate = 0.88; // малко по-бавно — спокойно, не набързо
+    utt.pitch = 0.95; // леко по-ниско — мъжки, уверен
+    utt.volume = 0.85;
+
+    // Опитай да намериш BG глас; ако няма — ползвай дефолтния
+    const voices = window.speechSynthesis.getVoices();
+    const bgVoice =
+      voices.find((v) => v.lang.startsWith("bg")) ||
+      voices.find((v) => v.lang.startsWith("ru")) || // слав. fallback
+      null;
+    if (bgVoice) utt.voice = bgVoice;
+
+    console.log(`[FILLER] Playing: "${filler}"`);
+    window.speechSynthesis.cancel(); // изчисти предишни
+    window.speechSynthesis.speak(utt);
+  }, []);
+
+  const scheduleFillerWord = useCallback(
+    (delayMs = 380) => {
+      // Отмени предишен таймер
+      if (fillerTimeoutRef.current) {
+        window.clearTimeout(fillerTimeoutRef.current);
+        fillerTimeoutRef.current = null;
+      }
+      fillerPlayedRef.current = false;
+
+      fillerTimeoutRef.current = window.setTimeout(() => {
+        // Само ако Gemini още не е върнал аудио
+        if (!isPlayingRef.current) {
+          playFillerWord();
+        }
+      }, delayMs);
+    },
+    [playFillerWord],
+  );
+
+  const cancelFillerWord = useCallback(() => {
+    if (fillerTimeoutRef.current) {
+      window.clearTimeout(fillerTimeoutRef.current);
+      fillerTimeoutRef.current = null;
+    }
+    fillerPlayedRef.current = false;
+    // Спри filler ако вече е тръгнал
+    if (window.speechSynthesis?.speaking) {
+      window.speechSynthesis.cancel();
+    }
+  }, []);
+  // ── END Filler words ──────────────────────────────────────────────────────
 
   const sendToGemini = useCallback((text: string) => {
     const ws = wsRef.current;
@@ -2648,6 +2726,7 @@ export const useGeminiVoice = ({
           `${todayCtx}\n${focusBlock}\n[STT_CONTACT — поправи имейл/телефон ако са изкривени, изпиши ги обратно на клиента за потвърждение${parsedHints ? `; parsed: ${parsedHints}` : ""}]: ${cleanText}`,
         );
       } else {
+        scheduleFillerWord(380); // → пусни filler ако Gemini не отговори в 380ms
         sendToGemini(`${todayCtx}\n${focusBlock}\n${cleanText}`);
       }
     },
@@ -2659,6 +2738,8 @@ export const useGeminiVoice = ({
       sendToGemini,
       updateConversationFocusFromUser,
       mergeTranscriptCandidates,
+      scheduleFillerWord,
+      cancelFillerWord,
     ],
   );
 
@@ -2997,17 +3078,22 @@ export const useGeminiVoice = ({
       scheduledSourcesRef.current.push(source);
       nextPlayTimeRef.current += buffer.duration;
 
-      // === BREATHING: insert subtle breath sound every ~4 chunks ===
+      // === BREATHING: insert breath sound at sentence boundaries ===
+      // Всеки chunk е ~100ms аудио. Вмъкваме дишане:
+      // - На всеки ~8 chunk-а (≈800ms) → кратък дъх между изречения
+      // - На всеки ~20 chunk-а (≈2s) → малко по-дълъг дъх (нова мисъл)
       audioChunkCounterRef.current++;
-      if (audioChunkCounterRef.current % 4 === 0 && audioQueueRef.current.length > 0) {
+      const isShortBreath = audioChunkCounterRef.current % 8 === 0;
+      const isLongBreath = audioChunkCounterRef.current % 20 === 0;
+      if ((isShortBreath || isLongBreath) && audioQueueRef.current.length > 0) {
         try {
           const breathBuffer = createBreathSound(ctx);
           const breathSource = ctx.createBufferSource();
           breathSource.buffer = breathBuffer;
           breathSource.connect(dryGainNodeRef.current!);
           breathSource.start(nextPlayTimeRef.current);
-          // Overlap slightly so it doesn't feel like a hard cut
-          nextPlayTimeRef.current += breathBuffer.duration * 0.4;
+          // Дълъг дъх = пълна пауза; кратък = 50% overlap
+          nextPlayTimeRef.current += isLongBreath ? breathBuffer.duration * 0.85 : breathBuffer.duration * 0.45;
         } catch {}
       }
 
@@ -3323,7 +3409,7 @@ export const useGeminiVoice = ({
         // ── BG Voice Persona Prefix ───────────────────────────────────────────
         // Native-audio не поддържа language_code, но чита system instruction.
         // Тези инструкции карат модела да говори с естествена BG интонация,
-        // правилни ударения и спокоен, уважителен тон.
+        // правилни ударения, спокоен тон и кратки, разговорни отговори.
         const BG_VOICE_PREFIX =
           `Говориш единствено на български език. ` +
           `Произнасяй всяка дума с правилно българско ударение и естествена интонация — ` +
@@ -3331,7 +3417,15 @@ export const useGeminiVoice = ({
           `Темпото на речта е спокойно и уверено — не бързо, не монотонно. ` +
           `Тонът е топъл, уважителен и приятелски — като внимателен и грижовен консултант. ` +
           `Използвай естествени паузи между изреченията. ` +
-          `Никога не произнасяй думи на английски освен ако клиентът не го изисква изрично.\n\n`;
+          `Никога не произнасяй думи на английски освен ако клиентът не го изисква изрично.\n\n` +
+          // ── Стил на отговорите (критично за добър voice UX) ──────────────
+          `ПРАВИЛА ЗА ОТГОВОРИТЕ:\n` +
+          `- Давай КРАТКИ отговори — максимум 2-3 изречения на ход.\n` +
+          `- Задавай само ЕДИН въпрос наведнъж — изчакай отговора на клиента, преди да питаш следващото.\n` +
+          `- НЕ изреждай всички налични опции наведнъж — предложи максимум 2 варианта, после питай.\n` +
+          `- Говори разговорно и естествено — без списъци, без точки, без формален тон.\n` +
+          `- Ако нещо не знаеш или не си сигурен — кажи го честно и предложи да провериш.\n` +
+          `- Отговаряй на зададения въпрос директно, без излишно предисловие.\n\n`;
 
         if (resolvedInstruction && !resolvedInstruction.startsWith("Говориш единствено")) {
           resolvedInstruction = BG_VOICE_PREFIX + resolvedInstruction;
@@ -4542,6 +4636,7 @@ export const useGeminiVoice = ({
             } else {
               for (const part of modelTurn.parts) {
                 if (part.inlineData?.data) {
+                  cancelFillerWord(); // ← аудиото пристига → отмени filler
                   clearSilenceWatchdog();
                   playAudioChunk(part.inlineData.data);
                 }
@@ -4766,6 +4861,7 @@ export const useGeminiVoice = ({
       clearSilenceWatchdog,
       sendToGemini,
       maybeExecuteActionFromGemini,
+      cancelFillerWord,
     ],
   );
 
