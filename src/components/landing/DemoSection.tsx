@@ -344,8 +344,8 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
                       exit={{ opacity: 0 }}
                     >
                       <div className="flex items-center gap-3 flex-1">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                          <CheckCircle className="w-4 h-4 text-emerald-400" />
+                        <div className="w-8 h-8 rounded-lg bg-neo-success/10 flex items-center justify-center">
+                          <CheckCircle className="w-4 h-4 text-neo-success" />
                         </div>
                         <div>
                           <span className="text-sm text-foreground font-medium block">
