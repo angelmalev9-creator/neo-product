@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
-import { PencilUnderline } from "@/components/ui/PencilUnderline";
+
 import { useTranslation } from "react-i18next";
 
 interface DemoSectionProps {
