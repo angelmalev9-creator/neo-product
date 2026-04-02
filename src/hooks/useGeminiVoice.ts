@@ -4355,11 +4355,8 @@ export const useGeminiVoice = ({
           const isNativeAudio = session.model.includes("native-audio");
 
           // ── Voice selection ───────────────────────────────────────────────
-          // Aoede  = топъл женски глас, естествен, уютен — идеален за BG клиентски опит
-          // Charon = по-нисък мъжки глас (резервен вариант)
-          // Kore   = по-формален женски (за корпоративен тон)
-          // Puck   = по-млад/енергичен (за по-динамични brands)
-          const voiceName = isNativeAudio ? "Aoede" : "Aoede";
+          // Charon = по-нисък, солиден мъжки глас — авторитетен и уважителен
+          const voiceName = isNativeAudio ? "Charon" : "Charon";
 
           const setupPayload: any = {
             setup: {
