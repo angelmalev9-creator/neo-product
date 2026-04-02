@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { useNavigate } from 'react-router-dom';
-import { PencilUnderline } from '@/components/ui/PencilUnderline';
+
 import { useTranslation } from 'react-i18next';
 import EmbeddedCheckoutModal from '@/components/checkout/EmbeddedCheckoutModal';
 import { motion } from 'framer-motion';
