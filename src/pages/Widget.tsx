@@ -45,6 +45,7 @@ const Widget = () => {
   const messagesRef = useRef<Message[]>([]);
   
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const conversationIdRef = useRef<string | null>(null);
   const callStartTimeRef = useRef<number | null>(null);
   const lastTrackedTimeRef = useRef<number>(0);
   const persistedTranscriptKeysRef = useRef<Set<string>>(new Set());
