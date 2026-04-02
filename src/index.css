@@ -218,13 +218,12 @@
   /* Premium Typography: lighter weights, tighter tracking */
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Montserrat', system-ui, sans-serif;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1.1;
   }
-  h1 { letter-spacing: -0.03em; font-weight: 500; }
-  h2 { font-weight: 600; }
-  h3, h4 { font-weight: 500; }
+  h1 { letter-spacing: -0.03em; }
+  h3, h4 { font-weight: 600; }
 
   @media (max-width: 768px) {
     h1, h2 { letter-spacing: -0.015em; line-height: 1.08; }
