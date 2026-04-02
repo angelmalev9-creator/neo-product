@@ -25,12 +25,12 @@ const Index = () => {
 
   return (
     <div className="min-h-screen text-foreground neo-grain relative flex flex-col items-center">
-      {/* Background glows — subtler */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-background" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[180%] h-[60vh] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,hsl(355_100%_50%/0.18),transparent_70%)]" />
-        <div className="absolute top-1/3 right-0 w-[50%] h-[50vh] bg-[radial-gradient(ellipse_80%_60%_at_100%_30%,hsl(280_90%_50%/0.06),transparent_60%)]" />
-        <div className="absolute bottom-0 left-0 w-[50%] h-[40vh] bg-[radial-gradient(ellipse_80%_60%_at_0%_100%,hsl(355_80%_45%/0.08),transparent_60%)]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-[80vh] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,hsl(355_100%_50%/0.3),transparent_70%)]" />
+        <div className="absolute top-1/3 right-0 w-[60%] h-[60vh] bg-[radial-gradient(ellipse_80%_60%_at_100%_30%,hsl(280_90%_50%/0.12),transparent_60%)]" />
+        <div className="absolute bottom-0 left-0 w-[60%] h-[50vh] bg-[radial-gradient(ellipse_80%_60%_at_0%_100%,hsl(355_80%_45%/0.14),transparent_60%)]" />
+        <div className="absolute top-[60%] left-1/2 -translate-x-1/2 w-[80%] h-[40vh] bg-[radial-gradient(ellipse_70%_50%_at_50%_50%,hsl(280_80%_50%/0.06),transparent_70%)]" />
       </div>
 
       <AnimatedBackground />
@@ -39,7 +39,7 @@ const Index = () => {
         <Navigation />
         <main className="relative z-10">
           <Hero />
-          <Suspense fallback={<div className="min-h-[40vh]" />}>
+          <Suspense fallback={<div className="min-h-[50vh]" />}>
             <DemoSection onTrainingComplete={handleTrainingComplete} />
             <VoiceInterview key={sessionId || 'no-session'} sessionId={sessionId} />
             <BusinessResults />
@@ -61,11 +61,11 @@ const Index = () => {
         style={{ paddingBottom: 'max(0.625rem, env(safe-area-inset-bottom))' }}
       >
         <Button
-          className="neo-btn-primary w-full py-2.5 text-sm font-bold rounded-full gap-2"
+          className="neo-btn-primary w-full py-3 text-[13px] font-bold rounded-full gap-2 whitespace-nowrap"
           onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
         >
           Опитайте NEO безплатно
-          <ArrowRight className="w-3.5 h-3.5" />
+          <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
     </div>

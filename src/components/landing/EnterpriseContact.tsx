@@ -34,42 +34,73 @@ const EnterpriseContact = () => {
   };
 
   return (
-    <section ref={ref as React.RefObject<HTMLElement>} id="contact" className="py-20 sm:py-24 lg:py-28 relative overflow-hidden">
-      <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10 max-w-xl">
-        <div className="text-center mb-8">
-          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-primary text-xs font-medium mb-3">
-            <MessageSquare className="w-3 h-3" /> Контакт
-          </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-display font-black text-foreground leading-tight tracking-tight">
-            {t('contact.title1')}<br />
-            <span className="neo-gradient-text">{t('contact.title2')}</span>
-          </h2>
-        </div>
-
-        <form onSubmit={handleSubmit} className="neo-glass-subtle rounded-xl p-5 sm:p-6 space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="relative">
-              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/35" />
-              <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder={t('contact.namePlaceholder')}
-                className="w-full bg-background/30 border border-border/20 rounded-lg py-3 pl-9 pr-3 text-sm placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/25 focus:ring-1 focus:ring-primary/10 transition-all"
-                required />
-            </div>
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/35" />
-              <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder={t('contact.emailPlaceholder')}
-                className="w-full bg-background/30 border border-border/20 rounded-lg py-3 pl-9 pr-3 text-sm placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/25 focus:ring-1 focus:ring-primary/10 transition-all"
-                required />
-            </div>
+    <section 
+      ref={ref as React.RefObject<HTMLElement>}
+      id="contact" 
+      className="py-10 sm:py-14 lg:py-16 relative overflow-hidden"
+    >
+      {/* Ambient glow */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/4 blur-[120px] rounded-full pointer-events-none" />
+      
+      <div className="container mx-auto px-4 lg:px-8 relative z-10">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-10 lg:mb-14">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/8 border border-primary/15 text-primary text-sm font-medium mb-5">
+              <MessageSquare className="w-3.5 h-3.5" />
+              Контакт
+            </span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-black text-foreground leading-[1.1] tracking-wide">
+              {t('contact.title1')}
+              <br />
+              <span className="neo-gradient-text">{t('contact.title2')}</span>
+            </h2>
           </div>
-          <textarea value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-            placeholder={t('contact.messagePlaceholder')} rows={3}
-            className="w-full bg-background/30 border border-border/20 rounded-lg py-3 px-3.5 text-sm placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/25 focus:ring-1 focus:ring-primary/10 transition-all resize-none" />
-          <Button type="submit" size="lg" className="w-full neo-btn-primary text-sm h-11 rounded-lg" disabled={isSubmitting}>
-            {isSubmitting ? t('contact.sending') : t('contact.submit')} <Send className="ml-1.5 w-3.5 h-3.5" />
-          </Button>
-        </form>
+
+          <form onSubmit={handleSubmit} className="neo-glass-premium rounded-xl sm:rounded-2xl lg:rounded-3xl p-5 sm:p-6 lg:p-10 space-y-3 sm:space-y-4 lg:space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-5">
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder={t('contact.namePlaceholder')}
+                  className="w-full bg-background/30 border border-border/20 rounded-xl py-3.5 lg:py-4 pl-11 pr-4 text-sm placeholder:text-muted-foreground/35 focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/15 transition-all"
+                  required
+                />
+              </div>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder={t('contact.emailPlaceholder')}
+                  className="w-full bg-background/30 border border-border/20 rounded-xl py-3.5 lg:py-4 pl-11 pr-4 text-sm placeholder:text-muted-foreground/35 focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/15 transition-all"
+                  required
+                />
+              </div>
+            </div>
+
+            <textarea
+              value={formData.message}
+              onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+              placeholder={t('contact.messagePlaceholder')}
+              rows={4}
+              className="w-full bg-background/30 border border-border/20 rounded-xl py-3.5 lg:py-4 px-4 text-sm placeholder:text-muted-foreground/35 focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/15 transition-all resize-none"
+            />
+
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full neo-btn-primary text-sm lg:text-base py-4 lg:py-5 rounded-xl"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? t('contact.sending') : t('contact.submit')}
+              <Send className="ml-2 w-4 h-4" />
+            </Button>
+          </form>
+        </div>
       </div>
     </section>
   );
