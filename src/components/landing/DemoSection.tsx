@@ -449,7 +449,8 @@ const LiveStepCard = ({ icon, title, description, state, step }: LiveStepCardPro
         isActive
           ? "border-primary/20 bg-primary/[0.03]"
           : isDone
-            ? "border-emerald-500/15 bg-emerald-500/[0.02]"
+                ? "border-neo-success/15 bg-neo-success/[0.02]"
+                : "border-border/5 bg-card/20"
             : "border-border/5 bg-card/20"
       }`}
       animate={isActive ? { scale: [1, 1.01, 1] } : {}}
