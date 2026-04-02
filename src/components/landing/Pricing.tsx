@@ -113,7 +113,7 @@ const Pricing = () => {
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-semibold text-foreground mb-4 max-w-2xl mx-auto leading-[1.1] tracking-[-0.5px]">
             <PencilUnderline>{t('pricing.title1')}</PencilUnderline> <span className="neo-gradient-text whitespace-nowrap">{t('pricing.title2')}</span>
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground mb-8">
+          <p className="text-sm sm:text-base text-foreground/40 mb-8 max-w-md mx-auto leading-[1.6]">
             {t('pricing.subtitle')}
           </p>
 
