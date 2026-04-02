@@ -281,47 +281,41 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center max-w-6xl mx-auto">
           <div>
-            <h2 className="text-xl sm:text-2xl md:text-[1.75rem] font-display font-black text-foreground mb-3 lg:mb-4 leading-[1.1] tracking-tight">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-display font-black text-foreground mb-2 lg:mb-3 leading-[1.1] tracking-tight">
               <PencilUnderline>{t("demo.title1")}</PencilUnderline>{" "}
               <span className="neo-gradient-text whitespace-nowrap">{t("demo.title2")}</span>
             </h2>
 
-            <p className="text-base lg:text-lg text-muted-foreground mb-3 lg:mb-4 max-w-md">{t("demo.description")}</p>
-            <p className="text-sm lg:text-base text-muted-foreground mb-5 lg:mb-6 max-w-md">
-              <span className="text-foreground">{t("demo.testAsClient")}</span> {t("demo.testDetails")}
+            <p className="text-sm lg:text-base text-muted-foreground mb-2 lg:mb-3 max-w-md leading-relaxed">{t("demo.description")}</p>
+            <p className="text-xs lg:text-sm text-muted-foreground mb-4 lg:mb-5 max-w-md">
+              <span className="text-foreground font-medium">{t("demo.testAsClient")}</span> {t("demo.testDetails")}
             </p>
 
-            <div className="neo-glass-subtle border border-border/20 rounded-xl p-4 mb-5 lg:mb-6">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">{t("demo.howItWorks")}</p>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-start gap-3">
-                  <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center shrink-0 mt-0.5">
-                    1
-                  </span>
+            <div className="neo-glass-subtle border border-border/15 rounded-lg p-3 mb-4 lg:mb-5">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">{t("demo.howItWorks")}</p>
+              <div className="space-y-1.5 text-xs">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] flex items-center justify-center shrink-0 font-bold">1</span>
                   <span className="text-muted-foreground">{t("demo.step1")}</span>
                 </div>
-                <div className="flex items-start gap-3">
-                  <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center shrink-0 mt-0.5">
-                    2
-                  </span>
+                <div className="flex items-center gap-2.5">
+                  <span className="w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] flex items-center justify-center shrink-0 font-bold">2</span>
                   <span className="text-muted-foreground">{t("demo.step2")}</span>
                 </div>
-                <div className="flex items-start gap-3">
-                  <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center shrink-0 mt-0.5">
-                    3
-                  </span>
+                <div className="flex items-center gap-2.5">
+                  <span className="w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] flex items-center justify-center shrink-0 font-bold">3</span>
                   <span className="text-muted-foreground">{t("demo.step3")}</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-4 mb-6 lg:mb-8 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <Zap className="w-4 h-4 text-primary" />
+            <div className="flex flex-wrap gap-3 mb-4 lg:mb-5 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Zap className="w-3 h-3 text-primary" />
                 {t("demo.noRegistration")}
               </span>
-              <span className="flex items-center gap-1.5">
-                <Shield className="w-4 h-4 text-primary" />
+              <span className="flex items-center gap-1">
+                <Shield className="w-3 h-3 text-primary" />
                 {t("demo.free")}
               </span>
             </div>
