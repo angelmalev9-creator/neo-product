@@ -619,8 +619,8 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-  .font-display { font-family: 'Montserrat', system-ui, sans-serif; font-weight: 600; letter-spacing: -0.02em; }
-  .font-headline { font-family: 'Montserrat', system-ui, sans-serif; font-weight: 500; letter-spacing: -0.01em; }
+  .font-display { font-family: 'Montserrat', system-ui, sans-serif; font-weight: 700; letter-spacing: -0.02em; }
+  .font-headline { font-family: 'Montserrat', system-ui, sans-serif; font-weight: 700; letter-spacing: -0.01em; }
   .font-sans { font-family: 'Montserrat', system-ui, sans-serif; }
   .font-mono { font-family: 'Montserrat', monospace; }
   .duration-400 { transition-duration: 400ms; }
