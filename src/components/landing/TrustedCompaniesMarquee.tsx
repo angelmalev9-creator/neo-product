@@ -1,14 +1,14 @@
 import { motion } from 'framer-motion';
 
 const trustedCompanies = [
-  { name: 'Dental Studio Sofia', metric: '24/7 записвания' },
-  { name: 'Auto Prime Service', metric: '0 пропуснати запитвания' },
-  { name: 'MediCare Clinic', metric: 'По-бърз прием' },
-  { name: 'Beauty Lab', metric: 'Автоматични часове' },
-  { name: 'Legal Partners', metric: 'Повече лидове' },
-  { name: 'Home Vision', metric: 'По-висока конверсия' },
-  { name: 'FitCore Studio', metric: 'Клиенти 24/7' },
-  { name: 'Smile Center', metric: 'Потвърдени консултации' },
+  { name: 'Dental Studio Sofia', metric: '−40% пропуснати часове' },
+  { name: 'Auto Prime Service', metric: '0 пропуснати обаждания' },
+  { name: 'MediCare Clinic', metric: '3× по-бърз прием' },
+  { name: 'Beauty Lab', metric: '100% автоматични часове' },
+  { name: 'Legal Partners BG', metric: '+60% повече лидове' },
+  { name: 'Home Vision', metric: '2× по-висока конверсия' },
+  { name: 'FitCore Studio', metric: 'Без рецепционист' },
+  { name: 'Smile Center', metric: '€1200/мес спестени' },
 ];
 
 const TrustedTrack = ({ reverse = false }: { reverse?: boolean }) => {
@@ -43,10 +43,10 @@ const TrustedCompaniesMarquee = () => {
     <div className="mx-auto mt-8 max-w-6xl rounded-[2rem] border border-border/20 bg-card/40 p-4 backdrop-blur-2xl sm:mt-10 sm:p-5">
       <div className="mb-3 flex items-center justify-between gap-3 px-1">
         <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-          Компании, които биха ползвали NEO
+          Компании, които спестиха рецепционист с NEO
         </p>
         <div className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] text-primary">
-          NEO работи 24/7
+          Автоматизиран процес 24/7
         </div>
       </div>
 

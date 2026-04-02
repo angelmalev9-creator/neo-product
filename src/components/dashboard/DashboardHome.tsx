@@ -28,21 +28,71 @@ interface DashboardHomeProps {
   userId: string;
 }
 
-const WEEKDAY_LABELS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
+type TimeFilter = 'today' | 'week' | 'month' | 'last_month';
 
-function getLast7Days() {
-  const days: { date: string; label: string; dayStart: string; dayEnd: string }[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
-    const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
-    const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).toISOString();
-    const dow = d.getDay();
-    const label = WEEKDAY_LABELS[dow === 0 ? 6 : dow - 1];
-    days.push({ date: dateStr, label, dayStart, dayEnd });
+const TIME_FILTER_LABELS: Record<TimeFilter, string> = {
+  today: 'Днес',
+  week: 'Седмица',
+  month: 'Месец',
+  last_month: 'Мин. месец',
+};
+
+function getFilterRange(filter: TimeFilter): { start: string; end: string; bucketCount: number } {
+  const now = new Date();
+  if (filter === 'today') {
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const end = new Date(start.getTime() + 86400000);
+    return { start: start.toISOString(), end: end.toISOString(), bucketCount: 24 };
   }
-  return days;
+  if (filter === 'week') {
+    const start = new Date(now);
+    start.setDate(start.getDate() - 6);
+    start.setHours(0, 0, 0, 0);
+    return { start: start.toISOString(), end: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString(), bucketCount: 7 };
+  }
+  if (filter === 'month') {
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return { start: start.toISOString(), end: end.toISOString(), bucketCount: now.getDate() };
+  }
+  // last_month
+  const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const end = new Date(now.getFullYear(), now.getMonth(), 1);
+  return { start: start.toISOString(), end: end.toISOString(), bucketCount: new Date(now.getFullYear(), now.getMonth(), 0).getDate() };
+}
+
+function getBucketLabels(filter: TimeFilter): string[] {
+  const WEEKDAY_LABELS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
+  if (filter === 'today') {
+    return Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
+  }
+  if (filter === 'week') {
+    const labels: string[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dow = d.getDay();
+      labels.push(WEEKDAY_LABELS[dow === 0 ? 6 : dow - 1]);
+    }
+    return labels;
+  }
+  if (filter === 'month') {
+    const now = new Date();
+    return Array.from({ length: now.getDate() }, (_, i) => String(i + 1));
+  }
+  // last_month
+  const now = new Date();
+  const daysInLastMonth = new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+  return Array.from({ length: daysInLastMonth }, (_, i) => String(i + 1));
+}
+
+function bucketIndex(createdAt: string, filter: TimeFilter, rangeStart: string): number {
+  const d = new Date(createdAt);
+  const s = new Date(rangeStart);
+  if (filter === 'today') return d.getHours();
+  if (filter === 'week') return Math.floor((d.getTime() - s.getTime()) / 86400000);
+  // month or last_month
+  return d.getDate() - 1;
 }
 
 const fadeUp = {
@@ -82,7 +132,7 @@ const DashboardHome = ({
   const [todayClients, setTodayClients] = useState(0);
   const [todayBookings, setTodayBookings] = useState(0);
   const [statsLoading, setStatsLoading] = useState(true);
-  const [weekData, setWeekData] = useState<{ label: string; conversations: number; clients: number }[]>([]);
+  
   const [totalConversations, setTotalConversations] = useState(0);
   const [totalLeads, setTotalLeads] = useState(0);
   const [avgDuration, setAvgDuration] = useState(0);
@@ -123,32 +173,36 @@ const DashboardHome = ({
     setStatsLoading(false);
   };
 
-  const fetchWeeklyStats = async () => {
+  const [chartFilter, setChartFilter] = useState<TimeFilter>('week');
+  const [chartData, setChartData] = useState<{ label: string; conversations: number; clients: number }[]>([]);
+
+  const fetchChartData = async (filter: TimeFilter) => {
     if (!userId) return;
-    const days = getLast7Days();
-    const weekStart = days[0].dayStart;
+    const { start, end } = getFilterRange(filter);
+    const labels = getBucketLabels(filter);
     const [convRes, clientConvRes] = await Promise.all([
-      supabase.from('conversations').select('created_at').eq('user_id', userId).gte('created_at', weekStart),
-      supabase.from('conversations').select('created_at').eq('user_id', userId).eq('lead_captured', true).gte('created_at', weekStart),
+      supabase.from('conversations').select('created_at').eq('user_id', userId).gte('created_at', start).lt('created_at', end),
+      supabase.from('conversations').select('created_at').eq('user_id', userId).eq('lead_captured', true).gte('created_at', start).lt('created_at', end),
     ]);
     const convos = convRes.data || [];
     const clientConvos = clientConvRes.data || [];
-    const result = days.map(day => ({
-      label: day.label,
-      conversations: convos.filter(c => c.created_at >= day.dayStart && c.created_at < day.dayEnd).length,
-      clients: clientConvos.filter(c => c.created_at >= day.dayStart && c.created_at < day.dayEnd).length,
+    const result = labels.map((lbl, i) => ({
+      label: lbl,
+      conversations: convos.filter(c => bucketIndex(c.created_at, filter, start) === i).length,
+      clients: clientConvos.filter(c => bucketIndex(c.created_at, filter, start) === i).length,
     }));
-    setWeekData(result);
+    setChartData(result);
   };
 
   useEffect(() => {
     if (!userId || !subscribed) return;
     fetchTodayStats();
-    fetchWeeklyStats();
+    fetchChartData(chartFilter);
     const channel = supabase.channel('today-stats-realtime')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'conversations', filter: `user_id=eq.${userId}` }, () => {
         setTodayConversations(prev => prev + 1);
         setTotalConversations(prev => prev + 1);
+        fetchChartData(chartFilter);
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'conversations', filter: `user_id=eq.${userId}` }, (payload) => {
         const newRow = payload.new as any;
@@ -164,7 +218,7 @@ const DashboardHome = ({
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [userId, subscribed]);
+  }, [userId, subscribed, chartFilter]);
 
   if (!subscribed) {
     return (
@@ -269,29 +323,44 @@ const DashboardHome = ({
           className="lg:col-span-3 rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-4 flex flex-col min-h-[200px] relative overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] to-transparent pointer-events-none" />
-          <div className="relative flex items-center justify-between mb-3 shrink-0">
+          <div className="relative flex items-center justify-between mb-3 shrink-0 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-muted-foreground" />
-              <h2 className="text-xs font-semibold text-foreground">Седмичен преглед</h2>
+              <h2 className="text-xs font-semibold text-foreground">Анализи</h2>
               <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                 <span className="text-[9px] text-primary font-medium">Live</span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
-                <div className="w-2 h-2 rounded-sm bg-primary" /> Разговори
-              </div>
-              <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
-                <div className="w-2 h-2 rounded-sm bg-[hsl(var(--neo-success))]" /> Клиенти
-              </div>
+            <div className="flex items-center gap-1">
+              {(Object.keys(TIME_FILTER_LABELS) as TimeFilter[]).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => { setChartFilter(f); fetchChartData(f); }}
+                  className={`text-[10px] px-2.5 py-1 rounded-full transition-all duration-200 ${
+                    chartFilter === f
+                      ? 'bg-primary text-primary-foreground font-semibold'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                  }`}
+                >
+                  {TIME_FILTER_LABELS[f]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="relative flex items-center gap-3 mb-2 shrink-0">
+            <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
+              <div className="w-2 h-2 rounded-sm bg-primary" /> Разговори
+            </div>
+            <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
+              <div className="w-2 h-2 rounded-sm bg-[hsl(var(--neo-success))]" /> Клиенти
             </div>
           </div>
           <div className="flex-1 min-h-0 relative">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weekData} barGap={2}>
+              <BarChart data={chartData} barGap={2}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.15} vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} interval={chartFilter === 'today' ? 3 : chartFilter === 'month' || chartFilter === 'last_month' ? 4 : 0} />
                 <YAxis hide allowDecimals={false} />
                 <Tooltip
                   contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 12, fontSize: 11, boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}
