@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
-import { PencilUnderline } from "@/components/ui/PencilUnderline";
 import { useTranslation } from "react-i18next";
 
 interface DemoSectionProps {
@@ -151,92 +150,90 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
   };
 
   return (
-    <section ref={ref as React.RefObject<HTMLElement>} id="demo"
-      className={`py-20 sm:py-24 lg:py-28 relative overflow-hidden neo-section-flip-left ${isVisible ? "neo-section-visible" : ""}`}>
-      <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10 max-w-5xl">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+    <section ref={ref as React.RefObject<HTMLElement>} id="demo" className="py-24 sm:py-32 lg:py-40 relative overflow-hidden">
+      <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10 max-w-6xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           <div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-display font-black text-foreground mb-3 leading-tight tracking-tight">
-              <PencilUnderline>{t("demo.title1")}</PencilUnderline>{" "}
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-foreground mb-5 leading-[1.1] tracking-tight">
+              {t("demo.title1")}{" "}
               <span className="neo-gradient-text">{t("demo.title2")}</span>
             </h2>
-            <p className="text-sm lg:text-base text-muted-foreground mb-2 max-w-md">{t("demo.description")}</p>
-            <p className="text-sm text-muted-foreground mb-5 max-w-md">
-              <span className="text-foreground">{t("demo.testAsClient")}</span> {t("demo.testDetails")}
+            <p className="text-base lg:text-lg text-muted-foreground mb-3 max-w-lg leading-relaxed">{t("demo.description")}</p>
+            <p className="text-base text-muted-foreground mb-8 max-w-lg">
+              <span className="text-foreground font-medium">{t("demo.testAsClient")}</span> {t("demo.testDetails")}
             </p>
 
-            <div className="neo-glass-subtle border border-border/15 rounded-lg p-3.5 mb-4">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">{t("demo.howItWorks")}</p>
-              <div className="space-y-1.5 text-sm">
+            {/* Steps */}
+            <div className="neo-glass-subtle border border-border/15 rounded-2xl p-5 mb-6">
+              <p className="text-xs text-muted-foreground uppercase tracking-widest mb-3 font-semibold">{t("demo.howItWorks")}</p>
+              <div className="space-y-3">
                 {[t("demo.step1"), t("demo.step2"), t("demo.step3")].map((step, i) => (
-                  <div key={i} className="flex items-start gap-2.5">
-                    <span className="w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
-                    <span className="text-xs text-muted-foreground">{step}</span>
+                  <div key={i} className="flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                    <span className="text-sm text-muted-foreground leading-relaxed">{step}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3 mb-5 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-primary" />{t("demo.noRegistration")}</span>
-              <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-primary" />{t("demo.free")}</span>
+            <div className="flex flex-wrap gap-4 mb-6 text-sm text-muted-foreground">
+              <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-primary" />{t("demo.noRegistration")}</span>
+              <span className="flex items-center gap-2"><Shield className="w-4 h-4 text-primary" />{t("demo.free")}</span>
             </div>
 
-            <div className="neo-glass-subtle border border-border/25 rounded-xl p-2">
+            {/* URL Input */}
+            <div className="rounded-2xl border border-border/20 bg-card/50 p-2">
               {status === "idle" && (
                 <form onSubmit={handleSubmit} className="flex items-center gap-2">
                   <div className="relative flex-1">
-                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/30" />
+                    <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/30" />
                     <input type="text" value={url} onChange={(e) => setUrl(e.target.value)} placeholder={t("demo.placeholder")}
-                      className="w-full bg-background/50 border-0 rounded-lg py-3 pl-9 pr-3 text-[16px] sm:text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all font-medium" />
+                      className="w-full bg-transparent border-0 rounded-xl py-4 pl-11 pr-4 text-[16px] sm:text-base text-foreground placeholder:text-muted-foreground/30 focus:outline-none transition-all font-medium" />
                   </div>
-                  <Button type="submit" size="lg" className="bg-primary hover:bg-primary/90 rounded-lg h-11 w-11 p-0 shrink-0">
-                    <ArrowRight className="w-4 h-4" />
+                  <Button type="submit" size="lg" className="neo-btn-primary rounded-xl h-12 w-12 p-0 shrink-0">
+                    <ArrowRight className="w-5 h-5" />
                   </Button>
                 </form>
               )}
               {(status === "scraping" || status === "processing") && (
-                <div className="p-3.5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Loader2 className="w-4 h-4 text-primary animate-spin shrink-0" />
-                    <p className="text-sm text-foreground font-medium">{status === "scraping" ? t("demo.scanning") : t("demo.processing")}</p>
+                <div className="p-4">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Loader2 className="w-5 h-5 text-primary animate-spin shrink-0" />
+                    <p className="text-base text-foreground font-medium">{status === "scraping" ? t("demo.scanning") : t("demo.processing")}</p>
                   </div>
-                  <div className="relative h-2.5 rounded-full overflow-hidden bg-muted/40">
-                    <div className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary to-accent transition-all duration-300" style={{ width: `${progress}%` }} />
+                  <div className="relative h-2 rounded-full overflow-hidden bg-muted/30">
+                    <div className="absolute inset-y-0 left-0 rounded-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
                   </div>
-                  <p className="text-[11px] text-muted-foreground mt-2 text-right">{Math.round(progress)}%</p>
+                  <p className="text-xs text-muted-foreground mt-2 text-right">{Math.round(progress)}%</p>
                 </div>
               )}
               {status === "ready" && (
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3.5">
-                  <div className="flex items-center gap-2.5 flex-1">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4">
+                  <div className="flex items-center gap-3 flex-1">
                     <CheckCircle className="w-5 h-5 text-neo-success shrink-0" />
                     <div>
-                      <span className="text-sm text-foreground font-medium block">{pagesScraped} {t("demo.pagesLearned")}</span>
-                      <span className="text-xs text-muted-foreground">{t("demo.ready")}</span>
+                      <span className="text-base text-foreground font-medium block">{pagesScraped} {t("demo.pagesLearned")}</span>
+                      <span className="text-sm text-muted-foreground">{t("demo.ready")}</span>
                     </div>
                   </div>
-                  <Button size="lg" className="bg-primary rounded-lg font-bold w-full sm:w-auto text-sm h-10"
+                  <Button size="lg" className="neo-btn-primary rounded-full font-semibold w-full sm:w-auto text-base h-12 px-6"
                     onClick={() => document.getElementById("voice-interview")?.scrollIntoView({ behavior: "smooth" })}>
-                    {t("demo.callNow")} <ArrowRight className="w-4 h-4 ml-1.5" />
+                    {t("demo.callNow")} <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
               )}
             </div>
 
-            <div className="mt-3 bg-muted/20 border border-border/15 rounded-lg px-3.5 py-2.5">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" />
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Демонстрацията включва гласово взаимодействие. Изпробвайте Neo в спокойна и безопасна среда.
-                </p>
-              </div>
+            <div className="mt-4 flex items-start gap-2 text-xs text-muted-foreground/60">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              <p>Демонстрацията включва гласово взаимодействие. Изпробвайте Neo в спокойна среда.</p>
             </div>
           </div>
 
-          <div className="space-y-3 hidden lg:block">
-            <StepCard icon={<Sparkles className="w-4 h-4" />} title={t("demo.stepScan")} description={t("demo.stepScanDesc")} state={getStepState("scan")} />
-            <StepCard icon={<Brain className="w-4 h-4" />} title={t("demo.stepLearn")} description={t("demo.stepLearnDesc")} state={getStepState("learn")} />
+          {/* Right side - Step cards */}
+          <div className="space-y-4 hidden lg:block">
+            <StepCard icon={<Sparkles className="w-5 h-5" />} title={t("demo.stepScan")} description={t("demo.stepScanDesc")} state={getStepState("scan")} />
+            <StepCard icon={<Brain className="w-5 h-5" />} title={t("demo.stepLearn")} description={t("demo.stepLearnDesc")} state={getStepState("learn")} />
           </div>
         </div>
       </div>
@@ -256,19 +253,19 @@ const StepCard = ({ icon, title, description, state }: StepCardProps) => {
   const isDone = state === "done";
 
   return (
-    <div className={`relative p-4 rounded-lg border transition-all duration-300 ${
-      isActive ? "neo-glass border-primary/30" : isDone ? "neo-glass-subtle border-neo-success/25" : "neo-glass-subtle border-border/15"
+    <div className={`relative p-6 rounded-2xl border transition-all duration-300 ${
+      isActive ? "neo-glass border-primary/30" : isDone ? "neo-glass-subtle border-neo-success/25" : "neo-glass-subtle border-border/10"
     }`}>
-      <div className="flex items-start gap-3">
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all ${
-          isActive ? "bg-primary/15 text-primary" : isDone ? "bg-neo-success/15 text-neo-success" : "bg-muted/40 text-muted-foreground"
+      <div className="flex items-start gap-4">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all ${
+          isActive ? "bg-primary/15 text-primary" : isDone ? "bg-neo-success/15 text-neo-success" : "bg-muted/30 text-muted-foreground"
         }`}>
-          {isDone ? <CheckCircle className="w-4 h-4" /> : icon}
+          {isDone ? <CheckCircle className="w-5 h-5" /> : icon}
         </div>
         <div>
-          <h4 className={`text-sm font-bold mb-0.5 ${isActive ? "text-foreground" : isDone ? "text-neo-success" : "text-muted-foreground"}`}>{title}</h4>
-          <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
-          {isActive && <div className="mt-2 flex items-center gap-2"><div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" /><span className="text-[11px] text-primary font-medium">Обработва се...</span></div>}
+          <h4 className={`text-base font-semibold mb-1 ${isActive ? "text-foreground" : isDone ? "text-neo-success" : "text-muted-foreground"}`}>{title}</h4>
+          <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
+          {isActive && <div className="mt-3 flex items-center gap-2"><div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" /><span className="text-xs text-primary font-medium">Обработва се...</span></div>}
         </div>
       </div>
     </div>
