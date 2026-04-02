@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
-import { PencilUnderline } from "@/components/ui/PencilUnderline";
+
 import { useTranslation } from "react-i18next";
 
 interface DemoSectionProps {
@@ -282,8 +282,8 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center max-w-6xl mx-auto">
           <div>
             <h2 className="text-lg sm:text-xl md:text-2xl font-display font-black text-foreground mb-2 lg:mb-3 leading-[1.1] tracking-tight">
-              <PencilUnderline>{t("demo.title1")}</PencilUnderline>{" "}
-              <span className="neo-gradient-text whitespace-nowrap">{t("demo.title2")}</span>
+              {t("demo.title1")}{" "}
+              <span className="text-primary">{t("demo.title2")}</span>
             </h2>
 
             <p className="text-sm lg:text-base text-muted-foreground mb-2 lg:mb-3 max-w-md leading-relaxed">{t("demo.description")}</p>
@@ -291,23 +291,6 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
               <span className="text-foreground font-medium">{t("demo.testAsClient")}</span> {t("demo.testDetails")}
             </p>
 
-            <div className="neo-glass-subtle border border-border/15 rounded-lg p-3 mb-4 lg:mb-5">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">{t("demo.howItWorks")}</p>
-              <div className="space-y-1.5 text-xs">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] flex items-center justify-center shrink-0 font-bold">1</span>
-                  <span className="text-muted-foreground">{t("demo.step1")}</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <span className="w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] flex items-center justify-center shrink-0 font-bold">2</span>
-                  <span className="text-muted-foreground">{t("demo.step2")}</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <span className="w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] flex items-center justify-center shrink-0 font-bold">3</span>
-                  <span className="text-muted-foreground">{t("demo.step3")}</span>
-                </div>
-              </div>
-            </div>
 
             <div className="flex flex-wrap gap-3 mb-4 lg:mb-5 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">

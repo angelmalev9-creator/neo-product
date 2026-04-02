@@ -120,7 +120,7 @@ const BusinessResults = () => {
           </span>
           <h2 className="text-xl sm:text-2xl md:text-[1.75rem] font-display font-black text-foreground mb-5 leading-[1.08] tracking-tight max-w-4xl mx-auto">
             Вашият AI асистент за{' '}
-            <span className="neo-gradient-text">продажби и резервации</span>
+            <span className="text-primary">продажби и резервации</span>
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             NEO не е просто чатбот — той е вашият дигитален търговец, рецепционист и маркетолог в едно.
@@ -156,9 +156,9 @@ const BusinessResults = () => {
         {/* Dashboard Features with Real Screenshots */}
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-6 sm:mb-8">
-            <h3 className="text-lg sm:text-xl md:text-2xl font-display font-black text-foreground mb-3 leading-tight">
+            <h3 className="text-base sm:text-lg md:text-xl font-display font-bold text-foreground mb-3 leading-tight">
               Всичко на{' '}
-              <span className="neo-gradient-text">едно табло</span>
+              <span className="text-primary">едно табло</span>
             </h3>
             <p className="text-muted-foreground max-w-xl mx-auto">
               Контролирайте NEO, следете резултатите и управлявайте клиентите си от едно място.
@@ -183,11 +183,11 @@ const BusinessResults = () => {
                     src={feature.image} 
                     alt={feature.title}
                     loading="lazy"
-                    className="w-full h-full object-cover object-top transition-all duration-700 group-hover:scale-[1.03]"
+                    className="w-full h-full object-cover object-top transition-all duration-700 group-hover:scale-[1.03] brightness-125 contrast-[1.05]"
                   />
-                  {/* Gradient overlay */}
-                  <div className={`absolute inset-0 bg-gradient-to-t ${feature.accent}`} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
+                  {/* Gradient overlay — lighter for better visibility */}
+                  <div className={`absolute inset-0 bg-gradient-to-t ${feature.accent} opacity-40`} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
                 </div>
 
                 {/* Content */}

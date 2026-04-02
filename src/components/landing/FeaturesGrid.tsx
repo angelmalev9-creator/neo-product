@@ -73,7 +73,7 @@ const FeaturesGrid = () => {
       <div className="mx-auto max-w-6xl px-3 sm:px-4 lg:px-6">
         <div className="text-center mb-12">
           <h2 className="text-xl sm:text-2xl md:text-[1.75rem] font-display font-black text-foreground leading-[1.08] tracking-tight mb-3">
-            Всичко, което <span className="neo-gradient-text">ви трябва</span>
+            Всичко, което <span className="text-primary">ви трябва</span>
           </h2>
           <p className="text-muted-foreground text-sm max-w-md mx-auto">
             NEO заменя рецепционист, чатбот и колцентър — в един инструмент.

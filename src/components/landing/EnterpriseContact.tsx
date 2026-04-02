@@ -52,31 +52,31 @@ const EnterpriseContact = () => {
             <h2 className="text-xl sm:text-2xl md:text-[1.75rem] font-display font-black text-foreground leading-[1.1] tracking-tight">
               {t('contact.title1')}
               <br />
-              <span className="neo-gradient-text">{t('contact.title2')}</span>
+              <span className="text-primary">{t('contact.title2')}</span>
             </h2>
           </div>
 
           <form onSubmit={handleSubmit} className="neo-glass-premium rounded-xl sm:rounded-2xl lg:rounded-3xl p-5 sm:p-6 lg:p-10 space-y-3 sm:space-y-4 lg:space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-5">
               <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder={t('contact.namePlaceholder')}
-                  className="w-full bg-background/30 border border-border/20 rounded-xl py-3.5 lg:py-4 pl-11 pr-4 text-sm placeholder:text-muted-foreground/35 focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/15 transition-all"
+                  className="w-full bg-card/40 border border-border/30 rounded-xl py-3.5 lg:py-4 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all"
                   required
                 />
               </div>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder={t('contact.emailPlaceholder')}
-                  className="w-full bg-background/30 border border-border/20 rounded-xl py-3.5 lg:py-4 pl-11 pr-4 text-sm placeholder:text-muted-foreground/35 focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/15 transition-all"
+                  className="w-full bg-card/40 border border-border/30 rounded-xl py-3.5 lg:py-4 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all"
                   required
                 />
               </div>
@@ -87,7 +87,7 @@ const EnterpriseContact = () => {
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
               placeholder={t('contact.messagePlaceholder')}
               rows={4}
-              className="w-full bg-background/30 border border-border/20 rounded-xl py-3.5 lg:py-4 px-4 text-sm placeholder:text-muted-foreground/35 focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/15 transition-all resize-none"
+              className="w-full bg-card/40 border border-border/30 rounded-xl py-3.5 lg:py-4 px-4 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all resize-none"
             />
 
             <Button

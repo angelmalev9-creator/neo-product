@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { useNavigate } from 'react-router-dom';
-import { PencilUnderline } from '@/components/ui/PencilUnderline';
+
 import { useTranslation } from 'react-i18next';
 import EmbeddedCheckoutModal from '@/components/checkout/EmbeddedCheckoutModal';
 import { motion } from 'framer-motion';
@@ -111,7 +111,7 @@ const Pricing = () => {
             Ценови планове
           </span>
           <h2 className="text-xl sm:text-2xl md:text-[1.75rem] font-display font-black text-foreground mb-4 max-w-3xl mx-auto leading-[1.1] tracking-tight">
-            <PencilUnderline>{t('pricing.title1')}</PencilUnderline> <span className="neo-gradient-text whitespace-nowrap">{t('pricing.title2')}</span>
+            {t('pricing.title1')} <span className="text-primary">{t('pricing.title2')}</span>
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground mb-8">
             {t('pricing.subtitle')}
@@ -138,10 +138,10 @@ const Pricing = () => {
               </button>
             </div>
             {isYearly && (
-              <motion.span
+               <motion.span
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 text-[10px] sm:text-xs font-bold px-4 py-1.5 rounded-full"
+                className="bg-primary/10 text-primary border border-primary/20 text-[10px] sm:text-xs font-bold px-4 py-1.5 rounded-full"
               >
                 🎉 {t('pricing.saveUpTo')} 40%
               </motion.span>
@@ -175,7 +175,7 @@ const Pricing = () => {
                 )}
 
                 {isYearly && yearlySavings > 0 && (
-                  <div className="absolute -top-2 -right-2 z-10 bg-emerald-500 text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-lg">
+                  <div className="absolute -top-2 -right-2 z-10 bg-primary text-primary-foreground px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-lg">
                     -{yearlySavings}%
                   </div>
                 )}
@@ -202,7 +202,7 @@ const Pricing = () => {
                   <span className="text-xs text-muted-foreground">({plan.callsPerDay})</span>
                 </div>
 
-                <div className="text-sm text-emerald-400 font-medium mb-6 flex items-center gap-2">
+                <div className="text-sm text-primary font-medium mb-6 flex items-center gap-2">
                   <PiggyBank className="w-4 h-4" />
                   {t('pricing.savingsPrefix')} {plan.savings} {t('pricing.savingsSuffix')}
                 </div>
@@ -212,8 +212,8 @@ const Pricing = () => {
                 <ul className="space-y-3 mb-6 lg:mb-8 flex-1">
                   {plan.features.map((feature, j) => (
                     <li key={j} className="flex items-start gap-3 text-sm text-foreground/80">
-                      <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                        <feature.icon className="w-3 h-3 text-emerald-400" />
+                      <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                        <feature.icon className="w-3 h-3 text-primary" />
                       </div>
                       <span>{feature.text}</span>
                     </li>
@@ -240,7 +240,7 @@ const Pricing = () => {
         {/* Bottom */}
         <div className="text-center mt-12">
           <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-emerald-400" />
+            <ShieldCheck className="w-5 h-5 text-primary/60" />
             {t('pricing.guarantee')}
           </p>
         </div>

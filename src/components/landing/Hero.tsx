@@ -244,7 +244,7 @@ const Hero = () => {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.5 }} className="flex flex-wrap gap-x-4 gap-y-1 text-foreground/25 text-[10px] font-medium">
               {['Без кредитна карта', 'Без код', '14 дни гаранция'].map((text) => (
                 <span key={text} className="flex items-center gap-1">
-                  <span className="w-1 h-1 rounded-full bg-emerald-500/60" />
+                  <span className="w-1 h-1 rounded-full bg-primary/60" />
                   {text}
                 </span>
               ))}
