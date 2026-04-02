@@ -29,7 +29,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen text-foreground neo-grain relative flex flex-col items-center">
-      <CustomCursor />
+      
       
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-background" />
