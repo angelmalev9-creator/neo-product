@@ -6,23 +6,19 @@ const AnimatedBackground = () => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
     let animationId: number;
     let lastTime = 0;
-    const TARGET_FPS = 30; // Cap at 30fps for performance
+    const TARGET_FPS = 30;
     const FRAME_TIME = 1000 / TARGET_FPS;
+    let time = 0;
 
     const isMobile = window.innerWidth < 768;
-    const PARTICLE_COUNT = isMobile ? 15 : 30;
-    const BAND_COUNT = isMobile ? 2 : 3;
-    const CONNECTION_DIST = isMobile ? 80 : 110;
-    const CONNECTION_DIST_SQ = CONNECTION_DIST * CONNECTION_DIST;
-
-    let particles: { x: number; y: number; size: number; sx: number; sy: number; opacity: number; color: string }[] = [];
-    let bands: { y: number; height: number; speed: number; opacity: number; dir: number }[] = [];
+    const DOT_SPACING = isMobile ? 20 : 14;
+    const DOT_RADIUS = 0.6;
+    const BASE_OPACITY = 0.07;
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio, 1.5);
@@ -30,100 +26,78 @@ const AnimatedBackground = () => {
       canvas.height = window.innerHeight * dpr;
       canvas.style.width = window.innerWidth + 'px';
       canvas.style.height = window.innerHeight + 'px';
-      ctx.scale(dpr, dpr);
-    };
-
-    const w = () => window.innerWidth;
-    const h = () => window.innerHeight;
-
-    const init = () => {
-      particles = [];
-      bands = [];
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
-        particles.push({
-          x: Math.random() * w(),
-          y: Math.random() * h(),
-          size: Math.random() * 2 + 0.6,
-          sx: (Math.random() - 0.5) * 0.3,
-          sy: (Math.random() - 0.5) * 0.3,
-          opacity: Math.random() * 0.35 + 0.08,
-          color: Math.random() > 0.5 ? '255,60,60' : '200,80,220',
-        });
-      }
-      for (let i = 0; i < BAND_COUNT; i++) {
-        bands.push({
-          y: Math.random() * h(),
-          height: Math.random() * 1.5 + 0.5,
-          speed: Math.random() * 0.2 + 0.06,
-          opacity: Math.random() * 0.1 + 0.03,
-          dir: Math.random() > 0.5 ? 1 : -1,
-        });
-      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
     const animate = (timestamp: number) => {
       animationId = requestAnimationFrame(animate);
-
       if (timestamp - lastTime < FRAME_TIME) return;
       lastTime = timestamp;
+      time += 0.003;
 
-      const W = w(), H = h();
+      const W = window.innerWidth;
+      const H = window.innerHeight;
       ctx.clearRect(0, 0, W, H);
 
-      for (const b of bands) {
-        b.y += b.speed * b.dir;
-        if (b.y > H + 30) b.y = -30;
-        if (b.y < -30) b.y = H + 30;
-        const g = ctx.createLinearGradient(0, b.y, W, b.y);
-        g.addColorStop(0, `rgba(255,60,60,0)`);
-        g.addColorStop(0.3, `rgba(255,60,60,${b.opacity})`);
-        g.addColorStop(0.7, `rgba(200,80,220,${b.opacity * 0.7})`);
-        g.addColorStop(1, `rgba(255,60,60,0)`);
-        ctx.fillStyle = g;
-        ctx.fillRect(0, b.y, W, b.height);
-      }
+      // Radial gradient glow — bottom-right teal accent
+      const grd = ctx.createRadialGradient(W * 0.85, H * 0.75, 0, W * 0.85, H * 0.75, W * 0.55);
+      grd.addColorStop(0, 'rgba(0,210,160,0.06)');
+      grd.addColorStop(0.4, 'rgba(0,180,140,0.025)');
+      grd.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, W, H);
 
-      ctx.lineWidth = 0.3;
-      for (let i = 0; i < particles.length; i++) {
-        const a = particles[i];
-        for (let j = i + 1; j < particles.length; j++) {
-          const b = particles[j];
-          const dx = a.x - b.x;
-          const dy = a.y - b.y;
-          const distSq = dx * dx + dy * dy;
-          if (distSq < CONNECTION_DIST_SQ) {
-            const opacity = (1 - Math.sqrt(distSq) / CONNECTION_DIST) * 0.1;
-            ctx.beginPath();
-            ctx.strokeStyle = `rgba(255,60,60,${opacity})`;
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
-          }
+      // Secondary subtle red glow — top-left
+      const grd2 = ctx.createRadialGradient(W * 0.1, H * 0.15, 0, W * 0.1, H * 0.15, W * 0.4);
+      grd2.addColorStop(0, 'rgba(255,60,60,0.03)');
+      grd2.addColorStop(0.5, 'rgba(255,60,60,0.01)');
+      grd2.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grd2;
+      ctx.fillRect(0, 0, W, H);
+
+      // Dot grid
+      const cols = Math.ceil(W / DOT_SPACING) + 1;
+      const rows = Math.ceil(H / DOT_SPACING) + 1;
+
+      for (let row = 0; row < rows; row++) {
+        const y = row * DOT_SPACING;
+        for (let col = 0; col < cols; col++) {
+          const x = col * DOT_SPACING;
+
+          // Distance from center for vignette
+          const dx = (x / W - 0.5) * 2;
+          const dy = (y / H - 0.5) * 2;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const vignette = Math.max(0, 1 - dist * 0.6);
+
+          // Subtle wave animation
+          const wave = Math.sin(x * 0.008 + time * 2) * Math.cos(y * 0.006 + time * 1.5);
+          const opacity = BASE_OPACITY * vignette * (0.7 + 0.3 * (wave * 0.5 + 0.5));
+
+          if (opacity < 0.008) continue;
+
+          ctx.beginPath();
+          ctx.arc(x, y, DOT_RADIUS, 0, 6.2832);
+          ctx.fillStyle = `rgba(255,255,255,${opacity})`;
+          ctx.fill();
         }
       }
 
-      for (const p of particles) {
-        p.x += p.sx;
-        p.y += p.sy;
-        if (p.x > W) p.x = 0;
-        if (p.x < 0) p.x = W;
-        if (p.y > H) p.y = 0;
-        if (p.y < 0) p.y = H;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, 6.2832);
-        ctx.fillStyle = `rgba(${p.color},${p.opacity})`;
-        ctx.fill();
-      }
+      // Edge vignette overlay
+      const vig = ctx.createRadialGradient(W / 2, H / 2, W * 0.25, W / 2, H / 2, W * 0.75);
+      vig.addColorStop(0, 'rgba(0,0,0,0)');
+      vig.addColorStop(1, 'rgba(0,0,0,0.3)');
+      ctx.fillStyle = vig;
+      ctx.fillRect(0, 0, W, H);
     };
 
     resize();
-    init();
     animationId = requestAnimationFrame(animate);
 
     let resizeTimeout: number;
     const onResize = () => {
       clearTimeout(resizeTimeout);
-      resizeTimeout = window.setTimeout(() => { resize(); init(); }, 250);
+      resizeTimeout = window.setTimeout(resize, 250);
     };
     window.addEventListener('resize', onResize, { passive: true });
 
@@ -138,7 +112,7 @@ const AnimatedBackground = () => {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none"
-      style={{ opacity: 0.5, zIndex: -5, willChange: 'transform' }}
+      style={{ zIndex: -5, willChange: 'transform' }}
     />
   );
 };
