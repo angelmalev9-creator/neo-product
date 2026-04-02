@@ -221,10 +221,14 @@ const Widget = () => {
     }
     const result = await trackConversation('start');
     if (result?.conversationId) {
+      conversationIdRef.current = result.conversationId;
       setConversationId(result.conversationId);
       callStartTimeRef.current = Date.now();
       lastTrackedTimeRef.current = 0;
       persistedTranscriptKeysRef.current.clear();
+      console.log('[WIDGET] Conversation started:', result.conversationId);
+    } else {
+      console.warn('[WIDGET] Failed to start conversation tracking');
     }
     if (window.parent !== window) window.parent.postMessage({ type: 'NEO_CONVERSATION_STARTED' }, '*');
     playConnectSound();
