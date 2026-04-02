@@ -2,7 +2,6 @@ import { useState, lazy, Suspense } from 'react';
 import Navigation from '@/components/landing/Navigation';
 import Hero from '@/components/landing/Hero';
 import AnimatedBackground from '@/components/landing/AnimatedBackground';
-import CustomCursor from '@/components/landing/CustomCursor';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 
