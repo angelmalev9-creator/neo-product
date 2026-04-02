@@ -22,6 +22,32 @@ interface WidgetConfig {
   buttonSize: string;
 }
 
+const normalizeTranscriptChunk = (value: string) => value.replace(/\s+/g, ' ').trim();
+
+const extractIncrementalTranscript = (previous: string, incoming: string) => {
+  const prev = normalizeTranscriptChunk(previous);
+  const next = normalizeTranscriptChunk(incoming);
+
+  if (!next) return '';
+  if (!prev) return next;
+  if (next === prev || prev.includes(next)) return '';
+  if (next.startsWith(prev)) return normalizeTranscriptChunk(next.slice(prev.length));
+
+  const repeatedIndex = next.indexOf(prev);
+  if (repeatedIndex >= 0) {
+    return normalizeTranscriptChunk(next.slice(repeatedIndex + prev.length));
+  }
+
+  const maxOverlap = Math.min(prev.length, next.length);
+  for (let len = maxOverlap; len >= 10; len -= 1) {
+    if (prev.slice(-len) === next.slice(0, len)) {
+      return normalizeTranscriptChunk(next.slice(len));
+    }
+  }
+
+  return next;
+};
+
 const Widget = () => {
   const [searchParams] = useSearchParams();
   const userId = searchParams.get('userId');
@@ -49,6 +75,7 @@ const Widget = () => {
   const callStartTimeRef = useRef<number | null>(null);
   const lastTrackedTimeRef = useRef<number>(0);
   const persistedTranscriptKeysRef = useRef<Set<string>>(new Set());
+  const lastPersistedTranscriptRef = useRef<{ user: string; assistant: string }>({ user: '', assistant: '' });
   
   const { playConnectSound, playDisconnectSound, startAmbient, stopAmbient, initAudioContext } = useAudioEffects({ ambientVolume: 0.04, effectsVolume: 0.2 });
 
@@ -116,25 +143,31 @@ const Widget = () => {
 
   const persistTranscriptMessage = useCallback(async (role: Message['role'], content: string) => {
     const cleaned = cleanTranscriptForStorage(content);
-    const normalized = cleaned.replace(/\s+/g, ' ').trim();
+    const normalized = normalizeTranscriptChunk(cleaned);
     const cid = conversationIdRef.current;
     if (!cid || !normalized) {
       console.warn('[WIDGET-PERSIST] Skipped: no conversationId or empty content', { cid, normalized: normalized?.slice(0, 30) });
       return;
     }
 
-    const key = `${cid}:${role}:${normalized}`;
+    const incremental = extractIncrementalTranscript(lastPersistedTranscriptRef.current[role], normalized);
+    if (!incremental) return;
+
+    const key = `${cid}:${role}:${incremental}`;
     if (persistedTranscriptKeysRef.current.has(key)) return;
     persistedTranscriptKeysRef.current.add(key);
 
     const result = await trackConversation('message', role === 'user'
-      ? { userMessage: normalized, conversationId: cid }
-      : { assistantMessage: normalized, conversationId: cid }
+      ? { userMessage: incremental, conversationId: cid }
+      : { assistantMessage: incremental, conversationId: cid }
     );
 
     if (!result) {
       persistedTranscriptKeysRef.current.delete(key);
+      return;
     }
+
+    lastPersistedTranscriptRef.current[role] = normalized;
   }, [trackConversation]);
 
   // Lead modal only shows on disconnect (endCall), not during conversation
@@ -212,6 +245,7 @@ const Widget = () => {
     setLiveTranscript('');
     setLiveAssistantTranscript('');
     persistedTranscriptKeysRef.current.clear();
+    lastPersistedTranscriptRef.current = { user: '', assistant: '' };
     setError(null);
     let micGranted = false;
     try {
@@ -285,6 +319,7 @@ const Widget = () => {
       setConversationId(null);
       callStartTimeRef.current = null;
       lastTrackedTimeRef.current = 0;
+      lastPersistedTranscriptRef.current = { user: '', assistant: '' };
     }
     // DON'T clear messages - keep them visible after disconnect
   }, [disconnect, trackConversation, leadSubmitted, stopAmbient, playDisconnectSound, liveAssistantTranscript, liveTranscript, persistTranscriptMessage]);
