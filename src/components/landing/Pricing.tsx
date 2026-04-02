@@ -138,10 +138,10 @@ const Pricing = () => {
               </button>
             </div>
             {isYearly && (
-              <motion.span
+               <motion.span
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 text-[10px] sm:text-xs font-bold px-4 py-1.5 rounded-full"
+                className="bg-primary/10 text-primary border border-primary/20 text-[10px] sm:text-xs font-bold px-4 py-1.5 rounded-full"
               >
                 🎉 {t('pricing.saveUpTo')} 40%
               </motion.span>
