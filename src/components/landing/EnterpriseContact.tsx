@@ -65,18 +65,18 @@ const EnterpriseContact = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder={t('contact.namePlaceholder')}
-                  className="w-full bg-background/30 border border-border/20 rounded-xl py-3.5 lg:py-4 pl-11 pr-4 text-sm placeholder:text-muted-foreground/35 focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/15 transition-all"
+                  className="w-full bg-card/40 border border-border/30 rounded-xl py-3.5 lg:py-4 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all"
                   required
                 />
               </div>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder={t('contact.emailPlaceholder')}
-                  className="w-full bg-background/30 border border-border/20 rounded-xl py-3.5 lg:py-4 pl-11 pr-4 text-sm placeholder:text-muted-foreground/35 focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/15 transition-all"
+                  className="w-full bg-card/40 border border-border/30 rounded-xl py-3.5 lg:py-4 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all"
                   required
                 />
               </div>
