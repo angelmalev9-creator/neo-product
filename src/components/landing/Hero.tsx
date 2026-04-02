@@ -1,6 +1,7 @@
 import { Zap, Clock, Users, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PencilUnderline } from '@/components/ui/PencilUnderline';
+import TrustedCompaniesMarquee from '@/components/landing/TrustedCompaniesMarquee';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 
@@ -13,7 +14,7 @@ const Hero = () => {
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-primary/6 blur-[120px] pointer-events-none" />
 
       <div className="container mx-auto px-4 sm:px-4 lg:px-8 relative z-10">
-        <div className="max-w-5xl mx-auto text-center">
+        <div className="max-w-6xl mx-auto text-center">
           {/* Status Badge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -34,7 +35,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.15 }}
-            className="text-[2rem] leading-[1.1] sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.5rem] font-display font-black text-foreground sm:leading-[1.08] mb-3 sm:mb-6 lg:mb-8 tracking-wide">
+            className="text-[2.15rem] leading-[1.02] sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.8rem] font-display font-black text-foreground sm:leading-[1.04] mb-3 sm:mb-6 lg:mb-7 tracking-tight">
             <span><PencilUnderline>{t('hero.headline1')}</PencilUnderline></span>
             <br />
             <span className="neo-gradient-text-animated">
@@ -47,10 +48,20 @@ const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="text-[13px] leading-relaxed sm:text-lg md:text-xl lg:text-2xl text-foreground/40 mb-5 sm:mb-8 lg:mb-12 px-1 sm:px-4 lg:px-0 max-w-2xl mx-auto font-medium">
+            className="text-[14px] leading-relaxed sm:text-lg md:text-[1.35rem] lg:text-[1.7rem] text-foreground/55 mb-4 sm:mb-6 px-1 sm:px-4 lg:px-0 max-w-4xl mx-auto font-medium">
             {t('hero.subheadline')}
-            <span className="text-foreground/80 font-bold"> {t('hero.price')}</span>
           </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.38 }}
+            className="mb-5 sm:mb-8 lg:mb-10"
+          >
+            <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-xs sm:text-sm text-primary shadow-[0_0_40px_hsl(var(--primary)/0.12)]">
+              {t('hero.price')}
+            </span>
+          </motion.div>
 
           {/* CTA Buttons */}
           <motion.div
@@ -79,7 +90,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
-            className="flex items-stretch justify-center gap-2 sm:gap-4 lg:gap-6 mb-5 sm:mb-10">
+            className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6 mb-6 sm:mb-10">
             {[
               { value: t('hero.stat1Value'), label: t('hero.stat1Label'), icon: Zap },
               { value: t('hero.stat2Value'), label: t('hero.stat2Label'), icon: Clock },
@@ -87,9 +98,12 @@ const Hero = () => {
             ].map((stat) => (
               <div
                 key={stat.label}
-                className="neo-glass-premium flex-1 sm:flex-none px-2 sm:px-5 lg:px-7 py-2 sm:py-4 lg:py-5 text-center rounded-xl sm:rounded-2xl group hover:scale-[1.03] transition-transform duration-300 min-w-0">
+                className="neo-glass-premium px-2 sm:px-5 lg:px-7 py-3 sm:py-4 lg:py-5 text-center rounded-xl sm:rounded-2xl group hover:scale-[1.03] transition-transform duration-300 min-w-0">
+                <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary sm:h-10 sm:w-10">
+                  <stat.icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                </div>
                 <div className="text-sm sm:text-2xl lg:text-3xl font-black text-foreground tracking-tight group-hover:text-primary transition-colors">{stat.value}</div>
-                <div className="text-[7px] sm:text-[9px] lg:text-[10px] text-foreground/30 uppercase tracking-[0.08em] sm:tracking-[0.15em] mt-0.5 sm:mt-1.5 font-semibold leading-tight">{stat.label}</div>
+                <div className="text-[8px] sm:text-[10px] lg:text-[11px] text-foreground/40 uppercase tracking-[0.08em] sm:tracking-[0.15em] mt-1 sm:mt-1.5 font-semibold leading-tight">{stat.label}</div>
               </div>
             ))}
           </motion.div>
@@ -112,6 +126,14 @@ const Hero = () => {
               <span className="w-1 h-1 rounded-full bg-emerald-500/60" />
               {t('hero.trust3')}
             </span>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.75, delay: 0.95 }}
+          >
+            <TrustedCompaniesMarquee />
           </motion.div>
         </div>
       </div>

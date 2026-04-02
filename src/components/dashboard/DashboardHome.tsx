@@ -194,6 +194,12 @@ const DashboardHome = ({
   const bookingRate = totalConversations > 0 ? Math.round((totalBookings / totalConversations) * 100) : 0;
   const avgDurationMin = avgDuration > 0 ? `${Math.floor(avgDuration / 60)}:${String(avgDuration % 60).padStart(2, '0')}` : '—';
   const upgradeInfo = TIER_UPGRADES[tierName];
+  const automationScore = Math.min(99, Math.max(12, Math.round((conversionRate * 0.45) + (bookingRate * 0.35) + ((100 - Math.min(usagePercent, 100)) * 0.2))));
+  const analysisSignals = [
+    { label: 'Конверсия към клиент', value: conversionRate, helper: `${totalLeads} от ${totalConversations} разговора`, tone: 'primary' as const },
+    { label: 'Резервации от разговор', value: bookingRate, helper: `${totalBookings} потвърдени резервации`, tone: 'blue' as const },
+    { label: 'Използване на плана', value: Math.min(Math.round(usagePercent), 100), helper: `${usedMinutes.toFixed(0)} / ${planLimit} минути`, tone: 'success' as const },
+  ];
 
   return (
     <div className="h-full flex flex-col p-4 lg:p-6 gap-3 overflow-y-auto lg:overflow-hidden">
@@ -307,6 +313,32 @@ const DashboardHome = ({
           transition={{ delay: 0.4, duration: 0.5 }}
           className="lg:col-span-2 flex flex-col gap-3 min-h-0"
         >
+          <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-4 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.05] via-transparent to-transparent pointer-events-none" />
+            <div className="relative mb-3 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Анализи</p>
+                <h3 className="text-sm font-semibold text-foreground">Състояние на AI канала Ви</h3>
+              </div>
+              <div className="rounded-xl border border-primary/20 bg-primary/10 px-3 py-2 text-right">
+                <div className="text-lg font-black text-primary leading-none">{automationScore}</div>
+                <div className="mt-1 text-[9px] uppercase tracking-[0.18em] text-primary/80">Score</div>
+              </div>
+            </div>
+
+            <div className="relative space-y-3">
+              {analysisSignals.map((signal) => (
+                <InsightBar
+                  key={signal.label}
+                  label={signal.label}
+                  value={signal.value}
+                  helper={signal.helper}
+                  tone={signal.tone}
+                />
+              ))}
+            </div>
+          </div>
+
           {/* Performance metrics */}
           <div className="grid grid-cols-2 gap-2 shrink-0">
             <MiniStat icon={Activity} label="Общо разговори" value={String(totalConversations)} color="text-primary" />
@@ -427,6 +459,35 @@ function ActionRow({ icon: Icon, title, done, onClick }: {
         <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300" />
       )}
     </button>
+  );
+}
+
+function InsightBar({ label, value, helper, tone }: {
+  label: string;
+  value: number;
+  helper: string;
+  tone: 'primary' | 'success' | 'blue';
+}) {
+  const toneMap = {
+    primary: 'bg-primary',
+    success: 'bg-[hsl(var(--neo-success))]',
+    blue: 'bg-[hsl(var(--neo-blue))]',
+  };
+
+  return (
+    <div className="rounded-xl border border-border/10 bg-background/25 p-3">
+      <div className="mb-1 flex items-center justify-between gap-3">
+        <span className="text-[11px] text-foreground">{label}</span>
+        <span className="text-[11px] text-muted-foreground">{value}%</span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-muted/60">
+        <div
+          className={`h-full rounded-full ${toneMap[tone]} transition-all duration-500`}
+          style={{ width: `${Math.max(6, Math.min(value, 100))}%` }}
+        />
+      </div>
+      <p className="mt-1.5 text-[10px] text-muted-foreground">{helper}</p>
+    </div>
   );
 }
 
