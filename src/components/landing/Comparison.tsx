@@ -1,10 +1,11 @@
-import { Check, X, Zap } from 'lucide-react';
+import { Check, X, Zap, ArrowRight } from 'lucide-react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 
 const rows = [
   { label: 'Работно време', employee: '8 часа/ден', neo: '24/7/365', neoWins: true },
-  { label: 'Месечна цена', employee: '~€1,000', neo: 'от €25', neoWins: true },
+  { label: 'Месечна цена', employee: '~1 000 EUR', neo: 'от 25 EUR', neoWins: true },
   { label: 'Пропуснати клиенти', employee: 'Често', neo: 'Никога', neoWins: true },
   { label: 'Едновременни разговори', employee: '1', neo: 'Неограничени', neoWins: true },
   { label: 'Записва часове', employee: 'Ръчно', neo: 'Автоматично', neoWins: true },
@@ -26,7 +27,7 @@ const Comparison = () => {
             NEO vs <span className="text-primary">служител</span>
           </h2>
           <p className="text-muted-foreground text-base max-w-lg mx-auto">
-            Същата работа — 40 пъти по-евтино.
+            Същата работа — 40 пъти по-евтино. Без болнични, без закъснения, без пропуснати обаждания.
           </p>
         </div>
 
@@ -43,7 +44,7 @@ const Comparison = () => {
               Служител
             </div>
             <div className="px-5 py-4 text-xs font-bold text-primary uppercase tracking-wider text-center">
-              NEO ✦
+              NEO
             </div>
           </div>
 
@@ -64,18 +65,33 @@ const Comparison = () => {
               </div>
             </div>
           ))}
+
+          {/* Bottom row — cost anchoring */}
+          <div className="border-t border-primary/15 bg-primary/5 px-5 py-4">
+            <div className="grid grid-cols-3 items-center">
+              <span className="text-xs font-bold text-foreground">Годишна разлика</span>
+              <span className="text-center text-sm font-bold text-red-400/80 line-through">12 000 EUR</span>
+              <span className="text-center text-sm font-black text-primary">от 300 EUR</span>
+            </div>
+          </div>
         </motion.div>
 
         {/* Bottom CTA */}
-        <div className="text-center mt-10">
-          <button
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={isVisible ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.3 }}
+          className="text-center mt-10"
+        >
+          <Button
+            variant="outline"
+            className="neo-glass-premium border-0 text-foreground/60 hover:text-foreground text-xs px-5 py-2.5 h-auto rounded-full font-bold gap-1.5"
             onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
-            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-semibold transition-colors text-sm"
           >
-            Опитайте безплатно
-            <Zap className="w-4 h-4" />
-          </button>
-        </div>
+            Пресметнете колко спестявате
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Button>
+        </motion.div>
       </div>
     </section>
   );

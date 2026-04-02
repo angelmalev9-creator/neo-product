@@ -1,11 +1,10 @@
-import { Check, Crown, PiggyBank, ShieldCheck, Phone, BarChart3, Headphones, Users, Mail, Sparkles } from 'lucide-react';
+import { Check, Crown, PiggyBank, ShieldCheck, Phone, BarChart3, Headphones, Users, Mail, Sparkles, Clock, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { useNavigate } from 'react-router-dom';
-
 import { useTranslation } from 'react-i18next';
 import EmbeddedCheckoutModal from '@/components/checkout/EmbeddedCheckoutModal';
 import { motion } from 'framer-motion';
@@ -14,6 +13,28 @@ const PRICE_IDS = {
   starter: { monthly: 'price_1SnZt6JnrCo2ucK9XL1FGEEn', yearly: 'price_1SnZtYJnrCo2ucK9KDk4xZd6' },
   growth: { monthly: 'price_1SnZtFJnrCo2ucK95hcj2Gqy', yearly: 'price_1SnZtiJnrCo2ucK9kXjVEPkf' },
   empire: { monthly: 'price_1SnZtOJnrCo2ucK9zta7lV0A', yearly: 'price_1SnZtrJnrCo2ucK9Md9j1egd' },
+};
+
+/* ── Urgency counter — seats left ── */
+const SpotsCounter = () => {
+  const [spots, setSpots] = useState(7);
+  useEffect(() => {
+    const t = setInterval(() => {
+      setSpots(prev => Math.max(3, prev + (Math.random() > 0.6 ? -1 : 0)));
+    }, 12000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.6 }}
+      className="flex items-center justify-center gap-2 text-xs text-foreground/40 mt-6"
+    >
+      <Clock className="w-3.5 h-3.5 text-primary/60" />
+      <span>Остават <span className="text-primary font-bold">{spots}</span> места на промоционалната цена тази седмица</span>
+    </motion.div>
+  );
 };
 
 const Pricing = () => {
@@ -30,6 +51,7 @@ const Pricing = () => {
       id: 'starter', name: t('pricing.starter'), price: yearly ? '15' : '25', yearlyTotal: '180',
       minutes: '500', callsPerDay: `~25 ${t('pricing.callsPerDay')}`, savings: '97%',
       description: t('pricing.starterDesc'),
+      anchor: '1 000 EUR/мес за рецепционист',
       features: [
         { text: `500 ${t('pricing.minutes')} / ${t('pricing.perMonthShort')}`, icon: Phone },
         { text: t('pricing.feature_247'), icon: Headphones },
@@ -44,6 +66,7 @@ const Pricing = () => {
       id: 'growth', name: t('pricing.growth'), price: yearly ? '23' : '33', yearlyTotal: '276',
       minutes: '2500', callsPerDay: `~125 ${t('pricing.callsPerDay')}`, savings: '96%',
       description: t('pricing.growthDesc'),
+      anchor: '2 000 EUR/мес за екип',
       features: [
         { text: `2 500 ${t('pricing.minutes')} / ${t('pricing.perMonthShort')}`, icon: Phone },
         { text: t('pricing.feature_247'), icon: Headphones },
@@ -60,6 +83,7 @@ const Pricing = () => {
       id: 'empire', name: t('pricing.business'), price: yearly ? '50' : '60', yearlyTotal: '600',
       minutes: '10000', callsPerDay: `500+ ${t('pricing.callsPerDay')}`, savings: '93%',
       description: t('pricing.businessDesc'),
+      anchor: '5 000+ EUR/мес за цял екип',
       features: [
         { text: `10 000 ${t('pricing.minutes')} / ${t('pricing.perMonthShort')}`, icon: Phone },
         { text: 'Всичко от Растеж +', icon: Check },
@@ -82,7 +106,7 @@ const Pricing = () => {
       if (!user) { window.location.href = `/auth?plan=${plan.id}&priceId=${plan.priceId}`; return; }
       const { error } = await supabase.functions.invoke('activate-test-plan', { body: { tier: plan.id } });
       if (error) throw error;
-      toast({ title: '✅ Планът е активиран!', description: `${plan.name} е активен (тестов режим)` });
+      toast({ title: 'Планът е активиран!', description: `${plan.name} е активен (тестов режим)` });
       window.location.href = '/dashboard';
     } catch (error) {
       console.error('Checkout error:', error);
@@ -100,7 +124,6 @@ const Pricing = () => {
       id="pricing" 
       className="py-10 sm:py-16 relative overflow-visible"
     >
-      {/* Ambient glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 blur-[150px] rounded-full pointer-events-none" />
       
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
@@ -143,7 +166,7 @@ const Pricing = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 className="bg-primary/10 text-primary border border-primary/20 text-[10px] sm:text-xs font-bold px-4 py-1.5 rounded-full"
               >
-                🎉 {t('pricing.saveUpTo')} 40%
+                Спестете до 40% с годишен план
               </motion.span>
             )}
           </div>
@@ -181,18 +204,20 @@ const Pricing = () => {
                 )}
 
                 <h3 className="text-lg lg:text-xl font-bold text-foreground mb-1">{plan.name}</h3>
-                <p className="text-xs lg:text-sm text-muted-foreground mb-5">{plan.description}</p>
+                <p className="text-xs lg:text-sm text-muted-foreground mb-4">{plan.description}</p>
 
+                {/* Price anchoring — strikethrough reference */}
+                <p className="text-[10px] text-muted-foreground/40 line-through mb-1">{plan.anchor}</p>
                 <div className="flex items-baseline gap-1.5 mb-1">
                   <span className={`text-4xl lg:text-5xl font-black tracking-tight ${plan.featured ? 'neo-gradient-text' : 'text-foreground'}`}>
-                    €{plan.price}
+                    {plan.price} EUR
                   </span>
                   <span className="text-sm lg:text-lg text-muted-foreground font-medium">/{t('pricing.perMonthShort')}</span>
                 </div>
 
                 {isYearly && (
                   <p className="text-xs text-muted-foreground/60 mb-3">
-                    {t('pricing.billedYearly')}: €{plan.yearlyTotal}
+                    {t('pricing.billedYearly')}: {plan.yearlyTotal} EUR
                   </p>
                 )}
 
@@ -232,13 +257,20 @@ const Pricing = () => {
                 >
                   {loadingPlan === plan.id ? t('pricing.loading') : plan.cta}
                 </Button>
+
+                {/* Micro-commitment — risk reversal */}
+                <p className="text-[9px] text-center text-muted-foreground/35 mt-3">
+                  14 дни безплатен тест — без обвързване
+                </p>
               </motion.div>
             );
           })}
         </div>
 
-        {/* Bottom */}
-        <div className="text-center mt-12">
+        {/* Scarcity + guarantee */}
+        <SpotsCounter />
+
+        <div className="text-center mt-6">
           <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
             <ShieldCheck className="w-5 h-5 text-primary/60" />
             {t('pricing.guarantee')}
