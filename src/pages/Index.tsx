@@ -7,12 +7,15 @@ import { ArrowRight } from 'lucide-react';
 
 // Lazy load below-fold sections for faster initial paint
 const DemoSection = lazy(() => import('@/components/landing/DemoSection'));
+const ScrollStory = lazy(() => import('@/components/landing/ScrollStory'));
+const SettingsCards = lazy(() => import('@/components/landing/SettingsCards'));
 const VoiceInterview = lazy(() => import('@/components/landing/VoiceInterview'));
-const Comparison = lazy(() => import('@/components/landing/Comparison'));
+const BookingTimeline = lazy(() => import('@/components/landing/BookingTimeline'));
 const BusinessResults = lazy(() => import('@/components/landing/BusinessResults'));
+const Comparison = lazy(() => import('@/components/landing/Comparison'));
 const Testimonials = lazy(() => import('@/components/landing/Testimonials'));
-const Founder = lazy(() => import('@/components/landing/Founder'));
 const Pricing = lazy(() => import('@/components/landing/Pricing'));
+const Founder = lazy(() => import('@/components/landing/Founder'));
 const EnterpriseContact = lazy(() => import('@/components/landing/EnterpriseContact'));
 const Footer = lazy(() => import('@/components/landing/Footer'));
 
@@ -35,13 +38,16 @@ const Index = () => {
 
       <AnimatedBackground />
       
-      <div className="pt-14 sm:pt-16 lg:pt-20 pb-16 sm:pb-12 w-full">
+      <div className="pt-14 sm:pt-16 lg:pt-20 w-full">
         <Navigation />
         <main className="relative z-10">
           <Hero />
           <Suspense fallback={<div className="min-h-[50vh]" />}>
             <DemoSection onTrainingComplete={handleTrainingComplete} />
             <VoiceInterview key={sessionId || 'no-session'} sessionId={sessionId} />
+            <ScrollStory />
+            <SettingsCards />
+            <BookingTimeline />
             <BusinessResults />
             <Comparison />
             <Testimonials />
@@ -61,10 +67,10 @@ const Index = () => {
         style={{ paddingBottom: 'max(0.625rem, env(safe-area-inset-bottom))' }}
       >
         <Button
-          className="neo-btn-primary w-full py-3 text-[13px] font-bold rounded-full gap-2 whitespace-nowrap"
+          className="neo-btn-primary w-full py-3 text-[13px] font-semibold rounded-full gap-2 whitespace-nowrap"
           onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
         >
-          Опитайте NEO безплатно
+          Тествай NEO
           <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
