@@ -7,6 +7,32 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const normalizeText = (value: string) => String(value || "").replace(/\s+/g, " ").trim();
+
+const extractIncrementalMessage = (previous: string, incoming: string) => {
+  const prev = normalizeText(previous);
+  const next = normalizeText(incoming);
+
+  if (!next) return "";
+  if (!prev) return next;
+  if (next === prev || prev.includes(next)) return "";
+  if (next.startsWith(prev)) return normalizeText(next.slice(prev.length));
+
+  const repeatedIndex = next.indexOf(prev);
+  if (repeatedIndex >= 0) {
+    return normalizeText(next.slice(repeatedIndex + prev.length));
+  }
+
+  const maxOverlap = Math.min(prev.length, next.length);
+  for (let len = maxOverlap; len >= 10; len -= 1) {
+    if (prev.slice(-len) === next.slice(0, len)) {
+      return normalizeText(next.slice(len));
+    }
+  }
+
+  return next;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -58,46 +84,63 @@ serve(async (req) => {
         });
       }
 
-      const inserts: { conversation_id: string; role: string; content: string; created_at: string }[] = [];
-      const now = Date.now();
+      const { data: recentMessages } = await supabase
+        .from("conversation_messages")
+        .select("role, content, created_at")
+        .eq("conversation_id", conversationId)
+        .order("created_at", { ascending: false })
+        .limit(8);
 
-      // Give user message an earlier timestamp, assistant a later one
-      // so chronological ordering is preserved
+      const latestUserMessage = recentMessages?.find((message) => message.role === "user")?.content || "";
+      const latestAssistantMessage = recentMessages?.find((message) => message.role === "assistant")?.content || "";
+
+      const inserts: { conversation_id: string; role: string; content: string; created_at: string }[] = [];
+      let lastTimestamp = recentMessages?.[0]?.created_at
+        ? new Date(recentMessages[0].created_at).getTime()
+        : Date.now() - 100;
+
       if (userMessage) {
-        inserts.push({
-          conversation_id: conversationId,
-          role: "user",
-          content: userMessage,
-          created_at: new Date(now).toISOString(),
-        });
+        const nextUserMessage = extractIncrementalMessage(latestUserMessage, userMessage);
+        if (nextUserMessage) {
+          lastTimestamp = Math.max(Date.now(), lastTimestamp + 40);
+          inserts.push({
+            conversation_id: conversationId,
+            role: "user",
+            content: nextUserMessage,
+            created_at: new Date(lastTimestamp).toISOString(),
+          });
+        }
       }
+
       if (assistantMessage) {
-        inserts.push({
-          conversation_id: conversationId,
-          role: "assistant",
-          content: assistantMessage,
-          // 500ms offset ensures assistant always sorts after user in same batch
-          created_at: new Date(now + 500).toISOString(),
-        });
+        const nextAssistantMessage = extractIncrementalMessage(latestAssistantMessage, assistantMessage);
+        if (nextAssistantMessage) {
+          lastTimestamp = Math.max(Date.now(), lastTimestamp + 40);
+          inserts.push({
+            conversation_id: conversationId,
+            role: "assistant",
+            content: nextAssistantMessage,
+            created_at: new Date(lastTimestamp).toISOString(),
+          });
+        }
       }
 
       if (inserts.length > 0) {
         const { error } = await supabase.from("conversation_messages").insert(inserts);
         if (error) console.error("message insert error:", error);
 
-        // Update messages_count
-        await supabase.rpc("increment_messages_count" as any, {
-          conv_id: conversationId,
-          delta: inserts.length,
-        }).then(() => {}).catch(() => {
-          supabase
-            .from("conversations")
-            .update({ messages_count: inserts.length, updated_at: new Date().toISOString() })
-            .eq("id", conversationId)
-            .then(() => {});
-        });
+        const { count: messageCount } = await supabase
+          .from("conversation_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("conversation_id", conversationId);
+
+        await supabase
+          .from("conversations")
+          .update({ messages_count: messageCount || 0, updated_at: new Date().toISOString() })
+          .eq("id", conversationId);
       }
-      return new Response(JSON.stringify({ ok: true }), {
+
+      return new Response(JSON.stringify({ ok: true, inserted: inserts.length }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
