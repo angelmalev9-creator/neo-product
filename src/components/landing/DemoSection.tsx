@@ -281,7 +281,7 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center max-w-6xl mx-auto">
           <div>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display text-foreground mb-3 lg:mb-4 leading-[1.1] tracking-[-0.02em]">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-black text-foreground mb-3 lg:mb-4 leading-[1.1] tracking-wide">
               <PencilUnderline>{t("demo.title1")}</PencilUnderline>{" "}
               <span className="neo-gradient-text whitespace-nowrap">{t("demo.title2")}</span>
             </h2>

@@ -98,7 +98,7 @@ const Pricing = () => {
     <section 
       ref={ref as React.RefObject<HTMLElement>}
       id="pricing" 
-      className="py-28 sm:py-36 lg:py-40 relative overflow-visible"
+      className="py-10 sm:py-16 relative overflow-visible"
     >
       {/* Ambient glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 blur-[150px] rounded-full pointer-events-none" />
@@ -110,10 +110,10 @@ const Pricing = () => {
             <Sparkles className="w-3.5 h-3.5" />
             Ценови планове
           </span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-display text-foreground mb-4 max-w-2xl mx-auto leading-[1.1] tracking-[-0.02em]">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-black text-foreground mb-4 max-w-3xl mx-auto leading-[1.1] tracking-wide">
             <PencilUnderline>{t('pricing.title1')}</PencilUnderline> <span className="neo-gradient-text whitespace-nowrap">{t('pricing.title2')}</span>
           </h2>
-          <p className="text-sm sm:text-base text-muted-foreground mb-8 max-w-md mx-auto leading-[1.6] font-light">
+          <p className="text-base sm:text-lg text-muted-foreground mb-8">
             {t('pricing.subtitle')}
           </p>
 
@@ -238,11 +238,8 @@ const Pricing = () => {
         </div>
 
         {/* Bottom */}
-        <div className="text-center mt-16">
-          <p className="text-lg font-semibold text-foreground/50 mb-3">
-            👉 По-евтино от 1 изпуснат клиент
-          </p>
-          <p className="text-sm text-foreground/30 flex items-center justify-center gap-2">
+        <div className="text-center mt-12">
+          <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
             <ShieldCheck className="w-5 h-5 text-emerald-400" />
             {t('pricing.guarantee')}
           </p>
