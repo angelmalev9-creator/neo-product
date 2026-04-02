@@ -282,8 +282,8 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center max-w-6xl mx-auto">
           <div>
             <h2 className="text-lg sm:text-xl md:text-2xl font-display font-black text-foreground mb-2 lg:mb-3 leading-[1.1] tracking-tight">
-              <PencilUnderline>{t("demo.title1")}</PencilUnderline>{" "}
-              <span className="neo-gradient-text whitespace-nowrap">{t("demo.title2")}</span>
+              {t("demo.title1")}{" "}
+              <span className="text-primary">{t("demo.title2")}</span>
             </h2>
 
             <p className="text-sm lg:text-base text-muted-foreground mb-2 lg:mb-3 max-w-md leading-relaxed">{t("demo.description")}</p>
