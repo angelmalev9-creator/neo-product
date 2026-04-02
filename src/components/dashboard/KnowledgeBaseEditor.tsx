@@ -187,6 +187,77 @@ const KnowledgeBaseEditor = ({ userId, currentSession, onSessionUpdate, onCompan
     }
   };
 
+  const readFileContent = (file: globalThis.File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string || '');
+      reader.onerror = () => reject(new Error('Грешка при четене на файл'));
+      reader.readAsText(file);
+    });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    const newFiles: UploadedFile[] = [];
+    for (const file of Array.from(files)) {
+      if (file.size > MAX_FILE_SIZE) {
+        toast({ title: 'Твърде голям файл', description: `${file.name} надвишава 5MB`, variant: 'destructive' });
+        continue;
+      }
+      try {
+        const content = await readFileContent(file);
+        if (content.trim().length === 0) {
+          toast({ title: 'Празен файл', description: `${file.name} не съдържа текст`, variant: 'destructive' });
+          continue;
+        }
+        newFiles.push({ name: file.name, content: content.trim(), size: file.size });
+      } catch {
+        toast({ title: 'Грешка', description: `Не може да се прочете ${file.name}`, variant: 'destructive' });
+      }
+    }
+    if (newFiles.length > 0) {
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+      toast({ title: `${newFiles.length} файл(а) добавен(и)`, description: 'Натиснете „Запази към базата" за да обновите знанията' });
+    }
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const saveFilesToKnowledge = async () => {
+    if (!currentSession || uploadedFiles.length === 0) return;
+    setSaving(true);
+    try {
+      const extraKnowledge = uploadedFiles
+        .map(f => `\n\n--- ДОПЪЛНИТЕЛЕН ДОКУМЕНТ: ${f.name} ---\n${f.content}`)
+        .join('');
+      const updatedSummary = (currentSession.summary || '') + extraKnowledge;
+      const { error } = await supabase
+        .from('demo_sessions')
+        .update({ summary: updatedSummary })
+        .eq('id', currentSession.id);
+      if (error) throw error;
+      onSessionUpdate({ ...currentSession, summary: updatedSummary });
+      setUploadedFiles([]);
+      toast({ title: 'Знанията са обновени!', description: `${uploadedFiles.length} документ(а) добавен(и) към базата` });
+    } catch {
+      toast({ title: 'Грешка', description: 'Неуспешно запазване', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Scraping Form */}
@@ -234,17 +305,74 @@ const KnowledgeBaseEditor = ({ userId, currentSession, onSessionUpdate, onCompan
                 <CheckCircle className="w-6 h-6 text-neo-success shrink-0" />
                 <span className="text-sm text-foreground">{pagesScraped} страници обучени</span>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={() => setStatus('idle')}
-              >
+              <Button variant="outline" size="sm" className="text-xs" onClick={() => setStatus('idle')}>
                 Скрейпни друг
               </Button>
             </div>
           )}
         </div>
+      </div>
+
+      {/* File Upload Section */}
+      <div className="space-y-3">
+        <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
+          <Upload className="w-4 h-4 text-primary" />
+          Допълнителни документи
+        </h4>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".txt,.md,.csv,.json"
+          multiple
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          className="neo-glass-subtle border border-dashed border-border/40 hover:border-primary/40 rounded-xl p-4 cursor-pointer transition-all group"
+        >
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center transition-colors">
+              {uploading ? <Loader2 className="w-5 h-5 text-primary animate-spin" /> : <Plus className="w-5 h-5 text-primary" />}
+            </div>
+            <div>
+              <p className="text-xs font-medium text-foreground">Качете файлове с инструкции</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">.txt, .md, .csv, .json • до 5MB на файл</p>
+            </div>
+          </div>
+        </div>
+
+        {uploadedFiles.length > 0 && (
+          <div className="space-y-2">
+            {uploadedFiles.map((file, i) => (
+              <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg bg-background/40 border border-border/15">
+                <File className="w-4 h-4 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-foreground truncate">{file.name}</p>
+                  <p className="text-[10px] text-muted-foreground">{formatSize(file.size)} • {file.content.length.toLocaleString()} символа</p>
+                </div>
+                <button onClick={() => removeFile(i)} className="p-1 rounded-md hover:bg-destructive/10 transition-colors">
+                  <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
+                </button>
+              </div>
+            ))}
+            <Button
+              onClick={saveFilesToKnowledge}
+              disabled={saving || !currentSession}
+              className="w-full bg-primary hover:bg-primary/90 text-xs font-bold gap-2 h-9"
+            >
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              {saving ? 'Запазване...' : `Запази ${uploadedFiles.length} файл(а) към базата`}
+            </Button>
+            {!currentSession && (
+              <p className="text-[10px] text-muted-foreground text-center">
+                Първо скрейпнете уебсайт, за да добавите допълнителни документи
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Current Knowledge Base Display */}
@@ -255,12 +383,8 @@ const KnowledgeBaseEditor = ({ userId, currentSession, onSessionUpdate, onCompan
               <FileText className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-bold text-foreground mb-1">
-                Текуща база знания
-              </h4>
-              <p className="text-xs text-muted-foreground truncate">
-                {currentSession.url}
-              </p>
+              <h4 className="text-sm font-bold text-foreground mb-1">Текуща база знания</h4>
+              <p className="text-xs text-muted-foreground truncate">{currentSession.url}</p>
               {currentSession.created_at && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                   <Calendar className="w-3 h-3" />
@@ -275,12 +399,7 @@ const KnowledgeBaseEditor = ({ userId, currentSession, onSessionUpdate, onCompan
               <div className="flex items-center justify-between">
                 <h5 className="text-xs font-medium text-foreground">Резюме:</h5>
                 {!isEditing && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleEditStart}
-                    className="text-xs gap-1 h-7 px-2"
-                  >
+                  <Button variant="ghost" size="sm" onClick={handleEditStart} className="text-xs gap-1 h-7 px-2">
                     <Edit3 className="w-3 h-3" />
                     Редактирай
                   </Button>
@@ -289,30 +408,13 @@ const KnowledgeBaseEditor = ({ userId, currentSession, onSessionUpdate, onCompan
               
               {isEditing ? (
                 <div className="space-y-2">
-                  <Textarea
-                    value={editedSummary}
-                    onChange={(e) => setEditedSummary(e.target.value)}
-                    className="min-h-[200px] text-xs bg-background/50"
-                  />
+                  <Textarea value={editedSummary} onChange={(e) => setEditedSummary(e.target.value)} className="min-h-[200px] text-xs bg-background/50" />
                   <div className="flex gap-2 justify-end">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleEditCancel}
-                      disabled={saving}
-                      className="text-xs gap-1 h-7"
-                    >
-                      <X className="w-3 h-3" />
-                      Откажи
+                    <Button variant="ghost" size="sm" onClick={handleEditCancel} disabled={saving} className="text-xs gap-1 h-7">
+                      <X className="w-3 h-3" /> Откажи
                     </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleEditSave}
-                      disabled={saving}
-                      className="text-xs gap-1 h-7 bg-primary"
-                    >
-                      <Save className="w-3 h-3" />
-                      {saving ? 'Запазване...' : 'Запази'}
+                    <Button size="sm" onClick={handleEditSave} disabled={saving} className="text-xs gap-1 h-7 bg-primary">
+                      <Save className="w-3 h-3" /> {saving ? 'Запазване...' : 'Запази'}
                     </Button>
                   </div>
                 </div>
