@@ -132,7 +132,7 @@ const DashboardHome = ({
   const [todayClients, setTodayClients] = useState(0);
   const [todayBookings, setTodayBookings] = useState(0);
   const [statsLoading, setStatsLoading] = useState(true);
-  const [weekData, setWeekData] = useState<{ label: string; conversations: number; clients: number }[]>([]);
+  
   const [totalConversations, setTotalConversations] = useState(0);
   const [totalLeads, setTotalLeads] = useState(0);
   const [avgDuration, setAvgDuration] = useState(0);
