@@ -113,16 +113,16 @@ const BusinessResults = () => {
 
       <div className="container mx-auto px-5 sm:px-4 lg:px-8 relative z-10">
         {/* Header */}
-        <div className="text-center mb-8 sm:mb-12">
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/8 border border-primary/15 text-primary text-sm font-medium mb-5">
+        <div className="text-center mb-14 sm:mb-20">
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/8 border border-primary/15 text-primary text-xs font-medium mb-6">
             <Sparkles className="w-3.5 h-3.5" />
             Какво може NEO
           </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-black text-foreground mb-5 leading-[1.08] tracking-wide max-w-4xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-semibold text-foreground mb-4 leading-[1.1] tracking-[-0.5px] max-w-xl mx-auto">
             Вашият AI асистент за{' '}
             <span className="neo-gradient-text">продажби и резервации</span>
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm sm:text-base text-foreground/40 max-w-md mx-auto leading-[1.6]">
             NEO не е просто чатбот — той е вашият дигитален търговец, рецепционист и маркетолог в едно.
           </p>
         </div>
