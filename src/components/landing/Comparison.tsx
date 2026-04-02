@@ -103,10 +103,10 @@ const Comparison = () => {
       <div className="container mx-auto px-4 lg:px-8">
         {/* Title */}
         <div className="text-center mb-8 sm:mb-12 max-w-3xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-semibold text-foreground leading-[1.1] mb-3 sm:mb-4 tracking-[-0.5px] text-center">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-display text-foreground leading-[1.1] mb-3 sm:mb-4 tracking-[-0.02em] text-center">
             {t('comparison.title')} <br className="sm:hidden" /><span className="neo-gradient-text">{t('comparison.titleHighlight')}</span>
           </h2>
-          <p className="text-foreground/40 text-sm sm:text-base leading-[1.6]">{t('comparison.subtitle')}</p>
+          <p className="text-muted-foreground text-sm sm:text-base leading-[1.6] font-light">{t('comparison.subtitle')}</p>
         </div>
 
         {/* Mobile: Tab Selector */}
