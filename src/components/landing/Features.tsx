@@ -1,6 +1,6 @@
 import { Zap, Brain, Globe, Clock, Wallet, Calendar, Users, Mail, TrendingUp, Mic } from 'lucide-react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
-import { PencilUnderline } from '@/components/ui/PencilUnderline';
+
 import { useTranslation } from 'react-i18next';
 
 const Features = () => {
