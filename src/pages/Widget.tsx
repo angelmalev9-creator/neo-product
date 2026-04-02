@@ -140,12 +140,12 @@ const Widget = () => {
   // Lead modal only shows on disconnect (endCall), not during conversation
 
   useEffect(() => {
-    if (!isConnected || !conversationId || !callStartTimeRef.current) return;
+    if (!isConnected || !conversationIdRef.current || !callStartTimeRef.current) return;
     const interval = setInterval(() => {
       const elapsed = (Date.now() - callStartTimeRef.current!) / 1000;
       const sinceLast = elapsed - lastTrackedTimeRef.current;
       if (sinceLast >= 10) {
-        trackConversation('add_usage', { durationSeconds: sinceLast });
+        trackConversation('add_usage', { durationSeconds: sinceLast, conversationId: conversationIdRef.current });
         lastTrackedTimeRef.current = elapsed;
       }
     }, 10000);
@@ -153,9 +153,11 @@ const Widget = () => {
   }, [isConnected, conversationId]);
 
   useEffect(() => {
-    if (!conversationId) return;
+    if (!conversationIdRef.current) return;
     const handleVis = () => {
-      if (document.hidden && isConnected) trackConversation('end', { conversationId });
+      if (document.hidden && isConnected) {
+        trackConversation('end', { conversationId: conversationIdRef.current });
+      }
     };
     window.addEventListener('visibilitychange', handleVis);
     return () => window.removeEventListener('visibilitychange', handleVis);
