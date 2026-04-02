@@ -69,20 +69,16 @@ serve(async (req) => {
   // Inject keyframes
   var styleEl = document.createElement('style');
   styleEl.textContent = \`
-    @keyframes neo-glow {
-      0%, 100% { box-shadow: 0 0 20px \${color}33, 0 4px 16px rgba(0,0,0,0.15); }
-      50% { box-shadow: 0 0 32px \${color}55, 0 4px 20px rgba(0,0,0,0.2); }
-    }
-    @keyframes neo-float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-3px); }
+    @keyframes neo-entrance {
+      0% { opacity: 0; transform: scale(0.8) translateY(12px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
     }
     #neo-widget-btn {
-      animation: neo-float 4s ease-in-out infinite, neo-glow 3s ease-in-out infinite;
+      animation: neo-entrance 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;
+      box-shadow: 0 4px 20px \${color}30, 0 2px 8px rgba(0,0,0,0.12);
     }
-    #neo-widget-btn:hover .neo-phone-icon {
-      transition: transform 0.3s ease;
-      transform: scale(1.08);
+    #neo-widget-btn:hover {
+      box-shadow: 0 8px 32px \${color}45, 0 4px 12px rgba(0,0,0,0.18);
     }
     @media (max-width: 640px) {
       .neo-widget-wrapper {
