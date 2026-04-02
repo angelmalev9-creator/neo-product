@@ -37,7 +37,7 @@ const Footer = () => {
       <div className="border-t border-border/10">
         <div className="container mx-auto px-4 lg:px-8 py-8 lg:py-16">
           <div className="max-w-3xl mx-auto text-center">
-            <h3 className="text-xl sm:text-3xl lg:text-4xl font-display font-black text-foreground mb-3">
+            <h3 className="text-xl sm:text-3xl lg:text-4xl font-display text-foreground mb-3">
               {t('footer.ctaTitle')}
             </h3>
             <p className="text-muted-foreground mb-6 text-sm sm:text-lg">

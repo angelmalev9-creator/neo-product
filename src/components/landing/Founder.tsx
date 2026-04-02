@@ -39,7 +39,7 @@ const Founder = () => {
                 <p className="text-primary text-xs font-bold uppercase tracking-[0.2em] mb-3">
                   Кой стои зад NEO
                 </p>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-black text-foreground mb-5 leading-[1.1] tracking-wide">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-display text-foreground mb-5 leading-[1.1] tracking-[-0.02em]">
                   <PencilUnderline>Здравейте, казвам се</PencilUnderline>{' '}
                   <span className="neo-gradient-text">Ангел Малев</span>
                 </h2>
