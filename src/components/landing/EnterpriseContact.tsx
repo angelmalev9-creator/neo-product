@@ -87,7 +87,7 @@ const EnterpriseContact = () => {
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
               placeholder={t('contact.messagePlaceholder')}
               rows={4}
-              className="w-full bg-background/30 border border-border/20 rounded-xl py-3.5 lg:py-4 px-4 text-sm placeholder:text-muted-foreground/35 focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/15 transition-all resize-none"
+              className="w-full bg-card/40 border border-border/30 rounded-xl py-3.5 lg:py-4 px-4 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all resize-none"
             />
 
             <Button
