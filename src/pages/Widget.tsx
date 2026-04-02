@@ -117,21 +117,25 @@ const Widget = () => {
   const persistTranscriptMessage = useCallback(async (role: Message['role'], content: string) => {
     const cleaned = cleanTranscriptForStorage(content);
     const normalized = cleaned.replace(/\s+/g, ' ').trim();
-    if (!conversationId || !normalized) return;
+    const cid = conversationIdRef.current;
+    if (!cid || !normalized) {
+      console.warn('[WIDGET-PERSIST] Skipped: no conversationId or empty content', { cid, normalized: normalized?.slice(0, 30) });
+      return;
+    }
 
-    const key = `${conversationId}:${role}:${normalized}`;
+    const key = `${cid}:${role}:${normalized}`;
     if (persistedTranscriptKeysRef.current.has(key)) return;
     persistedTranscriptKeysRef.current.add(key);
 
     const result = await trackConversation('message', role === 'user'
-      ? { userMessage: normalized }
-      : { assistantMessage: normalized }
+      ? { userMessage: normalized, conversationId: cid }
+      : { assistantMessage: normalized, conversationId: cid }
     );
 
     if (!result) {
       persistedTranscriptKeysRef.current.delete(key);
     }
-  }, [conversationId, trackConversation]);
+  }, [trackConversation]);
 
   // Lead modal only shows on disconnect (endCall), not during conversation
 
