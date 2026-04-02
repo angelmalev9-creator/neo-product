@@ -291,11 +291,11 @@ const Widget = () => {
 
   const handleLeadSubmit = useCallback(async (data: LeadData) => {
     const { error } = await supabase.functions.invoke('widget-capture-lead', {
-      body: { userId, firstName: data.firstName, lastName: data.lastName, email: data.email, service: data.service, conversationId },
+      body: { userId, firstName: data.firstName, lastName: data.lastName, email: data.email, service: data.service, conversationId: conversationIdRef.current },
     });
     if (error) throw error;
     setLeadSubmitted(true);
-  }, [userId, conversationId]);
+  }, [userId]);
 
   const handleSendText = useCallback(async () => {
     if (!textInput.trim() || !isConnected) return;
