@@ -3499,9 +3499,22 @@ export const useGeminiVoice = ({
           console.log("[SESSION] 📅 Calendar block appended to instruction (" + calendarBlock.length + " chars)");
         }
 
+        // ── Model fallback: ensure we use a valid, non-retired model ──────
+        const VALID_MODELS = [
+          "gemini-2.0-flash-live-001",
+          "gemini-2.5-flash-preview-native-audio-dialog",
+          "gemini-2.5-flash",
+        ];
+        const FALLBACK_MODEL = "gemini-2.5-flash-preview-native-audio-dialog";
+        let resolvedModel = data.model || FALLBACK_MODEL;
+        if (!VALID_MODELS.some(m => resolvedModel.includes(m))) {
+          console.warn(`[SESSION] ⚠️ Model "${resolvedModel}" may be retired, falling back to "${FALLBACK_MODEL}"`);
+          resolvedModel = FALLBACK_MODEL;
+        }
+
         sessionDataRef.current = {
           apiKey: data.apiKey,
-          model: data.model,
+          model: resolvedModel,
           systemInstruction: clampInstruction(resolvedInstruction, MAX_SYSTEM_INSTRUCTION_CHARS),
 
           // always keep a usable session id even if edge does not echo it back
