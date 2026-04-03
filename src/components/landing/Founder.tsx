@@ -2,6 +2,7 @@ import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 
 import { Mail, ArrowRight, Quote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import devOfNeoImg from '@/assets/dev-of-neo.png';
 
 const Founder = () => {
   const { ref, isVisible } = useScrollAnimation();
@@ -25,9 +26,11 @@ const Founder = () => {
               {/* Photo */}
               <div className="lg:col-span-1 flex justify-center">
                 <div className="relative">
-                  <div className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/15 shadow-xl shadow-primary/10">
-                    <span className="text-5xl sm:text-6xl lg:text-7xl">👨‍💻</span>
-                  </div>
+                  <img 
+                    src={devOfNeoImg} 
+                    alt="Dev of NEO" 
+                    className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 rounded-xl sm:rounded-2xl object-cover shadow-xl shadow-primary/10 border border-primary/15"
+                  />
                   <div className="absolute -bottom-3 -right-3 w-10 h-10 rounded-xl bg-primary/15 border border-primary/20 flex items-center justify-center">
                     <Quote className="w-4 h-4 text-primary" />
                   </div>
