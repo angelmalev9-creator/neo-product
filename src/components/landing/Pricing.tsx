@@ -217,8 +217,19 @@ const Pricing = () => {
                 <h3 className="text-lg lg:text-xl font-bold text-foreground mb-1">{plan.name}</h3>
                 <p className="text-xs lg:text-sm text-muted-foreground mb-4">{plan.description}</p>
 
-                {/* Price anchoring — strikethrough reference */}
-                <p className="text-[10px] text-muted-foreground/40 line-through mb-1">{plan.anchor}</p>
+                {/* Price anchoring — red strikethrough with savings animation */}
+                <div className="relative mb-1">
+                  <p className="text-[11px] font-medium line-through" style={{ color: 'hsl(0 72% 51%)' }}>{plan.anchor}</p>
+                  <motion.span
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={isVisible ? { opacity: 1, x: 0 } : {}}
+                    transition={{ delay: 0.6 + i * 0.15 }}
+                    className="absolute -right-1 top-1/2 -translate-y-1/2 text-[9px] font-bold px-2 py-0.5 rounded-full"
+                    style={{ color: 'hsl(142 71% 45%)', backgroundColor: 'hsla(142, 71%, 45%, 0.1)' }}
+                  >
+                    Спестявате {plan.savings}
+                  </motion.span>
+                </div>
                 <div className="flex items-baseline gap-1.5 mb-1">
                   <span className={`text-4xl lg:text-5xl font-black tracking-tight ${plan.featured ? 'neo-gradient-text' : 'text-foreground'}`}>
                     {plan.price} EUR
