@@ -231,7 +231,9 @@ const Pricing = () => {
                   </motion.span>
                 </div>
                 <div className="flex items-baseline gap-1.5 mb-1">
-                  <span className={`text-4xl lg:text-5xl font-black tracking-tight ${plan.featured ? 'neo-gradient-text' : 'text-foreground'}`}>
+                  <span className={`text-4xl lg:text-5xl font-black tracking-tight ${plan.featured ? '' : 'text-foreground'}`}
+                    style={plan.featured ? { color: 'hsl(142 71% 45%)' } : undefined}
+                  >
                     {plan.price} EUR
                   </span>
                   <span className="text-sm lg:text-lg text-muted-foreground font-medium">/{t('pricing.perMonthShort')}</span>
