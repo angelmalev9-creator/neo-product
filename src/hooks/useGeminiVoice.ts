@@ -2700,7 +2700,7 @@ export const useGeminiVoice = ({
         const emailCandidate = mergedContact?.email || normalizeSpokenEmail(visibleUserText);
         if (looksLikeCompleteEmail(emailCandidate)) {
           sendToGemini(
-            `${todayCtx}\n${focusBlock}\n[STT_EMAIL_CAPTURED — изпиши имейла точно и поискай потвърждение]: ${emailCandidate}`,
+            `${todayCtx}\n${focusBlock}\n[STT_EMAIL_CAPTURED — изпиши ТОЧНО получения имейл и поискай потвърждение. ЗАБРАНЕНО е да използваш "example.com" или други примерни адреси]: ${emailCandidate}`,
           );
           expectedSensitiveInputModeRef.current = "general";
         } else {
