@@ -637,13 +637,14 @@
 /* ── Responsive breakpoints ── */
 @media (max-width: 768px) {
   .neo-scaled-content {
-    font-size: 14px;
+    font-size: clamp(10px, 2.8vw, 14px);
   }
 
   .neo-snap-section {
-    min-height: auto;
-    padding-top: 1.5rem;
-    padding-bottom: 1.5rem;
+    scroll-snap-align: center;
+    min-height: 100svh;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
   }
 }
 
