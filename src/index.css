@@ -606,3 +606,31 @@
   }
   .luxury-text { text-transform: uppercase; letter-spacing: 0.15em; font-weight: 700; }
 }
+
+/* Scaled content wrapper — creates a compact 75%-like feel */
+.neo-scaled-content {
+  transform: scale(0.82);
+  transform-origin: top center;
+  width: 121.95%; /* 1/0.82 to compensate for scale */
+  margin-left: -10.975%; /* center the scaled content */
+}
+
+/* Snap sections for smooth scroll centering */
+.neo-snap-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: auto;
+}
+
+.neo-snap-section > * {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .neo-scaled-content {
+    transform: scale(0.88);
+    width: 113.64%;
+    margin-left: -6.82%;
+  }
+}
