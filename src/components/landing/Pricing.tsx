@@ -197,7 +197,6 @@ const Pricing = () => {
                 style={plan.featured ? {
                   boxShadow: '0 0 60px hsla(142, 71%, 45%, 0.15), 0 0 120px hsla(142, 71%, 45%, 0.05)',
                   borderColor: 'hsla(142, 71%, 45%, 0.3)',
-                  ringColor: 'hsla(142, 71%, 45%, 0.3)',
                 } : undefined}
               >
                 {plan.featured && (
