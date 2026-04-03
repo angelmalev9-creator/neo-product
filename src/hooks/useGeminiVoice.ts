@@ -2700,7 +2700,7 @@ export const useGeminiVoice = ({
         const emailCandidate = mergedContact?.email || normalizeSpokenEmail(visibleUserText);
         if (looksLikeCompleteEmail(emailCandidate)) {
           sendToGemini(
-            `${todayCtx}\n${focusBlock}\n[STT_EMAIL_CAPTURED — изпиши имейла точно и поискай потвърждение]: ${emailCandidate}`,
+            `${todayCtx}\n${focusBlock}\n[STT_EMAIL_CAPTURED — изпиши ТОЧНО получения имейл и поискай потвърждение. ЗАБРАНЕНО е да използваш "example.com" или други примерни адреси]: ${emailCandidate}`,
           );
           expectedSensitiveInputModeRef.current = "general";
         } else {
@@ -2736,12 +2736,12 @@ export const useGeminiVoice = ({
           looksLikeCompletePhone(mergedContact.phone)
         ) {
           sendToGemini(
-            `${todayCtx}\n${focusBlock}\n[STT_CONTACT_CAPTURED — повтори точно име, имейл и телефон поотделно и поискай потвърждение, без да измисляш липсващи части]: ${payload}`,
+            `${todayCtx}\n${focusBlock}\n[STT_CONTACT_CAPTURED — повтори САМО реално получените данни (име, имейл, телефон) поотделно и поискай потвърждение. ЗАБРАНЕНО е да използваш примерни стойности като "example.com" или "ваш.имейл". Ако нещо липсва — попитай клиента директно за него]: ${payload}`,
           );
           expectedSensitiveInputModeRef.current = "general";
         } else {
           sendToGemini(
-            `${todayCtx}\n${focusBlock}\n[STT_CONTACT_PARTIAL — повтори само това, което вече е чуто, и поискай само липсващото: ${missing || "данни"}]: ${payload || cleanText}`,
+            `${todayCtx}\n${focusBlock}\n[STT_CONTACT_PARTIAL — повтори САМО реално чутите данни. ЗАБРАНЕНО е да казваш примерни имейли или телефони. Поискай клиента да каже или напише липсващото: ${missing || "данни"}]: ${payload || cleanText}`,
           );
         }
       } else if (likelyGarbled) {
@@ -2764,7 +2764,7 @@ export const useGeminiVoice = ({
           .filter(Boolean)
           .join(" ");
         sendToGemini(
-          `${todayCtx}\n${focusBlock}\n[STT_CONTACT — поправи имейл/телефон ако са изкривени, изпиши ги обратно на клиента за потвърждение${parsedHints ? `; parsed: ${parsedHints}` : ""}]: ${cleanText}`,
+          `${todayCtx}\n${focusBlock}\n[STT_CONTACT — поправи имейл/телефон ако са изкривени, изпиши САМО реалните данни обратно на клиента за потвърждение. ЗАБРАНЕНО е да казваш примерни стойности${parsedHints ? `; parsed: ${parsedHints}` : ""}]: ${cleanText}`,
         );
       } else {
         scheduleFillerWord(380); // → пусни filler ако Gemini не отговори в 380ms
@@ -3480,7 +3480,12 @@ export const useGeminiVoice = ({
           `- НЕ изреждай всички налични опции наведнъж — предложи максимум 2 варианта, после питай.\n` +
           `- Говори разговорно и естествено — без списъци, без точки, без формален тон.\n` +
           `- Ако нещо не знаеш или не си сигурен — кажи го честно и предложи да провериш.\n` +
-          `- Отговаряй на зададения въпрос директно, без излишно предисловие.\n\n`;
+          `- Отговаряй на зададения въпрос директно, без излишно предисловие.\n\n` +
+          `ПРАВИЛА ЗА КОНТАКТНИ ДАННИ:\n` +
+          `- НИКОГА не казвай примерни имейли (example.com), телефони или имена. Те не съществуват.\n` +
+          `- Ако клиентът не е дал имейл, телефон или име — ПОПИТАЙ го директно. Не измисляй.\n` +
+          `- Когато повтаряш данни за потвърждение — използвай САМО реално получените от клиента.\n` +
+          `- Ако данните са непълни или неясни — помоли клиента да ги повтори или напише в чата.\n\n`;
 
         if (resolvedInstruction && !resolvedInstruction.startsWith("Говориш единствено")) {
           resolvedInstruction = BG_VOICE_PREFIX + resolvedInstruction;
