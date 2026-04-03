@@ -97,8 +97,22 @@ const VoiceTest = ({
 
     // Skip duplicate greeting
     if (message.role === 'assistant') {
-      const isGreeting = content.toLowerCase().startsWith('здравейте');
-      if (isGreeting && greetingShownRef.current) return;
+      // If greeting was already shown instantly, replace it with the real transcript instead of adding duplicate
+      if (greetingShownRef.current) {
+        const isGreeting = content.toLowerCase().includes('здравейте') || content.toLowerCase().includes('нео от');
+        if (isGreeting) {
+          // Replace the instant greeting with the real one
+          setMessages((prev) => {
+            const updated = [...prev];
+            if (updated.length > 0 && updated[0].role === 'assistant') {
+              updated[0] = { role: 'assistant', content };
+            }
+            return updated;
+          });
+          greetingShownRef.current = false;
+          return;
+        }
+      }
     }
 
     setMessages((prev) => [...prev, { role: message.role, content }]);

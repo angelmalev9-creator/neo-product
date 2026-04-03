@@ -475,11 +475,18 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
 
       const cleanedMessage: Message = { role: message.role, content };
 
-      // ✅ FIX: Deduplicate greeting - if assistant says greeting and we already added instant greeting
-      if (message.role === "assistant") {
-        const isGreeting = content.toLowerCase().startsWith("здравейте");
-        if (isGreeting && greetingShownRef.current) {
-          console.log("[VoiceInterview] Skipping duplicate greeting in chat");
+      // Replace instant greeting with real transcript instead of duplicating
+      if (message.role === "assistant" && greetingShownRef.current) {
+        const isGreeting = content.toLowerCase().includes("здравейте") || content.toLowerCase().includes("нео от");
+        if (isGreeting) {
+          setMessages((prev) => {
+            const updated = [...prev];
+            if (updated.length > 0 && updated[0].role === "assistant") {
+              updated[0] = { role: "assistant", content };
+            }
+            return updated;
+          });
+          greetingShownRef.current = false;
           lastAssistantMessageAtRef.current = Date.now();
           if (finalMessageSentRef.current) finalMessageSpokenRef.current = true;
           return;
