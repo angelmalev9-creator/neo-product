@@ -1,4 +1,4 @@
-import { Check, Crown, PiggyBank, ShieldCheck, Phone, BarChart3, Headphones, Users, Mail, Sparkles, Clock, ArrowRight } from 'lucide-react';
+import { Check, Crown, PiggyBank, ShieldCheck, Phone, BarChart3, Headphones, Users, Mail, Sparkles, Clock, ArrowRight, Calendar, Brain, Globe, Palette, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -50,14 +50,16 @@ const Pricing = () => {
     {
       id: 'starter', name: t('pricing.starter'), price: yearly ? '15' : '25', yearlyTotal: '180',
       minutes: '500', callsPerDay: `~25 ${t('pricing.callsPerDay')}`, savings: '97%',
-      description: t('pricing.starterDesc'),
+      description: 'За малки бизнеси, които искат да не пропускат обаждания.',
       anchor: '1 000 EUR/мес за рецепционист',
+      upgradeHook: 'Нужда от резервации и имейл автоматизация?',
       features: [
         { text: `500 ${t('pricing.minutes')} / ${t('pricing.perMonthShort')}`, icon: Phone },
         { text: t('pricing.feature_247'), icon: Headphones },
-        { text: t('pricing.feature_bulgarian'), icon: Check },
-        { text: t('pricing.feature_widget'), icon: Check },
+        { text: t('pricing.feature_bulgarian'), icon: Globe },
+        { text: t('pricing.feature_widget'), icon: Palette },
         { text: 'Базова статистика', icon: BarChart3 },
+        { text: 'База знания с обучение', icon: Brain },
       ],
       cta: t('pricing.ctaStarter'), featured: false,
       priceId: yearly ? PRICE_IDS.starter.yearly : PRICE_IDS.starter.monthly,
@@ -65,16 +67,17 @@ const Pricing = () => {
     {
       id: 'growth', name: t('pricing.growth'), price: yearly ? '23' : '33', yearlyTotal: '276',
       minutes: '2500', callsPerDay: `~125 ${t('pricing.callsPerDay')}`, savings: '96%',
-      description: t('pricing.growthDesc'),
+      description: 'За растящи бизнеси с повече клиенти и нужда от автоматизация.',
       anchor: '2 000 EUR/мес за екип',
+      upgradeHook: 'Нужда от собствен брандинг и персонална поддръжка?',
       features: [
         { text: `2 500 ${t('pricing.minutes')} / ${t('pricing.perMonthShort')}`, icon: Phone },
-        { text: t('pricing.feature_247'), icon: Headphones },
         { text: 'Всичко от Старт +', icon: Check },
-        { text: 'Автоматични резервации', icon: Sparkles },
+        { text: 'Автоматични резервации', icon: Calendar },
         { text: t('pricing.feature_email_automation'), icon: Mail },
-        { text: 'Детайлна статистика', icon: BarChart3 },
-        { text: t('pricing.feature_priority'), icon: Users },
+        { text: 'Детайлна статистика и графики', icon: TrendingUp },
+        { text: 'Улавяне на потенциални клиенти', icon: Users },
+        { text: t('pricing.feature_priority'), icon: Headphones },
       ],
       cta: t('pricing.ctaPopular'), featured: true,
       priceId: yearly ? PRICE_IDS.growth.yearly : PRICE_IDS.growth.monthly,
@@ -82,15 +85,16 @@ const Pricing = () => {
     {
       id: 'empire', name: t('pricing.business'), price: yearly ? '50' : '60', yearlyTotal: '600',
       minutes: '10000', callsPerDay: `500+ ${t('pricing.callsPerDay')}`, savings: '93%',
-      description: t('pricing.businessDesc'),
+      description: 'За бизнеси с голям обем обаждания и нужда от пълен контрол.',
       anchor: '5 000+ EUR/мес за цял екип',
+      upgradeHook: null,
       features: [
         { text: `10 000 ${t('pricing.minutes')} / ${t('pricing.perMonthShort')}`, icon: Phone },
         { text: 'Всичко от Растеж +', icon: Check },
-        { text: 'Без NEO брандиране', icon: Sparkles },
+        { text: 'Без NEO брандиране', icon: Palette },
         { text: 'Персонален мениджър', icon: Users },
-        { text: 'API достъп', icon: BarChart3 },
-        { text: 'Приоритетна поддръжка', icon: Headphones },
+        { text: 'Мулти-езикова поддръжка', icon: Globe },
+        { text: 'Приоритетна поддръжка 24/7', icon: Headphones },
       ],
       cta: t('pricing.ctaBusiness'), featured: false,
       priceId: yearly ? PRICE_IDS.empire.yearly : PRICE_IDS.empire.monthly,
@@ -164,7 +168,8 @@ const Pricing = () => {
                <motion.span
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-primary/10 text-primary border border-primary/20 text-[10px] sm:text-xs font-bold px-4 py-1.5 rounded-full"
+                className="text-[10px] sm:text-xs font-bold px-4 py-1.5 rounded-full border"
+                style={{ color: 'hsl(142 71% 45%)', backgroundColor: 'hsla(142, 71%, 45%, 0.1)', borderColor: 'hsla(142, 71%, 45%, 0.2)' }}
               >
                 Спестете до 40% с годишен план
               </motion.span>
@@ -198,7 +203,7 @@ const Pricing = () => {
                 )}
 
                 {isYearly && yearlySavings > 0 && (
-                  <div className="absolute -top-2 -right-2 z-10 bg-primary text-primary-foreground px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-lg">
+                  <div className="absolute -top-2 -right-2 z-10 px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-lg text-white" style={{ backgroundColor: 'hsl(142 71% 45%)' }}>
                     -{yearlySavings}%
                   </div>
                 )}
@@ -227,9 +232,9 @@ const Pricing = () => {
                   <span className="text-xs text-muted-foreground">({plan.callsPerDay})</span>
                 </div>
 
-                <div className="text-sm text-primary font-medium mb-6 flex items-center gap-2">
+                <div className="text-sm font-semibold mb-6 flex items-center gap-2" style={{ color: 'hsl(142 71% 45%)' }}>
                   <PiggyBank className="w-4 h-4" />
-                  {t('pricing.savingsPrefix')} {plan.savings} {t('pricing.savingsSuffix')}
+                  Спестявате {plan.savings} спрямо служител
                 </div>
 
                 <div className="h-px bg-border/20 mb-5" />
@@ -262,6 +267,13 @@ const Pricing = () => {
                 <p className="text-[9px] text-center text-muted-foreground/35 mt-3">
                   14 дни безплатен тест — без обвързване
                 </p>
+
+                {/* Upgrade hook — nudge to next tier */}
+                {(plan as any).upgradeHook && (
+                  <p className="text-[10px] text-center mt-3 font-medium" style={{ color: 'hsl(142 71% 45%)' }}>
+                    {(plan as any).upgradeHook} <span className="underline cursor-pointer">Вижте Растеж</span>
+                  </p>
+                )}
               </motion.div>
             );
           })}

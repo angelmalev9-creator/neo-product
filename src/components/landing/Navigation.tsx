@@ -29,8 +29,9 @@ const Navigation = () => {
   }, []);
 
   const navLinks = [
+    { href: '#use-cases', label: 'За кого е' },
     { href: '#features', label: t('nav.features') },
-    { href: '#demo', label: t('nav.demo') },
+    { href: '#calculator', label: 'Колко губите?' },
     { href: '#pricing', label: t('nav.pricing') },
     { href: '/blog', label: 'БЛОГ', isRoute: true },
   ];
