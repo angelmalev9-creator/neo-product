@@ -3,11 +3,11 @@ import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 
-import usecaseClinic from '@/assets/usecase-clinic.jpg';
-import usecaseSalon from '@/assets/usecase-salon.jpg';
-import usecaseAuto from '@/assets/usecase-auto.jpg';
-import usecaseFitness from '@/assets/usecase-fitness.jpg';
-import usecaseHotel from '@/assets/usecase-hotel.jpg';
+import usecaseClinic from '@/assets/usecase-clinic.png';
+import usecaseSalon from '@/assets/usecase-salon.png';
+import usecaseAuto from '@/assets/usecase-auto.png';
+import usecaseFitness from '@/assets/usecase-fitness.png';
+import usecaseHotel from '@/assets/usecase-hotel.png';
 
 const industries = [
   {
