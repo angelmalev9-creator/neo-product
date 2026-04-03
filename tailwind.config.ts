@@ -60,12 +60,12 @@ export default {
         "float": "float 6s ease-in-out infinite",
       },
       backgroundImage: {
-        "neo-gradient": "linear-gradient(145deg, hsl(0 0% 3%) 0%, hsl(0 0% 7%) 100%)",
-        "neo-card-gradient": "linear-gradient(145deg, hsl(0 0% 7% / 0.95) 0%, hsl(0 0% 4% / 0.9) 100%)",
-        "neo-red-gradient": "linear-gradient(135deg, hsl(var(--neo-red)) 0%, hsl(var(--neo-red-glow)) 100%)",
-        "neo-warmth": "linear-gradient(135deg, hsl(0 85% 55%) 0%, hsl(355 90% 60%) 100%)",
-        "neo-premium": "linear-gradient(135deg, hsl(var(--neo-red)) 0%, hsl(var(--accent)) 50%, hsl(var(--neo-red)) 100%)",
-        "neo-radial": "radial-gradient(ellipse at center, hsl(var(--primary) / 0.2) 0%, transparent 70%)",
+        "neo-gradient": "linear-gradient(145deg, hsl(230 20% 4%) 0%, hsl(228 18% 7%) 100%)",
+        "neo-card-gradient": "linear-gradient(145deg, hsl(228 18% 7% / 0.95) 0%, hsl(230 20% 4% / 0.9) 100%)",
+        "neo-blue-gradient": "linear-gradient(135deg, hsl(var(--neo-blue)) 0%, hsl(var(--neo-blue-glow)) 100%)",
+        "neo-warmth": "linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(190 95% 55%) 100%)",
+        "neo-premium": "linear-gradient(135deg, hsl(var(--neo-blue)) 0%, hsl(var(--neo-cyan)) 50%, hsl(var(--neo-blue)) 100%)",
+        "neo-radial": "radial-gradient(ellipse at center, hsl(var(--primary) / 0.15) 0%, transparent 70%)",
       },
       boxShadow: {
         "neo-glow": "0 0 25px hsl(var(--neo-red) / 0.5), 0 0 50px hsl(var(--neo-red) / 0.3), 0 25px 50px hsl(0 0% 0% / 0.6)",
