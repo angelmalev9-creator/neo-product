@@ -14,7 +14,6 @@ const BusinessResults = lazy(() => import('@/components/landing/BusinessResults'
 const Comparison = lazy(() => import('@/components/landing/Comparison'));
 const Testimonials = lazy(() => import('@/components/landing/Testimonials'));
 const Pricing = lazy(() => import('@/components/landing/Pricing'));
-const Founder = lazy(() => import('@/components/landing/Founder'));
 const EnterpriseContact = lazy(() => import('@/components/landing/EnterpriseContact'));
 const Footer = lazy(() => import('@/components/landing/Footer'));
 
