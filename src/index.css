@@ -170,8 +170,8 @@
 
   @media (max-width: 768px) {
     body {
-      font-size: 16px;
-      line-height: 1.6;
+      font-size: 15px;
+      line-height: 1.55;
       background:
         radial-gradient(ellipse 120% 45% at 50% -15%, hsl(var(--neo-blue) / 0.12) 0%, transparent 50%),
         hsl(var(--background));
@@ -497,11 +497,17 @@
   .luxury-text { text-transform: uppercase; letter-spacing: 0.15em; font-weight: 700; }
 }
 
-/* ── Global Layout System — Miniature / Compact ── */
+/* ── Global Layout System — Compact desktop, readable mobile ── */
 .neo-scaled-content {
   max-width: 100vw;
   overflow-x: hidden;
-  font-size: clamp(11px, 1vw, 14px);
+  font-size: clamp(13px, 1.1vw, 14px);
+}
+
+@media (max-width: 768px) {
+  .neo-scaled-content {
+    font-size: 15px;
+  }
 }
 
 /* Snap scroll container */
@@ -520,25 +526,50 @@
   width: 100%;
 }
 
-/* ── Consistent Section Spacing — tighter for compact feel ── */
+/* ── Consistent Section Spacing ── */
 .neo-section-spacing {
   padding-top: clamp(2.5rem, 5vw, 6rem);
   padding-bottom: clamp(2.5rem, 5vw, 6rem);
 }
 
-/* ── Fluid Typography Scale — smaller for miniature look ── */
+@media (max-width: 768px) {
+  .neo-section-spacing {
+    padding-top: clamp(2rem, 8vw, 3rem);
+    padding-bottom: clamp(2rem, 8vw, 3rem);
+  }
+}
+
+/* ── Fluid Typography Scale ── */
 .neo-heading-section {
   font-size: clamp(1.5rem, 3vw, 2.5rem);
   line-height: 1.1;
   letter-spacing: -0.02em;
 }
 
+@media (max-width: 768px) {
+  .neo-heading-section {
+    font-size: clamp(1.4rem, 6vw, 1.75rem);
+  }
+}
+
 .neo-subheading {
-  font-size: clamp(0.813rem, 1.1vw, 1rem);
+  font-size: clamp(0.875rem, 1.2vw, 1.05rem);
   line-height: 1.6;
 }
 
+@media (max-width: 768px) {
+  .neo-subheading {
+    font-size: clamp(0.875rem, 3.8vw, 1rem);
+  }
+}
+
 .neo-body {
-  font-size: clamp(0.75rem, 0.9vw, 0.875rem);
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .neo-body {
+    font-size: clamp(0.825rem, 3.5vw, 0.9rem);
+  }
 }

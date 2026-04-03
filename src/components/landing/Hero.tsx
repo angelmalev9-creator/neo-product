@@ -194,7 +194,7 @@ const Hero = () => {
   const { t } = useTranslation();
 
   return (
-    <section className="relative min-h-[calc(100svh-3rem)] flex items-center neo-section-spacing overflow-hidden">
+    <section className="relative min-h-[calc(100svh-3rem)] flex items-center neo-section-spacing overflow-hidden px-4 sm:px-0">
       <div className="absolute inset-0 neo-grid-bg opacity-5 pointer-events-none" />
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 relative z-10 w-full">
@@ -217,7 +217,7 @@ const Hero = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-3xl sm:text-4xl lg:text-5xl font-display font-black text-foreground tracking-tight mb-5 leading-[1.08]"
+              className="text-[1.6rem] sm:text-4xl lg:text-5xl font-display font-black text-foreground tracking-tight mb-4 sm:mb-5 leading-[1.08]"
             >
               Докато Вие спите, NEO говори с клиенти и{' '}
               <span className="neo-gradient-text">записва часове</span>{' '}
@@ -239,7 +239,7 @@ const Hero = () => {
             {/* CTAs */}
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="flex flex-col sm:flex-row gap-2.5 mb-5">
               <Button
-                className="neo-btn-primary text-xs px-5 py-2.5 h-auto font-bold rounded-full group gap-1.5"
+                className="neo-btn-primary text-[13px] sm:text-xs px-5 py-3 sm:py-2.5 h-auto font-bold rounded-full group gap-1.5 w-full sm:w-auto"
                 onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 <Play className="w-3.5 h-3.5 fill-current" />
@@ -247,7 +247,7 @@ const Hero = () => {
               </Button>
               <Button
                 variant="outline"
-                className="neo-glass-premium border-0 text-foreground/50 hover:text-foreground text-xs px-5 py-2.5 h-auto rounded-full font-bold gap-1.5"
+                className="neo-glass-premium border-0 text-foreground/50 hover:text-foreground text-[13px] sm:text-xs px-5 py-3 sm:py-2.5 h-auto rounded-full font-bold gap-1.5 w-full sm:w-auto"
                 onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 Вижте как работи

@@ -94,12 +94,12 @@ const Navigation = () => {
           <div className="md:hidden flex items-center gap-2">
             <Button 
               size="sm" 
-              className="neo-btn-primary text-[11px] h-8 px-3.5 rounded-full font-bold" 
+              className="neo-btn-primary text-[12px] h-9 px-4 rounded-full font-bold" 
               onClick={() => { setIsOpen(false); document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' }); }}
             >
               {t('nav.demo')}
             </Button>
-            <button className="p-2 text-foreground rounded-full active:bg-foreground/5 transition-colors" onClick={() => setIsOpen(!isOpen)}>
+            <button className="p-2.5 text-foreground rounded-full active:bg-foreground/5 transition-colors" onClick={() => setIsOpen(!isOpen)}>
               {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
@@ -118,7 +118,7 @@ const Navigation = () => {
                   if ((link as any).isRoute) navigate(link.href);
                   else document.querySelector(link.href)?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="block text-[15px] py-3 text-foreground/45 hover:text-foreground active:text-foreground transition-colors text-left w-full font-medium" 
+                className="block text-[14px] py-3.5 text-foreground/45 hover:text-foreground active:text-foreground transition-colors text-left w-full font-medium" 
               >
                 {link.label}
               </button>
@@ -127,14 +127,14 @@ const Navigation = () => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="text-[15px] flex-1 h-11 text-foreground/45 rounded-xl font-medium" 
+                className="text-[14px] flex-1 h-12 text-foreground/45 rounded-xl font-medium" 
                 onClick={() => { setIsOpen(false); navigate('/auth'); }}
               >
                 {t('nav.login')}
               </Button>
               <Button 
                 size="sm" 
-                className="neo-btn-primary text-[15px] flex-1 h-11 rounded-full font-bold" 
+                className="neo-btn-primary text-[14px] flex-1 h-12 rounded-full font-bold" 
                 onClick={() => { setIsOpen(false); document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' }); }}
               >
                 {t('nav.demo')}
