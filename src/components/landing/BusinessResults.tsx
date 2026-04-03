@@ -105,7 +105,7 @@ const BusinessResults = () => {
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="features"
-      className="py-10 sm:py-14 relative overflow-hidden"
+      className="py-20 sm:py-28 relative overflow-hidden"
     >
       {/* Ambient glows */}
       <div className="absolute top-1/4 left-0 w-[500px] h-[500px] rounded-full bg-primary/5 blur-[180px] pointer-events-none" />
