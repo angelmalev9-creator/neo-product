@@ -16,9 +16,23 @@ const AnimatedBackground = () => {
     let time = 0;
 
     const isMobile = window.innerWidth < 768;
-    const DOT_SPACING = isMobile ? 20 : 14;
-    const DOT_RADIUS = 0.6;
-    const BASE_OPACITY = 0.07;
+    const DOT_SPACING = isMobile ? 28 : 18;
+    const DOT_RADIUS = 0.8;
+    const BASE_OPACITY = 0.09;
+    const MOUSE_RADIUS = isMobile ? 0 : 140;
+    const REPEL_STRENGTH = 18;
+
+    // Mouse tracking
+    const mouse = { x: -9999, y: -9999 };
+
+    const onMouseMove = (e: MouseEvent) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    };
+
+    if (!isMobile) {
+      window.addEventListener('mousemove', onMouseMove, { passive: true });
+    }
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio, 1.5);
@@ -39,51 +53,82 @@ const AnimatedBackground = () => {
       const H = window.innerHeight;
       ctx.clearRect(0, 0, W, H);
 
-      // Radial gradient glow — bottom-right teal accent
-      const grd = ctx.createRadialGradient(W * 0.85, H * 0.75, 0, W * 0.85, H * 0.75, W * 0.55);
-      grd.addColorStop(0, 'rgba(0,210,160,0.06)');
-      grd.addColorStop(0.4, 'rgba(0,180,140,0.025)');
+      // Deep crimson radial glow — bottom-right
+      const grd = ctx.createRadialGradient(W * 0.8, H * 0.7, 0, W * 0.8, H * 0.7, W * 0.5);
+      grd.addColorStop(0, 'rgba(140,20,20,0.06)');
+      grd.addColorStop(0.4, 'rgba(100,10,10,0.025)');
       grd.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = grd;
       ctx.fillRect(0, 0, W, H);
 
-      // Secondary subtle red glow — top-left
-      const grd2 = ctx.createRadialGradient(W * 0.1, H * 0.15, 0, W * 0.1, H * 0.15, W * 0.4);
-      grd2.addColorStop(0, 'rgba(255,60,60,0.03)');
-      grd2.addColorStop(0.5, 'rgba(255,60,60,0.01)');
+      // Secondary dark red glow — top-left
+      const grd2 = ctx.createRadialGradient(W * 0.15, H * 0.2, 0, W * 0.15, H * 0.2, W * 0.35);
+      grd2.addColorStop(0, 'rgba(160,30,30,0.04)');
+      grd2.addColorStop(0.5, 'rgba(120,15,15,0.015)');
       grd2.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = grd2;
       ctx.fillRect(0, 0, W, H);
 
-      // Dot grid
+      // Interactive dot grid with mouse repulsion
       const cols = Math.ceil(W / DOT_SPACING) + 1;
       const rows = Math.ceil(H / DOT_SPACING) + 1;
+      const mouseRadiusSq = MOUSE_RADIUS * MOUSE_RADIUS;
 
       for (let row = 0; row < rows; row++) {
-        const y = row * DOT_SPACING;
+        const baseY = row * DOT_SPACING;
         for (let col = 0; col < cols; col++) {
-          const x = col * DOT_SPACING;
+          const baseX = col * DOT_SPACING;
 
-          // Distance from center for vignette
-          const dx = (x / W - 0.5) * 2;
-          const dy = (y / H - 0.5) * 2;
+          let drawX = baseX;
+          let drawY = baseY;
+          let mouseGlow = 0;
+
+          // Mouse repulsion
+          if (!isMobile) {
+            const mdx = baseX - mouse.x;
+            const mdy = baseY - mouse.y;
+            const distSq = mdx * mdx + mdy * mdy;
+
+            if (distSq < mouseRadiusSq && distSq > 0) {
+              const dist = Math.sqrt(distSq);
+              const force = (1 - dist / MOUSE_RADIUS);
+              const forceCubed = force * force * force;
+              drawX += (mdx / dist) * REPEL_STRENGTH * forceCubed;
+              drawY += (mdy / dist) * REPEL_STRENGTH * forceCubed;
+              mouseGlow = forceCubed;
+            }
+          }
+
+          // Vignette
+          const dx = (baseX / W - 0.5) * 2;
+          const dy = (baseY / H - 0.5) * 2;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          const vignette = Math.max(0, 1 - dist * 0.6);
+          const vignette = Math.max(0, 1 - dist * 0.55);
 
-          // Subtle wave animation
-          const wave = Math.sin(x * 0.008 + time * 2) * Math.cos(y * 0.006 + time * 1.5);
-          const opacity = BASE_OPACITY * vignette * (0.7 + 0.3 * (wave * 0.5 + 0.5));
+          // Wave
+          const wave = Math.sin(baseX * 0.008 + time * 2) * Math.cos(baseY * 0.006 + time * 1.5);
+          let opacity = BASE_OPACITY * vignette * (0.7 + 0.3 * (wave * 0.5 + 0.5));
+
+          // Boost opacity near mouse
+          opacity += mouseGlow * 0.25;
 
           if (opacity < 0.008) continue;
 
+          // Dot color: white normally, crimson glow near mouse
+          const r = Math.round(255 - mouseGlow * 95);
+          const g = Math.round(255 - mouseGlow * 220);
+          const b = Math.round(255 - mouseGlow * 220);
+
+          const radius = DOT_RADIUS + mouseGlow * 1.2;
+
           ctx.beginPath();
-          ctx.arc(x, y, DOT_RADIUS, 0, 6.2832);
-          ctx.fillStyle = `rgba(255,255,255,${opacity})`;
+          ctx.arc(drawX, drawY, radius, 0, 6.2832);
+          ctx.fillStyle = `rgba(${r},${g},${b},${opacity})`;
           ctx.fill();
         }
       }
 
-      // Edge vignette overlay
+      // Edge vignette
       const vig = ctx.createRadialGradient(W / 2, H / 2, W * 0.25, W / 2, H / 2, W * 0.75);
       vig.addColorStop(0, 'rgba(0,0,0,0)');
       vig.addColorStop(1, 'rgba(0,0,0,0.3)');
@@ -105,6 +150,7 @@ const AnimatedBackground = () => {
       cancelAnimationFrame(animationId);
       clearTimeout(resizeTimeout);
       window.removeEventListener('resize', onResize);
+      if (!isMobile) window.removeEventListener('mousemove', onMouseMove);
     };
   }, []);
 
