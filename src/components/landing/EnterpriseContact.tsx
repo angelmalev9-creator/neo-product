@@ -92,6 +92,7 @@ const EnterpriseContact = () => {
 
             {/* Contact Form */}
             <form onSubmit={handleSubmit} className="neo-glass-premium rounded-xl sm:rounded-2xl lg:rounded-3xl p-5 sm:p-6 lg:p-8 space-y-3 sm:space-y-4 flex flex-col justify-center">
+              <h3 className="text-lg font-black text-foreground mb-1">Контактна форма</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
