@@ -94,12 +94,12 @@ const Navigation = () => {
           <div className="md:hidden flex items-center gap-2">
             <Button 
               size="sm" 
-              className="neo-btn-primary text-[11px] h-8 px-3.5 rounded-full font-bold" 
+              className="neo-btn-primary text-[12px] h-9 px-4 rounded-full font-bold" 
               onClick={() => { setIsOpen(false); document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' }); }}
             >
               {t('nav.demo')}
             </Button>
-            <button className="p-2 text-foreground rounded-full active:bg-foreground/5 transition-colors" onClick={() => setIsOpen(!isOpen)}>
+            <button className="p-2.5 text-foreground rounded-full active:bg-foreground/5 transition-colors" onClick={() => setIsOpen(!isOpen)}>
               {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
