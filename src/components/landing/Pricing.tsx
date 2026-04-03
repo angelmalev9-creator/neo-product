@@ -280,17 +280,6 @@ const Pricing = () => {
                   {loadingPlan === plan.id ? t('pricing.loading') : plan.cta}
                 </Button>
 
-                {/* Micro-commitment — risk reversal */}
-                <p className="text-[9px] text-center text-muted-foreground/35 mt-3">
-                  14 дни безплатен тест — без обвързване
-                </p>
-
-                {/* Upgrade hook — nudge to next tier */}
-                {(plan as any).upgradeHook && (
-                  <p className="text-[10px] text-center mt-3 font-medium" style={{ color: 'hsl(142 71% 45%)' }}>
-                    {(plan as any).upgradeHook} <span className="underline cursor-pointer">Вижте Растеж</span>
-                  </p>
-                )}
               </motion.div>
             );
           })}
