@@ -95,23 +95,29 @@ const VoiceTest = ({
       return;
     }
 
-    // Skip duplicate greeting
+    // Skip duplicate greeting — block any greeting-like assistant message while instant greeting is showing
     if (message.role === 'assistant') {
-      // If greeting was already shown instantly, replace it with the real transcript instead of adding duplicate
-      if (greetingShownRef.current) {
-        const isGreeting = content.toLowerCase().includes('здравейте') || content.toLowerCase().includes('нео от');
-        if (isGreeting) {
-          // Replace the instant greeting with the real one
-          setMessages((prev) => {
+      const lc = content.toLowerCase();
+      const isGreeting = lc.includes('здравейте') || lc.includes('нео от') || lc.includes('с какво мога');
+      
+      if (isGreeting) {
+        // Always replace the first assistant message if it's still the only one (instant greeting)
+        setMessages((prev) => {
+          const assistantCount = prev.filter(m => m.role === 'assistant').length;
+          if (assistantCount <= 1 && prev.length > 0 && prev[0].role === 'assistant') {
             const updated = [...prev];
-            if (updated.length > 0 && updated[0].role === 'assistant') {
-              updated[0] = { role: 'assistant', content };
-            }
+            updated[0] = { role: 'assistant', content };
             return updated;
-          });
-          greetingShownRef.current = false;
-          return;
-        }
+          }
+          return prev;
+        });
+        greetingShownRef.current = false;
+        return;
+      }
+      
+      // If greetingShown is still true but this isn't a greeting, just clear the flag
+      if (greetingShownRef.current) {
+        greetingShownRef.current = false;
       }
     }
 
