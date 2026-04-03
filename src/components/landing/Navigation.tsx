@@ -33,7 +33,6 @@ const Navigation = () => {
     { href: '#features', label: t('nav.features') },
     { href: '#calculator', label: 'ВИЖТЕ КОЛКО ГУБИТЕ' },
     { href: '#pricing', label: t('nav.pricing') },
-    { href: '/blog', label: 'БЛОГ', isRoute: true },
   ];
 
   return (
