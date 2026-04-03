@@ -168,7 +168,8 @@ const Pricing = () => {
                <motion.span
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-primary/10 text-primary border border-primary/20 text-[10px] sm:text-xs font-bold px-4 py-1.5 rounded-full"
+                className="text-[10px] sm:text-xs font-bold px-4 py-1.5 rounded-full border"
+                style={{ color: 'hsl(142 71% 45%)', backgroundColor: 'hsla(142, 71%, 45%, 0.1)', borderColor: 'hsla(142, 71%, 45%, 0.2)' }}
               >
                 Спестете до 40% с годишен план
               </motion.span>
