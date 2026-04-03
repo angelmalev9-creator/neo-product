@@ -239,7 +239,7 @@ const Hero = () => {
             {/* CTAs */}
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="flex flex-col sm:flex-row gap-2.5 mb-5">
               <Button
-                className="neo-btn-primary text-xs px-5 py-2.5 h-auto font-bold rounded-full group gap-1.5"
+                className="neo-btn-primary text-[13px] sm:text-xs px-5 py-3 sm:py-2.5 h-auto font-bold rounded-full group gap-1.5 w-full sm:w-auto"
                 onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 <Play className="w-3.5 h-3.5 fill-current" />
@@ -247,7 +247,7 @@ const Hero = () => {
               </Button>
               <Button
                 variant="outline"
-                className="neo-glass-premium border-0 text-foreground/50 hover:text-foreground text-xs px-5 py-2.5 h-auto rounded-full font-bold gap-1.5"
+                className="neo-glass-premium border-0 text-foreground/50 hover:text-foreground text-[13px] sm:text-xs px-5 py-3 sm:py-2.5 h-auto rounded-full font-bold gap-1.5 w-full sm:w-auto"
                 onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 Вижте как работи
