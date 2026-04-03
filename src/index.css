@@ -62,12 +62,12 @@
     /* Sidebar */
     --sidebar-background: 230 20% 5%;
     --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 0 85% 58%;
+    --sidebar-primary: 355 72% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 228 14% 12%;
     --sidebar-accent-foreground: 210 20% 98%;
     --sidebar-border: 225 10% 16%;
-    --sidebar-ring: 0 85% 58%;
+    --sidebar-ring: 355 72% 42%;
   }
 
   .light {
