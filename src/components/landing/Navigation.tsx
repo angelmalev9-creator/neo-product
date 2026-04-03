@@ -127,14 +127,14 @@ const Navigation = () => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="text-[15px] flex-1 h-11 text-foreground/45 rounded-xl font-medium" 
+                className="text-[14px] flex-1 h-12 text-foreground/45 rounded-xl font-medium" 
                 onClick={() => { setIsOpen(false); navigate('/auth'); }}
               >
                 {t('nav.login')}
               </Button>
               <Button 
                 size="sm" 
-                className="neo-btn-primary text-[15px] flex-1 h-11 rounded-full font-bold" 
+                className="neo-btn-primary text-[14px] flex-1 h-12 rounded-full font-bold" 
                 onClick={() => { setIsOpen(false); document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' }); }}
               >
                 {t('nav.demo')}
