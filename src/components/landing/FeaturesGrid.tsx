@@ -102,7 +102,7 @@ const FeaturesGrid = () => {
     >
       <div className="mx-auto max-w-6xl px-3 sm:px-4 lg:px-6">
         <div className="text-center mb-10 sm:mb-12">
-          <h2 className="text-lg sm:text-xl md:text-2xl font-display font-black text-foreground leading-[1.08] tracking-tight mb-3">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground leading-[1.08] tracking-tight mb-3">
             Всичко, което <span className="text-primary">Ви трябва</span>
           </h2>
           <p className="text-muted-foreground text-sm max-w-md mx-auto">

@@ -607,12 +607,12 @@
   .luxury-text { text-transform: uppercase; letter-spacing: 0.15em; font-weight: 700; }
 }
 
-/* Scaled content wrapper — creates a compact 75%-like feel */
+/* Scaled content wrapper — creates a compact miniature feel */
 .neo-scaled-content {
-  transform: scale(0.82);
+  transform: scale(0.76);
   transform-origin: top center;
-  width: 121.95%; /* 1/0.82 to compensate for scale */
-  margin-left: -10.975%; /* center the scaled content */
+  width: 131.58%; /* 1/0.76 to compensate for scale */
+  margin-left: -15.79%; /* center the scaled content */
 }
 
 /* Snap scroll container */
@@ -635,8 +635,14 @@
 
 @media (max-width: 768px) {
   .neo-scaled-content {
-    transform: scale(0.88);
-    width: 113.64%;
-    margin-left: -6.82%;
+    transform: scale(0.82);
+    width: 121.95%;
+    margin-left: -10.975%;
+  }
+
+  .neo-snap-section {
+    min-height: auto;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
   }
 }

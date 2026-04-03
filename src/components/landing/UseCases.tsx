@@ -254,7 +254,7 @@ const UseCases = () => {
       <div className="mx-auto max-w-6xl px-3 sm:px-4 lg:px-6 w-full flex-1 flex flex-col">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
-          <h2 className="text-lg sm:text-xl md:text-2xl font-display font-black text-foreground leading-[1.08] tracking-tight mb-2">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground leading-[1.08] tracking-tight mb-2">
             За всеки бизнес,{' '}
             <span className="text-primary">който говори с клиенти</span>
           </h2>

@@ -32,7 +32,7 @@ const RevenueCalculator = () => {
             <Calculator className="w-3 h-3" />
             Калкулатор
           </span>
-          <h2 className="text-lg sm:text-xl md:text-2xl font-display font-black text-foreground leading-[1.08] tracking-tight mb-3">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground leading-[1.08] tracking-tight mb-3">
             Колко губите от{' '}
             <span className="text-primary">пропуснати обаждания?</span>
           </h2>

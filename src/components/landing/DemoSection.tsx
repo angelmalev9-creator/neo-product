@@ -281,7 +281,7 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center max-w-6xl mx-auto">
           <div>
-            <h2 className="text-lg sm:text-xl md:text-2xl font-display font-black text-foreground mb-2 lg:mb-3 leading-[1.08] tracking-tight">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground mb-2 lg:mb-3 leading-[1.08] tracking-tight">
               {t("demo.title1")}{" "}
               <span className="text-primary">{t("demo.title2")}</span>
             </h2>
