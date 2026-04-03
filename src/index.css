@@ -16,58 +16,58 @@
     --popover: 228 18% 7%;
     --popover-foreground: 210 20% 98%;
 
-    /* PRIMARY: Lighter Crimson — vibrant but not neon */
-    --primary: 355 65% 52%;
+    /* PRIMARY: Saturated Electric Crimson — dopamine hit */
+    --primary: 355 85% 55%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 228 14% 11%;
     --secondary-foreground: 210 20% 98%;
 
     --muted: 225 12% 14%;
-    --muted-foreground: 218 14% 50%;
+    --muted-foreground: 218 14% 55%;
 
-    /* ACCENT: Warm Rose */
-    --accent: 350 55% 48%;
+    /* ACCENT: Vivid Hot Red */
+    --accent: 350 80% 52%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 82% 54%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 225 10% 16%;
+    --border: 225 10% 18%;
     --input: 228 12% 9%;
-    --ring: 355 65% 52%;
+    --ring: 355 85% 55%;
 
     --radius: 0.75rem;
 
-    /* NEO Custom — Lighter Crimson Palette */
-    --neo-blue: 355 65% 52%;
-    --neo-blue-glow: 0 60% 58%;
-    --neo-blue-dark: 350 55% 38%;
-    --neo-cyan: 350 55% 48%;
-    --neo-cyan-glow: 355 60% 55%;
-    --neo-indigo: 340 50% 48%;
-    --neo-purple: 330 45% 50%;
+    /* NEO Custom — Saturated Dopamine Palette */
+    --neo-blue: 355 85% 55%;
+    --neo-blue-glow: 0 80% 60%;
+    --neo-blue-dark: 350 75% 42%;
+    --neo-cyan: 350 75% 52%;
+    --neo-cyan-glow: 355 80% 58%;
+    --neo-indigo: 340 70% 52%;
+    --neo-purple: 330 65% 55%;
     --neo-dark: 230 20% 4%;
     --neo-dark-lighter: 228 18% 7%;
     --neo-glass: 228 14% 9%;
     --neo-glass-border: 225 10% 20%;
     --neo-text-muted: 218 14% 50%;
     --neo-text-bright: 210 20% 96%;
-    --neo-success: 152 76% 48%;
-    --neo-success-glow: 152 85% 55%;
-    --neo-warning: 45 100% 55%;
-    --neo-gold: 40 100% 55%;
-    --neo-orange: 25 95% 58%;
+    --neo-success: 142 80% 50%;
+    --neo-success-glow: 142 90% 58%;
+    --neo-warning: 45 100% 58%;
+    --neo-gold: 40 100% 58%;
+    --neo-orange: 20 100% 60%;
 
     /* Sidebar */
     --sidebar-background: 230 20% 5%;
     --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 355 65% 52%;
+    --sidebar-primary: 355 85% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 228 14% 12%;
     --sidebar-accent-foreground: 210 20% 98%;
-    --sidebar-border: 225 10% 16%;
-    --sidebar-ring: 355 65% 52%;
+    --sidebar-border: 225 10% 18%;
+    --sidebar-ring: 355 85% 55%;
   }
 
   .light {
