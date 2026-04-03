@@ -31,11 +31,11 @@ export default {
           border: "hsl(var(--sidebar-border))", ring: "hsl(var(--sidebar-ring))",
         },
         neo: {
-          red: "hsl(var(--neo-red))", "red-glow": "hsl(var(--neo-red-glow))",
+          blue: "hsl(var(--neo-blue))", "blue-glow": "hsl(var(--neo-blue-glow))",
           dark: "hsl(var(--neo-dark))", "dark-lighter": "hsl(var(--neo-dark-lighter))",
           glass: "hsl(var(--neo-glass))", "glass-border": "hsl(var(--neo-glass-border))",
           "text-muted": "hsl(var(--neo-text-muted))", success: "hsl(var(--neo-success))",
-          warning: "hsl(var(--neo-warning))", purple: "hsl(var(--neo-purple))", blue: "hsl(var(--neo-blue))",
+          warning: "hsl(var(--neo-warning))", purple: "hsl(var(--neo-purple))", cyan: "hsl(var(--neo-cyan))",
         },
       },
       borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)", "2xl": "1rem", "3xl": "1.5rem" },
