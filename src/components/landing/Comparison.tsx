@@ -23,7 +23,7 @@ const Comparison = () => {
     >
       <div className="container mx-auto px-4 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground leading-[1.08] tracking-tight mb-3">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-display font-black text-foreground leading-[1.08] tracking-tight mb-3">
             NEO vs <span className="text-primary">служител</span>
           </h2>
           <p className="text-muted-foreground text-base max-w-lg mx-auto">

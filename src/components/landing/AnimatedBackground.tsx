@@ -11,7 +11,7 @@ const AnimatedBackground = () => {
 
     let animationId: number;
     let lastTime = 0;
-    const TARGET_FPS = 30;
+    const TARGET_FPS = 60;
     const FRAME_TIME = 1000 / TARGET_FPS;
     let time = 0;
 
