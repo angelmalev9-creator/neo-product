@@ -2764,7 +2764,7 @@ export const useGeminiVoice = ({
           .filter(Boolean)
           .join(" ");
         sendToGemini(
-          `${todayCtx}\n${focusBlock}\n[STT_CONTACT — поправи имейл/телефон ако са изкривени, изпиши ги обратно на клиента за потвърждение${parsedHints ? `; parsed: ${parsedHints}` : ""}]: ${cleanText}`,
+          `${todayCtx}\n${focusBlock}\n[STT_CONTACT — поправи имейл/телефон ако са изкривени, изпиши САМО реалните данни обратно на клиента за потвърждение. ЗАБРАНЕНО е да казваш примерни стойности${parsedHints ? `; parsed: ${parsedHints}` : ""}]: ${cleanText}`,
         );
       } else {
         scheduleFillerWord(380); // → пусни filler ако Gemini не отговори в 380ms
