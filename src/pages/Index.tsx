@@ -29,8 +29,8 @@ const Index = () => {
       {/* Ambient background — minimal gradients */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-background" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-[60vh] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,hsl(355_100%_50%/0.15),transparent_70%)]" />
-        <div className="absolute bottom-0 left-0 w-[60%] h-[40vh] bg-[radial-gradient(ellipse_80%_60%_at_0%_100%,hsl(355_80%_45%/0.08),transparent_60%)]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-[60vh] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,hsl(217_91%_60%/0.10),transparent_70%)]" />
+        <div className="absolute bottom-0 left-0 w-[60%] h-[40vh] bg-[radial-gradient(ellipse_80%_60%_at_0%_100%,hsl(190_95%_55%/0.05),transparent_60%)]" />
       </div>
 
       <div className="neo-scaled-content pt-14 sm:pt-16 lg:pt-20 pb-16 sm:pb-12 w-full">
