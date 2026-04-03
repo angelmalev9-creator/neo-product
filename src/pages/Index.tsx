@@ -45,6 +45,7 @@ const Index = () => {
             <VoiceInterview key={sessionId || 'no-session'} sessionId={sessionId} />
             <FeaturesGrid />
             <UseCases />
+            <RevenueCalculator />
             <BusinessResults />
             <Comparison />
             <Testimonials />
