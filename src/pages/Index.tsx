@@ -1,8 +1,6 @@
 import { useState, lazy, Suspense } from 'react';
 import Navigation from '@/components/landing/Navigation';
 import Hero from '@/components/landing/Hero';
-import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
 
 // Lazy load below-fold sections
 const HowItWorks = lazy(() => import('@/components/landing/HowItWorks'));
