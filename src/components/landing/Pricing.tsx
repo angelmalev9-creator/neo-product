@@ -126,7 +126,7 @@ const Pricing = () => {
     <section 
       ref={ref as React.RefObject<HTMLElement>}
       id="pricing" 
-      className="py-10 sm:py-16 relative overflow-visible"
+      className="py-20 sm:py-28 relative overflow-visible"
     >
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 blur-[150px] rounded-full pointer-events-none" />
       
