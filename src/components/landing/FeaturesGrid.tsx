@@ -98,7 +98,7 @@ const FeaturesGrid = () => {
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="features"
-      className={`py-16 sm:py-24 relative neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
+      className={`py-20 sm:py-28 relative neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
     >
       <div className="mx-auto max-w-6xl px-3 sm:px-4 lg:px-6">
         <div className="text-center mb-10 sm:mb-12">
