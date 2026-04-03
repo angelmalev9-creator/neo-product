@@ -155,12 +155,12 @@ const BusinessResults = () => {
 
         {/* Dashboard Features with Real Screenshots */}
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-6 sm:mb-8">
-            <h3 className="text-base sm:text-lg md:text-xl font-display font-bold text-foreground mb-3 leading-tight">
+          <div className="text-center mb-8 sm:mb-10">
+            <h3 className="text-xl sm:text-2xl font-display font-bold text-foreground mb-3 leading-tight">
               Всичко на{' '}
               <span className="text-primary">едно табло</span>
             </h3>
-            <p className="text-muted-foreground max-w-xl mx-auto">
+            <p className="neo-subheading text-muted-foreground max-w-xl mx-auto">
               Контролирайте NEO, следете резултатите и управлявайте клиентите си от едно място.
             </p>
           </div>

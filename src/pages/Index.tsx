@@ -25,7 +25,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen text-foreground relative flex flex-col items-center neo-snap-container">
+    <div className="min-h-screen text-foreground relative flex flex-col items-center">
       {/* Ambient background — minimal gradients */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-background" />
@@ -36,20 +36,20 @@ const Index = () => {
       <div className="neo-scaled-content pt-14 sm:pt-16 lg:pt-20 pb-16 sm:pb-12 w-full">
         <Navigation />
         <main className="relative z-10">
-          <section className="neo-snap-section"><Hero /></section>
+          <Hero />
           <Suspense fallback={<div className="min-h-[40vh]" />}>
-            <section className="neo-snap-section"><HowItWorks /></section>
-            <section className="neo-snap-section"><DemoSection onTrainingComplete={handleTrainingComplete} /></section>
-            <section className="neo-snap-section"><VoiceInterview key={sessionId || 'no-session'} sessionId={sessionId} /></section>
-            <section className="neo-snap-section"><FeaturesGrid /></section>
+            <HowItWorks />
+            <DemoSection onTrainingComplete={handleTrainingComplete} />
+            <VoiceInterview key={sessionId || 'no-session'} sessionId={sessionId} />
+            <FeaturesGrid />
             <UseCases />
-            <section className="neo-snap-section"><RevenueCalculator /></section>
-            <section className="neo-snap-section"><BusinessResults /></section>
-            <section className="neo-snap-section"><Comparison /></section>
-            <section className="neo-snap-section"><Testimonials /></section>
-            <section className="neo-snap-section"><Pricing /></section>
-            <section className="neo-snap-section"><Founder /></section>
-            <section className="neo-snap-section"><EnterpriseContact /></section>
+            <RevenueCalculator />
+            <BusinessResults />
+            <Comparison />
+            <Testimonials />
+            <Pricing />
+            <Founder />
+            <EnterpriseContact />
           </Suspense>
         </main>
         <Suspense fallback={null}>
