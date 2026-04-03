@@ -51,7 +51,6 @@ const Index = () => {
             <Comparison />
             <Testimonials />
             <Pricing />
-            <Founder />
             <EnterpriseContact />
           </Suspense>
         </main>
