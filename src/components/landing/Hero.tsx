@@ -217,7 +217,7 @@ const Hero = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-3xl sm:text-4xl lg:text-5xl font-display font-black text-foreground tracking-tight mb-5 leading-[1.08]"
+              className="text-[1.6rem] sm:text-4xl lg:text-5xl font-display font-black text-foreground tracking-tight mb-4 sm:mb-5 leading-[1.08]"
             >
               Докато Вие спите, NEO говори с клиенти и{' '}
               <span className="neo-gradient-text">записва часове</span>{' '}
