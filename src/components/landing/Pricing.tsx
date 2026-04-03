@@ -231,9 +231,9 @@ const Pricing = () => {
                   <span className="text-xs text-muted-foreground">({plan.callsPerDay})</span>
                 </div>
 
-                <div className="text-sm text-primary font-medium mb-6 flex items-center gap-2">
+                <div className="text-sm font-semibold mb-6 flex items-center gap-2" style={{ color: 'hsl(142 71% 45%)' }}>
                   <PiggyBank className="w-4 h-4" />
-                  {t('pricing.savingsPrefix')} {plan.savings} {t('pricing.savingsSuffix')}
+                  Спестявате {plan.savings} спрямо служител
                 </div>
 
                 <div className="h-px bg-border/20 mb-5" />
