@@ -2736,7 +2736,7 @@ export const useGeminiVoice = ({
           looksLikeCompletePhone(mergedContact.phone)
         ) {
           sendToGemini(
-            `${todayCtx}\n${focusBlock}\n[STT_CONTACT_CAPTURED — повтори точно име, имейл и телефон поотделно и поискай потвърждение, без да измисляш липсващи части]: ${payload}`,
+            `${todayCtx}\n${focusBlock}\n[STT_CONTACT_CAPTURED — повтори САМО реално получените данни (име, имейл, телефон) поотделно и поискай потвърждение. ЗАБРАНЕНО е да използваш примерни стойности като "example.com" или "ваш.имейл". Ако нещо липсва — попитай клиента директно за него]: ${payload}`,
           );
           expectedSensitiveInputModeRef.current = "general";
         } else {
