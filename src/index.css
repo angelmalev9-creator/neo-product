@@ -497,10 +497,11 @@
   .luxury-text { text-transform: uppercase; letter-spacing: 0.15em; font-weight: 700; }
 }
 
-/* ── Global Layout System ── */
+/* ── Global Layout System — Miniature / Compact ── */
 .neo-scaled-content {
   max-width: 100vw;
   overflow-x: hidden;
+  font-size: clamp(11px, 1vw, 14px);
 }
 
 /* Snap scroll container */
@@ -519,25 +520,25 @@
   width: 100%;
 }
 
-/* ── Consistent Section Spacing ── */
+/* ── Consistent Section Spacing — tighter for compact feel ── */
 .neo-section-spacing {
-  padding-top: clamp(3rem, 6vw, 7.5rem);
-  padding-bottom: clamp(3rem, 6vw, 7.5rem);
+  padding-top: clamp(2.5rem, 5vw, 6rem);
+  padding-bottom: clamp(2.5rem, 5vw, 6rem);
 }
 
-/* ── Fluid Typography Scale ── */
+/* ── Fluid Typography Scale — smaller for miniature look ── */
 .neo-heading-section {
-  font-size: clamp(1.75rem, 3.5vw, 3rem);
-  line-height: 1.08;
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  line-height: 1.1;
   letter-spacing: -0.02em;
 }
 
 .neo-subheading {
-  font-size: clamp(0.938rem, 1.2vw, 1.125rem);
+  font-size: clamp(0.813rem, 1.1vw, 1rem);
   line-height: 1.6;
 }
 
 .neo-body {
-  font-size: clamp(0.813rem, 1vw, 0.938rem);
+  font-size: clamp(0.75rem, 0.9vw, 0.875rem);
   line-height: 1.6;
 }
