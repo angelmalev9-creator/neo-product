@@ -249,7 +249,7 @@ const UseCases = () => {
     <section
       ref={sectionRef}
       id="use-cases"
-      className="min-h-screen relative py-8 sm:py-12 flex flex-col"
+      className="neo-snap-section min-h-screen relative py-8 sm:py-12 flex flex-col"
     >
       <div className="mx-auto max-w-6xl px-3 sm:px-4 lg:px-6 w-full flex-1 flex flex-col">
         {/* Header */}

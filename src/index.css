@@ -615,12 +615,18 @@
   margin-left: -10.975%; /* center the scaled content */
 }
 
+/* Snap scroll container */
+.neo-snap-container {
+  scroll-snap-type: y proximity;
+}
+
 /* Snap sections for smooth scroll centering */
 .neo-snap-section {
+  scroll-snap-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: auto;
+  min-height: 100vh;
 }
 
 .neo-snap-section > * {
