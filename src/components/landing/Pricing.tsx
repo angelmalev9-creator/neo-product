@@ -191,9 +191,14 @@ const Pricing = () => {
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 className={`relative flex flex-col rounded-2xl p-5 sm:p-7 lg:p-8 transition-all duration-500 overflow-visible ${
                   plan.featured 
-                    ? 'neo-glass-premium ring-1 ring-primary/30 lg:scale-[1.04] shadow-[0_0_60px_hsl(var(--neo-red)/0.12)] mt-5' 
+                    ? 'neo-glass-premium ring-1 lg:scale-[1.04] mt-5' 
                     : 'neo-glass-subtle border border-border/20 hover:border-border/40 mt-5'
                 }`}
+                style={plan.featured ? {
+                  boxShadow: '0 0 60px hsla(142, 71%, 45%, 0.15), 0 0 120px hsla(142, 71%, 45%, 0.05)',
+                  borderColor: 'hsla(142, 71%, 45%, 0.3)',
+                  ringColor: 'hsla(142, 71%, 45%, 0.3)',
+                } : undefined}
               >
                 {plan.featured && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 bg-gradient-to-r from-primary to-accent text-primary-foreground px-5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-primary/30 whitespace-nowrap">
