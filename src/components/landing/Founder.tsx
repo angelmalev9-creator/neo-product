@@ -2,6 +2,7 @@ import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 
 import { Mail, ArrowRight, Quote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import devOfNeoImg from '@/assets/dev-of-neo.png';
 
 const Founder = () => {
   const { ref, isVisible } = useScrollAnimation();
