@@ -285,15 +285,7 @@ const Pricing = () => {
           })}
         </div>
 
-        {/* Scarcity + guarantee */}
         <SpotsCounter />
-
-        <div className="text-center mt-6">
-          <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-primary/60" />
-            {t('pricing.guarantee')}
-          </p>
-        </div>
       </div>
 
       {checkoutModal && (
