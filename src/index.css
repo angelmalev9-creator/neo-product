@@ -16,26 +16,26 @@
     --popover: 228 18% 7%;
     --popover-foreground: 210 20% 98%;
 
-    /* PRIMARY: Lighter Crimson — vibrant but not neon */
-    --primary: 355 65% 52%;
+    /* PRIMARY: Saturated Electric Crimson — dopamine hit */
+    --primary: 355 85% 55%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 228 14% 11%;
     --secondary-foreground: 210 20% 98%;
 
     --muted: 225 12% 14%;
-    --muted-foreground: 218 14% 50%;
+    --muted-foreground: 218 14% 55%;
 
-    /* ACCENT: Warm Rose */
-    --accent: 350 55% 48%;
+    /* ACCENT: Vivid Hot Red */
+    --accent: 350 80% 52%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 82% 54%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 225 10% 16%;
+    --border: 225 10% 18%;
     --input: 228 12% 9%;
-    --ring: 355 65% 52%;
+    --ring: 355 85% 55%;
 
     --radius: 0.75rem;
 
