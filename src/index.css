@@ -35,18 +35,18 @@
 
     --border: 225 10% 16%;
     --input: 228 12% 9%;
-    --ring: 0 85% 58%;
+    --ring: 355 72% 42%;
 
     --radius: 0.75rem;
 
-    /* NEO Custom — Electric Red Palette */
-    --neo-blue: 0 85% 58%;
-    --neo-blue-glow: 10 100% 65%;
-    --neo-blue-dark: 355 75% 42%;
-    --neo-cyan: 20 95% 55%;
-    --neo-cyan-glow: 25 100% 62%;
-    --neo-indigo: 340 75% 55%;
-    --neo-purple: 330 80% 58%;
+    /* NEO Custom — Dark Crimson Palette */
+    --neo-blue: 355 72% 42%;
+    --neo-blue-glow: 0 70% 50%;
+    --neo-blue-dark: 350 65% 30%;
+    --neo-cyan: 0 65% 38%;
+    --neo-cyan-glow: 5 70% 45%;
+    --neo-indigo: 340 60% 38%;
+    --neo-purple: 330 55% 40%;
     --neo-dark: 230 20% 4%;
     --neo-dark-lighter: 228 18% 7%;
     --neo-glass: 228 14% 9%;
