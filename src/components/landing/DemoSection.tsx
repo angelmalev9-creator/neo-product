@@ -274,7 +274,7 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="demo"
-      className={`py-10 sm:py-16 lg:py-24 relative overflow-hidden neo-section-flip-left ${
+      className={`py-20 sm:py-28 relative overflow-hidden neo-section-flip-left ${
         isVisible ? "neo-section-visible" : ""
       }`}
     >
