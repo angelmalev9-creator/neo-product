@@ -88,12 +88,6 @@ const EnterpriseContact = () => {
                 </p>
               </div>
 
-              <Button variant="outline" className="gap-2 rounded-xl border-border/30 hover:border-primary/30 h-10 text-sm" asChild>
-                <a href="mailto:support@neo-voice.ai">
-                  <Mail className="w-4 h-4" />
-                  Пишете ми директно
-                </a>
-              </Button>
             </div>
 
             {/* Contact Form */}
