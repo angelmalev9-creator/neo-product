@@ -43,14 +43,14 @@ const HowItWorks = () => {
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="how-it-works"
-      className={`py-24 sm:py-32 relative neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
+      className={`py-20 sm:py-28 relative neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
     >
       <div className="mx-auto max-w-6xl px-3 sm:px-4 lg:px-6">
         <div className="text-center mb-16">
           <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-primary text-[10px] font-semibold mb-4 uppercase tracking-[0.15em]">
             Как работи
           </span>
-          <h2 className="text-lg sm:text-xl md:text-2xl font-display font-black text-foreground leading-[1.08] tracking-tight mb-3">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground leading-[1.08] tracking-tight mb-3">
             3 стъпки.{' '}
             <span className="text-primary">5 минути. Готово.</span>
           </h2>

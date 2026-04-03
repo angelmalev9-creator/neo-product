@@ -105,7 +105,7 @@ const BusinessResults = () => {
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="features"
-      className="py-10 sm:py-14 relative overflow-hidden"
+      className="py-20 sm:py-28 relative overflow-hidden"
     >
       {/* Ambient glows */}
       <div className="absolute top-1/4 left-0 w-[500px] h-[500px] rounded-full bg-primary/5 blur-[180px] pointer-events-none" />
@@ -118,7 +118,7 @@ const BusinessResults = () => {
             <Sparkles className="w-3.5 h-3.5" />
             Какво може NEO
           </span>
-          <h2 className="text-lg sm:text-xl md:text-2xl font-display font-black text-foreground mb-5 leading-[1.08] tracking-tight max-w-4xl mx-auto">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground mb-5 leading-[1.08] tracking-tight max-w-4xl mx-auto">
             Вашият AI асистент за{' '}
             <span className="text-primary">продажби и резервации</span>
           </h2>

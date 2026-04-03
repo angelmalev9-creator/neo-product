@@ -24,7 +24,7 @@ const RevenueCalculator = () => {
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="calculator"
-      className={`py-16 sm:py-24 relative neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
+      className={`py-20 sm:py-28 relative neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
     >
       <div className="mx-auto max-w-6xl px-3 sm:px-4 lg:px-6">
         <div className="text-center mb-10 sm:mb-14">
@@ -32,7 +32,7 @@ const RevenueCalculator = () => {
             <Calculator className="w-3 h-3" />
             Калкулатор
           </span>
-          <h2 className="text-lg sm:text-xl md:text-2xl font-display font-black text-foreground leading-[1.08] tracking-tight mb-3">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground leading-[1.08] tracking-tight mb-3">
             Колко губите от{' '}
             <span className="text-primary">пропуснати обаждания?</span>
           </h2>

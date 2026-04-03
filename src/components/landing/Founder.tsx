@@ -10,7 +10,7 @@ const Founder = () => {
     <section 
       ref={ref as React.RefObject<HTMLElement>}
       id="founder"
-      className="py-10 sm:py-14 lg:py-16 relative overflow-hidden"
+      className="py-20 sm:py-28 relative overflow-hidden"
     >
       {/* Ambient glow */}
       <div className="absolute top-1/2 left-0 w-[400px] h-[400px] rounded-full bg-primary/4 blur-[120px] pointer-events-none" />
@@ -39,7 +39,7 @@ const Founder = () => {
                 <p className="text-primary text-xs font-bold uppercase tracking-[0.2em] mb-3">
                   Кой стои зад NEO
                 </p>
-                <h2 className="text-xl sm:text-2xl md:text-[1.75rem] font-display font-black text-foreground mb-5 leading-[1.1] tracking-tight">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground mb-5 leading-[1.1] tracking-tight">
                   Здравейте, казвам се{' '}
                   <span className="text-primary">Ангел Малев</span>
                 </h2>
