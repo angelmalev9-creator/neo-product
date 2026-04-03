@@ -2,8 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* NEO AI — Electric Dopamine Design System */
-/* Deep Obsidian | Electric Red | Orange Pulse */
+/* NEO AI — Dark Crimson Design System */
+/* Deep Obsidian | Dark Crimson | Warm Red */
 
 @layer base {
   :root {
@@ -16,8 +16,8 @@
     --popover: 228 18% 7%;
     --popover-foreground: 210 20% 98%;
 
-    /* PRIMARY: Deep Crimson — тъмно червено, authority, dopamine */
-    --primary: 355 72% 42%;
+    /* PRIMARY: Lighter Crimson — vibrant but not neon */
+    --primary: 355 65% 52%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 228 14% 11%;
@@ -26,8 +26,8 @@
     --muted: 225 12% 14%;
     --muted-foreground: 218 14% 50%;
 
-    /* ACCENT: Dark Blood Red */
-    --accent: 0 65% 38%;
+    /* ACCENT: Warm Rose */
+    --accent: 350 55% 48%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
@@ -35,18 +35,18 @@
 
     --border: 225 10% 16%;
     --input: 228 12% 9%;
-    --ring: 355 72% 42%;
+    --ring: 355 65% 52%;
 
     --radius: 0.75rem;
 
-    /* NEO Custom — Dark Crimson Palette */
-    --neo-blue: 355 72% 42%;
-    --neo-blue-glow: 0 70% 50%;
-    --neo-blue-dark: 350 65% 30%;
-    --neo-cyan: 0 65% 38%;
-    --neo-cyan-glow: 5 70% 45%;
-    --neo-indigo: 340 60% 38%;
-    --neo-purple: 330 55% 40%;
+    /* NEO Custom — Lighter Crimson Palette */
+    --neo-blue: 355 65% 52%;
+    --neo-blue-glow: 0 60% 58%;
+    --neo-blue-dark: 350 55% 38%;
+    --neo-cyan: 350 55% 48%;
+    --neo-cyan-glow: 355 60% 55%;
+    --neo-indigo: 340 50% 48%;
+    --neo-purple: 330 45% 50%;
     --neo-dark: 230 20% 4%;
     --neo-dark-lighter: 228 18% 7%;
     --neo-glass: 228 14% 9%;
@@ -62,12 +62,12 @@
     /* Sidebar */
     --sidebar-background: 230 20% 5%;
     --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 355 72% 42%;
+    --sidebar-primary: 355 65% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 228 14% 12%;
     --sidebar-accent-foreground: 210 20% 98%;
     --sidebar-border: 225 10% 16%;
-    --sidebar-ring: 355 72% 42%;
+    --sidebar-ring: 355 65% 52%;
   }
 
   .light {
@@ -77,23 +77,23 @@
     --card-foreground: 228 25% 8%;
     --popover: 0 0% 100%;
     --popover-foreground: 228 25% 8%;
-    --primary: 355 65% 38%;
+    --primary: 355 58% 48%;
     --primary-foreground: 0 0% 100%;
     --secondary: 220 16% 90%;
     --secondary-foreground: 228 18% 14%;
     --muted: 220 14% 90%;
     --muted-foreground: 218 14% 38%;
-    --accent: 0 55% 35%;
+    --accent: 350 48% 42%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 48%;
     --destructive-foreground: 0 0% 100%;
     --border: 220 16% 82%;
     --input: 220 16% 88%;
-    --ring: 355 65% 38%;
-    --neo-blue: 355 65% 38%;
-    --neo-blue-glow: 0 60% 45%;
-    --neo-blue-dark: 350 55% 28%;
-    --neo-cyan: 0 55% 35%;
+    --ring: 355 58% 48%;
+    --neo-blue: 355 58% 48%;
+    --neo-blue-glow: 0 55% 52%;
+    --neo-blue-dark: 350 48% 35%;
+    --neo-cyan: 350 48% 42%;
     --neo-dark: 220 16% 96%;
     --neo-dark-lighter: 220 14% 93%;
     --neo-glass: 220 12% 94%;
@@ -104,12 +104,12 @@
     --neo-warning: 45 85% 42%;
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 228 25% 8%;
-    --sidebar-primary: 355 65% 38%;
+    --sidebar-primary: 355 58% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 16% 92%;
     --sidebar-accent-foreground: 228 18% 12%;
     --sidebar-border: 220 16% 82%;
-    --sidebar-ring: 355 65% 38%;
+    --sidebar-ring: 355 58% 48%;
   }
 
   .dark {
@@ -119,27 +119,27 @@
     --card-foreground: 210 20% 98%;
     --popover: 228 18% 7%;
     --popover-foreground: 210 20% 98%;
-    --primary: 355 72% 42%;
+    --primary: 355 65% 52%;
     --primary-foreground: 0 0% 100%;
     --secondary: 228 14% 11%;
     --secondary-foreground: 210 20% 98%;
     --muted: 225 12% 14%;
     --muted-foreground: 218 14% 50%;
-    --accent: 0 65% 38%;
+    --accent: 350 55% 48%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
     --border: 225 10% 16%;
     --input: 228 12% 9%;
-    --ring: 355 72% 42%;
+    --ring: 355 65% 52%;
     --sidebar-background: 230 20% 5%;
     --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 355 72% 42%;
+    --sidebar-primary: 355 65% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 228 14% 12%;
     --sidebar-accent-foreground: 210 20% 98%;
     --sidebar-border: 225 10% 16%;
-    --sidebar-ring: 355 72% 42%;
+    --sidebar-ring: 355 65% 52%;
   }
 }
 
@@ -497,10 +497,11 @@
   .luxury-text { text-transform: uppercase; letter-spacing: 0.15em; font-weight: 700; }
 }
 
-/* ── Global Layout System ── */
+/* ── Global Layout System — Miniature / Compact ── */
 .neo-scaled-content {
   max-width: 100vw;
   overflow-x: hidden;
+  font-size: clamp(11px, 1vw, 14px);
 }
 
 /* Snap scroll container */
@@ -519,25 +520,25 @@
   width: 100%;
 }
 
-/* ── Consistent Section Spacing ── */
+/* ── Consistent Section Spacing — tighter for compact feel ── */
 .neo-section-spacing {
-  padding-top: clamp(3rem, 6vw, 7.5rem);
-  padding-bottom: clamp(3rem, 6vw, 7.5rem);
+  padding-top: clamp(2.5rem, 5vw, 6rem);
+  padding-bottom: clamp(2.5rem, 5vw, 6rem);
 }
 
-/* ── Fluid Typography Scale ── */
+/* ── Fluid Typography Scale — smaller for miniature look ── */
 .neo-heading-section {
-  font-size: clamp(1.75rem, 3.5vw, 3rem);
-  line-height: 1.08;
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  line-height: 1.1;
   letter-spacing: -0.02em;
 }
 
 .neo-subheading {
-  font-size: clamp(0.938rem, 1.2vw, 1.125rem);
+  font-size: clamp(0.813rem, 1.1vw, 1rem);
   line-height: 1.6;
 }
 
 .neo-body {
-  font-size: clamp(0.813rem, 1vw, 0.938rem);
+  font-size: clamp(0.75rem, 0.9vw, 0.875rem);
   line-height: 1.6;
 }
