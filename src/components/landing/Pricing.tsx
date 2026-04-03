@@ -201,7 +201,9 @@ const Pricing = () => {
                 } : undefined}
               >
                 {plan.featured && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 bg-gradient-to-r from-primary to-accent text-primary-foreground px-5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-primary/30 whitespace-nowrap">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 text-white px-5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 whitespace-nowrap"
+                    style={{ background: 'linear-gradient(135deg, hsl(142 71% 45%), hsl(160 64% 40%))', boxShadow: '0 4px 20px hsla(142, 71%, 45%, 0.35)' }}
+                  >
                     <Crown className="w-3.5 h-3.5" />
                     {t('pricing.mostPopular')}
                   </div>
