@@ -1,4 +1,4 @@
-import { Check, Crown, PiggyBank, ShieldCheck, Phone, BarChart3, Headphones, Users, Mail, Sparkles, Clock, ArrowRight } from 'lucide-react';
+import { Check, Crown, PiggyBank, ShieldCheck, Phone, BarChart3, Headphones, Users, Mail, Sparkles, Clock, ArrowRight, Calendar, Brain, Globe, Palette, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
