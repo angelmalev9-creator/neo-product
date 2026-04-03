@@ -19,14 +19,14 @@ const Comparison = () => {
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="comparison"
-      className={`py-20 sm:py-28 neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
+      className={`neo-section-spacing neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
     >
-      <div className="container mx-auto px-4 lg:px-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground leading-[1.08] tracking-tight mb-3">
+          <h2 className="neo-heading-section font-display font-black text-foreground mb-4">
             NEO vs <span className="text-primary">служител</span>
           </h2>
-          <p className="text-muted-foreground text-base max-w-lg mx-auto">
+          <p className="neo-subheading text-muted-foreground max-w-lg mx-auto">
             Същата работа — 40 пъти по-евтино. Без болнични, без закъснения, без пропуснати обаждания.
           </p>
         </div>

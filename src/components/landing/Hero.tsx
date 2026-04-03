@@ -229,7 +229,7 @@ const Hero = () => {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-sm sm:text-[15px] text-foreground/50 mb-6 leading-relaxed max-w-md"
+              className="neo-subheading text-foreground/50 mb-7 max-w-md"
             >
               Отговаря на всеки клиент и не пропуска нито едно запитване — 24/7.
               <br />
