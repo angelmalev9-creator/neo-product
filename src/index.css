@@ -53,11 +53,11 @@
     --neo-glass-border: 225 10% 20%;
     --neo-text-muted: 218 14% 50%;
     --neo-text-bright: 210 20% 96%;
-    --neo-success: 152 76% 48%;
-    --neo-success-glow: 152 85% 55%;
-    --neo-warning: 45 100% 55%;
-    --neo-gold: 40 100% 55%;
-    --neo-orange: 25 95% 58%;
+    --neo-success: 142 80% 50%;
+    --neo-success-glow: 142 90% 58%;
+    --neo-warning: 45 100% 58%;
+    --neo-gold: 40 100% 58%;
+    --neo-orange: 20 100% 60%;
 
     /* Sidebar */
     --sidebar-background: 230 20% 5%;
