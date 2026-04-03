@@ -105,24 +105,24 @@ const BusinessResults = () => {
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="features"
-      className="py-20 sm:py-28 relative overflow-hidden"
+      className="neo-section-spacing relative overflow-hidden"
     >
       {/* Ambient glows */}
       <div className="absolute top-1/4 left-0 w-[500px] h-[500px] rounded-full bg-primary/5 blur-[180px] pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-violet-500/5 blur-[150px] pointer-events-none" />
 
-      <div className="container mx-auto px-5 sm:px-4 lg:px-8 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header */}
-        <div className="text-center mb-8 sm:mb-12">
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/8 border border-primary/15 text-primary text-sm font-medium mb-5">
+        <div className="text-center mb-10 sm:mb-14">
+          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-primary text-xs font-medium mb-5">
             <Sparkles className="w-3.5 h-3.5" />
             Какво може NEO
           </span>
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground mb-5 leading-[1.08] tracking-tight max-w-4xl mx-auto">
+          <h2 className="neo-heading-section font-display font-black text-foreground mb-5 max-w-4xl mx-auto">
             Вашият AI асистент за{' '}
             <span className="text-primary">продажби и резервации</span>
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="neo-subheading text-muted-foreground max-w-2xl mx-auto">
             NEO не е просто чатбот — той е вашият дигитален търговец, рецепционист и маркетолог в едно.
           </p>
         </div>
@@ -155,12 +155,12 @@ const BusinessResults = () => {
 
         {/* Dashboard Features with Real Screenshots */}
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-6 sm:mb-8">
-            <h3 className="text-base sm:text-lg md:text-xl font-display font-bold text-foreground mb-3 leading-tight">
+          <div className="text-center mb-8 sm:mb-10">
+            <h3 className="text-xl sm:text-2xl font-display font-bold text-foreground mb-3 leading-tight">
               Всичко на{' '}
               <span className="text-primary">едно табло</span>
             </h3>
-            <p className="text-muted-foreground max-w-xl mx-auto">
+            <p className="neo-subheading text-muted-foreground max-w-xl mx-auto">
               Контролирайте NEO, следете резултатите и управлявайте клиентите си от едно място.
             </p>
           </div>

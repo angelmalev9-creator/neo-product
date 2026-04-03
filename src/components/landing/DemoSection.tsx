@@ -274,19 +274,19 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="demo"
-      className={`py-20 sm:py-28 relative overflow-hidden neo-section-flip-left ${
+      className={`neo-section-spacing relative overflow-hidden neo-section-flip-left ${
         isVisible ? "neo-section-visible" : ""
       }`}
     >
-      <div className="container mx-auto px-4 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center max-w-6xl mx-auto">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center max-w-6xl mx-auto">
           <div>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground mb-2 lg:mb-3 leading-[1.08] tracking-tight">
+            <h2 className="neo-heading-section font-display font-black text-foreground mb-3 lg:mb-4">
               {t("demo.title1")}{" "}
               <span className="text-primary">{t("demo.title2")}</span>
             </h2>
 
-            <p className="text-sm lg:text-base text-muted-foreground mb-2 lg:mb-3 max-w-md leading-relaxed">{t("demo.description")}</p>
+            <p className="neo-subheading text-muted-foreground mb-3 lg:mb-4 max-w-md">{t("demo.description")}</p>
             <p className="text-xs lg:text-sm text-muted-foreground mb-4 lg:mb-5 max-w-md">
               <span className="text-foreground font-medium">{t("demo.testAsClient")}</span> {t("demo.testDetails")}
             </p>

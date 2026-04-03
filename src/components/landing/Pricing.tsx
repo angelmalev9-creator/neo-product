@@ -126,21 +126,21 @@ const Pricing = () => {
     <section 
       ref={ref as React.RefObject<HTMLElement>}
       id="pricing" 
-      className="py-20 sm:py-28 relative overflow-visible"
+      className="neo-section-spacing relative overflow-visible"
     >
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 blur-[150px] rounded-full pointer-events-none" />
       
-      <div className="container mx-auto px-4 lg:px-8 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header */}
-        <div className="text-center mb-8 sm:mb-14">
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/8 border border-primary/15 text-primary text-sm font-medium mb-5">
+        <div className="text-center mb-10 sm:mb-14">
+          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-primary text-xs font-medium mb-5">
             <Sparkles className="w-3.5 h-3.5" />
             Ценови планове
           </span>
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground mb-4 max-w-3xl mx-auto leading-[1.1] tracking-tight">
+          <h2 className="neo-heading-section font-display font-black text-foreground mb-5 max-w-3xl mx-auto">
             {t('pricing.title1')} <span className="text-primary">{t('pricing.title2')}</span>
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground mb-8">
+          <p className="neo-subheading text-muted-foreground mb-8">
             {t('pricing.subtitle')}
           </p>
 

@@ -33,14 +33,14 @@ const Testimonials = () => {
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="testimonials"
-      className={`py-20 sm:py-28 relative neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
+      className={`neo-section-spacing relative neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
     >
-      <div className="container mx-auto px-4 lg:px-8">
-        <div className="text-center mb-14">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground leading-[1.08] tracking-tight mb-3">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12 sm:mb-14">
+          <h2 className="neo-heading-section font-display font-black text-foreground mb-4">
             Реални <span className="text-primary">резултати</span>
           </h2>
-          <p className="text-muted-foreground text-base max-w-lg mx-auto">
+          <p className="neo-subheading text-muted-foreground max-w-lg mx-auto">
             Бизнеси, които вече работят с NEO — и техните конкретни числа.
           </p>
         </div>

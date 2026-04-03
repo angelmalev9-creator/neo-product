@@ -24,19 +24,19 @@ const RevenueCalculator = () => {
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="calculator"
-      className={`py-20 sm:py-28 relative neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
+      className={`neo-section-spacing relative neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
     >
-      <div className="mx-auto max-w-6xl px-3 sm:px-4 lg:px-6">
-        <div className="text-center mb-10 sm:mb-14">
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-primary text-[10px] font-semibold mb-4 uppercase tracking-[0.15em]">
-            <Calculator className="w-3 h-3" />
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12 sm:mb-14">
+          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-primary text-xs font-semibold mb-5 uppercase tracking-[0.15em]">
+            <Calculator className="w-3.5 h-3.5" />
             Калкулатор
           </span>
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground leading-[1.08] tracking-tight mb-3">
+          <h2 className="neo-heading-section font-display font-black text-foreground mb-4">
             Колко губите от{' '}
             <span className="text-primary">пропуснати обаждания?</span>
           </h2>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+          <p className="neo-subheading text-muted-foreground max-w-lg mx-auto">
             Изчислете реалната цена на всяко пропуснато обаждане за Вашия бизнес.
           </p>
         </div>

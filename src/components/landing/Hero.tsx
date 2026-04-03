@@ -194,20 +194,20 @@ const Hero = () => {
   const { t } = useTranslation();
 
   return (
-    <section className="relative min-h-[calc(100svh-3rem)] flex items-center py-6 sm:py-10 lg:py-16 overflow-hidden">
+    <section className="relative min-h-[calc(100svh-3rem)] flex items-center neo-section-spacing overflow-hidden">
       <div className="absolute inset-0 neo-grid-bg opacity-5 pointer-events-none" />
 
-      <div className="mx-auto max-w-6xl px-3 sm:px-4 lg:px-6 relative z-10 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-center">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           {/* LEFT — Copy */}
-          <div className="max-w-lg">
+          <div className="max-w-xl">
             {/* Badge */}
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="inline-flex items-center gap-2 neo-glass-premium px-3 py-1.5 mb-5 rounded-full">
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="inline-flex items-center gap-2 neo-glass-premium px-3 py-1.5 mb-6 rounded-full">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
               </span>
-              <span className="text-foreground/50 text-[9px] lg:text-[10px] font-semibold tracking-[0.12em] uppercase">
+              <span className="text-foreground/50 text-[10px] sm:text-xs font-semibold tracking-[0.12em] uppercase">
                 AI рецепционист — 24/7
               </span>
             </motion.div>
@@ -217,7 +217,7 @@ const Hero = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-[1.75rem] leading-[1.1] sm:text-[2rem] md:text-[2.5rem] lg:text-[2.75rem] font-display font-black text-foreground tracking-tight mb-4"
+              className="text-3xl sm:text-4xl lg:text-5xl font-display font-black text-foreground tracking-tight mb-5 leading-[1.08]"
             >
               Докато Вие спите, NEO говори с клиенти и{' '}
               <span className="neo-gradient-text">записва часове</span>{' '}
@@ -229,7 +229,7 @@ const Hero = () => {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-sm sm:text-[15px] text-foreground/50 mb-6 leading-relaxed max-w-md"
+              className="neo-subheading text-foreground/50 mb-7 max-w-md"
             >
               Отговаря на всеки клиент и не пропуска нито едно запитване — 24/7.
               <br />
