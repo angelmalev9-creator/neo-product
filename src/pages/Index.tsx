@@ -35,23 +35,23 @@ const Index = () => {
         <div className="absolute bottom-0 left-0 w-[60%] h-[40vh] bg-[radial-gradient(ellipse_80%_60%_at_0%_100%,hsl(355_80%_45%/0.08),transparent_60%)]" />
       </div>
 
-      <div className="pt-14 sm:pt-16 lg:pt-20 pb-16 sm:pb-12 w-full">
+      <div className="neo-scaled-content pt-14 sm:pt-16 lg:pt-20 pb-16 sm:pb-12 w-full">
         <Navigation />
         <main className="relative z-10">
-          <Hero />
+          <section className="neo-snap-section"><Hero /></section>
           <Suspense fallback={<div className="min-h-[40vh]" />}>
-            <HowItWorks />
-            <DemoSection onTrainingComplete={handleTrainingComplete} />
-            <VoiceInterview key={sessionId || 'no-session'} sessionId={sessionId} />
-            <FeaturesGrid />
+            <section className="neo-snap-section"><HowItWorks /></section>
+            <section className="neo-snap-section"><DemoSection onTrainingComplete={handleTrainingComplete} /></section>
+            <section className="neo-snap-section"><VoiceInterview key={sessionId || 'no-session'} sessionId={sessionId} /></section>
+            <section className="neo-snap-section"><FeaturesGrid /></section>
             <UseCases />
-            <RevenueCalculator />
-            <BusinessResults />
-            <Comparison />
-            <Testimonials />
-            <Pricing />
-            <Founder />
-            <EnterpriseContact />
+            <section className="neo-snap-section"><RevenueCalculator /></section>
+            <section className="neo-snap-section"><BusinessResults /></section>
+            <section className="neo-snap-section"><Comparison /></section>
+            <section className="neo-snap-section"><Testimonials /></section>
+            <section className="neo-snap-section"><Pricing /></section>
+            <section className="neo-snap-section"><Founder /></section>
+            <section className="neo-snap-section"><EnterpriseContact /></section>
           </Suspense>
         </main>
         <Suspense fallback={null}>
