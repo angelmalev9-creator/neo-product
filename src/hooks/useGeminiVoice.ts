@@ -2741,7 +2741,7 @@ export const useGeminiVoice = ({
           expectedSensitiveInputModeRef.current = "general";
         } else {
           sendToGemini(
-            `${todayCtx}\n${focusBlock}\n[STT_CONTACT_PARTIAL — повтори само това, което вече е чуто, и поискай само липсващото: ${missing || "данни"}]: ${payload || cleanText}`,
+            `${todayCtx}\n${focusBlock}\n[STT_CONTACT_PARTIAL — повтори САМО реално чутите данни. ЗАБРАНЕНО е да казваш примерни имейли или телефони. Поискай клиента да каже или напише липсващото: ${missing || "данни"}]: ${payload || cleanText}`,
           );
         }
       } else if (likelyGarbled) {
