@@ -33,7 +33,7 @@ const Testimonials = () => {
     <section
       ref={ref as React.RefObject<HTMLElement>}
       id="testimonials"
-      className={`py-16 sm:py-24 relative neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
+      className={`py-20 sm:py-28 relative neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
     >
       <div className="container mx-auto px-4 lg:px-8">
         <div className="text-center mb-14">
