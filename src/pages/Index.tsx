@@ -10,6 +10,7 @@ const DemoSection = lazy(() => import('@/components/landing/DemoSection'));
 const VoiceInterview = lazy(() => import('@/components/landing/VoiceInterview'));
 const FeaturesGrid = lazy(() => import('@/components/landing/FeaturesGrid'));
 const UseCases = lazy(() => import('@/components/landing/UseCases'));
+const RevenueCalculator = lazy(() => import('@/components/landing/RevenueCalculator'));
 const BusinessResults = lazy(() => import('@/components/landing/BusinessResults'));
 const Comparison = lazy(() => import('@/components/landing/Comparison'));
 const Testimonials = lazy(() => import('@/components/landing/Testimonials'));
@@ -44,6 +45,7 @@ const Index = () => {
             <VoiceInterview key={sessionId || 'no-session'} sessionId={sessionId} />
             <FeaturesGrid />
             <UseCases />
+            <RevenueCalculator />
             <BusinessResults />
             <Comparison />
             <Testimonials />

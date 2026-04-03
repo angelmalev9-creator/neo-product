@@ -10,6 +10,7 @@ const industries = [
     color: 'text-emerald-400',
     bg: 'from-emerald-500/15 to-emerald-500/5',
     border: 'border-emerald-500/20',
+    iconBg: 'bg-emerald-500/15',
   },
   {
     icon: Scissors,
@@ -18,6 +19,7 @@ const industries = [
     color: 'text-pink-400',
     bg: 'from-pink-500/15 to-pink-500/5',
     border: 'border-pink-500/20',
+    iconBg: 'bg-pink-500/15',
   },
   {
     icon: Car,
@@ -26,6 +28,7 @@ const industries = [
     color: 'text-amber-400',
     bg: 'from-amber-500/15 to-amber-500/5',
     border: 'border-amber-500/20',
+    iconBg: 'bg-amber-500/15',
   },
   {
     icon: Dumbbell,
@@ -34,6 +37,7 @@ const industries = [
     color: 'text-cyan-400',
     bg: 'from-cyan-500/15 to-cyan-500/5',
     border: 'border-cyan-500/20',
+    iconBg: 'bg-cyan-500/15',
   },
   {
     icon: Building2,
@@ -42,6 +46,7 @@ const industries = [
     color: 'text-violet-400',
     bg: 'from-violet-500/15 to-violet-500/5',
     border: 'border-violet-500/20',
+    iconBg: 'bg-violet-500/15',
   },
 ];
 
@@ -53,14 +58,14 @@ const UseCases = () => {
       ref={ref as React.RefObject<HTMLElement>}
       className={`py-16 sm:py-24 relative neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
     >
-      <div className="container mx-auto px-4 lg:px-8">
-        <div className="text-center mb-14">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground leading-[1.08] tracking-tight mb-4">
+      <div className="mx-auto max-w-6xl px-3 sm:px-4 lg:px-6">
+        <div className="text-center mb-10 sm:mb-14">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-display font-black text-foreground leading-[1.08] tracking-tight mb-3">
             За всеки бизнес,{' '}
             <span className="text-primary">който говори с клиенти</span>
           </h2>
-          <p className="text-muted-foreground text-base max-w-xl mx-auto">
-            NEO се адаптира към вашата индустрия за минути.
+          <p className="text-muted-foreground text-sm max-w-md mx-auto">
+            NEO се адаптира към Вашата индустрия за минути.
           </p>
         </div>
 
@@ -70,10 +75,10 @@ const UseCases = () => {
               key={ind.title}
               initial={{ opacity: 0, y: 20 }}
               animate={isVisible ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.4, delay: i * 0.08 }}
-              className={`group relative rounded-2xl border ${ind.border} bg-gradient-to-b ${ind.bg} p-5 text-center hover:scale-[1.04] transition-all duration-300`}
+              transition={{ duration: 0.35, delay: i * 0.07 }}
+              className={`group relative rounded-2xl border ${ind.border} bg-gradient-to-b ${ind.bg} p-5 text-center hover:scale-[1.04] transition-transform duration-300`}
             >
-              <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-background/30 flex items-center justify-center">
+              <div className={`w-12 h-12 mx-auto mb-3 rounded-xl ${ind.iconBg} border ${ind.border} flex items-center justify-center`}>
                 <ind.icon className={`w-6 h-6 ${ind.color}`} strokeWidth={1.5} />
               </div>
               <h3 className="text-sm font-bold text-foreground mb-1.5">{ind.title}</h3>
