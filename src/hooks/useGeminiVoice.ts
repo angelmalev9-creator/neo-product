@@ -1712,30 +1712,8 @@ export const useGeminiVoice = ({
   ];
 
   const playFillerWord = useCallback(() => {
-    if (fillerPlayedRef.current) return;
-    if (isPlayingRef.current) return; // вече говори
-    if (!window.speechSynthesis) return;
-
-    fillerPlayedRef.current = true;
-    const filler = BG_FILLERS[Math.floor(Math.random() * BG_FILLERS.length)];
-
-    const utt = new SpeechSynthesisUtterance(filler);
-    utt.lang = "bg-BG";
-    utt.rate = 0.88; // малко по-бавно — спокойно, не набързо
-    utt.pitch = 0.95; // леко по-ниско — мъжки, уверен
-    utt.volume = 0.85;
-
-    // Опитай да намериш BG глас; ако няма — ползвай дефолтния
-    const voices = window.speechSynthesis.getVoices();
-    const bgVoice =
-      voices.find((v) => v.lang.startsWith("bg")) ||
-      voices.find((v) => v.lang.startsWith("ru")) || // слав. fallback
-      null;
-    if (bgVoice) utt.voice = bgVoice;
-
-    console.log(`[FILLER] Playing: "${filler}"`);
-    window.speechSynthesis.cancel(); // изчисти предишни
-    window.speechSynthesis.speak(utt);
+    // Filler words disabled
+    return;
   }, []);
 
   const scheduleFillerWord = useCallback(
