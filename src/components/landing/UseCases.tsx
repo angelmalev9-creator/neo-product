@@ -249,16 +249,16 @@ const UseCases = () => {
     <section
       ref={sectionRef}
       id="use-cases"
-      className="neo-snap-section min-h-screen relative py-8 sm:py-12 flex flex-col"
+      className="neo-snap-section min-h-screen relative neo-section-spacing flex flex-col"
     >
-      <div className="mx-auto max-w-6xl px-3 sm:px-4 lg:px-6 w-full flex-1 flex flex-col">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 w-full flex-1 flex flex-col">
         {/* Header */}
-        <div className="text-center mb-6 sm:mb-8">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground leading-[1.08] tracking-tight mb-2">
+        <div className="text-center mb-8 sm:mb-10">
+          <h2 className="neo-heading-section font-display font-black text-foreground mb-4">
             За всеки бизнес,{' '}
             <span className="text-primary">който говори с клиенти</span>
           </h2>
-          <p className="text-muted-foreground text-sm max-w-md mx-auto">
+          <p className="neo-subheading text-muted-foreground max-w-lg mx-auto">
             NEO се адаптира към Вашата индустрия за минути.
           </p>
         </div>

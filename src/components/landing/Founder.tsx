@@ -10,12 +10,12 @@ const Founder = () => {
     <section 
       ref={ref as React.RefObject<HTMLElement>}
       id="founder"
-      className="py-20 sm:py-28 relative overflow-hidden"
+      className="neo-section-spacing relative overflow-hidden"
     >
       {/* Ambient glow */}
       <div className="absolute top-1/2 left-0 w-[400px] h-[400px] rounded-full bg-primary/4 blur-[120px] pointer-events-none" />
       
-      <div className="container mx-auto px-4 lg:px-8 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-4xl mx-auto">
           <div className="neo-glass-premium rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-14 relative overflow-hidden">
             {/* Decorative gradient */}
@@ -39,7 +39,7 @@ const Founder = () => {
                 <p className="text-primary text-xs font-bold uppercase tracking-[0.2em] mb-3">
                   Кой стои зад NEO
                 </p>
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-black text-foreground mb-5 leading-[1.1] tracking-tight">
+                <h2 className="neo-heading-section font-display font-black text-foreground mb-5">
                   Здравейте, казвам се{' '}
                   <span className="text-primary">Ангел Малев</span>
                 </h2>
