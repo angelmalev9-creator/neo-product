@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* NEO AI — Electric Dopamine Design System */
-/* Deep Obsidian | Electric Blue | Cyan Pulse */
+/* Deep Obsidian | Electric Red | Orange Pulse */
 
 @layer base {
   :root {
@@ -16,8 +16,8 @@
     --popover: 228 18% 7%;
     --popover-foreground: 210 20% 98%;
 
-    /* PRIMARY: Electric Blue — dopamine, trust, energy */
-    --primary: 217 91% 60%;
+    /* PRIMARY: Electric Red — dopamine, urgency, energy */
+    --primary: 0 85% 58%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 228 14% 11%;
@@ -26,8 +26,8 @@
     --muted: 225 12% 14%;
     --muted-foreground: 218 14% 50%;
 
-    /* ACCENT: Vivid Cyan */
-    --accent: 190 95% 55%;
+    /* ACCENT: Hot Orange */
+    --accent: 20 95% 55%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
@@ -35,18 +35,18 @@
 
     --border: 225 10% 16%;
     --input: 228 12% 9%;
-    --ring: 217 91% 60%;
+    --ring: 0 85% 58%;
 
     --radius: 0.75rem;
 
-    /* NEO Custom — Electric Palette */
-    --neo-blue: 217 91% 60%;
-    --neo-blue-glow: 210 100% 68%;
-    --neo-blue-dark: 220 80% 42%;
-    --neo-cyan: 190 95% 55%;
-    --neo-cyan-glow: 185 100% 62%;
-    --neo-indigo: 235 75% 58%;
-    --neo-purple: 262 80% 62%;
+    /* NEO Custom — Electric Red Palette */
+    --neo-blue: 0 85% 58%;
+    --neo-blue-glow: 10 100% 65%;
+    --neo-blue-dark: 355 75% 42%;
+    --neo-cyan: 20 95% 55%;
+    --neo-cyan-glow: 25 100% 62%;
+    --neo-indigo: 340 75% 55%;
+    --neo-purple: 330 80% 58%;
     --neo-dark: 230 20% 4%;
     --neo-dark-lighter: 228 18% 7%;
     --neo-glass: 228 14% 9%;
@@ -62,12 +62,12 @@
     /* Sidebar */
     --sidebar-background: 230 20% 5%;
     --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary: 0 85% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 228 14% 12%;
     --sidebar-accent-foreground: 210 20% 98%;
     --sidebar-border: 225 10% 16%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-ring: 0 85% 58%;
   }
 
   .light {
