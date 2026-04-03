@@ -39,14 +39,14 @@
 
     --radius: 0.75rem;
 
-    /* NEO Custom — Lighter Crimson Palette */
-    --neo-blue: 355 65% 52%;
-    --neo-blue-glow: 0 60% 58%;
-    --neo-blue-dark: 350 55% 38%;
-    --neo-cyan: 350 55% 48%;
-    --neo-cyan-glow: 355 60% 55%;
-    --neo-indigo: 340 50% 48%;
-    --neo-purple: 330 45% 50%;
+    /* NEO Custom — Saturated Dopamine Palette */
+    --neo-blue: 355 85% 55%;
+    --neo-blue-glow: 0 80% 60%;
+    --neo-blue-dark: 350 75% 42%;
+    --neo-cyan: 350 75% 52%;
+    --neo-cyan-glow: 355 80% 58%;
+    --neo-indigo: 340 70% 52%;
+    --neo-purple: 330 65% 55%;
     --neo-dark: 230 20% 4%;
     --neo-dark-lighter: 228 18% 7%;
     --neo-glass: 228 14% 9%;
