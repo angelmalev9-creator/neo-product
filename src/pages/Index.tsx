@@ -27,7 +27,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen text-foreground relative flex flex-col items-center">
+    <div className="min-h-screen text-foreground relative flex flex-col items-center neo-snap-container">
       {/* Ambient background — minimal gradients */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-background" />
