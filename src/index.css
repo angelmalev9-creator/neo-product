@@ -2,8 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* NEO AI — Electric Dopamine Design System */
-/* Deep Obsidian | Electric Red | Orange Pulse */
+/* NEO AI — Dark Crimson Design System */
+/* Deep Obsidian | Dark Crimson | Warm Red */
 
 @layer base {
   :root {
@@ -16,8 +16,8 @@
     --popover: 228 18% 7%;
     --popover-foreground: 210 20% 98%;
 
-    /* PRIMARY: Deep Crimson — тъмно червено, authority, dopamine */
-    --primary: 355 72% 42%;
+    /* PRIMARY: Lighter Crimson — vibrant but not neon */
+    --primary: 355 65% 52%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 228 14% 11%;
@@ -26,8 +26,8 @@
     --muted: 225 12% 14%;
     --muted-foreground: 218 14% 50%;
 
-    /* ACCENT: Dark Blood Red */
-    --accent: 0 65% 38%;
+    /* ACCENT: Warm Rose */
+    --accent: 350 55% 48%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
@@ -35,18 +35,18 @@
 
     --border: 225 10% 16%;
     --input: 228 12% 9%;
-    --ring: 355 72% 42%;
+    --ring: 355 65% 52%;
 
     --radius: 0.75rem;
 
-    /* NEO Custom — Dark Crimson Palette */
-    --neo-blue: 355 72% 42%;
-    --neo-blue-glow: 0 70% 50%;
-    --neo-blue-dark: 350 65% 30%;
-    --neo-cyan: 0 65% 38%;
-    --neo-cyan-glow: 5 70% 45%;
-    --neo-indigo: 340 60% 38%;
-    --neo-purple: 330 55% 40%;
+    /* NEO Custom — Lighter Crimson Palette */
+    --neo-blue: 355 65% 52%;
+    --neo-blue-glow: 0 60% 58%;
+    --neo-blue-dark: 350 55% 38%;
+    --neo-cyan: 350 55% 48%;
+    --neo-cyan-glow: 355 60% 55%;
+    --neo-indigo: 340 50% 48%;
+    --neo-purple: 330 45% 50%;
     --neo-dark: 230 20% 4%;
     --neo-dark-lighter: 228 18% 7%;
     --neo-glass: 228 14% 9%;
@@ -62,12 +62,12 @@
     /* Sidebar */
     --sidebar-background: 230 20% 5%;
     --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 355 72% 42%;
+    --sidebar-primary: 355 65% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 228 14% 12%;
     --sidebar-accent-foreground: 210 20% 98%;
     --sidebar-border: 225 10% 16%;
-    --sidebar-ring: 355 72% 42%;
+    --sidebar-ring: 355 65% 52%;
   }
 
   .light {
