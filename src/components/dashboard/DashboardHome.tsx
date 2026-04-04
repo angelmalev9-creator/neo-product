@@ -265,8 +265,8 @@ const DashboardHome = ({
         className="flex items-center justify-between shrink-0"
       >
         <div>
-          <h1 className="text-lg font-bold text-foreground">Начало</h1>
-          <p className="text-xs text-muted-foreground">Преглед на активността в реално време</p>
+          <h1 className="text-lg font-bold text-foreground">Добре дошли!</h1>
+          <p className="text-xs text-muted-foreground">Ето какво се случва с вашия AI асистент</p>
         </div>
         <div className="flex items-center gap-3">
           <motion.span
