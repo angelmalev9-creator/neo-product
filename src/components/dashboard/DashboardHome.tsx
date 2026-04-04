@@ -350,10 +350,10 @@ const DashboardHome = ({
           </div>
           <div className="relative flex items-center gap-3 mb-2 shrink-0">
             <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
-              <div className="w-2 h-2 rounded-sm bg-primary" /> Разговори
+              <div className="w-2 h-2 rounded-sm bg-primary" /> Обаждания
             </div>
             <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
-              <div className="w-2 h-2 rounded-sm bg-[hsl(var(--neo-success))]" /> Клиенти
+              <div className="w-2 h-2 rounded-sm bg-[hsl(var(--neo-success))]" /> Нови клиенти
             </div>
           </div>
           <div className="flex-1 min-h-0 relative">
