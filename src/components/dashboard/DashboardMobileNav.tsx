@@ -1,5 +1,5 @@
 import {
-  Home, Rocket, MessageSquare, Brain, BarChart3,
+  Home, Brain, MessageSquare, Mic, BarChart3,
   Settings, Sun, Moon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -13,11 +13,11 @@ interface DashboardMobileNavProps {
 
 const BOTTOM_TABS = [
   { id: 'home', label: 'Начало', icon: Home },
-  { id: 'setup-website', label: 'Настрой', icon: Rocket },
-  { id: 'conv-diary', label: 'Чат', icon: MessageSquare },
-  { id: 'neo-test', label: 'NEO', icon: Brain },
+  { id: 'setup-website', label: 'Обучение', icon: Brain },
+  { id: 'conv-diary', label: 'Разговори', icon: MessageSquare },
+  { id: 'neo-test', label: 'Тест', icon: Mic },
   { id: 'results-stats', label: 'Данни', icon: BarChart3 },
-  { id: 'settings-plan', label: 'Още', icon: Settings },
+  { id: 'settings-plan', label: 'Акаунт', icon: Settings },
 ];
 
 const isTabActive = (activeTab: string, tabId: string) => {
@@ -35,7 +35,6 @@ const DashboardMobileNav = ({ activeTab, onTabChange }: DashboardMobileNavProps)
 
   return (
     <>
-      {/* Top header - slim */}
       <header
         className="lg:hidden sticky top-0 z-50 border-b border-border/10 bg-sidebar/95 backdrop-blur-xl px-4 py-2.5 flex items-center justify-between"
         style={{ paddingTop: 'max(0.625rem, env(safe-area-inset-top))' }}
@@ -49,7 +48,6 @@ const DashboardMobileNav = ({ activeTab, onTabChange }: DashboardMobileNavProps)
         </button>
       </header>
 
-      {/* Bottom tab bar - always visible */}
       <nav
         className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-sidebar/95 backdrop-blur-xl border-t border-border/10"
         style={{ paddingBottom: 'max(0.25rem, env(safe-area-inset-bottom))' }}
@@ -63,9 +61,7 @@ const DashboardMobileNav = ({ activeTab, onTabChange }: DashboardMobileNavProps)
                 onClick={() => onTabChange(tab.id)}
                 className={cn(
                   'flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-all min-w-0 flex-1',
-                  active
-                    ? 'text-primary'
-                    : 'text-muted-foreground hover:text-foreground'
+                  active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                 )}
               >
                 <div className={cn(

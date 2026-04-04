@@ -457,10 +457,10 @@ const DashboardHome = ({
             <div className="flex-1 rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-4 flex flex-col gap-1.5 min-h-0 overflow-y-auto relative">
               <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.02] to-transparent pointer-events-none rounded-2xl" />
               <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider shrink-0 relative mb-1">Бързи действия</h3>
-              <ActionRow icon={Globe} title="Добави сайт" done={!!websiteUrl} onClick={() => onTabChange('setup-website')} />
-              <ActionRow icon={CalendarDays} title="Свържи календар" done={calendarConnected} onClick={() => onTabChange('setup-calendar')} />
-              <ActionRow icon={Mic} title="Тествай NEO" done={hasTestedNeo} onClick={() => onTabChange('neo-test')} />
-              <ActionRow icon={BrainCircuit} title="Персонализирай" done={false} onClick={() => onTabChange('neo-behavior')} />
+              <ActionRow icon={Globe} title="Добавете вашия сайт" done={!!websiteUrl} onClick={() => onTabChange('setup-website')} />
+              <ActionRow icon={CalendarDays} title="Свържете Google Calendar" done={calendarConnected} onClick={() => onTabChange('setup-calendar')} />
+              <ActionRow icon={Mic} title="Чуйте как звучи NEO" done={hasTestedNeo} onClick={() => onTabChange('neo-test')} />
+              <ActionRow icon={BrainCircuit} title="Настройте какво казва" done={false} onClick={() => onTabChange('neo-behavior')} />
             </div>
           )}
         </motion.div>
