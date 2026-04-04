@@ -250,9 +250,9 @@ const DashboardHome = ({
   const upgradeInfo = TIER_UPGRADES[tierName];
   const automationScore = Math.min(99, Math.max(12, Math.round((conversionRate * 0.45) + (bookingRate * 0.35) + ((100 - Math.min(usagePercent, 100)) * 0.2))));
   const analysisSignals = [
-    { label: 'Конверсия към клиент', value: conversionRate, helper: `${totalLeads} от ${totalConversations} разговора`, tone: 'primary' as const },
-    { label: 'Резервации от разговор', value: bookingRate, helper: `${totalBookings} потвърдени резервации`, tone: 'blue' as const },
-    { label: 'Използване на плана', value: Math.min(Math.round(usagePercent), 100), helper: `${usedMinutes.toFixed(0)} / ${planLimit} минути`, tone: 'success' as const },
+    { label: 'Колко клиенти печелите', value: conversionRate, helper: `${totalLeads} от ${totalConversations} обаждания`, tone: 'primary' as const },
+    { label: 'Колко резервации правите', value: bookingRate, helper: `${totalBookings} запазени часове`, tone: 'blue' as const },
+    { label: 'Изразходвани минути', value: Math.min(Math.round(usagePercent), 100), helper: `${usedMinutes.toFixed(0)} от ${planLimit} мин използвани`, tone: 'success' as const },
   ];
 
   return (
