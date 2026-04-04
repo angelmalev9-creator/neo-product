@@ -56,16 +56,16 @@ const AUDIO_SAMPLE_RATE_OUT = 24000;
 const AUDIO_SAMPLE_RATE_IN = 16000;
 
 const ECHO_GUARD_MS = 80;
-const ANTI_BARGE_IN_MS = 1200;
-const MIN_BARGE_IN_CHARS = 8;
-const MIN_BARGE_IN_WORDS = 3;
+const ANTI_BARGE_IN_MS = 3500; // ↑ NEO изчаква минимум 3.5s преди да може да бъде прекъснат
+const MIN_BARGE_IN_CHARS = 20; // ↑ Изисква се повече реч преди barge-in
+const MIN_BARGE_IN_WORDS = 5; // ↑ Минимум 5 думи за да се смята за реална намеса
 const BARGE_IN_COMMANDS = ["стоп", "спри", "изчакай", "чакай", "момент", "секунда", "стига", "почакай"];
-const UTTERANCE_DEBOUNCE_MS = 350;
-const SPEECH_FINAL_MIN_MS = 280;
-const SPEECH_FINAL_MAX_MS = 4500;
-const UTTERANCE_END_MIN_MS = 240;
-const UTTERANCE_END_MAX_MS = 3400;
-const CONTINUATION_EXTRA_MS = 900;
+const UTTERANCE_DEBOUNCE_MS = 500; // ↑ По-дълъг debounce — чака клиентът да спре
+const SPEECH_FINAL_MIN_MS = 420; // ↑ Минимум 420ms след финален токен преди изпращане
+const SPEECH_FINAL_MAX_MS = 5500; // ↑ Максимум — за по-дълги изречения
+const UTTERANCE_END_MIN_MS = 380; // ↑ По-дълъг минимален период
+const UTTERANCE_END_MAX_MS = 4200; // ↑ По-дълъг максимален период
+const CONTINUATION_EXTRA_MS = 1400; // ↑ Ако изречението е незавършено — чака повече
 const LOW_CONF_SHORT_TEXT_MAX_CHARS = 8;
 const LOW_CONF_SHORT_TEXT_MAX_WORDS = 2;
 const LOW_CONF_HOLD_MS = 1700;
@@ -82,12 +82,12 @@ const SENSITIVE_MODE_EXTRA_WAIT_MS: Record<SensitiveInputMode, number> = {
   contact: 2800,
 };
 // VAD-based barge-in: number of consecutive speech frames needed to interrupt NEO
-// Higher = less false positives from noise/echo.
-const VAD_BARGE_IN_FRAMES_REQUIRED = 15;
+// Higher = less false positives from noise/echo. Raised so client must speak clearly.
+const VAD_BARGE_IN_FRAMES_REQUIRED = 35;
 
 // VAD (client-side) is only a fallback safety layer.
 // Server-final tokens should end the turn first.
-const VAD_SILENCE_MS = 4200;
+const VAD_SILENCE_MS = 5500; // ↑ Изчаква 5.5s тишина преди да изпрати транскрипцията
 const VAD_NOISE_PROFILE_MS = 2500;
 const VAD_MIN_SPEECH_THRESHOLD = 0.009;
 const VAD_MAX_SPEECH_THRESHOLD = 0.036;
@@ -2746,7 +2746,13 @@ export const useGeminiVoice = ({
         );
       } else {
         scheduleFillerWord(380); // → пусни filler ако Gemini не отговори в 380ms
-        sendToGemini(normalizeBgForSpeech(`${todayCtx}\n${focusBlock}\n${cleanText}`));
+        sendToGemini(
+          normalizeBgForSpeech(
+            `${todayCtx}\n${focusBlock}\n` +
+              `[СТИЛ: говори от 1-во лице мн.число ("ние", "можем", "имаме", "при нас"), уверен и естествен тон, сякаш знаеш — не рецитираш. Умерено темпо.]\n` +
+              cleanText,
+          ),
+        );
       }
     },
     [
@@ -3312,7 +3318,7 @@ export const useGeminiVoice = ({
 
         if (isPlayingRef.current && Date.now() - speakStartRef.current > ANTI_BARGE_IN_MS) {
           vadBargeInFramesRef.current += 1;
-          if (vadBargeInFramesRef.current >= VAD_BARGE_IN_FRAMES_REQUIRED && rms > vadThresholdRef.current * 2.5) {
+          if (vadBargeInFramesRef.current >= VAD_BARGE_IN_FRAMES_REQUIRED && rms > vadThresholdRef.current * 3.5) {
             console.log("[VAD BARGE-IN] ⚡ Speech detected → interrupt", { rms, frames: vadBargeInFramesRef.current });
             performEarlyBargeIn();
             vadBargeInFramesRef.current = 0;
@@ -3490,7 +3496,7 @@ export const useGeminiVoice = ({
         ];
         const FALLBACK_MODEL = "gemini-2.5-flash-preview-native-audio-dialog";
         let resolvedModel = data.model || FALLBACK_MODEL;
-        if (!VALID_MODELS.some(m => resolvedModel.includes(m))) {
+        if (!VALID_MODELS.some((m) => resolvedModel.includes(m))) {
           console.warn(`[SESSION] ⚠️ Model "${resolvedModel}" may be retired, falling back to "${FALLBACK_MODEL}"`);
           resolvedModel = FALLBACK_MODEL;
         }
@@ -4508,9 +4514,9 @@ export const useGeminiVoice = ({
               model: `models/${session.model}`,
               generation_config: {
                 response_modalities: ["AUDIO"],
-                // temperature 0.7 — достатъчно естествена variability без хаос
-                // По-ниско (0.3) звучи роботизирано; по-високо (0.9+) е непредсказуемо
-                temperature: 0.7,
+                // temperature 0.85 — по-топъл, по-естествен глас; звучи като човек, не като робот
+                // По-ниско (0.3-0.5) звучи прекалено механично и предсказуемо
+                temperature: 0.85,
                 max_output_tokens: 1500,
                 speech_config: {
                   voice_config: {
@@ -4558,9 +4564,12 @@ export const useGeminiVoice = ({
               greetingSentRef.current = true;
               currentResponseTextRef.current = "";
               sendToGemini(
-                `Нов клиент се свърза. Поздрави го топло и естествено — ти си НЕО от ${companyNameRef.current}. ` +
-                  `Говори на спокоен, приятелски тон — като да говориш с познат, не като робот. ` +
-                  `Поздравяването да е кратко и естествено (1-2 изречения). Питай с какво можеш да помогнеш.`,
+                `Нов клиент се свърза. Поздрави го топло и естествено — казвай се НЕО и представляваш ${companyNameRef.current}. ` +
+                  `ЗАДЪЛЖИТЕЛНО говори от 1-во лице множествено число ("ние", "можем", "предлагаме", "при нас", "имаме") — говориш като служител на компанията, не като външно лице. ` +
+                  `Тонът да е топъл и уверен — като опитен, компетентен служител, не като робот или оператор на скрипт. ` +
+                  `Говори сякаш ЗНАЕШ нещата — без колебание, без рецитиране, без дистанция. ` +
+                  `Поздравяването да е много кратко и естествено (1-2 изречения максимум). След това питай с какво можеш да помогнеш. ` +
+                  `Темпото на речта — умерено, като нормален разговор, не бързо.`,
               );
             }
           }
