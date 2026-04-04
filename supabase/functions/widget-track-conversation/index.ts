@@ -221,6 +221,28 @@ serve(async (req) => {
         })
         .eq("id", conversationId);
 
+      // Update profiles.used_minutes with the conversation duration
+      if (duration > 0) {
+        const addedMinutes = duration / 60;
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("used_minutes")
+          .eq("user_id", userId)
+          .single();
+
+        if (profile) {
+          const currentUsed = parseFloat(String(profile.used_minutes || 0));
+          await supabase
+            .from("profiles")
+            .update({
+              used_minutes: currentUsed + addedMinutes,
+              updated_at: now,
+            })
+            .eq("user_id", userId);
+          console.log(`[TRACK] Updated used_minutes: ${currentUsed} + ${addedMinutes.toFixed(2)} = ${(currentUsed + addedMinutes).toFixed(2)}`);
+        }
+      }
+
       // Auto-summarize if there are messages
       if (count && count > 0) {
         try {
