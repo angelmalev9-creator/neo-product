@@ -250,9 +250,9 @@ const DashboardHome = ({
   const upgradeInfo = TIER_UPGRADES[tierName];
   const automationScore = Math.min(99, Math.max(12, Math.round((conversionRate * 0.45) + (bookingRate * 0.35) + ((100 - Math.min(usagePercent, 100)) * 0.2))));
   const analysisSignals = [
-    { label: 'Конверсия към клиент', value: conversionRate, helper: `${totalLeads} от ${totalConversations} разговора`, tone: 'primary' as const },
-    { label: 'Резервации от разговор', value: bookingRate, helper: `${totalBookings} потвърдени резервации`, tone: 'blue' as const },
-    { label: 'Използване на плана', value: Math.min(Math.round(usagePercent), 100), helper: `${usedMinutes.toFixed(0)} / ${planLimit} минути`, tone: 'success' as const },
+    { label: 'Колко клиенти печелите', value: conversionRate, helper: `${totalLeads} от ${totalConversations} обаждания`, tone: 'primary' as const },
+    { label: 'Колко резервации правите', value: bookingRate, helper: `${totalBookings} запазени часове`, tone: 'blue' as const },
+    { label: 'Изразходвани минути', value: Math.min(Math.round(usagePercent), 100), helper: `${usedMinutes.toFixed(0)} от ${planLimit} мин използвани`, tone: 'success' as const },
   ];
 
   return (
@@ -265,8 +265,8 @@ const DashboardHome = ({
         className="flex items-center justify-between shrink-0"
       >
         <div>
-          <h1 className="text-lg font-bold text-foreground">Начало</h1>
-          <p className="text-xs text-muted-foreground">Преглед на активността в реално време</p>
+          <h1 className="text-lg font-bold text-foreground">Добре дошли!</h1>
+          <p className="text-xs text-muted-foreground">Ето какво се случва с вашия AI асистент</p>
         </div>
         <div className="flex items-center gap-3">
           <motion.span
@@ -283,9 +283,9 @@ const DashboardHome = ({
 
       {/* Row 2: Live Stats (4 cards) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
-        <StatCard i={0} icon={MessageCircle} label="Разговори днес" value={statsLoading ? '—' : String(todayConversations)} subLabel={`${totalConversations} общо`} color="primary" />
-        <StatCard i={1} icon={UserCheck} label="Нови клиенти" value={statsLoading ? '—' : String(todayClients)} subLabel={`${conversionRate}% конверсия`} color="success" />
-        <StatCard i={2} icon={CalendarCheck} label="Резервации" value={statsLoading ? '—' : String(todayBookings)} subLabel={`${totalBookings} общо`} color="blue" />
+        <StatCard i={0} icon={MessageCircle} label="Обаждания днес" value={statsLoading ? '—' : String(todayConversations)} subLabel={`${totalConversations} общо до момента`} color="primary" />
+        <StatCard i={1} icon={UserCheck} label="Заинтересовани клиенти" value={statsLoading ? '—' : String(todayClients)} subLabel={`${conversionRate}% от обажданията`} color="success" />
+        <StatCard i={2} icon={CalendarCheck} label="Запазени часове" value={statsLoading ? '—' : String(todayBookings)} subLabel={`${totalBookings} общо резервации`} color="blue" />
         <motion.div custom={3} initial="hidden" animate="visible" variants={fadeUp}
           className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-4 flex flex-col justify-between relative overflow-hidden group hover:border-border/30 transition-all duration-500"
         >
@@ -326,7 +326,7 @@ const DashboardHome = ({
           <div className="relative flex items-center justify-between mb-3 shrink-0 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-muted-foreground" />
-              <h2 className="text-xs font-semibold text-foreground">Анализи</h2>
+              <h2 className="text-xs font-semibold text-foreground">Графика на активността</h2>
               <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                 <span className="text-[9px] text-primary font-medium">Live</span>
@@ -350,10 +350,10 @@ const DashboardHome = ({
           </div>
           <div className="relative flex items-center gap-3 mb-2 shrink-0">
             <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
-              <div className="w-2 h-2 rounded-sm bg-primary" /> Разговори
+              <div className="w-2 h-2 rounded-sm bg-primary" /> Обаждания
             </div>
             <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
-              <div className="w-2 h-2 rounded-sm bg-[hsl(var(--neo-success))]" /> Клиенти
+              <div className="w-2 h-2 rounded-sm bg-[hsl(var(--neo-success))]" /> Нови клиенти
             </div>
           </div>
           <div className="flex-1 min-h-0 relative">
@@ -365,7 +365,7 @@ const DashboardHome = ({
                 <Tooltip
                   contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 12, fontSize: 11, boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}
                   labelStyle={{ color: 'hsl(var(--foreground))' }}
-                  formatter={(value: number, name: string) => [value, name === 'conversations' ? 'Разговори' : 'Нови клиенти']}
+                  formatter={(value: number, name: string) => [value, name === 'conversations' ? 'Обаждания' : 'Нови клиенти']}
                   cursor={{ fill: 'hsl(var(--primary) / 0.05)' }}
                 />
                 <Bar dataKey="conversations" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} maxBarSize={24} />
@@ -386,8 +386,8 @@ const DashboardHome = ({
             <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.05] via-transparent to-transparent pointer-events-none" />
             <div className="relative mb-3 flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Анализи</p>
-                <h3 className="text-sm font-semibold text-foreground">Състояние на AI канала Ви</h3>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Ефективност</p>
+                <h3 className="text-sm font-semibold text-foreground">Как се справя NEO?</h3>
               </div>
               <div className="rounded-xl border border-primary/20 bg-primary/10 px-3 py-2 text-right">
                 <div className="text-lg font-black text-primary leading-none">{automationScore}</div>
@@ -410,10 +410,10 @@ const DashboardHome = ({
 
           {/* Performance metrics */}
           <div className="grid grid-cols-2 gap-2 shrink-0">
-            <MiniStat icon={Activity} label="Общо разговори" value={String(totalConversations)} color="text-primary" />
-            <MiniStat icon={Target} label="Конверсия" value={conversionRate > 0 ? `${conversionRate}%` : '—'} color="text-[hsl(var(--neo-purple))]" />
-            <MiniStat icon={Timer} label="Ср. дължина" value={avgDurationMin} color="text-[hsl(var(--neo-blue))]" />
-            <MiniStat icon={LineChart} label="Резерв. %"  value={bookingRate > 0 ? `${bookingRate}%` : '—'} color="text-[hsl(var(--neo-orange))]" />
+            <MiniStat icon={Activity} label="Всички обаждания" value={String(totalConversations)} color="text-primary" />
+            <MiniStat icon={Target} label="% клиенти" value={conversionRate > 0 ? `${conversionRate}%` : '—'} color="text-[hsl(var(--neo-purple))]" />
+            <MiniStat icon={Timer} label="Средно време" value={avgDurationMin} color="text-[hsl(var(--neo-blue))]" />
+            <MiniStat icon={LineChart} label="% резервации"  value={bookingRate > 0 ? `${bookingRate}%` : '—'} color="text-[hsl(var(--neo-orange))]" />
           </div>
 
           {/* Upsell banner or Quick actions */}
@@ -457,10 +457,10 @@ const DashboardHome = ({
             <div className="flex-1 rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-4 flex flex-col gap-1.5 min-h-0 overflow-y-auto relative">
               <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.02] to-transparent pointer-events-none rounded-2xl" />
               <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider shrink-0 relative mb-1">Бързи действия</h3>
-              <ActionRow icon={Globe} title="Добави сайт" done={!!websiteUrl} onClick={() => onTabChange('setup-website')} />
-              <ActionRow icon={CalendarDays} title="Свържи календар" done={calendarConnected} onClick={() => onTabChange('setup-calendar')} />
-              <ActionRow icon={Mic} title="Тествай NEO" done={hasTestedNeo} onClick={() => onTabChange('neo-test')} />
-              <ActionRow icon={BrainCircuit} title="Персонализирай" done={false} onClick={() => onTabChange('neo-behavior')} />
+              <ActionRow icon={Globe} title="Добавете вашия сайт" done={!!websiteUrl} onClick={() => onTabChange('setup-website')} />
+              <ActionRow icon={CalendarDays} title="Свържете Google Calendar" done={calendarConnected} onClick={() => onTabChange('setup-calendar')} />
+              <ActionRow icon={Mic} title="Чуйте как звучи NEO" done={hasTestedNeo} onClick={() => onTabChange('neo-test')} />
+              <ActionRow icon={BrainCircuit} title="Настройте какво казва" done={false} onClick={() => onTabChange('neo-behavior')} />
             </div>
           )}
         </motion.div>

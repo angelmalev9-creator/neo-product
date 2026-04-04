@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import {
-  Home, Rocket, Globe, CalendarDays, Mail, Database,
-  MessageSquare,
-  Brain, Mic, BarChart3, TrendingUp,
+  Home, Globe, CalendarDays, Mail, Database,
+  MessageSquare, Brain, Mic, BarChart3,
   Settings, Crown, User, LogOut, ChevronDown, Palette,
   Sun, Moon,
 } from 'lucide-react';
@@ -24,39 +23,35 @@ interface NavGroup {
   id: string;
   label: string;
   icon: React.ElementType;
+  description?: string;
   children?: { id: string; label: string; icon: React.ElementType }[];
 }
 
 const NAV_GROUPS: NavGroup[] = [
-  { id: 'home', label: 'Начало', icon: Home },
+  { id: 'home', label: 'Начало', icon: Home, description: 'Преглед' },
   {
-    id: 'setup', label: 'Настрой', icon: Rocket,
+    id: 'setup', label: 'Обучение', icon: Brain, description: 'Настройте NEO',
     children: [
       { id: 'setup-website', label: 'Уебсайт', icon: Globe },
       { id: 'setup-calendar', label: 'Календар', icon: CalendarDays },
       { id: 'setup-email', label: 'Имейл', icon: Mail },
-      { id: 'setup-data', label: 'Данни от сайта', icon: Database },
+      { id: 'setup-data', label: 'Знания', icon: Database },
     ],
   },
-  { id: 'conv-diary', label: 'Разговори', icon: MessageSquare },
+  { id: 'conv-diary', label: 'Разговори', icon: MessageSquare, description: 'Чат история' },
   {
-    id: 'neo', label: 'NEO', icon: Brain,
+    id: 'neo', label: 'Тест на NEO', icon: Mic, description: 'Тествайте',
     children: [
       { id: 'neo-behavior', label: 'Поведение', icon: Settings },
-      { id: 'neo-test', label: 'Тест', icon: Mic },
+      { id: 'neo-test', label: 'Тествай на живо', icon: Mic },
     ],
   },
+  { id: 'results-stats', label: 'Статистика', icon: BarChart3, description: 'Резултати' },
+  { id: 'widget', label: 'Уиджет', icon: Palette, description: 'За сайта Ви' },
   {
-    id: 'results', label: 'Резултати', icon: BarChart3,
+    id: 'settings-group', label: 'Акаунт', icon: Settings,
     children: [
-      { id: 'results-stats', label: 'Статистика', icon: TrendingUp },
-    ],
-  },
-  { id: 'widget', label: 'Уиджет', icon: Palette },
-  {
-    id: 'settings-group', label: 'Настройки', icon: Settings,
-    children: [
-      { id: 'settings-plan', label: 'План', icon: Crown },
+      { id: 'settings-plan', label: 'Абонамент', icon: Crown },
       { id: 'settings-profile', label: 'Профил', icon: User },
     ],
   },
@@ -95,7 +90,7 @@ const DashboardSidebar = ({ activeTab, onTabChange, onLogout, userEmail, subscri
         </div>
       )}
 
-      {/* Navigation - scrollable */}
+      {/* Navigation */}
       <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto scrollbar-thin">
         {NAV_GROUPS.map((group) => {
           const hasChildren = !!group.children?.length;
@@ -113,7 +108,7 @@ const DashboardSidebar = ({ activeTab, onTabChange, onLogout, userEmail, subscri
                   }
                 }}
                 className={cn(
-                  'w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-all duration-150',
+                  'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150',
                   !hasChildren && activeTab === group.id
                     ? 'bg-primary/12 text-primary'
                     : isActive && hasChildren
