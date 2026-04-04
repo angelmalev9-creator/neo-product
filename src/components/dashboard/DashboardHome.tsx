@@ -386,8 +386,8 @@ const DashboardHome = ({
             <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.05] via-transparent to-transparent pointer-events-none" />
             <div className="relative mb-3 flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Анализи</p>
-                <h3 className="text-sm font-semibold text-foreground">Състояние на AI канала Ви</h3>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Ефективност</p>
+                <h3 className="text-sm font-semibold text-foreground">Как се справя NEO?</h3>
               </div>
               <div className="rounded-xl border border-primary/20 bg-primary/10 px-3 py-2 text-right">
                 <div className="text-lg font-black text-primary leading-none">{automationScore}</div>
