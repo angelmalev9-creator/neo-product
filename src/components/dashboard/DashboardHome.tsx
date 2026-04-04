@@ -283,9 +283,9 @@ const DashboardHome = ({
 
       {/* Row 2: Live Stats (4 cards) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
-        <StatCard i={0} icon={MessageCircle} label="Разговори днес" value={statsLoading ? '—' : String(todayConversations)} subLabel={`${totalConversations} общо`} color="primary" />
-        <StatCard i={1} icon={UserCheck} label="Нови клиенти" value={statsLoading ? '—' : String(todayClients)} subLabel={`${conversionRate}% конверсия`} color="success" />
-        <StatCard i={2} icon={CalendarCheck} label="Резервации" value={statsLoading ? '—' : String(todayBookings)} subLabel={`${totalBookings} общо`} color="blue" />
+        <StatCard i={0} icon={MessageCircle} label="Обаждания днес" value={statsLoading ? '—' : String(todayConversations)} subLabel={`${totalConversations} общо до момента`} color="primary" />
+        <StatCard i={1} icon={UserCheck} label="Заинтересовани клиенти" value={statsLoading ? '—' : String(todayClients)} subLabel={`${conversionRate}% от обажданията`} color="success" />
+        <StatCard i={2} icon={CalendarCheck} label="Запазени часове" value={statsLoading ? '—' : String(todayBookings)} subLabel={`${totalBookings} общо резервации`} color="blue" />
         <motion.div custom={3} initial="hidden" animate="visible" variants={fadeUp}
           className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-4 flex flex-col justify-between relative overflow-hidden group hover:border-border/30 transition-all duration-500"
         >
