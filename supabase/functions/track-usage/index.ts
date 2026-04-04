@@ -242,17 +242,39 @@ serve(async (req) => {
       let usedMinutes = currentUsed;
 
       if (daysSinceReset >= 30) {
+        // Monthly reset - but recalculate from conversations in current period
+        const newResetDate = now.toISOString();
         await supabase
           .from('profiles')
           .update({
             used_minutes: 0,
-            last_usage_reset: now.toISOString(),
-            updated_at: now.toISOString(),
+            last_usage_reset: newResetDate,
+            updated_at: newResetDate,
           })
           .eq('user_id', userId);
         
         usedMinutes = 0;
         logStep("Monthly usage reset");
+      } else if (usedMinutes === 0) {
+        // If used_minutes is 0 but there are conversations, recalculate from DB
+        const { data: convos } = await supabase
+          .from('conversations')
+          .select('duration_seconds')
+          .eq('user_id', userId)
+          .gte('created_at', lastReset.toISOString())
+          .not('duration_seconds', 'is', null);
+
+        if (convos && convos.length > 0) {
+          const totalMinutes = convos.reduce((sum: number, c: any) => sum + (parseFloat(String(c.duration_seconds || 0)) / 60), 0);
+          if (totalMinutes > 0) {
+            usedMinutes = totalMinutes;
+            await supabase
+              .from('profiles')
+              .update({ used_minutes: totalMinutes, updated_at: now.toISOString() })
+              .eq('user_id', userId);
+            logStep("Recalculated usage from conversations", { totalMinutes: totalMinutes.toFixed(2) });
+          }
+        }
       }
 
       return new Response(
