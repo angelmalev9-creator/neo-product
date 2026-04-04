@@ -62,18 +62,6 @@ const UseCaseCard = ({ industry }: { industry: typeof industries[0] }) => {
       {/* Image */}
       <div className={`relative rounded-xl overflow-hidden border ${industry.border}`}>
         <img src={industry.image} alt={industry.title} width={1254} height={1254} className="w-full h-auto" loading="lazy" />
-        <div className="absolute top-2 left-2 flex items-center gap-1.5">
-          <div className={`${industry.accentBg} backdrop-blur-md border ${industry.border} rounded-lg px-2.5 py-1 flex items-center gap-1.5`}>
-            <Icon className={`w-3.5 h-3.5 ${industry.color}`} strokeWidth={2} />
-            <span className="text-[11px] font-bold text-foreground">{industry.title}</span>
-          </div>
-        </div>
-        <div className="absolute bottom-2 right-2">
-          <div className="bg-background/80 backdrop-blur-md border border-border/40 rounded-lg px-2.5 py-1 flex items-center gap-1.5">
-            <Clock className="w-3 h-3 text-primary" />
-            <span className="text-[11px] font-bold text-primary">{industry.available} достъпен</span>
-          </div>
-        </div>
       </div>
 
       {/* Info */}
