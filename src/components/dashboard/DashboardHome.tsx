@@ -410,10 +410,10 @@ const DashboardHome = ({
 
           {/* Performance metrics */}
           <div className="grid grid-cols-2 gap-2 shrink-0">
-            <MiniStat icon={Activity} label="Общо разговори" value={String(totalConversations)} color="text-primary" />
-            <MiniStat icon={Target} label="Конверсия" value={conversionRate > 0 ? `${conversionRate}%` : '—'} color="text-[hsl(var(--neo-purple))]" />
-            <MiniStat icon={Timer} label="Ср. дължина" value={avgDurationMin} color="text-[hsl(var(--neo-blue))]" />
-            <MiniStat icon={LineChart} label="Резерв. %"  value={bookingRate > 0 ? `${bookingRate}%` : '—'} color="text-[hsl(var(--neo-orange))]" />
+            <MiniStat icon={Activity} label="Всички обаждания" value={String(totalConversations)} color="text-primary" />
+            <MiniStat icon={Target} label="% клиенти" value={conversionRate > 0 ? `${conversionRate}%` : '—'} color="text-[hsl(var(--neo-purple))]" />
+            <MiniStat icon={Timer} label="Средно време" value={avgDurationMin} color="text-[hsl(var(--neo-blue))]" />
+            <MiniStat icon={LineChart} label="% резервации"  value={bookingRate > 0 ? `${bookingRate}%` : '—'} color="text-[hsl(var(--neo-orange))]" />
           </div>
 
           {/* Upsell banner or Quick actions */}
