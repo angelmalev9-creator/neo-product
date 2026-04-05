@@ -1699,22 +1699,131 @@ export const useGeminiVoice = ({
 
   // ── Filler words: естествени БГ реакции докато Gemini генерира отговор ──────
   // Ако след ~380ms няма аудио от Gemini → изпускаме кратка устна реакция.
-  // Използваме Web Speech API (SpeechSynthesis) за незабавен TTS без латентност.
+  // Използваме синтезирани filler звуци за незабавен отговор без латентност.
   const BG_FILLERS = [
+    "Ъмм...",
+    "Мхм...",
+    "Аха...",
     "Да...",
-    "Разбира се...",
-    "Момент...",
     "Разбирам...",
     "Добре...",
-    "Да, разбира се...",
-    "Ясно...",
+    "Ъмм, да...",
+    "Мхм, разбирам...",
+    "Аха, ясно...",
+    "Мхм, добре...",
+    "Ъмм, момент...",
     "Да, момент...",
   ];
 
-  const playFillerWord = useCallback(() => {
-    // Filler words disabled
-    return;
+  /** Създава синтезиран filler звук ("ъмм", "мхм") чрез AudioContext */
+  const createFillerSound = useCallback((ctx: AudioContext, type: "uhm" | "mhm" | "aha"): AudioBuffer => {
+    const sampleRate = ctx.sampleRate;
+
+    if (type === "uhm") {
+      // "Ъмм" — назален хъм с леко покачване на тона
+      const duration = 0.35 + Math.random() * 0.15; // 350-500ms
+      const length = Math.floor(sampleRate * duration);
+      const buffer = ctx.createBuffer(1, length, sampleRate);
+      const data = buffer.getChannelData(0);
+      const baseFreq = 110 + Math.random() * 30; // ~110-140Hz — мъжки "ъмм"
+      for (let i = 0; i < length; i++) {
+        const t = i / length;
+        // Envelope: мек attack, plateau, мек release
+        const attack = Math.min(1, t * 8); // ~125ms attack
+        const release = t > 0.7 ? Math.pow(1 - (t - 0.7) / 0.3, 1.5) : 1;
+        const envelope = attack * release * 0.035;
+        // Тон с лека pitch rise (характерно за "ъмм?" когато мислиш)
+        const pitchRise = 1 + t * 0.08; // 8% rise
+        const fundamental = Math.sin((2 * Math.PI * baseFreq * pitchRise * i) / sampleRate);
+        const harmonic2 = 0.3 * Math.sin((2 * Math.PI * baseFreq * 2 * pitchRise * i) / sampleRate);
+        const harmonic3 = 0.15 * Math.sin((2 * Math.PI * baseFreq * 3 * pitchRise * i) / sampleRate);
+        // Назален шум
+        const nasal = (Math.random() * 2 - 1) * 0.08;
+        data[i] = (fundamental + harmonic2 + harmonic3 + nasal) * envelope;
+      }
+      return buffer;
+    }
+
+    if (type === "mhm") {
+      // "Мхм" — двусричен назален звук с pitch drop-rise
+      const duration = 0.4 + Math.random() * 0.1;
+      const length = Math.floor(sampleRate * duration);
+      const buffer = ctx.createBuffer(1, length, sampleRate);
+      const data = buffer.getChannelData(0);
+      const baseFreq = 130 + Math.random() * 20;
+      for (let i = 0; i < length; i++) {
+        const t = i / length;
+        const attack = Math.min(1, t * 10);
+        const release = t > 0.8 ? Math.pow(1 - (t - 0.8) / 0.2, 1.2) : 1;
+        // Двуфазен pitch: drop после rise (характерно за "мхм")
+        const pitchCurve =
+          t < 0.45
+            ? 1 - t * 0.15 // drop в първата половина
+            : 0.93 + (t - 0.45) * 0.2; // rise във втората
+        const envelope = attack * release * 0.03;
+        // Кратка пауза в средата за "м-хм" ефект
+        const midDip = 1 - 0.6 * Math.exp(-Math.pow((t - 0.42) * 15, 2));
+        const fundamental = Math.sin((2 * Math.PI * baseFreq * pitchCurve * i) / sampleRate);
+        const harmonic2 = 0.25 * Math.sin((2 * Math.PI * baseFreq * 2 * pitchCurve * i) / sampleRate);
+        const nasal = (Math.random() * 2 - 1) * 0.06;
+        data[i] = (fundamental + harmonic2 + nasal) * envelope * midDip;
+      }
+      return buffer;
+    }
+
+    // 'aha' — "Аха" — по-ярък, утвърдителен звук
+    const duration = 0.3 + Math.random() * 0.1;
+    const length = Math.floor(sampleRate * duration);
+    const buffer = ctx.createBuffer(1, length, sampleRate);
+    const data = buffer.getChannelData(0);
+    const baseFreq = 160 + Math.random() * 30;
+    for (let i = 0; i < length; i++) {
+      const t = i / length;
+      const attack = Math.min(1, t * 12); // Бърз attack
+      const release = t > 0.6 ? Math.pow(1 - (t - 0.6) / 0.4, 1.0) : 1;
+      // Pitch: лек drop → стабилно (като "а-ха")
+      const pitchCurve = t < 0.3 ? 1.05 - t * 0.15 : 1.0;
+      const envelope = attack * release * 0.028;
+      // По-ярък тембър — повече хармоници
+      const fundamental = Math.sin((2 * Math.PI * baseFreq * pitchCurve * i) / sampleRate);
+      const harmonic2 = 0.35 * Math.sin((2 * Math.PI * baseFreq * 2 * pitchCurve * i) / sampleRate);
+      const harmonic3 = 0.2 * Math.sin((2 * Math.PI * baseFreq * 3 * pitchCurve * i) / sampleRate);
+      // Кратка аспирация в началото за "а" звук
+      const aspiration = t < 0.08 ? (Math.random() * 2 - 1) * 0.15 * (1 - t / 0.08) : 0;
+      data[i] = (fundamental + harmonic2 + harmonic3 + aspiration) * envelope;
+    }
+    return buffer;
   }, []);
+
+  const playFillerWord = useCallback(() => {
+    const ctx = audioContextRef.current;
+    if (!ctx || isPlayingRef.current || fillerPlayedRef.current) return;
+    fillerPlayedRef.current = true;
+
+    try {
+      // Избираме случаен тип filler звук
+      const types: Array<"uhm" | "mhm" | "aha"> = ["uhm", "mhm", "aha", "uhm", "mhm"]; // uhm/mhm по-чести
+      const type = types[Math.floor(Math.random() * types.length)];
+      const fillerBuffer = createFillerSound(ctx, type);
+      const source = ctx.createBufferSource();
+      source.buffer = fillerBuffer;
+
+      // Свързваме чрез dry gain за да мине през warmth EQ
+      if (dryGainNodeRef.current) {
+        const fillerGain = ctx.createGain();
+        fillerGain.gain.value = 0.7 + Math.random() * 0.3; // 70-100% сила
+        source.connect(fillerGain);
+        fillerGain.connect(dryGainNodeRef.current);
+      } else {
+        source.connect(ctx.destination);
+      }
+
+      source.start();
+      console.log(`[FILLER] 🗣️ Playing "${type}" filler sound`);
+    } catch (e) {
+      console.warn("[FILLER] Failed to play filler sound:", e);
+    }
+  }, [createFillerSound]);
 
   const scheduleFillerWord = useCallback(
     (delayMs = 380) => {
@@ -2745,11 +2854,13 @@ export const useGeminiVoice = ({
           `${todayCtx}\n${focusBlock}\n[STT_CONTACT — поправи имейл/телефон ако са изкривени, изпиши САМО реалните данни обратно на клиента за потвърждение. ЗАБРАНЕНО е да казваш примерни стойности${parsedHints ? `; parsed: ${parsedHints}` : ""}]: ${cleanText}`,
         );
       } else {
-        scheduleFillerWord(380); // → пусни filler ако Gemini не отговори в 380ms
+        scheduleFillerWord(350); // → пусни filler ако Gemini не отговори в 350ms
         sendToGemini(
           normalizeBgForSpeech(
             `${todayCtx}\n${focusBlock}\n` +
-              `[СТИЛ: говори от 1-во лице мн.число ("ние", "можем", "имаме", "при нас"), уверен и естествен тон, сякаш знаеш — не рецитираш. Умерено темпо.]\n` +
+              `[СТИЛ: говори от 1-во лице мн.число ("ние", "можем", "имаме", "при нас"), емоционален и ангажиращ тон. ` +
+              `Реагирай човешки — "мхм", "аха", "ъмм". Звучи като ИСТИНСКИ ЧОВЕК — с дишане, леки паузи, емоция в гласа. ` +
+              `Умерено темпо. Покажи, че те ИНТЕРЕСУВА какво казва клиентът.]\n` +
               cleanText,
           ),
         );
@@ -2989,49 +3100,80 @@ export const useGeminiVoice = ({
     const impulse = ctx.createBuffer(2, length, sampleRate);
     for (let channel = 0; channel < 2; channel++) {
       const channelData = impulse.getChannelData(channel);
+      // Стерео spread: леко изместване между каналите за пространственост
+      const offset = channel === 0 ? 0 : Math.floor(sampleRate * 0.0003); // 0.3ms offset
       for (let i = 0; i < length; i++) {
-        channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+        const idx = Math.min(i + offset, length - 1);
+        // Ранни отражения (early reflections) — по-силни в първите 15ms
+        const earlyReflection =
+          idx < sampleRate * 0.015 ? 0.6 * (Math.random() * 2 - 1) * Math.pow(1 - idx / (sampleRate * 0.015), 0.5) : 0;
+        // Дифузна реверберация с експоненциален decay
+        const diffuse = (Math.random() * 2 - 1) * Math.pow(1 - idx / length, decay);
+        // Лек low-pass ефект за по-топъл reverb (високите честоти затихват по-бързо)
+        const highFreqDamping = Math.pow(1 - idx / length, decay * 1.5);
+        channelData[i] = (earlyReflection + diffuse * highFreqDamping) * 0.8;
       }
     }
     return impulse;
   };
 
   const startAmbientBackground = (ctx: AudioContext, destination: AudioNode) => {
-    const bufferSize = 2 * ctx.sampleRate;
+    const bufferSize = 3 * ctx.sampleRate; // 3 секунди loop за по-малко повторение
     const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const output = noiseBuffer.getChannelData(0);
     let lastOut = 0;
+    let lastOut2 = 0;
     for (let i = 0; i < bufferSize; i++) {
       const white = Math.random() * 2 - 1;
-      output[i] = (lastOut + 0.02 * white) / 1.02;
-      lastOut = output[i];
-      output[i] *= 3.5;
+      // Двустепенен brownian за по-топъл, по-дълбок ambient
+      lastOut = (lastOut + 0.02 * white) / 1.02;
+      lastOut2 = (lastOut2 + 0.03 * lastOut) / 1.03;
+      // Добавяме леко модулиране за "дишащ" ambient — не статичен
+      const breathMod = 1 + 0.15 * Math.sin((2 * Math.PI * 0.18 * i) / ctx.sampleRate);
+      output[i] = lastOut2 * 3.0 * breathMod;
     }
     const source = ctx.createBufferSource();
     source.buffer = noiseBuffer;
     source.loop = true;
-    const filter = ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.value = 80;
+    // Двоен филтър за по-естествен звук
+    const lowpass = ctx.createBiquadFilter();
+    lowpass.type = "lowpass";
+    lowpass.frequency.value = 120; // Покриваме повече от спектъра за топлина
+    lowpass.Q.value = 0.5;
+    const highpass = ctx.createBiquadFilter();
+    highpass.type = "highpass";
+    highpass.frequency.value = 20; // Махаме суббас
     const gain = ctx.createGain();
-    gain.gain.value = 0.015;
-    source.connect(filter);
-    filter.connect(gain);
+    gain.gain.value = 0.012; // Леко по-силен за усещане за "жива стая"
+    source.connect(lowpass);
+    lowpass.connect(highpass);
+    highpass.connect(gain);
     gain.connect(destination);
     source.start();
     return { source, gain };
   };
 
   const createBreathSound = (ctx: AudioContext): AudioBuffer => {
-    const duration = 0.08;
+    // Реалистично човешко дишане — по-дълго, с формантна характеристика
+    const duration = 0.14 + Math.random() * 0.12; // 140-260ms — като истинско вдишване
     const sampleRate = ctx.sampleRate;
     const length = Math.floor(sampleRate * duration);
     const buffer = ctx.createBuffer(1, length, sampleRate);
     const data = buffer.getChannelData(0);
+    // Brownian (red) noise за по-реалистичен дъх (не бял шум)
+    let prev = 0;
     for (let i = 0; i < length; i++) {
       const t = i / length;
-      const envelope = Math.sin(Math.PI * t);
-      data[i] = (Math.random() * 2 - 1) * envelope * 0.02;
+      // Асиметричен envelope: бързо нарастване, бавно затихване — като истинско вдишване
+      const attack = Math.min(1, t * 6); // бърз attack ~17%
+      const release = Math.pow(1 - t, 0.7);
+      const envelope = attack * release;
+      // Brownian noise — по-топъл, по-естествен от бял шум
+      const white = (Math.random() * 2 - 1) * 0.5;
+      prev = (prev + white) * 0.5;
+      // Леко подсилване в ниските честоти за "гърлен" характер
+      const formant = 1 + 0.3 * Math.sin((2 * Math.PI * 350 * i) / sampleRate);
+      data[i] = prev * envelope * 0.025 * formant;
     }
     return buffer;
   };
@@ -3052,19 +3194,43 @@ export const useGeminiVoice = ({
       gainRef.current.gain.value = 1.0;
       gainRef.current.connect(ctx.destination);
 
-      // Dry path (main voice, slightly boosted)
+      // === WARMTH EQ: добавяме топлина на гласа чрез леко подсилване на ниски/средни честоти ===
+      const warmthEQ = ctx.createBiquadFilter();
+      warmthEQ.type = "peaking";
+      warmthEQ.frequency.value = 220; // Фундаментал на мъжки глас
+      warmthEQ.gain.value = 2.5; // Леко подсилване за топлина
+      warmthEQ.Q.value = 0.8;
+      warmthEQ.connect(gainRef.current);
+
+      // Presence boost за яснота и "близост" — чувство за интимен разговор
+      const presenceEQ = ctx.createBiquadFilter();
+      presenceEQ.type = "peaking";
+      presenceEQ.frequency.value = 3200; // Presence range
+      presenceEQ.gain.value = 1.8;
+      presenceEQ.Q.value = 1.2;
+      presenceEQ.connect(warmthEQ);
+
+      // Лек de-ess: намаляваме прекалено остри "с" звуци
+      const deEss = ctx.createBiquadFilter();
+      deEss.type = "peaking";
+      deEss.frequency.value = 6500;
+      deEss.gain.value = -2.0;
+      deEss.Q.value = 2.0;
+      deEss.connect(presenceEQ);
+
+      // Dry path (main voice)
       dryGainNodeRef.current = ctx.createGain();
-      dryGainNodeRef.current.gain.value = 1.25;
-      dryGainNodeRef.current.connect(gainRef.current);
+      dryGainNodeRef.current.gain.value = 1.15;
+      dryGainNodeRef.current.connect(deEss);
 
       // Wet path (subtle reverb for spatial presence)
       try {
         reverbNodeRef.current = ctx.createConvolver();
-        reverbNodeRef.current.buffer = createReverbImpulse(ctx, 0.25, 2.0);
+        reverbNodeRef.current.buffer = createReverbImpulse(ctx, 0.3, 2.2);
         reverbGainNodeRef.current = ctx.createGain();
-        reverbGainNodeRef.current.gain.value = 0.07; // Very subtle
+        reverbGainNodeRef.current.gain.value = 0.09; // Малко по-силен reverb за пространственост
         reverbNodeRef.current.connect(reverbGainNodeRef.current);
-        reverbGainNodeRef.current.connect(gainRef.current);
+        reverbGainNodeRef.current.connect(warmthEQ);
       } catch (e) {
         console.warn("[AUDIO] Reverb setup failed, using dry only:", e);
         reverbNodeRef.current = null;
@@ -3090,7 +3256,6 @@ export const useGeminiVoice = ({
       buffer.getChannelData(0).set(audioData);
       const source = ctx.createBufferSource();
       source.buffer = buffer;
-      source.playbackRate.value = 1.0;
       activeSourceRef.current = source;
 
       // Connect to dry path (always) and reverb path (if available)
@@ -3101,25 +3266,47 @@ export const useGeminiVoice = ({
 
       source.start(nextPlayTimeRef.current);
       scheduledSourcesRef.current.push(source);
-      nextPlayTimeRef.current += buffer.duration;
 
-      // === BREATHING: insert breath sound at sentence boundaries ===
-      // Всеки chunk е ~100ms аудио. Вмъкваме дишане:
-      // - На всеки ~8 chunk-а (≈800ms) → кратък дъх между изречения
-      // - На всеки ~20 chunk-а (≈2s) → малко по-дълъг дъх (нова мисъл)
+      // === SUBTLE PITCH MICRO-VARIATION: леки колебания в скоростта за по-човешки звук ===
+      // Реалните хора никога не говорят с абсолютно постоянна скорост
+      const pitchVariation = 0.997 + Math.random() * 0.006; // ±0.3% — незабележимо, но добавя живост
+      source.playbackRate.value = pitchVariation;
+
+      nextPlayTimeRef.current += buffer.duration / pitchVariation;
+
+      // === BREATHING: реалистично дишане между фрази ===
+      // Вдишване на различни интервали — не механично на всеки N chunk-а
       audioChunkCounterRef.current++;
-      const isShortBreath = audioChunkCounterRef.current % 8 === 0;
-      const isLongBreath = audioChunkCounterRef.current % 20 === 0;
+      // Рандомизирани интервали: кратък дъх на ~6-10 chunks, дълъг на ~16-24 chunks
+      const shortBreathInterval = 6 + Math.floor(Math.random() * 5); // 6-10
+      const longBreathInterval = 16 + Math.floor(Math.random() * 9); // 16-24
+      const isShortBreath =
+        audioChunkCounterRef.current % shortBreathInterval === 0 &&
+        audioChunkCounterRef.current % longBreathInterval !== 0;
+      const isLongBreath = audioChunkCounterRef.current % longBreathInterval === 0;
       if ((isShortBreath || isLongBreath) && audioQueueRef.current.length > 0) {
         try {
           const breathBuffer = createBreathSound(ctx);
           const breathSource = ctx.createBufferSource();
           breathSource.buffer = breathBuffer;
           breathSource.connect(dryGainNodeRef.current!);
+          // Леко рандомизиране на силата на дъха
+          const breathGain = ctx.createGain();
+          breathGain.gain.value = 0.6 + Math.random() * 0.4; // 60-100% сила
+          breathSource.connect(breathGain);
+          breathGain.connect(dryGainNodeRef.current!);
           breathSource.start(nextPlayTimeRef.current);
-          // Дълъг дъх = пълна пауза; кратък = 50% overlap
-          nextPlayTimeRef.current += isLongBreath ? breathBuffer.duration * 0.85 : breathBuffer.duration * 0.45;
+          // Дълъг дъх = пълна пауза + малка допълнителна; кратък = 60% overlap
+          const breathPause = isLongBreath
+            ? breathBuffer.duration * (0.8 + Math.random() * 0.3) // 80-110% от дъха
+            : breathBuffer.duration * (0.35 + Math.random() * 0.2); // 35-55% от дъха
+          nextPlayTimeRef.current += breathPause;
         } catch {}
+      }
+      // === MICRO-ПАУЗИ: много кратки тихи моменти за естествен ритъм ===
+      // На всеки ~4 chunk-а добавяме крехка пауза (5-15ms) — като лек hesitation
+      else if (audioChunkCounterRef.current % 4 === 0 && audioQueueRef.current.length > 0) {
+        nextPlayTimeRef.current += 0.005 + Math.random() * 0.01; // 5-15ms
       }
 
       source.onended = () => {
@@ -3440,9 +3627,24 @@ export const useGeminiVoice = ({
           `Произнасяй всяка дума с правилно българско ударение и естествена интонация — ` +
           `като роден говорител, не като преводач. ` +
           `Темпото на речта е спокойно и уверено — не бързо, не монотонно. ` +
-          `Тонът е топъл, уважителен и приятелски — като внимателен и грижовен консултант. ` +
+          `Тонът е топъл, емоционален и ангажиращ — като внимателен приятел, който наистина се интересува. ` +
           `Използвай естествени паузи между изреченията. ` +
           `Никога не произнасяй думи на английски освен ако клиентът не го изисква изрично.\n\n` +
+          // ── Човешки речеви навици ──────────────────────────────────────
+          `КРИТИЧНО — ГОВОРИ КАТО ИСТИНСКИ ЧОВЕК:\n` +
+          `- Вмъквай естествени "ъмм", "мхм", "аха" в речта си — точно както истински човек би направил.\n` +
+          `- Когато мислиш или правиш пауза, кажи "ъмм..." или "хмм..." — НЕ мълчи.\n` +
+          `- Когато клиентът каже нещо, потвърждавай с "мхм", "аха", "да-да" преди отговора.\n` +
+          `- Реагирай емоционално: ако клиентът каже нещо хубаво, покажи ентусиазъм ("О, страхотно!"). ` +
+          `Ако каже нещо тъжно, покажи съчувствие ("Ох, разбирам..."). ` +
+          `Ако каже нещо интересно, покажи любопитство ("Уау, наистина ли?").\n` +
+          `- Говори с ВАРИАЦИЯ в интонацията — по-силно когато си ентусиазиран, по-тихо когато си съпричастен.\n` +
+          `- Използвай изрази на колебание: "Ъмм, нека помисля...", "Хмм, добър въпрос...".\n` +
+          `- Понякога се поправяй: "...тоест, искам да кажа...", "...по-точно казано...".\n` +
+          `- Използвай "знаеш ли", "виж", "представи си" за ангажиране.\n` +
+          `- Дишай между изреченията — прави кратки паузи за вдишване.\n` +
+          `- НИКОГА не звучи като робот, скрипт или автоматичен отговор.\n` +
+          `- Бъди ЕСТЕСТВЕН — сякаш разговаряш с приятел, не четеш от лист.\n\n` +
           // ── Произношение на числа, мерки и съкращения ────────────────────
           `ПРАВИЛА ЗА ПРОИЗНОШЕНИЕ:\n` +
           `- Цени: "15999 €" → "петнадесет хиляди деветстотин деветдесет и девет евро". "31291 лв" → "тридесет и една хиляди двеста деветдесет и един лева".\n` +
@@ -3463,8 +3665,9 @@ export const useGeminiVoice = ({
           `- Задавай само ЕДИН въпрос наведнъж — изчакай отговора на клиента, преди да питаш следващото.\n` +
           `- НЕ изреждай всички налични опции наведнъж — предложи максимум 2 варианта, после питай.\n` +
           `- Говори разговорно и естествено — без списъци, без точки, без формален тон.\n` +
-          `- Ако нещо не знаеш или не си сигурен — кажи го честно и предложи да провериш.\n` +
-          `- Отговаряй на зададения въпрос директно, без излишно предисловие.\n\n` +
+          `- Ако нещо не знаеш или не си сигурен — кажи го честно: "Ъмм, нека проверя..." или "Хмм, не съм напълно сигурен, но...".\n` +
+          `- Отговаряй на зададения въпрос директно, без излишно предисловие.\n` +
+          `- Започвай отговора си с кратка емоционална реакция: "О, добър въпрос!", "Мхм, разбирам!", "Аха, да!".\n\n` +
           `ПРАВИЛА ЗА КОНТАКТНИ ДАННИ:\n` +
           `- НИКОГА не казвай примерни имейли (example.com), телефони или имена. Те не съществуват.\n` +
           `- Ако клиентът не е дал имейл, телефон или име — ПОПИТАЙ го директно. Не измисляй.\n` +
@@ -4514,9 +4717,9 @@ export const useGeminiVoice = ({
               model: `models/${session.model}`,
               generation_config: {
                 response_modalities: ["AUDIO"],
-                // temperature 0.85 — по-топъл, по-естествен глас; звучи като човек, не като робот
-                // По-ниско (0.3-0.5) звучи прекалено механично и предсказуемо
-                temperature: 0.85,
+                // temperature 0.95 — по-топъл, по-емоционален глас; звучи като жив човек
+                // Високата температура добавя естествена вариация в интонацията
+                temperature: 0.95,
                 max_output_tokens: 1500,
                 speech_config: {
                   voice_config: {
@@ -4564,12 +4767,13 @@ export const useGeminiVoice = ({
               greetingSentRef.current = true;
               currentResponseTextRef.current = "";
               sendToGemini(
-                `Нов клиент се свърза. Поздрави го топло и естествено — казвай се НЕО и представляваш ${companyNameRef.current}. ` +
+                `Нов клиент се свърза. Поздрави го топло и ЕМОЦИОНАЛНО — казвай се НЕО и представляваш ${companyNameRef.current}. ` +
                   `ЗАДЪЛЖИТЕЛНО говори от 1-во лице множествено число ("ние", "можем", "предлагаме", "при нас", "имаме") — говориш като служител на компанията, не като външно лице. ` +
-                  `Тонът да е топъл и уверен — като опитен, компетентен служител, не като робот или оператор на скрипт. ` +
+                  `Тонът да е топъл, ентусиазиран и ангажиращ — като опитен, компетентен приятел, не като робот или оператор на скрипт. ` +
+                  `Започни с нещо като "Здравейте! Аха, радвам се, че ни се обадихте!" или "Здравейте! Мхм, чудесно, с какво мога да ви помогна?". ` +
                   `Говори сякаш ЗНАЕШ нещата — без колебание, без рецитиране, без дистанция. ` +
-                  `Поздравяването да е много кратко и естествено (1-2 изречения максимум). След това питай с какво можеш да помогнеш. ` +
-                  `Темпото на речта — умерено, като нормален разговор, не бързо.`,
+                  `Поздравяването да е много кратко и естествено (1-2 изречения максимум). Включи леко "ъмм" или "мхм" за естественост. ` +
+                  `Темпото на речта — умерено, като нормален разговор, не бързо. Покажи, че си ЕНТУСИАЗИРАН да помогнеш.`,
               );
             }
           }
