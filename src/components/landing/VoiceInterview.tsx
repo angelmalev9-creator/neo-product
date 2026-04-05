@@ -1130,11 +1130,8 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
       micGranted = false;
     }
 
-    // ✅ Hybrid greeting approach:
-    // Show greeting TEXT instantly in the chat panel
-    const instantGreeting = `Здравейте! Аз съм НЕО от ${companyName || "компанията"}. Какво ви интересува?`;
-    setMessages([{ role: "assistant", content: instantGreeting }]);
-    greetingShownRef.current = true;
+    // Gemini ще изговори и покаже поздрава автоматично чрез trigger в useGeminiVoice
+    greetingShownRef.current = false;
 
     if (micGranted) {
       // Full voice + text mode

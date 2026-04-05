@@ -250,10 +250,8 @@ const VoiceTest = ({
       micGranted = false;
     }
 
-    // Instant greeting
-    const instantGreeting = `Здравейте! Аз съм НЕО от ${companyName || 'компанията'}. Какво ви интересува?`;
-    setMessages([{ role: 'assistant', content: instantGreeting }]);
-    greetingShownRef.current = true;
+    // Gemini ще изговори и покаже поздрава автоматично чрез trigger в useGeminiVoice
+    greetingShownRef.current = false;
     setCallDuration(0);
 
     if (micGranted) {
