@@ -161,7 +161,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     if (!sessionToken) return;
 
     const { data, error } = await supabase.functions.invoke("demo-email-log", {
-      body: { sessionId, sessionToken },
+      body: { session_id: sessionId, sessionToken },
     });
 
     if (error) {
@@ -1132,6 +1132,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
 
     // ✅ Hybrid greeting approach:
     // Show greeting TEXT instantly in the chat panel
+    const instantGreeting = `Здравейте! Аз съм NEO, виртуалният асистент на ${companyName || "вашата компания"}. Как мога да Ви помогна?`;
     setMessages([{ role: "assistant", content: instantGreeting }]);
     greetingShownRef.current = true;
 
