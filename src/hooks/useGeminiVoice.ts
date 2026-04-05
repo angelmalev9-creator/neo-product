@@ -4846,7 +4846,7 @@ export const useGeminiVoice = ({
             }
 
             if (!greetingSentRef.current) {
-              greetingSentRef.current = false;
+              greetingSentRef.current = true;
               currentResponseTextRef.current = "";
               // ★ Greeting-ът се изпраща от самия сайт/widget — тук НЕ изпращаме допълнителен.
               // Ако сайтът няма собствен greeting, може да се разкоментира долния ред.
