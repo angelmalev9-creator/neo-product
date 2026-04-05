@@ -1,15 +1,15 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Phone, PhoneOff, Clock, Send, MessageSquare, Mic, Mail } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { useGeminiVoice } from '@/hooks/useGeminiVoice';
-import { useAudioEffects } from '@/hooks/useAudioEffects';
-import { Progress } from '@/components/ui/progress';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Phone, PhoneOff, Clock, Send, MessageSquare, Mic, Mail } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useGeminiVoice } from "@/hooks/useGeminiVoice";
+import { useAudioEffects } from "@/hooks/useAudioEffects";
+import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface Message {
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
 }
 
@@ -39,13 +39,13 @@ const VoiceTest = ({
   onUsageUpdate,
 }: VoiceTestProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [systemPrompt, setSystemPrompt] = useState<string>('');
+  const [systemPrompt, setSystemPrompt] = useState<string>("");
   const [callDuration, setCallDuration] = useState<number>(0);
   const [localUsedMinutes, setLocalUsedMinutes] = useState<number>(usedMinutes);
-  const [textInput, setTextInput] = useState<string>('');
+  const [textInput, setTextInput] = useState<string>("");
   const [textOnlyMode, setTextOnlyMode] = useState(false);
-  const [liveAssistantTranscript, setLiveAssistantTranscript] = useState<string>('');
-  const [liveUserTranscript, setLiveUserTranscript] = useState<string>('');
+  const [liveAssistantTranscript, setLiveAssistantTranscript] = useState<string>("");
+  const [liveUserTranscript, setLiveUserTranscript] = useState<string>("");
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -61,13 +61,10 @@ const VoiceTest = ({
 
   const { toast } = useToast();
 
-  const {
-    playConnectSound,
-    playDisconnectSound,
-    startAmbient,
-    stopAmbient,
-    initAudioContext,
-  } = useAudioEffects({ ambientVolume: 0.06, effectsVolume: 0.25 });
+  const { playConnectSound, playDisconnectSound, startAmbient, stopAmbient, initAudioContext } = useAudioEffects({
+    ambientVolume: 0.06,
+    effectsVolume: 0.25,
+  });
 
   useEffect(() => {
     setLocalUsedMinutes(usedMinutes);
@@ -81,32 +78,32 @@ const VoiceTest = ({
     let content = message.content;
     if (!content || content.trim().length < 2) return;
 
-    if (message.role === 'user') {
-      setLiveUserTranscript('');
+    if (message.role === "user") {
+      setLiveUserTranscript("");
     }
 
-    if (message.role === 'assistant') {
-      setLiveAssistantTranscript('');
+    if (message.role === "assistant") {
+      setLiveAssistantTranscript("");
     }
 
     // Skip duplicate typed user messages
-    if (message.role === 'user' && typedMessageAddedRef.current === content) {
+    if (message.role === "user" && typedMessageAddedRef.current === content) {
       typedMessageAddedRef.current = null;
       return;
     }
 
     // Skip duplicate greeting — block any greeting-like assistant message while instant greeting is showing
-    if (message.role === 'assistant') {
+    if (message.role === "assistant") {
       const lc = content.toLowerCase();
-      const isGreeting = lc.includes('здравейте') || lc.includes('нео от') || lc.includes('с какво мога');
-      
+      const isGreeting = lc.includes("здравейте") || lc.includes("нео от") || lc.includes("с какво мога");
+
       if (isGreeting) {
         // Always replace the first assistant message if it's still the only one (instant greeting)
         setMessages((prev) => {
-          const assistantCount = prev.filter(m => m.role === 'assistant').length;
-          if (assistantCount <= 1 && prev.length > 0 && prev[0].role === 'assistant') {
+          const assistantCount = prev.filter((m) => m.role === "assistant").length;
+          if (assistantCount <= 1 && prev.length > 0 && prev[0].role === "assistant") {
             const updated = [...prev];
-            updated[0] = { role: 'assistant', content };
+            updated[0] = { role: "assistant", content };
             return updated;
           }
           return prev;
@@ -114,7 +111,7 @@ const VoiceTest = ({
         greetingShownRef.current = false;
         return;
       }
-      
+
       // If greetingShown is still true but this isn't a greeting, just clear the flag
       if (greetingShownRef.current) {
         greetingShownRef.current = false;
@@ -124,14 +121,17 @@ const VoiceTest = ({
     setMessages((prev) => [...prev, { role: message.role, content }]);
   }, []);
 
-  const handleError = useCallback((error: string) => {
-    console.error('Voice error:', error);
-    toast({
-      title: 'Грешка',
-      description: error,
-      variant: 'destructive',
-    });
-  }, [toast]);
+  const handleError = useCallback(
+    (error: string) => {
+      console.error("Voice error:", error);
+      toast({
+        title: "Грешка",
+        description: error,
+        variant: "destructive",
+      });
+    },
+    [toast],
+  );
 
   const {
     isConnected,
@@ -147,13 +147,13 @@ const VoiceTest = ({
     onMessage: handleMessage,
     onError: handleError,
     onTranscript: (transcript, isFinal, role) => {
-      if (role === 'assistant') {
+      if (role === "assistant") {
         if (!isFinal) {
           setLiveAssistantTranscript(transcript);
         } else {
-          setLiveAssistantTranscript('');
+          setLiveAssistantTranscript("");
         }
-      } else if (role === 'user') {
+      } else if (role === "user") {
         setLiveUserTranscript(transcript);
       }
     },
@@ -192,16 +192,19 @@ const VoiceTest = ({
             const minutesToTrack = currentSessionMinutes - lastTrackedMinutesRef.current;
             if (minutesToTrack > 0) {
               lastTrackedMinutesRef.current = currentSessionMinutes;
-              supabase.functions.invoke('track-usage', {
-                body: { action: 'add_usage', minutes: minutesToTrack },
-              }).then(({ data, error }) => {
-                if (data && !error) console.log('[USAGE] Tracked:', data.used_minutes);
-              }).catch(console.error);
+              supabase.functions
+                .invoke("track-usage", {
+                  body: { action: "add_usage", minutes: minutesToTrack },
+                })
+                .then(({ data, error }) => {
+                  if (data && !error) console.log("[USAGE] Tracked:", data.used_minutes);
+                })
+                .catch(console.error);
             }
           }
 
           if (totalUsedMinutes >= planLimit) {
-            toast({ title: 'Лимит достигнат', description: 'Надвишихте лимита за Вашия план', variant: 'destructive' });
+            toast({ title: "Лимит достигнат", description: "Надвишихте лимита за Вашия план", variant: "destructive" });
             handleEndCall();
           }
         }
@@ -217,24 +220,28 @@ const VoiceTest = ({
   useEffect(() => {
     if (!demoSession) return;
 
-    const company = companyName || 'компанията';
+    const company = companyName || "компанията";
     // Gemini session handles knowledge injection via gemini-session edge function
     const prompt = `TTS for ${company}`;
     setSystemPrompt(prompt);
 
     prepareSession(prompt, company, demoSession.id).catch((err) => {
-      console.error('Prepare session error:', err);
+      console.error("Prepare session error:", err);
     });
   }, [demoSession, companyName, customPrompt, promptTemplate, voiceSpeed, prepareSession]);
 
   const handleStartCall = useCallback(async () => {
     if (!demoSession || !systemPrompt) {
-      toast({ title: 'Грешка', description: 'Моля, първо заредете база знания (обучете NEO с Вашия сайт)', variant: 'destructive' });
+      toast({
+        title: "Грешка",
+        description: "Моля, първо заредете база знания (обучете NEO с Вашия сайт)",
+        variant: "destructive",
+      });
       return;
     }
 
     if (remainingMinutes <= 0) {
-      toast({ title: 'Лимит достигнат', description: 'Надвишихте лимита за Вашия план', variant: 'destructive' });
+      toast({ title: "Лимит достигнат", description: "Надвишихте лимита за Вашия план", variant: "destructive" });
       return;
     }
 
@@ -251,8 +258,7 @@ const VoiceTest = ({
     }
 
     // Instant greeting
-    const instantGreeting = `Здравейте! Аз съм НЕО от ${companyName || 'компанията'}. Какво ви интересува?`;
-    setMessages([{ role: 'assistant', content: instantGreeting }]);
+    setMessages([{ role: "assistant", content: instantGreeting }]);
     greetingShownRef.current = true;
     setCallDuration(0);
 
@@ -260,14 +266,24 @@ const VoiceTest = ({
       setTextOnlyMode(false);
       playConnectSound();
       startAmbient();
-      await connect(systemPrompt, companyName || 'компанията', demoSession.id, false);
+      await connect(systemPrompt, companyName || "компанията", demoSession.id, false);
     } else {
       setTextOnlyMode(true);
       playConnectSound();
-      toast({ title: '🎤 Микрофонът не е разрешен', description: 'НЕО ще ви отговаря с глас, а вие пишете.' });
-      await connect(systemPrompt, companyName || 'компанията', demoSession.id, true);
+      toast({ title: "🎤 Микрофонът не е разрешен", description: "НЕО ще ви отговаря с глас, а вие пишете." });
+      await connect(systemPrompt, companyName || "компанията", demoSession.id, true);
     }
-  }, [demoSession, systemPrompt, companyName, connect, toast, remainingMinutes, initAudioContext, playConnectSound, startAmbient]);
+  }, [
+    demoSession,
+    systemPrompt,
+    companyName,
+    connect,
+    toast,
+    remainingMinutes,
+    initAudioContext,
+    playConnectSound,
+    startAmbient,
+  ]);
 
   const handleEndCall = useCallback(() => {
     isDisconnectingRef.current = true;
@@ -276,17 +292,17 @@ const VoiceTest = ({
 
     const pendingUser = liveUserTranscript.trim();
     if (pendingUser) {
-      setMessages(prev => [...prev, { role: 'user' as const, content: pendingUser }]);
+      setMessages((prev) => [...prev, { role: "user" as const, content: pendingUser }]);
     }
-    
+
     // Commit any partial assistant transcript before disconnecting
     const pendingAssistant = liveAssistantTranscript.trim();
     if (pendingAssistant) {
-      setMessages(prev => [...prev, { role: 'assistant' as const, content: pendingAssistant }]);
+      setMessages((prev) => [...prev, { role: "assistant" as const, content: pendingAssistant }]);
     }
-    setLiveAssistantTranscript('');
-    setLiveUserTranscript('');
-    
+    setLiveAssistantTranscript("");
+    setLiveUserTranscript("");
+
     disconnect();
     setTextOnlyMode(false);
 
@@ -305,14 +321,17 @@ const VoiceTest = ({
       const totalMinutes = (Date.now() - startTime) / 1000 / 60;
       const untrackedMinutes = totalMinutes - lastTracked;
       if (untrackedMinutes > 0.01) {
-        supabase.functions.invoke('track-usage', {
-          body: { action: 'add_usage', minutes: untrackedMinutes },
-        }).then(({ data }) => {
-          if (data) {
-            onUsageUpdate(data.used_minutes);
-            setLocalUsedMinutes(data.used_minutes);
-          }
-        }).catch(console.error);
+        supabase.functions
+          .invoke("track-usage", {
+            body: { action: "add_usage", minutes: untrackedMinutes },
+          })
+          .then(({ data }) => {
+            if (data) {
+              onUsageUpdate(data.used_minutes);
+              setLocalUsedMinutes(data.used_minutes);
+            }
+          })
+          .catch(console.error);
       }
     }
   }, [disconnect, onUsageUpdate, playDisconnectSound, stopAmbient, liveAssistantTranscript, liveUserTranscript]);
@@ -329,29 +348,32 @@ const VoiceTest = ({
 
     typedSendLockRef.current = true;
     lastTypedSendRef.current = { text: trimmed, ts: now };
-    setTextInput('');
+    setTextInput("");
 
     if (isConnected) {
       skipCleanForTypedRef.current = trimmed;
       typedMessageAddedRef.current = trimmed;
-      setMessages((prev) => [...prev, { role: 'user', content: trimmed }]);
+      setMessages((prev) => [...prev, { role: "user", content: trimmed }]);
       sendText(trimmed);
     }
 
     typedSendLockRef.current = false;
   }, [textInput, isConnected, textOnlyMode, sendText]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendText();
-    }
-  }, [handleSendText]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleSendText();
+      }
+    },
+    [handleSendText],
+  );
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   const canStartCall = demoSession && systemPrompt && remainingMinutes > 0;
@@ -370,9 +392,7 @@ const VoiceTest = ({
           </span>
         </div>
         <Progress value={Math.min(usagePercent, 100)} className="h-2" />
-        <p className="text-xs text-muted-foreground text-right mt-1">
-          Остават: {remainingMinutes.toFixed(1)} мин
-        </p>
+        <p className="text-xs text-muted-foreground text-right mt-1">Остават: {remainingMinutes.toFixed(1)} мин</p>
       </div>
 
       {/* Mode indicator */}
@@ -397,12 +417,12 @@ const VoiceTest = ({
             disabled={isConnecting || (!canStartCall && !isConnected && !textOnlyMode)}
             className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 ${
               isConnected || textOnlyMode
-                ? 'bg-destructive'
+                ? "bg-destructive"
                 : isConnecting
-                ? 'bg-primary/50 cursor-wait'
-                : canStartCall
-                ? 'bg-gradient-to-br from-primary to-primary/80 neo-glow-soft hover:scale-105'
-                : 'bg-muted cursor-not-allowed'
+                  ? "bg-primary/50 cursor-wait"
+                  : canStartCall
+                    ? "bg-gradient-to-br from-primary to-primary/80 neo-glow-soft hover:scale-105"
+                    : "bg-muted cursor-not-allowed"
             }`}
           >
             {isConnected || textOnlyMode ? (
@@ -439,7 +459,7 @@ const VoiceTest = ({
             <span className="text-muted-foreground">Свързан - говорете или пишете</span>
           ) : !canStartCall ? (
             <span className="text-muted-foreground">
-              {remainingMinutes <= 0 ? 'Лимитът е достигнат' : 'Заредете база знания първо'}
+              {remainingMinutes <= 0 ? "Лимитът е достигнат" : "Заредете база знания първо"}
             </span>
           ) : (
             <span className="text-muted-foreground">Натиснете за гласов + текстов тест</span>
@@ -448,21 +468,18 @@ const VoiceTest = ({
 
         {/* Messages */}
         {(messages.length > 0 || liveAssistantTranscript || liveUserTranscript) && (
-          <div
-            ref={messagesContainerRef}
-            className="mt-4 max-h-[60vh] overflow-y-auto space-y-2 text-left"
-          >
+          <div ref={messagesContainerRef} className="mt-4 max-h-[60vh] overflow-y-auto space-y-2 text-left">
             {messages.map((msg, i) => (
               <div
                 key={i}
                 className={`p-3 rounded-lg text-sm break-words whitespace-pre-wrap ${
-                  msg.role === 'assistant'
-                    ? 'bg-primary/10 border border-primary/20'
-                    : 'bg-muted/30 border border-border/20'
+                  msg.role === "assistant"
+                    ? "bg-primary/10 border border-primary/20"
+                    : "bg-muted/30 border border-border/20"
                 }`}
               >
                 <span className="font-medium text-xs text-muted-foreground block mb-1">
-                  {msg.role === 'assistant' ? 'NEO' : 'Вие'}
+                  {msg.role === "assistant" ? "NEO" : "Вие"}
                 </span>
                 {msg.content}
               </div>
