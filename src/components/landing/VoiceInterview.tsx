@@ -475,22 +475,25 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
 
       const cleanedMessage: Message = { role: message.role, content };
 
-      // Block any greeting-like assistant message — replace instead of duplicating
+      // Deduplicate greeting messages — keep only the latest version
       if (message.role === "assistant") {
         const lc = content.toLowerCase();
         const isGreeting = lc.includes("здравейте") || lc.includes("нео от") || lc.includes("с какво мога");
         
         if (isGreeting) {
           setMessages((prev) => {
-            const assistantCount = prev.filter(m => m.role === "assistant").length;
-            if (assistantCount <= 1 && prev.length > 0 && prev[0].role === "assistant") {
+            // If no messages yet, just add it
+            if (prev.length === 0) return [{ role: "assistant", content }];
+            // If first message is also a greeting, replace it
+            const firstIsGreeting = prev[0]?.role === "assistant" && 
+              (prev[0].content.toLowerCase().includes("здравейте") || prev[0].content.toLowerCase().includes("нео от"));
+            if (firstIsGreeting) {
               const updated = [...prev];
               updated[0] = { role: "assistant", content };
               return updated;
             }
             return prev;
           });
-          greetingShownRef.current = false;
           lastAssistantMessageAtRef.current = Date.now();
           if (finalMessageSentRef.current) finalMessageSpokenRef.current = true;
           return;

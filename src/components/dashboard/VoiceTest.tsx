@@ -95,23 +95,23 @@ const VoiceTest = ({
       return;
     }
 
-    // Skip duplicate greeting — block any greeting-like assistant message while instant greeting is showing
+    // Deduplicate greeting messages — keep only the latest version
     if (message.role === 'assistant') {
       const lc = content.toLowerCase();
       const isGreeting = lc.includes('здравейте') || lc.includes('нео от') || lc.includes('с какво мога');
       
       if (isGreeting) {
-        // Always replace the first assistant message if it's still the only one (instant greeting)
         setMessages((prev) => {
-          const assistantCount = prev.filter(m => m.role === 'assistant').length;
-          if (assistantCount <= 1 && prev.length > 0 && prev[0].role === 'assistant') {
+          if (prev.length === 0) return [{ role: 'assistant', content }];
+          const firstIsGreeting = prev[0]?.role === 'assistant' && 
+            (prev[0].content.toLowerCase().includes('здравейте') || prev[0].content.toLowerCase().includes('нео от'));
+          if (firstIsGreeting) {
             const updated = [...prev];
             updated[0] = { role: 'assistant', content };
             return updated;
           }
           return prev;
         });
-        greetingShownRef.current = false;
         return;
       }
       
