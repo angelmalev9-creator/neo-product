@@ -4848,9 +4848,21 @@ export const useGeminiVoice = ({
             if (!greetingSentRef.current) {
               greetingSentRef.current = true;
               currentResponseTextRef.current = "";
-              // ★ Greeting-ът се изпраща от самия сайт/widget — тук НЕ изпращаме допълнителен.
-              // Ако сайтът няма собствен greeting, може да се разкоментира долния ред.
-              // sendToGemini(`Здравейте, аз съм НЕО от ${companyNameRef.current}. Как мога да Ви помогна?`);
+              // ★ Trigger Gemini to SPEAK the greeting aloud.
+              // The instant text greeting is already shown in the UI by the caller.
+              // This sends a hidden prompt so the model generates audio for the greeting.
+              setTimeout(() => {
+                const ws = wsRef.current;
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                  console.log("[GEMINI] Triggering spoken greeting");
+                  ws.send(JSON.stringify({
+                    client_content: {
+                      turns: [{ role: "user", parts: [{ text: "[SYSTEM] Започни разговора — представи се кратко на български и попитай с какво можеш да помогнеш. Говори естествено и приветливо." }] }],
+                      turn_complete: true,
+                    },
+                  }));
+                }
+              }, 300);
             }
           }
 
