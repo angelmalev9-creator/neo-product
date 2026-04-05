@@ -161,7 +161,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     if (!sessionToken) return;
 
     const { data, error } = await supabase.functions.invoke("demo-email-log", {
-      body: { session_id: sessionId, sessionToken },
+      body: { sessionId, sessionToken },
     });
 
     if (error) {
@@ -479,10 +479,10 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
       if (message.role === "assistant") {
         const lc = content.toLowerCase();
         const isGreeting = lc.includes("здравейте") || lc.includes("нео от") || lc.includes("с какво мога");
-
+        
         if (isGreeting) {
           setMessages((prev) => {
-            const assistantCount = prev.filter((m) => m.role === "assistant").length;
+            const assistantCount = prev.filter(m => m.role === "assistant").length;
             if (assistantCount <= 1 && prev.length > 0 && prev[0].role === "assistant") {
               const updated = [...prev];
               updated[0] = { role: "assistant", content };
@@ -495,7 +495,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
           if (finalMessageSentRef.current) finalMessageSpokenRef.current = true;
           return;
         }
-
+        
         if (greetingShownRef.current) {
           greetingShownRef.current = false;
         }
@@ -742,13 +742,13 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     onMessage: handleMessage,
     onError: handleError,
     onTranscript: (transcript, isFinal, role) => {
-      if (role === "assistant") {
+      if (role === 'assistant') {
         if (!isFinal) {
           setLiveAssistantTranscript(transcript);
         } else {
-          setLiveAssistantTranscript("");
+          setLiveAssistantTranscript('');
         }
-      } else if (role === "user") {
+      } else if (role === 'user') {
         setLiveUserTranscript(transcript);
       }
     },
@@ -1132,7 +1132,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
 
     // ✅ Hybrid greeting approach:
     // Show greeting TEXT instantly in the chat panel
-    const instantGreeting = `Здравейте! Аз съм NEO, виртуалният асистент на ${companyName || "вашата компания"}. Как мога да Ви помогна?`;
+    const instantGreeting = `Здравейте! Аз съм НЕО от ${companyName || "компанията"}. Какво ви интересува?`;
     setMessages([{ role: "assistant", content: instantGreeting }]);
     greetingShownRef.current = true;
 
@@ -1173,15 +1173,15 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     stopAmbient();
     const pendingUser = liveUserTranscript.trim();
     if (pendingUser) {
-      setMessages((prev) => [...prev, { role: "user", content: pendingUser }]);
+      setMessages(prev => [...prev, { role: 'user', content: pendingUser }]);
     }
     // Commit any partial assistant transcript before disconnecting
     const pendingAssistant = liveAssistantTranscript.trim();
     if (pendingAssistant) {
-      setMessages((prev) => [...prev, { role: "assistant", content: pendingAssistant }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: pendingAssistant }]);
     }
-    setLiveAssistantTranscript("");
-    setLiveUserTranscript("");
+    setLiveAssistantTranscript('');
+    setLiveUserTranscript('');
     disconnect();
     setTextOnlyMode(false);
   }, [disconnect, playDisconnectSound, stopAmbient, liveAssistantTranscript, liveUserTranscript]);
