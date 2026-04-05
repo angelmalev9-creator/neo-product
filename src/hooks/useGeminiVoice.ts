@@ -2049,6 +2049,12 @@ export const useGeminiVoice = ({
         clearUserLiveTranscript();
         return false;
       }
+      // Filter out [SYSTEM] trigger messages — they should never appear in chat
+      if (clean.startsWith("[SYSTEM]")) {
+        console.log("[USER] Filtered system trigger from chat");
+        clearUserLiveTranscript();
+        return false;
+      }
 
       const now = Date.now();
       const last = lastCommittedUserRef.current;
