@@ -258,6 +258,7 @@ const VoiceTest = ({
     }
 
     // Instant greeting
+    const instantGreeting = `Здравейте! Аз съм NEO, виртуалният асистент на ${companyName || "компанията"}. Как мога да Ви помогна?`;
     setMessages([{ role: "assistant", content: instantGreeting }]);
     greetingShownRef.current = true;
     setCallDuration(0);
