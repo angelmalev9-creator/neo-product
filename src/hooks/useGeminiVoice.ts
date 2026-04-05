@@ -1974,7 +1974,7 @@ export const useGeminiVoice = ({
       if (silenceNudgeSentRef.current) return;
       silenceNudgeSentRef.current = true;
       silenceNudgeCountRef.current += 1;
-      sendToGemini("Все още ли сте на линия?");
+      sendToGemini("Клиентът мълчи дълго. Попитай го: На линия ли сте?");
     }, 25000);
   }, [clearSilenceWatchdog, sendToGemini]);
 
@@ -2478,7 +2478,7 @@ export const useGeminiVoice = ({
         if (hasNonFinal) {
           // ★ BUG FIX: If utterance was committed very recently, ignore stale interim tokens
           // that arrive after the commit — they cause the "ghost" duplicate transcript
-          if (Date.now() - utteranceCommittedAtRef.current < 600) {
+          if (Date.now() - utteranceCommittedAtRef.current < 1200) {
             return;
           }
           const interimClean = sanitizeUserTranscriptForUi(transcript);
@@ -2500,7 +2500,7 @@ export const useGeminiVoice = ({
 
         if (!hasFinal) {
           // ★ BUG FIX: Skip debounce scheduling if utterance was just committed
-          if (Date.now() - utteranceCommittedAtRef.current < 600) {
+          if (Date.now() - utteranceCommittedAtRef.current < 1200) {
             return;
           }
           if (utteranceDebounceRef.current) {
@@ -2521,6 +2521,11 @@ export const useGeminiVoice = ({
 
         const taggedTranscript =
           minConfidence < 0.55 ? `[LOW_CONFIDENCE:${Math.round(minConfidence * 100)}%] ${transcript}` : transcript;
+
+        // ★ BUG FIX: If utterance was committed recently, ignore stale final tokens too
+        if (Date.now() - utteranceCommittedAtRef.current < 1200) {
+          return;
+        }
 
         const prev = utteranceBufferRef.current[utteranceBufferRef.current.length - 1] || "";
         if (prev && shouldReplaceBufferedTranscript(prev, taggedTranscript)) {
@@ -4843,13 +4848,9 @@ export const useGeminiVoice = ({
             if (!greetingSentRef.current) {
               greetingSentRef.current = true;
               currentResponseTextRef.current = "";
-              sendToGemini(
-                `Нов клиент се свърза. Поздрави го кратко и професионално — казвай се НЕО и представляваш ${companyNameRef.current}. ` +
-                  `ЗАДЪЛЖИТЕЛНО говори от 1-во лице множествено число ("ние", "можем", "предлагаме", "при нас", "имаме"). ` +
-                  `КАЖИ ТОЧНО: "Здравейте, аз съм НЕО от ${companyNameRef.current}. Как мога да Ви помогна?" ` +
-                  `НИЩО ПОВЕЧЕ. Без "толкова се радвам". Без описание на компанията. Без ентусиазъм. ` +
-                  `Кратко, топло, професионално. Клиентът ще каже с какво му е нужна помощ.`,
-              );
+              // ★ Greeting-ът се изпраща от самия сайт/widget — тук НЕ изпращаме допълнителен.
+              // Ако сайтът няма собствен greeting, може да се разкоментира долния ред.
+              // sendToGemini(`Здравейте, аз съм НЕО от ${companyNameRef.current}. Как мога да Ви помогна?`);
             }
           }
 
