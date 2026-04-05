@@ -45,9 +45,9 @@ const Index = () => {
             <DemoSection onTrainingComplete={handleTrainingComplete} />
             <VoiceInterview key={sessionId || 'no-session'} sessionId={sessionId} />
             <FeaturesGrid />
+            <BusinessResults />
             <UseCases />
             <RevenueCalculator />
-            <BusinessResults />
             <Comparison />
             <Testimonials />
             <Pricing />
