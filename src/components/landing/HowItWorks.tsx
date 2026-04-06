@@ -50,7 +50,7 @@ const HowItWorks = () => {
           <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-primary text-xs font-semibold mb-5 uppercase tracking-[0.15em]">
             Как работи
           </span>
-          <h2 className="neo-heading-section font-display font-black text-foreground mb-4">
+          <h2 className="neo-heading-section font-black text-foreground mb-4 font-mono">
             3 стъпки.{' '}
             <span className="text-primary">5 минути. Готово.</span>
           </h2>

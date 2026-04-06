@@ -55,7 +55,7 @@ const UseCases = () => {
     >
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-10">
-          <h2 className="neo-heading-section font-display font-black text-foreground mb-3">
+          <h2 className="neo-heading-section font-black text-foreground mb-3 font-mono">
             За всеки бизнес, <span className="text-primary">който говори с клиенти</span>
           </h2>
           <p className="neo-subheading text-muted-foreground max-w-lg mx-auto">

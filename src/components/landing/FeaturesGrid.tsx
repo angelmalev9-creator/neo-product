@@ -102,7 +102,7 @@ const FeaturesGrid = () => {
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12 sm:mb-14">
-          <h2 className="neo-heading-section font-display font-black text-foreground mb-4">
+          <h2 className="neo-heading-section font-black text-foreground mb-4 font-mono">
             Всичко, което <span className="text-primary">Ви трябва</span>
           </h2>
           <p className="neo-subheading text-muted-foreground max-w-lg mx-auto">

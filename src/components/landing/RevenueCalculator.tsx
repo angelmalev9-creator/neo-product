@@ -25,7 +25,7 @@ const RevenueCalculator = () => {
           <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-primary text-xs font-semibold mb-5 uppercase tracking-[0.15em]">
             <Calculator className="w-3.5 h-3.5" /> Калкулатор
           </span>
-          <h2 className="neo-heading-section font-display font-black text-foreground mb-3">
+          <h2 className="neo-heading-section font-black text-foreground mb-3 font-mono">
             Колко губите от <span className="text-primary">пропуснати обаждания?</span>
           </h2>
         </div>

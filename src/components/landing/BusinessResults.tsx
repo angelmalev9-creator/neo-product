@@ -41,7 +41,7 @@ const BusinessResults = () => {
             <Sparkles className="w-3.5 h-3.5" />
             Резултати
           </span>
-          <h2 className="neo-heading-section font-display font-black text-foreground mb-4">
+          <h2 className="neo-heading-section font-black text-foreground mb-4 font-mono">
             Какво постигат <span className="text-primary">клиентите ни</span>
           </h2>
           <p className="neo-subheading text-muted-foreground max-w-lg mx-auto">
