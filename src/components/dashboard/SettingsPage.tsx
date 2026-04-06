@@ -24,6 +24,11 @@ interface SettingsPageProps {
   userEmail?: string;
 }
 
+const formatUsageMinutes = (value: number) => {
+  if (value <= 0) return '0';
+  return value < 10 ? value.toFixed(1) : value.toFixed(0);
+};
+
 const SettingsPage = ({
   userId, section = 'plan', subscribed, tierName, subscriptionEnd,
   usedMinutes, planLimit, onManageSubscription, portalLoading,
@@ -56,7 +61,7 @@ const SettingsPage = ({
     <div className="h-full flex flex-col p-4 lg:p-6 overflow-hidden">
       <h1 className="text-lg font-bold text-foreground mb-3 shrink-0">Настройки</h1>
 
-      <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain space-y-4">
         {section === 'plan' && (
           <>
             {/* Plan card */}
@@ -88,11 +93,11 @@ const SettingsPage = ({
                 <div className="space-y-3 relative">
                   <div className="grid grid-cols-2 gap-2">
                     <div className="rounded-xl bg-background/40 border border-border/10 p-3 text-center">
-                      <p className="text-xl font-black text-foreground">{usedMinutes.toFixed(0)}</p>
+                      <p className="text-xl font-black text-foreground">{formatUsageMinutes(usedMinutes)}</p>
                       <p className="text-[9px] text-muted-foreground">използвани мин</p>
                     </div>
                     <div className="rounded-xl bg-background/40 border border-border/10 p-3 text-center">
-                      <p className="text-xl font-black text-foreground">{remainingMinutes.toFixed(0)}</p>
+                      <p className="text-xl font-black text-foreground">{formatUsageMinutes(remainingMinutes)}</p>
                       <p className="text-[9px] text-muted-foreground">оставащи мин</p>
                     </div>
                   </div>

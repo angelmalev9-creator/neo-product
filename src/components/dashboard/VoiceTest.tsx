@@ -52,6 +52,7 @@ const VoiceTest = ({
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const lastTrackedMinutesRef = useRef<number>(0);
+  const sessionBaseUsedMinutesRef = useRef<number>(usedMinutes);
   const isDisconnectingRef = useRef<boolean>(false);
   const greetingShownRef = useRef(false);
   const skipCleanForTypedRef = useRef<string | null>(null);
@@ -70,11 +71,18 @@ const VoiceTest = ({
   } = useAudioEffects({ ambientVolume: 0.06, effectsVolume: 0.25 });
 
   useEffect(() => {
+    if (isConnected || textOnlyMode) return;
+    sessionBaseUsedMinutesRef.current = usedMinutes;
     setLocalUsedMinutes(usedMinutes);
-  }, [usedMinutes]);
+  }, [usedMinutes, isConnected, textOnlyMode]);
 
   const remainingMinutes = Math.max(0, planLimit - localUsedMinutes);
   const usagePercent = planLimit > 0 ? (localUsedMinutes / planLimit) * 100 : 0;
+
+  const formatUsageMinutes = (value: number) => {
+    if (value <= 0) return '0';
+    return value < 10 ? value.toFixed(1) : value.toFixed(0);
+  };
 
   // ── Message handler ──
   const handleMessage = useCallback((message: Message) => {
@@ -176,6 +184,7 @@ const VoiceTest = ({
     if (isConnected || textOnlyMode) {
       startTimeRef.current = Date.now();
       lastTrackedMinutesRef.current = 0;
+      sessionBaseUsedMinutesRef.current = usedMinutes;
       isDisconnectingRef.current = false;
 
       timerRef.current = setInterval(() => {
@@ -184,7 +193,7 @@ const VoiceTest = ({
           setCallDuration(elapsed);
 
           const currentSessionMinutes = elapsed / 60;
-          const totalUsedMinutes = usedMinutes + currentSessionMinutes;
+          const totalUsedMinutes = sessionBaseUsedMinutesRef.current + currentSessionMinutes;
           setLocalUsedMinutes(totalUsedMinutes);
 
           // Track every 30s
@@ -195,7 +204,10 @@ const VoiceTest = ({
               supabase.functions.invoke('track-usage', {
                 body: { action: 'add_usage', minutes: minutesToTrack },
               }).then(({ data, error }) => {
-                if (data && !error) console.log('[USAGE] Tracked:', data.used_minutes);
+                if (data && !error) {
+                  onUsageUpdate(data.used_minutes);
+                  console.log('[USAGE] Tracked:', data.used_minutes);
+                }
               }).catch(console.error);
             }
           }
@@ -211,7 +223,7 @@ const VoiceTest = ({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isConnected, textOnlyMode, usedMinutes, planLimit, toast]);
+  }, [isConnected, textOnlyMode, planLimit, toast, onUsageUpdate]);
 
   // Build system prompt & prepare session (Gemini gets knowledge via gemini-session + worker proxy)
   useEffect(() => {
@@ -364,12 +376,12 @@ const VoiceTest = ({
             <span>Минути от плана</span>
           </div>
           <span className="font-medium text-foreground">
-            {usedMinutes.toFixed(1)} / {planLimit} мин
+            {formatUsageMinutes(localUsedMinutes)} / {planLimit} мин
           </span>
         </div>
         <Progress value={Math.min(usagePercent, 100)} className="h-2" />
         <p className="text-xs text-muted-foreground text-right mt-1">
-          Остават: {remainingMinutes.toFixed(1)} мин
+          Остават: {formatUsageMinutes(remainingMinutes)} мин
         </p>
       </div>
 

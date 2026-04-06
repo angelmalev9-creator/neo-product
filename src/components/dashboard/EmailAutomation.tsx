@@ -30,10 +30,22 @@ interface EmailLog {
   recipient_email: string;
   recipient_name: string | null;
   subject: string;
+  body: string;
   status: string;
   sent_at: string | null;
   created_at: string;
 }
+
+const getCompactEmailPreview = (value: string | null) => {
+  const clean = String(value || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!clean) return 'Няма кратко съдържание';
+  return clean.length > 110 ? `${clean.slice(0, 110).trim()}…` : clean;
+};
 
 const EmailAutomation = () => {
   const { t } = useTranslation();
@@ -288,7 +300,7 @@ const EmailAutomation = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-x-hidden">
       {/* Gmail Connection */}
       <Card className="neo-glass-subtle border-border/20">
         <CardHeader>
@@ -480,10 +492,14 @@ const EmailAutomation = () => {
           ) : (
             <div className="space-y-3">
               {emailLogs.map((log) => (
-                <div key={log.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/20">
-                  <div>
-                    <p className="font-medium">{log.recipient_name || log.recipient_email}</p>
-                    <p className="text-sm text-muted-foreground">{log.subject}</p>
+                <div key={log.id} className="flex items-start justify-between gap-3 p-3 rounded-lg bg-muted/20 overflow-hidden">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{log.subject}</p>
+                    <p className="text-sm text-muted-foreground break-all">{log.recipient_name || log.recipient_email}</p>
+                    <p className="text-xs text-muted-foreground/80 mt-1 break-words">{getCompactEmailPreview(log.body)}</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      {new Date(log.sent_at || log.created_at).toLocaleString('bg-BG', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </p>
                   </div>
                   <Badge variant={log.status === 'sent' ? 'default' : log.status === 'failed' ? 'destructive' : 'secondary'}>
                     {log.status === 'sent' ? 'Изпратен' : log.status === 'failed' ? 'Неуспешен' : 'Изчакващ'}

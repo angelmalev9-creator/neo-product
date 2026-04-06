@@ -24,6 +24,17 @@ interface SetupPageProps {
   onTabChange: (tab: string) => void;
 }
 
+const getCompactEmailPreview = (value: string | null) => {
+  const clean = String(value || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!clean) return 'Няма кратко съдържание';
+  return clean.length > 180 ? `${clean.slice(0, 180).trim()}…` : clean;
+};
+
 const SetupPage = ({
   userId, section, websiteUrl, setWebsiteUrl, companyName, setCompanyName,
   demoSession, setDemoSession, onTabChange,
@@ -62,7 +73,7 @@ const SetupPage = ({
   const activeSection = section || 'website';
 
   return (
-    <div className="h-full flex flex-col p-4 lg:p-6 overflow-hidden">
+    <div className="h-full flex flex-col p-4 lg:p-6 overflow-hidden overflow-x-hidden">
       <h1 className="text-lg font-bold text-foreground mb-3 shrink-0">Настройка</h1>
 
       {/* Progress + Tabs compact row */}
@@ -101,7 +112,7 @@ const SetupPage = ({
       </div>
 
       {/* Section content */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain">
         {activeSection === 'website' && (
           <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5 space-y-4">
             <div className="flex items-center gap-3">
@@ -278,8 +289,28 @@ const EmailLogsSection = ({ emailConnected, userId }: { emailConnected: boolean;
                 </button>
                 {isExpanded && (
                   <div className="px-3 pb-2.5 border-t border-border/10">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-[10px]">
+                      <div>
+                        <p className="text-muted-foreground">До</p>
+                        <p className="text-foreground break-all">{log.recipient_email}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Статус</p>
+                        <p className="text-foreground">{log.status === 'sent' ? 'Изпратен' : log.status === 'failed' || log.status === 'error' ? 'Грешка' : log.status}</p>
+                      </div>
+                      {log.intent && (
+                        <div>
+                          <p className="text-muted-foreground">Тип</p>
+                          <p className="text-foreground">{log.intent}</p>
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-muted-foreground">Кога</p>
+                        <p className="text-foreground">{new Date(log.sent_at || log.created_at).toLocaleString('bg-BG', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+                      </div>
+                    </div>
                     <p className="mt-2 text-[10px] text-foreground/70 leading-relaxed break-words">
-                      {log.body?.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim() || 'Няма съдържание'}
+                      {getCompactEmailPreview(log.body)}
                     </p>
                   </div>
                 )}
