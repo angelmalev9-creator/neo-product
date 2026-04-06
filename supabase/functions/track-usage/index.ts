@@ -18,6 +18,11 @@ const PLAN_LIMITS: Record<string, number> = {
   'empire': 10000,
 };
 
+const normalizeNumber = (value: unknown) => {
+  const parsed = Number(value ?? 0);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -256,24 +261,43 @@ serve(async (req) => {
         usedMinutes = 0;
         logStep("Monthly usage reset");
       } else if (usedMinutes === 0) {
-        // If used_minutes is 0 but there are conversations, recalculate from DB
-        const { data: convos } = await supabase
-          .from('conversations')
-          .select('duration_seconds')
-          .eq('user_id', userId)
-          .gte('created_at', lastReset.toISOString())
-          .not('duration_seconds', 'is', null);
+        // If used_minutes is 0 but there is tracked history, recalculate from DB
+        const [conversationsResult, voiceSessionsResult] = await Promise.all([
+          supabase
+            .from('conversations')
+            .select('duration_seconds')
+            .eq('user_id', userId)
+            .gte('created_at', lastReset.toISOString())
+            .not('duration_seconds', 'is', null),
+          supabase
+            .from('voice_sessions')
+            .select('duration_seconds')
+            .eq('user_id', userId)
+            .gte('created_at', lastReset.toISOString())
+            .not('duration_seconds', 'is', null),
+        ]);
 
-        if (convos && convos.length > 0) {
-          const totalMinutes = convos.reduce((sum: number, c: any) => sum + (parseFloat(String(c.duration_seconds || 0)) / 60), 0);
-          if (totalMinutes > 0) {
-            usedMinutes = totalMinutes;
-            await supabase
-              .from('profiles')
-              .update({ used_minutes: totalMinutes, updated_at: now.toISOString() })
-              .eq('user_id', userId);
-            logStep("Recalculated usage from conversations", { totalMinutes: totalMinutes.toFixed(2) });
-          }
+        const conversationMinutes = (conversationsResult.data || []).reduce(
+          (sum: number, conversation: any) => sum + normalizeNumber(conversation.duration_seconds) / 60,
+          0,
+        );
+        const voiceSessionMinutes = (voiceSessionsResult.data || []).reduce(
+          (sum: number, session: any) => sum + normalizeNumber(session.duration_seconds) / 60,
+          0,
+        );
+        const totalMinutes = conversationMinutes + voiceSessionMinutes;
+
+        if (totalMinutes > 0) {
+          usedMinutes = totalMinutes;
+          await supabase
+            .from('profiles')
+            .update({ used_minutes: totalMinutes, updated_at: now.toISOString() })
+            .eq('user_id', userId);
+          logStep("Recalculated usage from history", {
+            conversationMinutes: conversationMinutes.toFixed(2),
+            voiceSessionMinutes: voiceSessionMinutes.toFixed(2),
+            totalMinutes: totalMinutes.toFixed(2),
+          });
         }
       }
 
