@@ -217,10 +217,10 @@ const Hero = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-[1.6rem] sm:text-4xl lg:text-5xl font-display font-black text-foreground tracking-tight mb-4 sm:mb-5 leading-[1.08]"
+              className="lg:text-5xl font-black text-foreground tracking-tight mb-4 sm:mb-5 leading-[1.08] sm:text-2xl text-2xl shadow-none font-mono"
             >
               Докато Вие спите, NEO говори с клиенти и{' '}
-              <span className="neo-gradient-text">записва часове</span>{' '}
+              <span className="neo-gradient-text shadow-inner">записва часове</span>{' '}
               вместо Вас.
             </motion.h1>
 
@@ -229,11 +229,11 @@ const Hero = () => {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="neo-subheading text-foreground/50 mb-7 max-w-md"
+              className="neo-subheading text-foreground/50 mb-7 max-w-md opacity-75"
             >
               Отговаря на всеки клиент и не пропуска нито едно запитване — 24/7.
               <br />
-              <span className="text-foreground/70 font-medium">Готов за 5 минути. От 25 EUR/месец.</span>
+              <span className="text-foreground/70 font-medium opacity-70">Готов за 5 минути. От 25 EUR/месец.</span>
             </motion.p>
 
             {/* CTAs */}

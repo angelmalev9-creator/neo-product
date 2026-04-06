@@ -137,7 +137,7 @@ const Pricing = () => {
             <Sparkles className="w-3.5 h-3.5" />
             Ценови планове
           </span>
-          <h2 className="neo-heading-section font-display font-black text-foreground mb-5 max-w-3xl mx-auto">
+          <h2 className="neo-heading-section font-black text-foreground mb-5 max-w-3xl mx-auto font-mono">
             {t('pricing.title1')} <span className="text-primary">{t('pricing.title2')}</span>
           </h2>
           <p className="neo-subheading text-muted-foreground mb-8">
@@ -271,7 +271,7 @@ const Pricing = () => {
 
                 <Button
                   size="lg"
-                  className={`w-full py-4 text-sm lg:text-base font-bold rounded-xl transition-all duration-300 ${
+                  className={`w-full py-4 text-sm lg:text-base font-bold rounded-xl transition-all duration-300 font-mono ${
                     plan.featured 
                       ? 'neo-btn-primary shadow-lg shadow-primary/25' 
                       : 'bg-secondary text-foreground border border-border/20 hover:bg-secondary/80 hover:border-primary/20'
