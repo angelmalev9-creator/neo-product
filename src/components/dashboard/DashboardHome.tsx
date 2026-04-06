@@ -111,6 +111,11 @@ const TIER_UPGRADES: Record<string, { nextTier: string; nextLabel: string; featu
   },
 };
 
+const formatUsageMinutes = (value: number) => {
+  if (value <= 0) return '0';
+  return value < 10 ? value.toFixed(1) : value.toFixed(0);
+};
+
 const DashboardHome = ({
   subscribed, tierName, subscriptionEnd, usedMinutes, planLimit,
   onManageSubscription, portalLoading, onTabChange,
@@ -232,11 +237,11 @@ const DashboardHome = ({
   const analysisSignals = [
     { label: 'Колко клиенти печелите', value: conversionRate, helper: `${totalLeads} от ${totalConversations} обаждания`, tone: 'primary' as const },
     { label: 'Колко резервации правите', value: bookingRate, helper: `${totalBookings} запазени часове`, tone: 'blue' as const },
-    { label: 'Изразходвани минути', value: Math.min(Math.round(usagePercent), 100), helper: `${usedMinutes.toFixed(0)} от ${planLimit} мин`, tone: 'success' as const },
+    { label: 'Изразходвани минути', value: Math.min(Math.round(usagePercent), 100), helper: `${formatUsageMinutes(usedMinutes)} от ${planLimit} мин`, tone: 'success' as const },
   ];
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto overflow-x-hidden overscroll-y-contain">
       <div className="p-3 sm:p-4 lg:p-5 space-y-3 sm:space-y-4">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
@@ -277,7 +282,7 @@ const DashboardHome = ({
               <div className="relative">
                 <Progress value={Math.min(usagePercent, 100)} className="h-1 sm:h-1.5" />
                 <div className="flex justify-between mt-1">
-                  <p className="text-[9px] sm:text-[10px] text-muted-foreground">{usedMinutes.toFixed(0)}/{planLimit} мин</p>
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">{formatUsageMinutes(usedMinutes)}/{planLimit} мин</p>
                   {usagePercent > 80 && (
                     <span className="text-[8px] sm:text-[9px] text-[hsl(var(--neo-warning))] font-medium animate-pulse">
                       {usagePercent >= 100 ? 'Лимит!' : 'Почти пълно'}

@@ -44,11 +44,11 @@ const NeoPage = ({
   };
 
   return (
-    <div className="h-full flex flex-col p-4 lg:p-6 overflow-hidden">
+    <div className="h-full flex flex-col p-4 lg:p-6 overflow-hidden overflow-x-hidden">
       <h1 className="text-lg font-bold text-foreground mb-3 shrink-0">NEO</h1>
 
       {section === 'behavior' && (
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain">
           <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5 space-y-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
@@ -90,7 +90,7 @@ const NeoPage = ({
       )}
 
       {section === 'test' && (
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain">
           <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5 min-h-0">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">

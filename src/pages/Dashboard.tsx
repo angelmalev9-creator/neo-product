@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -83,13 +83,35 @@ const Dashboard = () => {
     }
   };
 
-  const loadUsage = async () => {
+  const loadUsage = useCallback(async () => {
     if (!user) return;
     try {
       const { data } = await supabase.functions.invoke('track-usage', { body: { action: 'get_usage' } });
       if (data) { setUsedMinutes(data.used_minutes || 0); setPlanLimit(data.plan_limit || 100); }
     } catch (err) { console.error('Failed to load usage:', err); }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const refreshUsage = () => {
+      void loadUsage();
+    };
+
+    const intervalId = window.setInterval(refreshUsage, 20000);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') refreshUsage();
+    };
+
+    window.addEventListener('focus', refreshUsage);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', refreshUsage);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user, loadUsage]);
 
   const handleManageSubscription = async () => {
     setPortalLoading(true);
@@ -224,7 +246,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen h-screen bg-background flex overflow-hidden">
+    <div className="min-h-screen h-screen bg-background flex overflow-hidden overflow-x-hidden">
       <div className="hidden lg:block">
         <DashboardSidebar
           activeTab={activeTab}
@@ -238,7 +260,7 @@ const Dashboard = () => {
 
       <div className="flex-1 flex flex-col min-w-0 h-screen">
         <DashboardMobileNav activeTab={activeTab} onTabChange={setActiveTab} />
-        <main className="flex-1 overflow-hidden pb-[4.5rem] lg:pb-0">
+        <main className="flex-1 min-h-0 overflow-hidden overflow-x-hidden overscroll-y-none pb-[4.5rem] lg:pb-0">
           {renderContent()}
         </main>
       </div>

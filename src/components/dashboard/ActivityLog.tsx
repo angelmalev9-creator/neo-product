@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   MessageSquare, Clock, Users, Phone, Mail,
@@ -74,6 +73,17 @@ interface EmailLog {
 interface ActivityLogProps {
   userId: string;
 }
+
+const getCompactEmailPreview = (value: string | null) => {
+  const clean = String(value || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!clean) return 'Няма кратко съдържание';
+  return clean.length > 140 ? `${clean.slice(0, 140).trim()}…` : clean;
+};
 
 const ActivityLog = ({ userId }: ActivityLogProps) => {
   const { toast } = useToast();
@@ -205,7 +215,7 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 overflow-x-hidden">
       {/* Compact stats row */}
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5 text-primary" /> {totalConvos} разговори</span>
@@ -224,8 +234,7 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
           <p className="text-sm">Все още няма записани разговори</p>
         </div>
       ) : (
-        <ScrollArea className="h-[560px]">
-          <div className="space-y-2 pr-2">
+        <div className="space-y-2 overflow-x-hidden">
             {conversations.map((convo) => {
               const lead = getLeadForConversation(convo.id);
               const booking = getBookingForConversation(convo.id);
@@ -390,8 +399,9 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                                   </span>
                                 </div>
                                 <p className="text-xs font-medium text-foreground">{email.subject}</p>
-                                <p className="text-[10px] text-muted-foreground mt-0.5">До: {email.recipient_email}</p>
+                                <p className="text-[10px] text-muted-foreground mt-0.5 break-all">До: {email.recipient_email}</p>
                                 {email.intent && <p className="text-[10px] text-muted-foreground/70 mt-0.5">Тип: {email.intent}</p>}
+                                <p className="text-[10px] text-foreground/70 mt-1 leading-relaxed break-words">{getCompactEmailPreview(email.body)}</p>
                               </div>
                             ))}
                           </div>
@@ -402,8 +412,7 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                 </div>
               );
             })}
-          </div>
-        </ScrollArea>
+        </div>
       )}
     </div>
   );

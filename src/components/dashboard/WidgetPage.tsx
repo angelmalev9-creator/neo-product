@@ -30,10 +30,10 @@ const WidgetPage = ({ userId, companyName, logoUrl, setLogoUrl }: WidgetPageProp
   };
 
   return (
-    <div className="h-full flex flex-col p-4 lg:p-6 overflow-hidden">
+    <div className="h-full flex flex-col p-4 lg:p-6 overflow-hidden overflow-x-hidden">
       <h1 className="text-lg font-bold text-foreground mb-3 shrink-0">Уиджет</h1>
 
-      <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain space-y-4">
         {/* Install code - compact */}
         <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/8 to-card/60 backdrop-blur-sm p-4 flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
