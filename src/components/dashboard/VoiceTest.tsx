@@ -70,12 +70,6 @@ const VoiceTest = ({
     initAudioContext,
   } = useAudioEffects({ ambientVolume: 0.06, effectsVolume: 0.25 });
 
-  useEffect(() => {
-    if (isConnected || textOnlyMode) return;
-    sessionBaseUsedMinutesRef.current = usedMinutes;
-    setLocalUsedMinutes(usedMinutes);
-  }, [usedMinutes, isConnected, textOnlyMode]);
-
   const remainingMinutes = Math.max(0, planLimit - localUsedMinutes);
   const usagePercent = planLimit > 0 ? (localUsedMinutes / planLimit) * 100 : 0;
 
@@ -166,6 +160,12 @@ const VoiceTest = ({
       }
     },
   });
+
+  useEffect(() => {
+    if (isConnected || textOnlyMode) return;
+    sessionBaseUsedMinutesRef.current = usedMinutes;
+    setLocalUsedMinutes(usedMinutes);
+  }, [usedMinutes, isConnected, textOnlyMode]);
 
   // Pre-warm microphone
   useEffect(() => {
