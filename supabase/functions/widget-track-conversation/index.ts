@@ -33,6 +33,11 @@ const extractIncrementalMessage = (previous: string, incoming: string) => {
   return next;
 };
 
+const parseSeconds = (value: unknown) => {
+  const parsed = Number(value ?? 0);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -147,19 +152,30 @@ serve(async (req) => {
 
     // ── ADD_USAGE ──
     if (action === "add_usage") {
+      const addedSeconds = parseSeconds(durationSeconds);
+
       if (conversationId && durationSeconds) {
+        const { data: conversation } = await supabase
+          .from("conversations")
+          .select("duration_seconds")
+          .eq("id", conversationId)
+          .maybeSingle();
+
+        const currentDurationSeconds = parseSeconds(conversation?.duration_seconds);
+        const nextDurationSeconds = currentDurationSeconds + addedSeconds;
+
         await supabase
           .from("conversations")
           .update({
-            duration_seconds: durationSeconds,
+            duration_seconds: nextDurationSeconds,
             updated_at: new Date().toISOString(),
           })
           .eq("id", conversationId);
       }
 
       // Also update profiles.used_minutes for real-time dashboard tracking
-      if (durationSeconds && durationSeconds > 0) {
-        const addedMinutes = durationSeconds / 60;
+      if (addedSeconds > 0) {
+        const addedMinutes = addedSeconds / 60;
         const { data: profile } = await supabase
           .from("profiles")
           .select("used_minutes")
@@ -202,7 +218,7 @@ serve(async (req) => {
       // Get conversation start time for duration
       const { data: convo } = await supabase
         .from("conversations")
-        .select("started_at")
+        .select("started_at, duration_seconds")
         .eq("id", conversationId)
         .single();
 
@@ -211,19 +227,23 @@ serve(async (req) => {
         duration = Math.round((Date.now() - new Date(convo.started_at).getTime()) / 1000);
       }
 
+      const existingDurationSeconds = parseSeconds(convo?.duration_seconds);
+      const finalDurationSeconds = Math.max(existingDurationSeconds, duration);
+
       await supabase
         .from("conversations")
         .update({
           ended_at: now,
-          duration_seconds: duration,
+          duration_seconds: finalDurationSeconds,
           messages_count: count || 0,
           updated_at: now,
         })
         .eq("id", conversationId);
 
-      // Update profiles.used_minutes with the conversation duration
-      if (duration > 0) {
-        const addedMinutes = duration / 60;
+      // Update profiles.used_minutes only with any untracked remainder
+      const untrackedDurationSeconds = Math.max(0, finalDurationSeconds - existingDurationSeconds);
+      if (untrackedDurationSeconds > 0) {
+        const addedMinutes = untrackedDurationSeconds / 60;
         const { data: profile } = await supabase
           .from("profiles")
           .select("used_minutes")
