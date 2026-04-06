@@ -37,6 +37,24 @@ export default {
           "text-muted": "hsl(var(--neo-text-muted))", success: "hsl(var(--neo-success))",
           warning: "hsl(var(--neo-warning))", purple: "hsl(var(--neo-purple))", cyan: "hsl(var(--neo-cyan))",
         },
+        "brand-red": {
+          50: "hsl(356 93% 96%)", 100: "hsl(355 77% 87%)", 200: "hsl(356 73% 80%)",
+          300: "hsl(356 74% 71%)", 400: "hsl(356 76% 65%)", 500: "hsl(355 78% 56%)",
+          600: "hsl(355 64% 51%)", 700: "hsl(355 61% 40%)", 800: "hsl(355 73% 31%)",
+          900: "hsl(356 60% 25%)",
+        },
+        "deep-red": {
+          50: "hsl(356 70% 92%)", 100: "hsl(356 60% 83%)", 200: "hsl(356 52% 75%)",
+          300: "hsl(356 52% 63%)", 400: "hsl(356 58% 55%)", 500: "hsl(356 73% 44%)",
+          600: "hsl(356 74% 40%)", 700: "hsl(355 74% 31%)", 800: "hsl(356 80% 26%)",
+          900: "hsl(356 76% 20%)",
+        },
+        "surface": {
+          50: "hsl(240 3% 91%)", 100: "hsl(240 4% 73%)", 200: "hsl(240 6% 61%)",
+          300: "hsl(240 6% 43%)", 400: "hsl(240 10% 31%)", 500: "hsl(240 28% 14%)",
+          600: "hsl(240 27% 13%)", 700: "hsl(240 29% 10%)", 800: "hsl(240 28% 8%)",
+          900: "hsl(240 27% 6%)",
+        },
       },
       borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)", "2xl": "1rem", "3xl": "1.5rem" },
       keyframes: {
