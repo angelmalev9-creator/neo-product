@@ -1,4 +1,5 @@
-import { Bot, Mail, Zap, ArrowRight, ExternalLink } from 'lucide-react';
+import { Mail, Zap, ArrowRight, ExternalLink } from 'lucide-react';
+import NeoLogo from '@/components/ui/NeoLogo';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -62,13 +63,7 @@ const Footer = () => {
             {/* Brand */}
             <div className="col-span-2">
               <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
-                  <Bot className="w-4.5 h-4.5 text-primary-foreground" />
-                </div>
-                <div>
-                  <span className="text-lg font-display font-black text-foreground">NEO</span>
-                  <span className="text-lg font-display font-black text-primary">.</span>
-                </div>
+                <NeoLogo size="md" />
               </div>
               <p className="text-muted-foreground text-xs sm:text-sm mb-4 max-w-xs leading-relaxed">
                 {t('footer.description')}
