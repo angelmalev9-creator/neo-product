@@ -3786,7 +3786,6 @@ export const useGeminiVoice = ({
           "gemini-2.5-flash-native-audio-preview-12-2025",
           "gemini-2.5-flash",
         ];
-        const FALLBACK_MODEL = "gemini-3.1-flash-live-preview";
         const FALLBACK_MODEL = "gemini-2.5-flash-native-audio-latest";
         let resolvedModel = data.model || FALLBACK_MODEL;
         if (!VALID_MODELS.some((m) => resolvedModel.includes(m))) {
