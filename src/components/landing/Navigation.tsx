@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, Bot, ArrowRight } from 'lucide-react';
+import { Menu, X, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import NeoLogo from '@/components/ui/NeoLogo';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { detectLanguageFromIP, changeLanguage } from '@/i18n';
@@ -47,11 +48,8 @@ const Navigation = () => {
       >
         <div className="flex items-center justify-between h-12 sm:h-12 lg:h-14 px-4 sm:px-4 lg:px-6">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2 group">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-primary/30 transition-shadow">
-              <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-foreground" />
-            </div>
-            <span className="text-base sm:text-lg font-black text-foreground tracking-tight">NEO</span>
+          <a href="/" className="flex items-center group">
+            <NeoLogo size="sm" />
           </a>
 
           {/* Desktop Nav */}
