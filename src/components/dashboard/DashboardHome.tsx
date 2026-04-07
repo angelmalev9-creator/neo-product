@@ -118,7 +118,7 @@ const DashboardHome = ({
   const [totalConversations, setTotalConversations] = useState(0);
   const [totalLeads, setTotalLeads] = useState(0);
   const [avgDuration, setAvgDuration] = useState(0);
-  const [showUpsell] = useState(true);
+  
   const [totalBookings, setTotalBookings] = useState(0);
   const [chartFilter, setChartFilter] = useState<TimeFilter>('week');
   const [chartData, setChartData] = useState<{ label: string; conversations: number; clients: number }[]>([]);
