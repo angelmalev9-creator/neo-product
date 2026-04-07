@@ -24,29 +24,30 @@ interface NavGroup {
   label: string;
   icon: React.ElementType;
   description?: string;
+  step?: string;
   children?: { id: string; label: string; icon: React.ElementType }[];
 }
 
 const NAV_GROUPS: NavGroup[] = [
-  { id: 'home', label: 'Начало', icon: Home, description: 'Преглед' },
+  { id: 'home', label: 'Начало', icon: Home, description: 'Преглед', step: undefined },
   {
-    id: 'setup', label: 'Обучение', icon: Brain, description: 'Настройте NEO',
+    id: 'setup', label: 'Обучение', icon: Brain, description: 'Настройте NEO', step: '1',
     children: [
       { id: 'setup-training', label: 'Обучение', icon: Globe },
       { id: 'setup-calendar', label: 'Календар', icon: CalendarDays },
       { id: 'setup-email', label: 'Имейл', icon: Mail },
     ],
   },
-  { id: 'conv-diary', label: 'Разговори', icon: MessageSquare, description: 'Чат история' },
   {
-    id: 'neo', label: 'Тест на NEO', icon: Mic, description: 'Тествайте',
+    id: 'neo', label: 'Тест на NEO', icon: Mic, description: 'Чуйте как звучи', step: '2',
     children: [
       { id: 'neo-behavior', label: 'Поведение', icon: Settings },
       { id: 'neo-test', label: 'Тествай на живо', icon: Mic },
     ],
   },
+  { id: 'widget', label: 'Уиджет', icon: Palette, description: 'Инсталирайте на сайта', step: '3' },
+  { id: 'conv-diary', label: 'Разговори', icon: MessageSquare, description: 'Чат история' },
   { id: 'results-stats', label: 'Статистика', icon: BarChart3, description: 'Резултати' },
-  { id: 'widget', label: 'Уиджет', icon: Palette, description: 'За сайта Ви' },
   {
     id: 'settings-group', label: 'Акаунт', icon: Settings,
     children: [
@@ -115,8 +116,18 @@ const DashboardSidebar = ({ activeTab, onTabChange, onLogout, userEmail, subscri
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
                 )}
               >
-                <group.icon className="w-4 h-4 shrink-0" />
+                {group.step ? (
+                  <span className={cn(
+                    'w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0 border',
+                    isActive ? 'bg-primary/15 border-primary/30 text-primary' : 'bg-muted/30 border-border/20 text-muted-foreground'
+                  )}>
+                    {group.step}
+                  </span>
+                ) : (
+                  <group.icon className="w-4 h-4 shrink-0" />
+                )}
                 <span className="flex-1 text-left">{group.label}</span>
+                {group.step && <group.icon className="w-3.5 h-3.5 shrink-0 opacity-50" />}
                 {hasChildren && (
                   <ChevronDown className={cn(
                     'w-3.5 h-3.5 transition-transform duration-200',

@@ -2,11 +2,9 @@ import { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import {
-  Crown, Globe, CalendarDays, Mic, CalendarCheck,
-  CheckCircle2, Zap, ArrowRight, Activity,
-  BarChart3, Target, Rocket,
-  BrainCircuit, ArrowUpRight, X,
-  MessageCircle, UserCheck, LineChart, Timer, Star,
+  Crown, Zap, ArrowRight,
+  BarChart3,
+  MessageCircle, UserCheck, CalendarCheck,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -98,18 +96,6 @@ const fadeUp = {
   }),
 };
 
-const TIER_UPGRADES: Record<string, { nextTier: string; nextLabel: string; features: string[]; price: string }> = {
-  'NEO Старт': {
-    nextTier: 'growth', nextLabel: 'NEO Растеж',
-    features: ['500 мин/месец', 'AI имейл автоматизация', 'Приоритетна поддръжка'],
-    price: '149 лв/мес',
-  },
-  'NEO Растеж': {
-    nextTier: 'empire', nextLabel: 'NEO Империя',
-    features: ['2500 мин/месец', 'API достъп', 'Без брандиране', 'Персонален мениджър'],
-    price: '349 лв/мес',
-  },
-};
 
 const formatUsageMinutes = (value: number) => {
   if (value <= 0) return '0';
@@ -132,7 +118,7 @@ const DashboardHome = ({
   const [totalConversations, setTotalConversations] = useState(0);
   const [totalLeads, setTotalLeads] = useState(0);
   const [avgDuration, setAvgDuration] = useState(0);
-  const [showUpsell, setShowUpsell] = useState(true);
+  
   const [totalBookings, setTotalBookings] = useState(0);
   const [chartFilter, setChartFilter] = useState<TimeFilter>('week');
   const [chartData, setChartData] = useState<{ label: string; conversations: number; clients: number }[]>([]);
@@ -231,8 +217,8 @@ const DashboardHome = ({
 
   const conversionRate = totalConversations > 0 ? Math.round((totalLeads / totalConversations) * 100) : 0;
   const bookingRate = totalConversations > 0 ? Math.round((totalBookings / totalConversations) * 100) : 0;
-  const avgDurationMin = avgDuration > 0 ? `${Math.floor(avgDuration / 60)}:${String(avgDuration % 60).padStart(2, '0')}` : '—';
-  const upgradeInfo = TIER_UPGRADES[tierName];
+  
+  
   const automationScore = Math.min(99, Math.max(12, Math.round((conversionRate * 0.45) + (bookingRate * 0.35) + ((100 - Math.min(usagePercent, 100)) * 0.2))));
   const analysisSignals = [
     { label: 'Колко клиенти печелите', value: conversionRate, helper: `${totalLeads} от ${totalConversations} обаждания`, tone: 'primary' as const },
@@ -386,53 +372,6 @@ const DashboardHome = ({
               </div>
             </div>
 
-            {/* Mini stats — 2x2 grid */}
-            <div className="grid grid-cols-2 gap-2">
-              <MiniStat icon={Activity} label="Всички обаждания" value={String(totalConversations)} color="text-primary" />
-              <MiniStat icon={Target} label="% клиенти" value={conversionRate > 0 ? `${conversionRate}%` : '—'} color="text-[hsl(var(--neo-purple))]" />
-              <MiniStat icon={Timer} label="Средно време" value={avgDurationMin} color="text-[hsl(var(--neo-blue))]" />
-              <MiniStat icon={LineChart} label="% резервации" value={bookingRate > 0 ? `${bookingRate}%` : '—'} color="text-[hsl(var(--neo-orange))]" />
-            </div>
-
-            {/* Upsell or Quick actions */}
-            {upgradeInfo && showUpsell ? (
-              <div className="rounded-xl sm:rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card/80 to-[hsl(var(--neo-purple))]/5 p-3 sm:p-4 relative overflow-hidden">
-                <button onClick={() => setShowUpsell(false)} className="absolute top-2.5 right-2.5 text-muted-foreground hover:text-foreground transition-colors z-10">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-primary/15 flex items-center justify-center">
-                    <Rocket className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] sm:text-[11px] font-bold text-foreground">Надградете до {upgradeInfo.nextLabel}</p>
-                    <p className="text-[8px] sm:text-[9px] text-muted-foreground">{upgradeInfo.price}</p>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1 my-2">
-                  {upgradeInfo.features.map(f => (
-                    <div key={f} className="flex items-center gap-1.5">
-                      <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary shrink-0" />
-                      <span className="text-[9px] sm:text-[10px] text-foreground/80">{f}</span>
-                    </div>
-                  ))}
-                </div>
-                <Button size="sm" onClick={() => navigate('/#pricing')} className="gap-1.5 text-[10px] sm:text-[11px] h-7 sm:h-8 w-full bg-primary hover:bg-primary/90">
-                  Надградете сега <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                </Button>
-              </div>
-            ) : (
-              <div className="rounded-xl sm:rounded-2xl border border-border/10 bg-card/60 p-3 sm:p-4 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.02] to-transparent pointer-events-none rounded-2xl" />
-                <h3 className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 relative">Бързи действия</h3>
-                <div className="space-y-1">
-                  <ActionRow icon={Globe} title="Добавете вашия сайт" done={!!websiteUrl} onClick={() => onTabChange('setup-website')} />
-                  <ActionRow icon={CalendarDays} title="Свържете Calendar" done={calendarConnected} onClick={() => onTabChange('setup-calendar')} />
-                  <ActionRow icon={Mic} title="Чуйте как звучи NEO" done={hasTestedNeo} onClick={() => onTabChange('neo-test')} />
-                  <ActionRow icon={BrainCircuit} title="Настройте какво казва" done={false} onClick={() => onTabChange('neo-behavior')} />
-                </div>
-              </div>
-            )}
           </motion.div>
         </div>
       </div>
@@ -462,37 +401,6 @@ function StatCard({ i, icon: Icon, label, value, subLabel }: {
   );
 }
 
-function MiniStat({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: string; color: string }) {
-  return (
-    <div className="rounded-lg sm:rounded-xl border border-border/10 bg-card/40 p-2.5 sm:p-3 flex items-center gap-2 hover:bg-card/70 transition-all">
-      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
-        <Icon className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${color}`} />
-      </div>
-      <div className="min-w-0">
-        <p className="text-xs sm:text-sm font-bold text-foreground leading-none">{value}</p>
-        <p className="text-[8px] sm:text-[9px] text-muted-foreground mt-0.5 truncate">{label}</p>
-      </div>
-    </div>
-  );
-}
-
-function ActionRow({ icon: Icon, title, done, onClick }: {
-  icon: React.ElementType; title: string; done: boolean; onClick: () => void;
-}) {
-  return (
-    <button onClick={onClick} className="flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg sm:rounded-xl hover:bg-muted/30 transition-all group text-left w-full">
-      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary/8 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-all">
-        <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
-      </div>
-      <span className="text-[11px] sm:text-xs font-medium text-foreground flex-1">{title}</span>
-      {done ? (
-        <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[hsl(var(--neo-success))]" />
-      ) : (
-        <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground/40 group-hover:text-primary transition-all" />
-      )}
-    </button>
-  );
-}
 
 function InsightBar({ label, value, helper, tone }: {
   label: string; value: number; helper: string; tone: 'primary' | 'success' | 'blue';
