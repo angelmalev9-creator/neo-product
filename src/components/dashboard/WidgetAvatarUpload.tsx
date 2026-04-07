@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, X, Bot } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
+import neoLogoImg from '@/assets/neo-logo.png';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 
@@ -79,9 +80,7 @@ const WidgetAvatarUpload = ({ userId, currentAvatarUrl, onAvatarChange }: Widget
           {currentAvatarUrl ? (
             <img src={currentAvatarUrl} alt="Avatar" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center">
-              <Bot className="w-7 h-7 text-white" />
-            </div>
+            <img src={neoLogoImg} alt="NEO" className="w-full h-full object-cover" />
           )}
         </div>
 
