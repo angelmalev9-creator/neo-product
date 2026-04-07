@@ -2,11 +2,9 @@ import { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import {
-  Crown, Globe, CalendarDays, Mic, CalendarCheck,
-  CheckCircle2, Zap, ArrowRight, Activity,
-  BarChart3, Target, Rocket,
-  BrainCircuit, ArrowUpRight, X,
-  MessageCircle, UserCheck, LineChart, Timer, Star,
+  Crown, Zap, ArrowRight,
+  BarChart3,
+  MessageCircle, UserCheck, CalendarCheck,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
