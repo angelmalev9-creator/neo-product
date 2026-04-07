@@ -1,4 +1,4 @@
-import { Play, ArrowRight, Mic, Calendar, MessageSquare, Phone, TrendingUp, Star, Bot } from 'lucide-react';
+import { Play, ArrowRight, Mic, Calendar, MessageSquare, Phone, TrendingUp, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import TrustedCompaniesMarquee from '@/components/landing/TrustedCompaniesMarquee';
 import { useTranslation } from 'react-i18next';
@@ -24,6 +24,37 @@ const RatingBadge = () => (
     </span>
   </motion.div>
 );
+
+/* ───── Live counter ───── */
+const LiveActivityTicker = () => {
+  const [count, setCount] = useState(14);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCount(prev => {
+        const delta = Math.random() > 0.5 ? 1 : -1;
+        return Math.max(8, Math.min(23, prev + delta));
+      });
+    }, 4000 + Math.random() * 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 1.8, duration: 0.4 }}
+      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-card/40 border border-border/10 backdrop-blur-sm"
+    >
+      <span className="relative flex h-1.5 w-1.5">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+      </span>
+      <span className="text-[9px] text-foreground/40 font-medium">
+        {count} бизнеса използват NEO в момента
+      </span>
+    </motion.div>
+  );
+};
 
 /* ───── MacBook Frame ───── */
 const MacBookFrame = ({ children }: { children: React.ReactNode }) => (
@@ -117,9 +148,8 @@ const DashboardContent = () => (
 const WidgetContent = () => (
   <div className="flex flex-col">
     <div className="flex items-center gap-2 px-3 py-2 border-b border-border/10 bg-gradient-to-r from-primary/8 to-transparent">
-      {/* NEO Logo - matches header logo */}
-      <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-sm shadow-primary/20">
-        <Bot className="w-3 h-3 text-white" />
+      <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-sm shadow-primary/20">
+        <Phone className="w-2.5 h-2.5 text-primary-foreground" />
       </div>
       <div className="flex-1">
         <p className="text-[10px] font-bold text-foreground">NEO Асистент</p>
@@ -131,8 +161,8 @@ const WidgetContent = () => (
     </div>
     <div className="px-2 py-2 space-y-1.5 min-h-[110px]">
       <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.0, duration: 0.3 }} className="flex gap-1.5 items-end">
-        <div className="w-4 h-4 rounded-md bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shrink-0">
-          <Bot className="w-2.5 h-2.5 text-white" />
+        <div className="w-4 h-4 rounded-md bg-primary/15 flex items-center justify-center shrink-0">
+          <span className="text-[7px] font-bold text-primary">N</span>
         </div>
         <div className="bg-card/80 border border-border/15 rounded-xl rounded-bl-sm px-2.5 py-1.5 max-w-[160px]">
           <p className="text-[10px] text-foreground/90 leading-relaxed">Здравейте! Как мога да Ви помогна?</p>
@@ -144,8 +174,8 @@ const WidgetContent = () => (
         </div>
       </motion.div>
       <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 2.8, duration: 0.3 }} className="flex gap-1.5 items-end">
-        <div className="w-4 h-4 rounded-md bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shrink-0">
-          <Bot className="w-2.5 h-2.5 text-white" />
+        <div className="w-4 h-4 rounded-md bg-primary/15 flex items-center justify-center shrink-0">
+          <span className="text-[7px] font-bold text-primary">N</span>
         </div>
         <div className="space-y-1 max-w-[180px]">
           <div className="bg-card/80 border border-border/15 rounded-xl rounded-bl-sm px-2.5 py-1.5">
@@ -247,6 +277,7 @@ const Hero = () => {
                   </span>
                 ))}
               </div>
+              <LiveActivityTicker />
             </motion.div>
           </div>
 
