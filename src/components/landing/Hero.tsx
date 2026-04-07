@@ -1,4 +1,5 @@
 import { Play, ArrowRight, Mic, Calendar, MessageSquare, Phone, TrendingUp, Star } from 'lucide-react';
+import neoLogoImg from '@/assets/neo-logo.png';
 import { Button } from '@/components/ui/button';
 import TrustedCompaniesMarquee from '@/components/landing/TrustedCompaniesMarquee';
 import { useTranslation } from 'react-i18next';
@@ -148,9 +149,7 @@ const DashboardContent = () => (
 const WidgetContent = () => (
   <div className="flex flex-col">
     <div className="flex items-center gap-2 px-3 py-2 border-b border-border/10 bg-gradient-to-r from-primary/8 to-transparent">
-      <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-sm shadow-primary/20">
-        <Phone className="w-2.5 h-2.5 text-primary-foreground" />
-      </div>
+      <img src={neoLogoImg} alt="NEO" className="w-6 h-6 rounded-lg object-cover shadow-sm shadow-primary/20" />
       <div className="flex-1">
         <p className="text-[10px] font-bold text-foreground">NEO Асистент</p>
         <div className="flex items-center gap-1">
@@ -161,9 +160,7 @@ const WidgetContent = () => (
     </div>
     <div className="px-2 py-2 space-y-1.5 min-h-[110px]">
       <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.0, duration: 0.3 }} className="flex gap-1.5 items-end">
-        <div className="w-4 h-4 rounded-md bg-primary/15 flex items-center justify-center shrink-0">
-          <span className="text-[7px] font-bold text-primary">N</span>
-        </div>
+        <img src={neoLogoImg} alt="NEO" className="w-4 h-4 rounded-md object-cover shrink-0" />
         <div className="bg-card/80 border border-border/15 rounded-xl rounded-bl-sm px-2.5 py-1.5 max-w-[160px]">
           <p className="text-[10px] text-foreground/90 leading-relaxed">Здравейте! Как мога да Ви помогна?</p>
         </div>
@@ -174,9 +171,7 @@ const WidgetContent = () => (
         </div>
       </motion.div>
       <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 2.8, duration: 0.3 }} className="flex gap-1.5 items-end">
-        <div className="w-4 h-4 rounded-md bg-primary/15 flex items-center justify-center shrink-0">
-          <span className="text-[7px] font-bold text-primary">N</span>
-        </div>
+        <img src={neoLogoImg} alt="NEO" className="w-4 h-4 rounded-md object-cover shrink-0" />
         <div className="space-y-1 max-w-[180px]">
           <div className="bg-card/80 border border-border/15 rounded-xl rounded-bl-sm px-2.5 py-1.5">
             <p className="text-[10px] text-foreground/90 leading-relaxed">Свободни часове:</p>
