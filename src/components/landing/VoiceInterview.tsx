@@ -161,7 +161,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     if (!sessionToken) return;
 
     const { data, error } = await supabase.functions.invoke("demo-email-log", {
-      body: { sessionId, sessionToken },
+      body: { session_id: sessionId, session_token: sessionToken },
     });
 
     if (error) {
