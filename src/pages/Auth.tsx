@@ -368,7 +368,7 @@ const Auth = () => {
               {resetEmailSent ? (
                 <div className="text-center py-4">
                   <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Sparkles className="w-6 h-6 text-primary" />
+                    <CheckCircle className="w-6 h-6 text-primary" />
                   </div>
                   <p className="text-muted-foreground">
                     Изпратихме имейл с линк за възстановяване на паролата.
