@@ -277,7 +277,7 @@ const Hero = () => {
                   </span>
                 ))}
               </div>
-              <LiveActivityTicker />
+              
             </motion.div>
           </div>
 
