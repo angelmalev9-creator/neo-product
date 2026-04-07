@@ -2,77 +2,77 @@
 @tailwind components;
 @tailwind utilities;
 
-/* NEO AI — Dark Crimson Design System */
-/* Deep Obsidian | Dark Crimson | Warm Red */
+/* NEO AI — Shadowed Blue SaaS Design System */
+/* Deep Obsidian | Shadowed Blue | Steel Cyan */
 
 @layer base {
   :root {
-    /* Base: neutrals-13 / card-surface-900 */
-    --background: 252 100% 4%;
+    /* Base: deep dark */
+    --background: 222 47% 4%;
     --foreground: 0 0% 100%;
 
-    /* Card: card-surface-700 */
-    --card: 240 29% 10%;
-    --card-foreground: 240 5% 96%;
+    /* Card */
+    --card: 220 30% 10%;
+    --card-foreground: 210 20% 96%;
 
-    --popover: 240 29% 10%;
-    --popover-foreground: 240 5% 96%;
+    --popover: 220 30% 10%;
+    --popover-foreground: 210 20% 96%;
 
-    /* PRIMARY: primary-red-500 */
-    --primary: 355 78% 56%;
+    /* PRIMARY: shadowed blue */
+    --primary: 215 80% 55%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: card-surface-600 */
-    --secondary: 240 27% 13%;
-    --secondary-foreground: 240 5% 96%;
+    /* Secondary */
+    --secondary: 220 25% 13%;
+    --secondary-foreground: 210 20% 96%;
 
-    /* Muted: card-surface-500 */
-    --muted: 240 28% 14%;
-    --muted-foreground: 252 4% 57%;
+    /* Muted */
+    --muted: 220 25% 14%;
+    --muted-foreground: 215 10% 55%;
 
-    /* ACCENT: deep-red-500 */
-    --accent: 356 73% 44%;
+    /* ACCENT: deeper blue */
+    --accent: 215 65% 42%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 356 73% 44%;
+    --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders: card-surface-400 */
-    --border: 240 10% 31%;
-    --input: 240 27% 13%;
-    --ring: 355 78% 56%;
+    /* Borders */
+    --border: 220 15% 25%;
+    --input: 220 25% 13%;
+    --ring: 215 80% 55%;
 
     --radius: 0.75rem;
 
-    /* NEO Brand Palette */
-    --neo-blue: 355 78% 56%;
-    --neo-blue-glow: 356 76% 65%;
-    --neo-blue-dark: 356 74% 40%;
-    --neo-cyan: 356 73% 44%;
-    --neo-cyan-glow: 356 74% 71%;
-    --neo-indigo: 356 74% 31%;
+    /* NEO Brand Palette — Shadowed Blue */
+    --neo-blue: 215 80% 55%;
+    --neo-blue-glow: 210 85% 65%;
+    --neo-blue-dark: 218 70% 38%;
+    --neo-cyan: 195 80% 50%;
+    --neo-cyan-glow: 195 85% 62%;
+    --neo-indigo: 225 60% 35%;
     --neo-purple: 215 85% 55%;
-    --neo-dark: 252 100% 4%;
-    --neo-dark-lighter: 240 29% 10%;
-    --neo-glass: 240 27% 13%;
-    --neo-glass-border: 240 10% 31%;
-    --neo-text-muted: 252 4% 57%;
-    --neo-text-bright: 240 5% 96%;
-    --neo-success: 142 80% 50%;
-    --neo-success-glow: 142 90% 58%;
+    --neo-dark: 222 47% 4%;
+    --neo-dark-lighter: 220 30% 10%;
+    --neo-glass: 220 25% 13%;
+    --neo-glass-border: 220 15% 25%;
+    --neo-text-muted: 215 10% 55%;
+    --neo-text-bright: 210 20% 96%;
+    --neo-success: 152 70% 45%;
+    --neo-success-glow: 152 85% 55%;
     --neo-warning: 45 100% 58%;
     --neo-gold: 40 100% 58%;
     --neo-orange: 20 100% 60%;
 
     /* Sidebar */
-    --sidebar-background: 240 28% 8%;
-    --sidebar-foreground: 240 5% 96%;
-    --sidebar-primary: 355 78% 56%;
+    --sidebar-background: 222 40% 6%;
+    --sidebar-foreground: 210 20% 96%;
+    --sidebar-primary: 215 80% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 27% 13%;
-    --sidebar-accent-foreground: 240 5% 96%;
-    --sidebar-border: 240 10% 31%;
-    --sidebar-ring: 355 78% 56%;
+    --sidebar-accent: 220 25% 13%;
+    --sidebar-accent-foreground: 210 20% 96%;
+    --sidebar-border: 220 15% 25%;
+    --sidebar-ring: 215 80% 55%;
   }
 
   .light {
