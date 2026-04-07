@@ -3780,7 +3780,13 @@ export const useGeminiVoice = ({
         }
 
         // ── Model fallback: ensure we use a valid, non-retired model ──────
-        const VALID_MODELS = ["gemini-2.0-flash-live-001", "gemini-2.5-flash-native-audio-latest", "gemini-2.5-flash"];
+        const VALID_MODELS = [
+          "gemini-2.0-flash-live-001",
+          "gemini-3.1-flash-live-preview",
+          "gemini-2.5-flash-native-audio-preview-12-2025",
+          "gemini-2.5-flash",
+        ];
+        const FALLBACK_MODEL = "gemini-3.1-flash-live-preview";
         const FALLBACK_MODEL = "gemini-2.5-flash-native-audio-latest";
         let resolvedModel = data.model || FALLBACK_MODEL;
         if (!VALID_MODELS.some((m) => resolvedModel.includes(m))) {
@@ -5207,7 +5213,7 @@ export const useGeminiVoice = ({
 
           // ── Auto-retry on 1008 (entity not found = retired model) ──────
           if (ev.code === 1008 && sessionDataRef.current) {
-            const RETRY_MODEL = "gemini-2.5-flash-native-audio-latest";
+            const RETRY_MODEL = "gemini-3.1-flash-live-preview";
             const currentModel = sessionDataRef.current.model || "";
             if (!currentModel.includes(RETRY_MODEL)) {
               console.warn(`[GEMINI] 1008 → model "${currentModel}" not found, retrying with "${RETRY_MODEL}"`);
