@@ -47,7 +47,7 @@ export const NeoLogo = ({
   return (
     <div className={cn('flex items-center gap-2', className)}>
       <div className={cn(
-        'rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20',
+        'rounded-lg bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg shadow-red-500/20',
         config.container
       )}>
         <Bot className={cn('text-white', config.icon)} />

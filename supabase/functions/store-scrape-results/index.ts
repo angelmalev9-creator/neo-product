@@ -386,6 +386,13 @@ function shouldDropLine(line: string) {
 function buildCleanedSummaryFromScrapedContent(pages: any[], siteUrl: string) {
   const out: string[] = [];
 
+  const headerParts: string[] = [];
+  if (siteUrl) headerParts.push(`Сайт: ${siteUrl}`);
+  const dom = siteUrl ? domainFromUrl(siteUrl) : "";
+  if (dom) headerParts.push(`Домейн: ${dom}`);
+  if (headerParts.length) out.push(headerParts.join(" | "));
+  out.push("");
+
   const seen = new Set<string>();
 
   for (const p of pages || []) {
@@ -629,10 +636,21 @@ function buildProfiles(pages: any[], caps: Array<{ kind: string; schema: any }>,
   return { site_profile, action_profile, booking_profile, business_detection };
 }
 
-function appendExecutionProfileToSummary(summary: string, _profiles: ReturnType<typeof buildProfiles>) {
-  // Technical execution profile is stored in structured_data/business_detection only,
-  // NOT in the human-readable summary field
-  return (summary || "").trim();
+function appendExecutionProfileToSummary(summary: string, profiles: ReturnType<typeof buildProfiles>) {
+  const s = (summary || "").trim();
+  const lines = [
+    "EXECUTION PROFILE:",
+    `- site_type: ${profiles.business_detection.site_type}`,
+    `- booking_mode: ${profiles.business_detection.booking_mode}`,
+    `- can_submit_forms: ${profiles.action_profile.can_submit_forms}`,
+    `- can_check_availability: ${profiles.action_profile.can_check_availability}`,
+  ];
+  const block = lines.join("\n");
+  if (!s) return block;
+  if (s.includes("EXECUTION PROFILE:")) return s;
+  return `${s}
+
+${block}`;
 }
 
 function appendFormsToSummary(

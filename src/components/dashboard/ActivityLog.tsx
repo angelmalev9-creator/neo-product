@@ -383,34 +383,25 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                           <p className="text-[10px] uppercase font-semibold text-muted-foreground mb-2 flex items-center gap-1">
                             <Mail className="w-3 h-3 text-primary" /> Изпратени имейли
                           </p>
-                          <div className="space-y-2">
+                          <div className="space-y-1.5">
                             {convoEmails.map((email) => (
-                              <div key={email.id} className="rounded-xl overflow-hidden border border-border/20 bg-white dark:bg-white/95">
-                                {/* Brand header */}
-                                <div className="bg-primary px-3 py-2 flex items-center justify-between">
-                                  <span className="text-xs font-semibold text-white truncate flex-1">{email.subject}</span>
-                                  <Badge variant="outline" className={`text-[9px] px-1.5 py-0 border-white/30 shrink-0 ml-2 ${
-                                    email.status === 'sent' ? 'bg-white/20 text-white' :
-                                    email.status === 'failed' ? 'bg-red-200/30 text-red-100' :
-                                    'bg-white/10 text-white/80'
+                              <div key={email.id} className="rounded-lg bg-muted/20 border border-border/20 p-2.5">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${
+                                    email.status === 'sent' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                                    email.status === 'failed' ? 'bg-destructive/10 text-destructive border-destructive/20' :
+                                    'bg-muted text-muted-foreground border-border/20'
                                   }`}>
                                     {email.status === 'sent' ? 'Изпратен' : email.status === 'failed' ? 'Грешка' : email.status || 'Чакащ'}
                                   </Badge>
+                                  <span className="text-[9px] text-muted-foreground">
+                                    {email.sent_at ? new Date(email.sent_at).toLocaleString('bg-BG', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+                                  </span>
                                 </div>
-                                {/* White body */}
-                                <div className="p-3 space-y-1.5">
-                                  <div className="flex items-center gap-4 text-[11px]">
-                                    <span className="text-gray-500">До:</span>
-                                    <span className="text-gray-800 font-medium">{email.recipient_email}</span>
-                                  </div>
-                                  {email.sent_at && (
-                                    <div className="flex items-center gap-4 text-[11px]">
-                                      <span className="text-gray-500">Кога:</span>
-                                      <span className="text-gray-700">{new Date(email.sent_at).toLocaleString('bg-BG', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                                    </div>
-                                  )}
-                                  <p className="text-[11px] text-gray-600 leading-relaxed mt-2 pt-2 border-t border-gray-100">{getCompactEmailPreview(email.body)}</p>
-                                </div>
+                                <p className="text-xs font-medium text-foreground">{email.subject}</p>
+                                <p className="text-[10px] text-muted-foreground mt-0.5 break-all">До: {email.recipient_email}</p>
+                                {email.intent && <p className="text-[10px] text-muted-foreground/70 mt-0.5">Тип: {email.intent}</p>}
+                                <p className="text-[10px] text-foreground/70 mt-1 leading-relaxed break-words">{getCompactEmailPreview(email.body)}</p>
                               </div>
                             ))}
                           </div>
