@@ -442,27 +442,21 @@ const DashboardHome = ({
 
 /* ── Sub-components ── */
 
-function StatCard({ i, icon: Icon, label, value, subLabel, color }: {
+function StatCard({ i, icon: Icon, label, value, subLabel }: {
   i: number; icon: React.ElementType; label: string; value: string; subLabel: string; color: 'primary' | 'success' | 'blue';
 }) {
-  const colorMap = {
-    primary: { gradient: 'from-primary/20 via-primary/8 to-transparent', iconColor: 'text-primary', iconBg: 'bg-primary/15' },
-    success: { gradient: 'from-[hsl(var(--neo-success))]/20 via-[hsl(var(--neo-success))]/8 to-transparent', iconColor: 'text-[hsl(var(--neo-success))]', iconBg: 'bg-[hsl(var(--neo-success))]/15' },
-    blue: { gradient: 'from-[hsl(var(--neo-blue))]/20 via-[hsl(var(--neo-blue))]/8 to-transparent', iconColor: 'text-[hsl(var(--neo-blue))]', iconBg: 'bg-[hsl(var(--neo-blue))]/15' },
-  };
-  const c = colorMap[color];
-
   return (
     <motion.div custom={i} initial="hidden" animate="visible" variants={fadeUp}>
-      <div className={`rounded-xl sm:rounded-2xl border border-border/10 bg-gradient-to-br ${c.gradient} p-3 sm:p-4 relative overflow-hidden h-full`}>
-        <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
-          <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl ${c.iconBg} flex items-center justify-center border border-border/10`}>
-            <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${c.iconColor}`} />
+      <div className="rounded-xl sm:rounded-2xl border border-border/10 bg-card/60 p-3 sm:p-4 relative overflow-hidden h-full">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.06] to-transparent pointer-events-none" />
+        <div className="relative flex items-center gap-2 mb-1.5 sm:mb-2">
+          <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-primary/12 flex items-center justify-center border border-primary/10">
+            <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
           </div>
         </div>
-        <p className="text-xl sm:text-2xl font-black text-foreground tracking-tight">{value}</p>
-        <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-0.5">{label}</p>
-        <p className="text-[8px] sm:text-[9px] text-muted-foreground/60 mt-0.5">{subLabel}</p>
+        <p className="relative text-xl sm:text-2xl font-black text-foreground tracking-tight">{value}</p>
+        <p className="relative text-[9px] sm:text-[10px] text-muted-foreground mt-0.5">{label}</p>
+        <p className="relative text-[8px] sm:text-[9px] text-muted-foreground/60 mt-0.5">{subLabel}</p>
       </div>
     </motion.div>
   );
