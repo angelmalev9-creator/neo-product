@@ -413,37 +413,6 @@ function StatCard({ i, icon: Icon, label, value, subLabel }: {
   );
 }
 
-function MiniStat({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: string; color: string }) {
-  return (
-    <div className="rounded-lg sm:rounded-xl border border-border/10 bg-card/40 p-2.5 sm:p-3 flex items-center gap-2 hover:bg-card/70 transition-all">
-      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
-        <Icon className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${color}`} />
-      </div>
-      <div className="min-w-0">
-        <p className="text-xs sm:text-sm font-bold text-foreground leading-none">{value}</p>
-        <p className="text-[8px] sm:text-[9px] text-muted-foreground mt-0.5 truncate">{label}</p>
-      </div>
-    </div>
-  );
-}
-
-function ActionRow({ icon: Icon, title, done, onClick }: {
-  icon: React.ElementType; title: string; done: boolean; onClick: () => void;
-}) {
-  return (
-    <button onClick={onClick} className="flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg sm:rounded-xl hover:bg-muted/30 transition-all group text-left w-full">
-      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary/8 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-all">
-        <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
-      </div>
-      <span className="text-[11px] sm:text-xs font-medium text-foreground flex-1">{title}</span>
-      {done ? (
-        <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[hsl(var(--neo-success))]" />
-      ) : (
-        <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground/40 group-hover:text-primary transition-all" />
-      )}
-    </button>
-  );
-}
 
 function InsightBar({ label, value, helper, tone }: {
   label: string; value: number; helper: string; tone: 'primary' | 'success' | 'blue';
