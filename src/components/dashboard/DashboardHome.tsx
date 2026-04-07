@@ -96,18 +96,6 @@ const fadeUp = {
   }),
 };
 
-const TIER_UPGRADES: Record<string, { nextTier: string; nextLabel: string; features: string[]; price: string }> = {
-  'NEO Старт': {
-    nextTier: 'growth', nextLabel: 'NEO Растеж',
-    features: ['500 мин/месец', 'AI имейл автоматизация', 'Приоритетна поддръжка'],
-    price: '149 лв/мес',
-  },
-  'NEO Растеж': {
-    nextTier: 'empire', nextLabel: 'NEO Империя',
-    features: ['2500 мин/месец', 'API достъп', 'Без брандиране', 'Персонален мениджър'],
-    price: '349 лв/мес',
-  },
-};
 
 const formatUsageMinutes = (value: number) => {
   if (value <= 0) return '0';
