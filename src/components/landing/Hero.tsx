@@ -72,28 +72,28 @@ const DashboardMockup = () => (
       </div>
       <span className="text-[10px] text-foreground/30 font-medium ml-2">NEO Dashboard</span>
     </div>
-    <div className="p-4 space-y-3">
-      <div className="grid grid-cols-3 gap-2.5">
+    <div className="p-3 space-y-2">
+      <div className="grid grid-cols-3 gap-2">
         {[
           { icon: MessageSquare, label: 'Разговори', value: '47', color: 'text-primary' },
           { icon: Calendar, label: 'Клиенти', value: '12', color: 'text-emerald-400' },
           { icon: Calendar, label: 'Резервации', value: '8', color: 'text-blue-400' },
         ].map((s) => (
-          <div key={s.label} className="rounded-xl bg-card/60 border border-border/10 p-3">
-            <s.icon className={`w-3.5 h-3.5 ${s.color} mb-1.5`} />
-            <p className="text-lg font-bold text-foreground/85">{s.value}</p>
-            <p className="text-[9px] text-foreground/35">{s.label}</p>
+          <div key={s.label} className="rounded-lg bg-card/60 border border-border/10 p-2">
+            <s.icon className={`w-3 h-3 ${s.color} mb-1`} />
+            <p className="text-base font-bold text-foreground/85">{s.value}</p>
+            <p className="text-[8px] text-foreground/35">{s.label}</p>
           </div>
         ))}
       </div>
-      <div className="rounded-xl bg-card/60 border border-border/10 p-3">
-        <div className="flex items-center justify-between mb-2.5">
-          <span className="text-[9px] text-foreground/35 font-medium">Анализи</span>
-          <span className="text-[8px] text-emerald-400 flex items-center gap-0.5">
+      <div className="rounded-lg bg-card/60 border border-border/10 p-2.5">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[8px] text-foreground/35 font-medium">Анализи</span>
+          <span className="text-[7px] text-emerald-400 flex items-center gap-0.5">
             <TrendingUp className="w-2.5 h-2.5" /> +23%
           </span>
         </div>
-        <div className="flex items-end gap-1 h-12">
+        <div className="flex items-end gap-0.5 h-10">
           {[30, 45, 25, 60, 40, 70, 55, 80, 50, 65, 75, 90].map((h, i) => (
             <motion.div
               key={i}
@@ -105,14 +105,14 @@ const DashboardMockup = () => (
           ))}
         </div>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {[
           { text: 'Нов клиент: Мария И.', time: '2 мин' },
           { text: 'Час записан: 14:30', time: '5 мин' },
         ].map((a) => (
-          <div key={a.text} className="flex items-center justify-between px-3 py-2 rounded-lg bg-card/50 border border-border/8">
-            <span className="text-[9px] text-foreground/45">{a.text}</span>
-            <span className="text-[8px] text-foreground/25">{a.time}</span>
+          <div key={a.text} className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-card/50 border border-border/8">
+            <span className="text-[8px] text-foreground/45">{a.text}</span>
+            <span className="text-[7px] text-foreground/25">{a.time}</span>
           </div>
         ))}
       </div>
@@ -140,7 +140,7 @@ const WidgetMockup = () => (
         </div>
       </div>
     </div>
-    <div className="px-3 py-3 space-y-2.5 min-h-[180px]">
+    <div className="px-2.5 py-2.5 space-y-2 min-h-[140px]">
       <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.0, duration: 0.35 }} className="flex gap-2 items-end">
         <div className="w-5 h-5 rounded-md bg-primary/15 flex items-center justify-center shrink-0">
           <span className="text-[8px] font-bold text-primary">N</span>
@@ -270,11 +270,11 @@ const Hero = () => {
 
           {/* RIGHT — Dashboard + Widget stacked vertically */}
           <div className="hidden sm:block">
-            <div className="relative w-full max-w-[460px] mx-auto flex flex-col gap-4">
+            <div className="relative w-full max-w-[420px] mx-auto flex flex-col gap-2">
               {/* Dashboard on top */}
               <DashboardMockup />
               {/* Widget below, offset right */}
-              <div className="relative z-10 ml-auto -mt-8" style={{ maxWidth: 320 }}>
+              <div className="relative z-10 ml-auto -mt-12" style={{ maxWidth: 280 }}>
                 <div className="absolute -inset-4 bg-primary/5 blur-[40px] rounded-full pointer-events-none" />
                 <WidgetMockup />
                 {/* Floating badges */}
