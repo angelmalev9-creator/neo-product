@@ -13,7 +13,7 @@ interface DashboardMobileNavProps {
 
 const BOTTOM_TABS = [
   { id: 'home', label: 'Начало', icon: Home },
-  { id: 'setup-website', label: 'Обучение', icon: Brain },
+  { id: 'setup-training', label: 'Обучение', icon: Brain },
   { id: 'conv-diary', label: 'Разговори', icon: MessageSquare },
   { id: 'neo-test', label: 'Тест', icon: Mic },
   { id: 'results-stats', label: 'Данни', icon: BarChart3 },
@@ -22,7 +22,7 @@ const BOTTOM_TABS = [
 
 const isTabActive = (activeTab: string, tabId: string) => {
   if (tabId === 'home') return activeTab === 'home';
-  if (tabId === 'setup-website') return activeTab.startsWith('setup');
+  if (tabId === 'setup-training') return activeTab.startsWith('setup');
   if (tabId === 'conv-diary') return activeTab.startsWith('conv');
   if (tabId === 'neo-test') return activeTab.startsWith('neo');
   if (tabId === 'results-stats') return activeTab.startsWith('results');

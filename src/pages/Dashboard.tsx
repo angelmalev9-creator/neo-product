@@ -165,10 +165,9 @@ const Dashboard = () => {
 
     if (activeTab.startsWith('setup')) {
       const sectionMap: Record<string, string> = {
-        'setup-website': 'website',
+        'setup-training': 'training',
         'setup-calendar': 'calendar',
         'setup-email': 'email',
-        'setup-data': 'data',
       };
       return (
         <SetupPage

@@ -32,10 +32,9 @@ const NAV_GROUPS: NavGroup[] = [
   {
     id: 'setup', label: 'Обучение', icon: Brain, description: 'Настройте NEO',
     children: [
-      { id: 'setup-website', label: 'Уебсайт', icon: Globe },
+      { id: 'setup-training', label: 'Обучение', icon: Globe },
       { id: 'setup-calendar', label: 'Календар', icon: CalendarDays },
       { id: 'setup-email', label: 'Имейл', icon: Mail },
-      { id: 'setup-data', label: 'Знания', icon: Database },
     ],
   },
   { id: 'conv-diary', label: 'Разговори', icon: MessageSquare, description: 'Чат история' },
