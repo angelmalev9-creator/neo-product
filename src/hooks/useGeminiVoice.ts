@@ -1955,14 +1955,27 @@ export const useGeminiVoice = ({
   const sendToGemini = useCallback((text: string) => {
     const ws = wsRef.current;
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
-    ws.send(
-      JSON.stringify({
-        client_content: {
-          turns: [{ role: "user", parts: [{ text }] }],
-          turn_complete: true,
-        },
-      }),
-    );
+    // gemini-3.1-flash-live-preview requires realtime_input for text during session
+    // (client_content is only for initial history seeding)
+    const model = (sessionDataRef.current as any)?.model || "";
+    if (model.includes("3.1-flash-live") || model.includes("3.0-flash-live")) {
+      ws.send(
+        JSON.stringify({
+          realtime_input: {
+            text: text,
+          },
+        }),
+      );
+    } else {
+      ws.send(
+        JSON.stringify({
+          client_content: {
+            turns: [{ role: "user", parts: [{ text }] }],
+            turn_complete: true,
+          },
+        }),
+      );
+    }
   }, []);
 
   const startSilenceWatchdog = useCallback(() => {
@@ -3786,10 +3799,10 @@ export const useGeminiVoice = ({
           "gemini-2.5-flash-native-audio-preview-12-2025",
           "gemini-2.5-flash",
         ];
-        const FALLBACK_MODEL = "gemini-2.5-flash-native-audio-latest";
+        const FALLBACK_MODEL = "gemini-3.1-flash-live-preview";
         let resolvedModel = data.model || FALLBACK_MODEL;
-        if (!VALID_MODELS.some((m) => resolvedModel.includes(m))) {
-          console.warn(`[SESSION] ⚠️ Model "${resolvedModel}" may be retired, falling back to "${FALLBACK_MODEL}"`);
+        if (!VALID_MODELS.includes(resolvedModel)) {
+          console.warn(`[SESSION] ⚠️ Model "${resolvedModel}" not in valid list, falling back to "${FALLBACK_MODEL}"`);
           resolvedModel = FALLBACK_MODEL;
         }
 
@@ -4819,7 +4832,9 @@ export const useGeminiVoice = ({
                   // За non-native модели може да се добави, но native-audio игнорира/отхвърля
                   // language_code: "bg-BG",
                 },
-                thinking_config: { thinking_budget: 0 },
+                thinking_config: session.model.includes("3.1-flash-live")
+                  ? { thinking_level: "minimal" }
+                  : { thinking_budget: 0 },
               },
               system_instruction: { parts: [{ text: session.systemInstruction }] },
               // ★ SEARCH WORKER — подай tools ако са налични
@@ -4861,23 +4876,36 @@ export const useGeminiVoice = ({
                 const ws = wsRef.current;
                 if (ws && ws.readyState === WebSocket.OPEN) {
                   console.log("[GEMINI] Triggering spoken greeting");
-                  ws.send(
-                    JSON.stringify({
-                      client_content: {
-                        turns: [
-                          {
-                            role: "user",
-                            parts: [
-                              {
-                                text: "[SYSTEM] Започни разговора — представи се кратко на български и попитай с какво можеш да помогнеш. Говори естествено и приветливо.",
-                              },
-                            ],
-                          },
-                        ],
-                        turn_complete: true,
-                      },
-                    }),
-                  );
+                  const greetingText =
+                    "[SYSTEM] Започни разговора — представи се кратко на български и попитай с какво можеш да помогнеш. Говори естествено и приветливо.";
+                  const greetingModel = (sessionDataRef.current as any)?.model || "";
+                  if (greetingModel.includes("3.1-flash-live") || greetingModel.includes("3.0-flash-live")) {
+                    ws.send(
+                      JSON.stringify({
+                        realtime_input: {
+                          text: greetingText,
+                        },
+                      }),
+                    );
+                  } else {
+                    ws.send(
+                      JSON.stringify({
+                        client_content: {
+                          turns: [
+                            {
+                              role: "user",
+                              parts: [
+                                {
+                                  text: greetingText,
+                                },
+                              ],
+                            },
+                          ],
+                          turn_complete: true,
+                        },
+                      }),
+                    );
+                  }
                 }
               }, 300);
             }
