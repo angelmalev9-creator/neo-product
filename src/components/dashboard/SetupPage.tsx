@@ -64,13 +64,13 @@ const SetupPage = ({
   };
 
   const steps = [
-    { label: 'Сайт', done: !!websiteUrl },
+    { label: 'Обучение', done: !!websiteUrl },
     { label: 'Календар', done: calendarConnected },
     { label: 'Имейл', done: emailConnected },
     { label: 'Тест', done: false },
   ];
   const completedSteps = steps.filter((s) => s.done).length;
-  const activeSection = section || 'website';
+  const activeSection = section || 'training';
 
   return (
     <div className="h-full flex flex-col p-4 lg:p-6 overflow-hidden overflow-x-hidden">
@@ -89,10 +89,9 @@ const SetupPage = ({
 
         <div className="flex gap-1.5 overflow-x-auto scrollbar-hide" ref={tabsRef}>
           {[
-            { id: 'website', label: 'Уебсайт', icon: Globe },
+            { id: 'training', label: 'Обучение', icon: Globe },
             { id: 'calendar', label: 'Календар', icon: CalendarDays },
             { id: 'email', label: 'Имейл', icon: Mail },
-            { id: 'data', label: 'Данни', icon: Database },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -113,27 +112,54 @@ const SetupPage = ({
 
       {/* Section content */}
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain">
-        {activeSection === 'website' && (
-          <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                <Globe className="w-5 h-5 text-primary" />
+        {activeSection === 'training' && (
+          <div className="space-y-4">
+            {/* Website URL + Company */}
+            <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                  <Globe className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-sm font-semibold text-foreground">Уебсайт</h2>
+                  <p className="text-[11px] text-muted-foreground">Въведете URL-а, за да обучим NEO</p>
+                </div>
+                {websiteUrl && <CheckCircle2 className="w-4 h-4 text-[hsl(var(--neo-success))]" />}
               </div>
-              <div className="flex-1">
-                <h2 className="text-sm font-semibold text-foreground">Уебсайт</h2>
-                <p className="text-[11px] text-muted-foreground">Въведете URL-а, за да обучим NEO</p>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">URL на сайта</Label>
+                  <Input type="url" placeholder="https://your-website.com" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} className="bg-background/50 text-sm h-10" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Име на компанията</Label>
+                  <Input placeholder="Вашата компания" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="bg-background/50 text-sm h-10" />
+                </div>
               </div>
-              {websiteUrl && <CheckCircle2 className="w-4 h-4 text-[hsl(var(--neo-success))]" />}
             </div>
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">URL на сайта</Label>
-                <Input type="url" placeholder="https://your-website.com" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} className="bg-background/50 text-sm h-10" />
+
+            {/* Knowledge Base (previously "Данни") */}
+            <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                  <Database className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-sm font-semibold text-foreground">Данни от сайта</h2>
+                  <p className="text-[11px] text-muted-foreground">Информацията, която NEO знае за вас</p>
+                </div>
+                {demoSession && <CheckCircle2 className="w-4 h-4 text-[hsl(var(--neo-success))]" />}
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Име на компанията</Label>
-                <Input placeholder="Вашата компания" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="bg-background/50 text-sm h-10" />
-              </div>
+              <KnowledgeBaseEditor
+                userId={userId}
+                currentSession={demoSession}
+                onSessionUpdate={(session) => {
+                  setDemoSession(session);
+                  if (session.url) setWebsiteUrl(session.url);
+                  if (session.company_name) setCompanyName(session.company_name);
+                }}
+                onCompanyNameExtracted={(name) => setCompanyName(name)}
+              />
             </div>
           </div>
         )}
@@ -146,30 +172,6 @@ const SetupPage = ({
           <EmailLogsSection emailConnected={emailConnected} userId={userId} />
         )}
 
-        {activeSection === 'data' && (
-          <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                <Database className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-sm font-semibold text-foreground">Данни от сайта</h2>
-                <p className="text-[11px] text-muted-foreground">Информацията, която NEO знае за вас</p>
-              </div>
-              {demoSession && <CheckCircle2 className="w-4 h-4 text-[hsl(var(--neo-success))]" />}
-            </div>
-            <KnowledgeBaseEditor
-              userId={userId}
-              currentSession={demoSession}
-              onSessionUpdate={(session) => {
-                setDemoSession(session);
-                if (session.url) setWebsiteUrl(session.url);
-                if (session.company_name) setCompanyName(session.company_name);
-              }}
-              onCompanyNameExtracted={(name) => setCompanyName(name)}
-            />
-          </div>
-        )}
       </div>
     </div>
   );
