@@ -18,12 +18,13 @@ const AnimatedBackground = () => {
       ].map((dot, i) => (
         <div
           key={i}
-          className="absolute rounded-full bg-primary"
+          className="absolute rounded-full"
           style={{
             left: dot.x,
             top: dot.y,
             width: dot.size,
             height: dot.size,
+            background: 'hsl(355, 78%, 56%)',
             opacity: dot.opacity,
             filter: 'blur(40px)',
             transform: 'translate(-50%, -50%)',
