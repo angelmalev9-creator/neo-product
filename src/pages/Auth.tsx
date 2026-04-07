@@ -265,6 +265,22 @@ const Auth = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
+    });
+    if (error) {
+      toast({
+        title: 'Грешка',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 pt-8 pb-12">
       {/* Background effects */}
