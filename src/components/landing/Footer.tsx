@@ -64,9 +64,6 @@ const Footer = () => {
             <div className="col-span-2">
               <div className="flex items-center gap-2.5 mb-4">
                 <NeoLogo size="md" />
-                  <span className="text-lg font-display font-black text-foreground">NEO</span>
-                  <span className="text-lg font-display font-black text-primary">.</span>
-                </div>
               </div>
               <p className="text-muted-foreground text-xs sm:text-sm mb-4 max-w-xs leading-relaxed">
                 {t('footer.description')}
