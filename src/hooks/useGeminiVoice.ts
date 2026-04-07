@@ -3780,12 +3780,8 @@ export const useGeminiVoice = ({
         }
 
         // ── Model fallback: ensure we use a valid, non-retired model ──────
-        const VALID_MODELS = [
-          "gemini-2.0-flash-live-001",
-          "gemini-2.5-flash-preview-native-audio-dialog",
-          "gemini-2.5-flash",
-        ];
-        const FALLBACK_MODEL = "gemini-2.5-flash-preview-native-audio-dialog";
+        const VALID_MODELS = ["gemini-2.0-flash-live-001", "gemini-2.5-flash-native-audio-latest", "gemini-2.5-flash"];
+        const FALLBACK_MODEL = "gemini-2.5-flash-native-audio-latest";
         let resolvedModel = data.model || FALLBACK_MODEL;
         if (!VALID_MODELS.some((m) => resolvedModel.includes(m))) {
           console.warn(`[SESSION] ⚠️ Model "${resolvedModel}" may be retired, falling back to "${FALLBACK_MODEL}"`);
@@ -4784,8 +4780,7 @@ export const useGeminiVoice = ({
         }
 
         const isLive001 = session.model.includes("2.0-flash-live");
-        const isNativeAudioPreview = session.model.includes("native-audio");
-        const apiVersion = isLive001 || isNativeAudioPreview ? "v1alpha" : "v1beta";
+        const apiVersion = isLive001 ? "v1alpha" : "v1beta";
         console.log("[CONNECT] Gemini WS, model:", session.model, "api:", apiVersion);
 
         const ws = new WebSocket(
@@ -4861,12 +4856,23 @@ export const useGeminiVoice = ({
                 const ws = wsRef.current;
                 if (ws && ws.readyState === WebSocket.OPEN) {
                   console.log("[GEMINI] Triggering spoken greeting");
-                  ws.send(JSON.stringify({
-                    client_content: {
-                      turns: [{ role: "user", parts: [{ text: "[SYSTEM] Започни разговора — представи се кратко на български и попитай с какво можеш да помогнеш. Говори естествено и приветливо." }] }],
-                      turn_complete: true,
-                    },
-                  }));
+                  ws.send(
+                    JSON.stringify({
+                      client_content: {
+                        turns: [
+                          {
+                            role: "user",
+                            parts: [
+                              {
+                                text: "[SYSTEM] Започни разговора — представи се кратко на български и попитай с какво можеш да помогнеш. Говори естествено и приветливо.",
+                              },
+                            ],
+                          },
+                        ],
+                        turn_complete: true,
+                      },
+                    }),
+                  );
                 }
               }, 300);
             }
@@ -5201,7 +5207,7 @@ export const useGeminiVoice = ({
 
           // ── Auto-retry on 1008 (entity not found = retired model) ──────
           if (ev.code === 1008 && sessionDataRef.current) {
-            const RETRY_MODEL = "gemini-2.5-flash-preview-native-audio-dialog";
+            const RETRY_MODEL = "gemini-2.5-flash-native-audio-latest";
             const currentModel = sessionDataRef.current.model || "";
             if (!currentModel.includes(RETRY_MODEL)) {
               console.warn(`[GEMINI] 1008 → model "${currentModel}" not found, retrying with "${RETRY_MODEL}"`);
@@ -5214,8 +5220,7 @@ export const useGeminiVoice = ({
                   const s = sessionDataRef.current;
                   if (s) {
                     const isLive = RETRY_MODEL.includes("2.0-flash-live");
-                    const isNative = RETRY_MODEL.includes("native-audio");
-                    const api = isLive || isNative ? "v1alpha" : "v1beta";
+                    const api = isLive ? "v1alpha" : "v1beta";
                     console.log("[GEMINI] 🔄 Auto-reconnect with model:", RETRY_MODEL, "api:", api);
                   }
                 }
