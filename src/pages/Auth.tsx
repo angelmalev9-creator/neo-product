@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, ArrowLeft, Sparkles, Crown } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, Crown } from 'lucide-react';
 import { z } from 'zod';
+import NeoLogo from '@/components/ui/NeoLogo';
 
 const authSchema = z.object({
   email: z.string().email('Невалиден имейл адрес'),
@@ -286,9 +287,8 @@ const Auth = () => {
         <div className="neo-glass neo-border-gradient rounded-xl sm:rounded-2xl p-5 sm:p-8">
           {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
-            <div className="inline-flex items-center gap-2 mb-3 sm:mb-4">
-              <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
-              <span className="text-xl sm:text-2xl font-headline font-bold text-foreground">NEO</span>
+            <div className="flex justify-center mb-3 sm:mb-4">
+              <NeoLogo size="lg" />
             </div>
             
             {/* Show selected plan if coming from pricing */}
