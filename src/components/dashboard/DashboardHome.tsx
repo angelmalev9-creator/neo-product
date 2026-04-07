@@ -118,7 +118,7 @@ const DashboardHome = ({
   const [totalConversations, setTotalConversations] = useState(0);
   const [totalLeads, setTotalLeads] = useState(0);
   const [avgDuration, setAvgDuration] = useState(0);
-  const [showUpsell, setShowUpsell] = useState(true);
+  const [showUpsell] = useState(true);
   const [totalBookings, setTotalBookings] = useState(0);
   const [chartFilter, setChartFilter] = useState<TimeFilter>('week');
   const [chartData, setChartData] = useState<{ label: string; conversations: number; clients: number }[]>([]);
@@ -218,7 +218,7 @@ const DashboardHome = ({
   const conversionRate = totalConversations > 0 ? Math.round((totalLeads / totalConversations) * 100) : 0;
   const bookingRate = totalConversations > 0 ? Math.round((totalBookings / totalConversations) * 100) : 0;
   const avgDurationMin = avgDuration > 0 ? `${Math.floor(avgDuration / 60)}:${String(avgDuration % 60).padStart(2, '0')}` : '—';
-  const upgradeInfo = TIER_UPGRADES[tierName];
+  
   const automationScore = Math.min(99, Math.max(12, Math.round((conversionRate * 0.45) + (bookingRate * 0.35) + ((100 - Math.min(usagePercent, 100)) * 0.2))));
   const analysisSignals = [
     { label: 'Колко клиенти печелите', value: conversionRate, helper: `${totalLeads} от ${totalConversations} обаждания`, tone: 'primary' as const },
