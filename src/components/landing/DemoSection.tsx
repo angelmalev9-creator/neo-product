@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Globe, CheckCircle, ArrowRight, Zap, Shield } from "lucide-react";
+import { Globe, CheckCircle, ArrowRight, Zap, Shield, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -158,10 +158,10 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="neo-heading-section font-black text-foreground mb-3 font-mono">
-            {t("demo.title1")} <span className="text-primary">{t("demo.title2")}</span>
+            Чуйте как звучи <span className="text-primary">Вашият NEO</span>
           </h2>
           <p className="neo-subheading text-muted-foreground mb-6 max-w-lg mx-auto">
-            {t("demo.description")}
+            Въведете адреса на сайта си и за секунди NEO ще научи всичко за бизнеса Ви — готов да говори с клиентите Ви.
           </p>
 
           {/* Input / Loading / Ready */}
@@ -183,7 +183,7 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
                   className="bg-primary hover:bg-primary/90 rounded-xl h-12 px-5 shrink-0 shadow-lg shadow-primary/25 font-bold text-sm gap-2"
                 >
                   <Zap className="w-4 h-4" />
-                  <span className="hidden sm:inline">Обучи NEO</span>
+                  <span className="hidden sm:inline">Обучете NEO</span>
                   <ArrowRight className="w-4 h-4 sm:hidden" />
                 </Button>
               </form>
@@ -217,11 +217,26 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
           {/* Trust pills */}
           <div className="flex flex-wrap items-center justify-center gap-4 mt-5 text-xs text-muted-foreground/50">
             <span className="flex items-center gap-1.5">
-              <Zap className="w-3 h-3 text-primary/50" /> {t("demo.noRegistration")}
+              <Zap className="w-3 h-3 text-primary/50" /> Без код
             </span>
             <span className="flex items-center gap-1.5">
-              <Shield className="w-3 h-3 text-primary/50" /> {t("demo.free")}
+              <Shield className="w-3 h-3 text-primary/50" /> Без интеграции
             </span>
+            <span className="flex items-center gap-1.5">
+              <Shield className="w-3 h-3 text-primary/50" /> Без настройки
+            </span>
+          </div>
+
+          {/* Demo disclaimer */}
+          <div className="mt-6 max-w-lg mx-auto">
+            <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-card/30 border border-border/10 text-left">
+              <AlertTriangle className="w-3.5 h-3.5 text-primary/50 shrink-0 mt-0.5" />
+              <p className="text-[10px] text-foreground/30 leading-relaxed">
+                <span className="font-semibold text-foreground/40">Демо версия:</span>{' '}
+                В демо режим NEO симулира записване на часове и резервации. За реални резервации, свържете календар от таблото за управление. 
+                NEO може да изпраща запитвания чрез формите за контакт на Вашия сайт — моля, не злоупотребявайте с тази функция.
+              </p>
+            </div>
           </div>
         </div>
       </div>
