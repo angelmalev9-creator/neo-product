@@ -108,10 +108,15 @@ serve(async (req) => {
   pill.onmouseenter = function() { pill.style.transform = 'scale(1.04)'; pill.style.boxShadow = '0 6px 28px ' + color + '55,0 4px 12px rgba(0,0,0,0.2)'; };
   pill.onmouseleave = function() { pill.style.transform = 'scale(1)'; pill.style.boxShadow = '0 4px 20px ' + color + '40,0 2px 8px rgba(0,0,0,0.15)'; };
 
-  // Icon circle with NEO logo
+  // Icon circle with logo or fallback SVG
   var iconCircle = document.createElement('div');
-  iconCircle.style.cssText = 'width:' + (btnSize - 12) + 'px;height:' + (btnSize - 12) + 'px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;';
-  iconCircle.innerHTML = '<svg class="neo-phone-icon" xmlns="http://www.w3.org/2000/svg" width="' + (btnSize * 0.32) + '" height="' + (btnSize * 0.32) + '" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="m2 14 2-2-2-2"/><path d="m22 14-2-2 2-2"/><path d="M9 15h2"/><path d="M13 15h2"/></svg>';
+  iconCircle.style.cssText = 'width:' + (btnSize - 12) + 'px;height:' + (btnSize - 12) + 'px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;';
+  var logoUrl = '${logoUrl}';
+  if (logoUrl) {
+    iconCircle.innerHTML = '<img src="' + logoUrl + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />';
+  } else {
+    iconCircle.innerHTML = '<svg class="neo-phone-icon" xmlns="http://www.w3.org/2000/svg" width="' + (btnSize * 0.32) + '" height="' + (btnSize * 0.32) + '" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="m2 14 2-2-2-2"/><path d="m22 14-2-2 2-2"/><path d="M9 15h2"/><path d="M13 15h2"/></svg>';
+  }
   pill.appendChild(iconCircle);
 
   // Text label
