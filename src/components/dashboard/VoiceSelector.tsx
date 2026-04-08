@@ -110,7 +110,7 @@ const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
                           <div className={cn(
                             'w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold',
                             voice.gender === 'female'
-                              ? 'bg-pink-500/10 text-pink-500'
+                              ? 'bg-accent/30 text-accent-foreground'
                               : 'bg-primary/10 text-primary'
                           )}>
                             {voice.name[0]}
