@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Phone, Eye, Crown, Paintbrush } from 'lucide-react';
+import { Phone, Crown, Paintbrush } from 'lucide-react';
 
 interface WidgetConfig {
   position: string;
@@ -76,7 +76,7 @@ const WidgetCustomizer = ({
   const { toast } = useToast();
   const [config, setConfig] = useState<WidgetConfig>(initialConfig || DEFAULT_CONFIG);
   const [saving, setSaving] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
+  
   const [localHideBranding, setLocalHideBranding] = useState(hideNeoBranding || false);
   
   const canCustomizeBranding = subscriptionTier === 'growth' || subscriptionTier === 'empire';
