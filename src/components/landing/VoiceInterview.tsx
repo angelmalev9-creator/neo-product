@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Phone, PhoneOff, Clock, Send } from "lucide-react";
+import { Phone, PhoneOff, Clock, Send, MicOff, Mic } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
@@ -735,6 +735,8 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     isConnecting,
     isSpeaking,
     isListening,
+    isMicMuted,
+    toggleMicMute,
     connect,
     disconnect,
     prepareSession,
@@ -1345,7 +1347,22 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
           </div>
 
           <div className="neo-glass-subtle border border-border/20 rounded-lg lg:rounded-xl p-4 lg:p-6 text-center">
-            <div className="relative inline-block mb-4 lg:mb-6">
+            <div className="relative inline-flex items-center gap-4 mb-4 lg:mb-6">
+              {/* Mic mute button */}
+              {(isConnected || textOnlyMode) && !textOnlyMode && (
+                <button
+                  onClick={toggleMicMute}
+                  className={`w-12 h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center transition-all border-2 ${
+                    isMicMuted
+                      ? 'bg-destructive/15 border-destructive/40 text-destructive'
+                      : 'bg-muted/20 border-border/30 text-muted-foreground hover:text-foreground hover:border-border/50'
+                  }`}
+                  title={isMicMuted ? 'Включи микрофона' : 'Изключи микрофона'}
+                >
+                  {isMicMuted ? <MicOff className="w-5 h-5 lg:w-6 lg:h-6" /> : <Mic className="w-5 h-5 lg:w-6 lg:h-6" />}
+                </button>
+              )}
+
               <button
                 onClick={isConnected || textOnlyMode ? endCall : startCall}
                 disabled={isConnecting}
@@ -1365,7 +1382,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
               </button>
 
               {(isConnected || textOnlyMode) && (
-                <div className="absolute inset-0 rounded-full border-2 border-primary/40 animate-ping" />
+                <div className="absolute inset-0 rounded-full border-2 border-primary/40 animate-ping pointer-events-none" style={{ left: textOnlyMode ? 0 : 'auto' }} />
               )}
             </div>
 

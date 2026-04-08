@@ -1616,6 +1616,8 @@ export const useGeminiVoice = ({
   const wsRef = useRef<WebSocket | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const [isMicMuted, setIsMicMuted] = useState(false);
+  const isMicMutedRef = useRef(false);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const audioQueueRef = useRef<Float32Array[]>([]);
@@ -5619,11 +5621,23 @@ export const useGeminiVoice = ({
 
   const getSessionData = useCallback(() => sessionDataRef.current, []);
 
+  const toggleMicMute = useCallback(() => {
+    const stream = streamRef.current;
+    if (!stream) return;
+    const tracks = stream.getAudioTracks();
+    const newMuted = !isMicMutedRef.current;
+    tracks.forEach(t => { t.enabled = !newMuted; });
+    isMicMutedRef.current = newMuted;
+    setIsMicMuted(newMuted);
+  }, []);
+
   return {
     isConnected,
     isConnecting,
     isSpeaking,
     isListening,
+    isMicMuted,
+    toggleMicMute,
     connect,
     disconnect,
     prepareSession,

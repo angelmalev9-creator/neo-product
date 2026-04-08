@@ -59,7 +59,7 @@ const WidgetPage = ({ userId, companyName, logoUrl, setLogoUrl }: WidgetPageProp
           </div>
           <div className="lg:col-span-2 rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5">
             <h3 className="text-xs font-semibold text-foreground mb-3">Персонализиране</h3>
-            <WidgetCustomizer userId={userId} companyName={companyName} initialConfig={null} />
+            <WidgetCustomizer userId={userId} companyName={companyName} initialConfig={null} logoUrl={logoUrl} />
           </div>
         </div>
       </div>

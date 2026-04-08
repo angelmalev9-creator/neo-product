@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Phone, PhoneOff, X, Send, Mic, MessageSquare, Bot, User, UserPlus, Sparkles } from 'lucide-react';
+import { Phone, PhoneOff, X, Send, Mic, MicOff, MessageSquare, Bot, User, UserPlus, Sparkles } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useGeminiVoice } from '@/hooks/useGeminiVoice';
@@ -98,7 +98,7 @@ const Widget = () => {
     setError(err);
   }, []);
 
-  const { isConnected, isConnecting, isSpeaking, isListening, connect, disconnect, prepareSession, sendText, preWarmMicrophone } = useGeminiVoice({
+  const { isConnected, isConnecting, isSpeaking, isListening, isMicMuted, toggleMicMute, connect, disconnect, prepareSession, sendText, preWarmMicrophone } = useGeminiVoice({
     onMessage: handleMessage,
     onError: handleError,
     onTranscript: (transcript, isFinal, role) => {
@@ -492,6 +492,12 @@ const Widget = () => {
               Свързване...
             </span>
           )}
+          {isMicMuted && isConnected && !isSpeaking && (
+            <span className="text-muted-foreground font-medium flex items-center gap-2">
+              <MicOff className="w-3 h-3" />
+              Микрофонът е изключен
+            </span>
+          )}
           {isSpeaking && (
             <span className="font-medium flex items-center gap-2" style={{ color: widgetColor }}>
               <div className="flex gap-0.5">
@@ -502,18 +508,18 @@ const Widget = () => {
               Говори...
             </span>
           )}
-          {isListening && (
+          {isListening && !isMicMuted && (
             <span className="text-green-500 font-medium flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping" />
               Слушам...
             </span>
           )}
-          {isConnected && !isSpeaking && !isListening && !isConnecting && (
+          {isConnected && !isSpeaking && !isListening && !isConnecting && !isMicMuted && (
             <span className="text-muted-foreground">Говорете или пишете</span>
           )}
         </div>
 
-        {/* Text input */}
+        {/* Text input + Mic mute */}
         {isConnected && (
           <div className="flex gap-2">
             <Input
@@ -524,6 +530,17 @@ const Widget = () => {
               className="flex-1 text-xs h-10 bg-muted/30 border-border/20 rounded-xl"
               disabled={isSendingText || isSpeaking}
             />
+            <button
+              onClick={toggleMicMute}
+              className={`shrink-0 h-10 w-10 rounded-xl flex items-center justify-center transition-all border ${
+                isMicMuted
+                  ? 'bg-destructive/10 border-destructive/30 text-destructive'
+                  : 'bg-muted/30 border-border/20 text-muted-foreground hover:text-foreground'
+              }`}
+              title={isMicMuted ? 'Включи микрофона' : 'Изключи микрофона'}
+            >
+              {isMicMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            </button>
             <Button
               onClick={handleSendText}
               disabled={!textInput.trim() || isSendingText || isSpeaking}
