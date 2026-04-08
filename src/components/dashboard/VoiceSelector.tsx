@@ -1,12 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Volume2, Check, Mic } from 'lucide-react';
+import { Volume2, Check, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import VoiceTraining from './VoiceTraining';
 
 interface VoiceSelectorProps {
   userId: string;
@@ -25,44 +23,48 @@ const VOICES = [
   { id: 'Zephyr', name: 'Виктория', description: 'Ярък и ясен женски глас', gender: 'female', hint: 'Оптимизиран за български език' },
 ];
 
-const VoiceSelector = ({ userId, demoSession, subscriptionTier }: VoiceSelectorProps) => {
+const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
   const { toast } = useToast();
   const [selectedVoice, setSelectedVoice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [customVoiceName, setCustomVoiceName] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [playingVoice, setPlayingVoice] = useState<string | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCacheRef = useRef<Record<string, string>>({});
 
   useEffect(() => {
     if (demoSession?.voice_name) {
       setSelectedVoice(demoSession.voice_name);
-      setCustomVoiceName((demoSession as any).custom_voice_name || null);
       setLoading(false);
     } else if (demoSession) {
       setSelectedVoice('Enceladus');
       setLoading(false);
     }
-  }, [demoSession, refreshKey]);
+  }, [demoSession]);
+
+  useEffect(() => {
+    return () => {
+      audioRef.current?.pause();
+      Object.values(audioCacheRef.current).forEach(url => URL.revokeObjectURL(url));
+    };
+  }, []);
 
   const handleVoiceChange = async (voiceId: string) => {
     if (!demoSession?.id || saving) return;
     const previousVoice = selectedVoice;
+    const voiceName = VOICES.find(v => v.id === voiceId)?.name;
 
     setSelectedVoice(voiceId);
     setSaving(true);
-
-    const displayName = voiceId === 'custom'
-      ? (customVoiceName || 'Моят глас')
-      : VOICES.find(v => v.id === voiceId)?.name;
 
     try {
       const { error } = await supabase
         .from('demo_sessions')
         .update({ voice_name: voiceId } as any)
         .eq('id', demoSession.id);
-
       if (error) throw error;
-      toast({ title: `Гласът е сменен на ${displayName}` });
+      toast({ title: `Гласът е сменен на ${voiceName}` });
     } catch {
       setSelectedVoice(previousVoice);
       toast({ title: 'Грешка', description: 'Неуспешна промяна на гласа', variant: 'destructive' });
@@ -71,11 +73,66 @@ const VoiceSelector = ({ userId, demoSession, subscriptionTier }: VoiceSelectorP
     }
   };
 
-  const hasCustomVoice = (demoSession as any)?.voice_training_status === 'ready';
+  const playPreview = async (voiceId: string, voiceName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    // If already playing this voice, stop it
+    if (playingVoice === voiceId) {
+      audioRef.current?.pause();
+      setPlayingVoice(null);
+      return;
+    }
+
+    // Stop any current playback
+    audioRef.current?.pause();
+
+    // Check cache
+    if (audioCacheRef.current[voiceId]) {
+      const audio = new Audio(audioCacheRef.current[voiceId]);
+      audioRef.current = audio;
+      audio.onended = () => setPlayingVoice(null);
+      audio.play();
+      setPlayingVoice(voiceId);
+      return;
+    }
+
+    // Fetch from edge function
+    setLoadingPreview(voiceId);
+    try {
+      const { data, error } = await supabase.functions.invoke('voice-preview', {
+        body: { voice_id: voiceId, voice_name: voiceName },
+      });
+
+      if (error || !data?.audio) throw new Error('No audio returned');
+
+      // Decode base64 to blob
+      const mimeType = data.mimeType || 'audio/mp3';
+      const binaryStr = atob(data.audio);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+
+      // Cache it
+      audioCacheRef.current[voiceId] = url;
+
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => setPlayingVoice(null);
+      audio.play();
+      setPlayingVoice(voiceId);
+    } catch (err) {
+      console.error('Voice preview error:', err);
+      toast({ title: 'Грешка', description: 'Не може да се зареди примерен запис', variant: 'destructive' });
+    } finally {
+      setLoadingPreview(null);
+    }
+  };
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain space-y-4">
-      {/* Voice Selection */}
       <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5 space-y-5">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
@@ -83,58 +140,23 @@ const VoiceSelector = ({ userId, demoSession, subscriptionTier }: VoiceSelectorP
           </div>
           <div>
             <h2 className="text-sm font-semibold text-foreground">Глас на асистента</h2>
-            <p className="text-[11px] text-muted-foreground">Изберете как ще звучи NEO при разговор с клиентите Ви</p>
+            <p className="text-[11px] text-muted-foreground">Изберете как ще звучи NEO — натиснете 🔊 за да чуете гласа</p>
           </div>
         </div>
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
             {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-32 rounded-xl" />
+              <Skeleton key={i} className="h-36 rounded-xl" />
             ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-            {/* Custom voice card */}
-            {hasCustomVoice && (
-              <Card
-                onClick={() => handleVoiceChange('custom')}
-                className={cn(
-                  'group relative cursor-pointer transition-all duration-200 hover:shadow-md',
-                  selectedVoice === 'custom'
-                    ? 'border-emerald-500/50 bg-emerald-500/5 shadow-sm ring-1 ring-emerald-500/20'
-                    : 'border-border/15 bg-background/40 hover:border-border/30'
-                )}
-              >
-                <CardContent className="p-4 space-y-2.5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-primary/10">
-                        <Mic className="w-4 h-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground leading-tight">
-                          {customVoiceName || 'Моят глас'}
-                        </p>
-                        <Badge className="bg-primary/10 text-primary text-[9px] px-1.5 py-0 mt-0.5">
-                          Моят глас
-                        </Badge>
-                      </div>
-                    </div>
-                    {selectedVoice === 'custom' && (
-                      <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 mt-0.5">
-                        <Check className="w-3 h-3 text-white" />
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">Вашият персонализиран глас</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Preset voices */}
             {VOICES.map((voice) => {
               const isSelected = selectedVoice === voice.id;
+              const isPlaying = playingVoice === voice.id;
+              const isLoading = loadingPreview === voice.id;
+
               return (
                 <Card
                   key={voice.id}
@@ -174,18 +196,41 @@ const VoiceSelector = ({ userId, demoSession, subscriptionTier }: VoiceSelectorP
                     <p className="text-[11px] text-muted-foreground leading-relaxed">{voice.description}</p>
                     <p className="text-[10px] text-muted-foreground/60 italic">{voice.hint}</p>
 
-                    {/* Hover wave animation */}
-                    <div className="flex items-end gap-[3px] h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      {[1, 2, 3, 4].map((bar) => (
-                        <div
-                          key={bar}
-                          className="w-[3px] rounded-full bg-primary/40"
-                          style={{
-                            animation: `voice-bar-pulse 0.8s ease-in-out ${bar * 0.15}s infinite alternate`,
-                          }}
-                        />
-                      ))}
-                    </div>
+                    {/* Play preview button */}
+                    <button
+                      onClick={(e) => playPreview(voice.id, voice.name, e)}
+                      disabled={isLoading}
+                      className={cn(
+                        'flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-md transition-all',
+                        isPlaying
+                          ? 'bg-primary/15 text-primary'
+                          : 'bg-muted/40 text-muted-foreground hover:bg-muted/70 hover:text-foreground'
+                      )}
+                    >
+                      {isLoading ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : isPlaying ? (
+                        <>
+                          <div className="flex items-end gap-[2px] h-3">
+                            {[1, 2, 3, 4].map((bar) => (
+                              <div
+                                key={bar}
+                                className="w-[2px] rounded-full bg-primary"
+                                style={{
+                                  animation: `voice-bar-pulse 0.6s ease-in-out ${bar * 0.1}s infinite alternate`,
+                                }}
+                              />
+                            ))}
+                          </div>
+                          <span>Спри</span>
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 className="w-3 h-3" />
+                          <span>Чуй гласа</span>
+                        </>
+                      )}
+                    </button>
                   </CardContent>
                 </Card>
               );
@@ -194,19 +239,10 @@ const VoiceSelector = ({ userId, demoSession, subscriptionTier }: VoiceSelectorP
         )}
       </div>
 
-      {/* Voice Training */}
-      <VoiceTraining
-        userId={userId}
-        demoSession={demoSession}
-        subscriptionTier={subscriptionTier}
-        onVoiceSaved={() => setRefreshKey(k => k + 1)}
-      />
-
-      {/* CSS animation for wave bars */}
       <style>{`
         @keyframes voice-bar-pulse {
-          0% { height: 4px; }
-          100% { height: 14px; }
+          0% { height: 3px; }
+          100% { height: 11px; }
         }
       `}</style>
     </div>
