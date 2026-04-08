@@ -5621,11 +5621,23 @@ export const useGeminiVoice = ({
 
   const getSessionData = useCallback(() => sessionDataRef.current, []);
 
+  const toggleMicMute = useCallback(() => {
+    const stream = streamRef.current;
+    if (!stream) return;
+    const tracks = stream.getAudioTracks();
+    const newMuted = !isMicMutedRef.current;
+    tracks.forEach(t => { t.enabled = !newMuted; });
+    isMicMutedRef.current = newMuted;
+    setIsMicMuted(newMuted);
+  }, []);
+
   return {
     isConnected,
     isConnecting,
     isSpeaking,
     isListening,
+    isMicMuted,
+    toggleMicMute,
     connect,
     disconnect,
     prepareSession,
