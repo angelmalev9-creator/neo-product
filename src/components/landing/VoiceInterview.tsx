@@ -735,6 +735,8 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     isConnecting,
     isSpeaking,
     isListening,
+    isMicMuted,
+    toggleMicMute,
     connect,
     disconnect,
     prepareSession,
