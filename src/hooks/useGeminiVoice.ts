@@ -4810,8 +4810,9 @@ export const useGeminiVoice = ({
           const isNativeAudio = session.model.includes("native-audio");
 
           // ── Voice selection ───────────────────────────────────────────────
-          // Charon = по-нисък, солиден мъжки глас — авторитетен и уважителен
-          const voiceName = isNativeAudio ? "Charon" : "Charon";
+          // Enceladus = ясен, неутрален мъжки глас — по-добро произношение на български
+          // (Charon е добър за английски, но Enceladus/Sadachbia са по-чисти за славянски езици)
+          const voiceName = isNativeAudio ? "Enceladus" : "Enceladus";
 
           const setupPayload: any = {
             setup: {
