@@ -19,11 +19,12 @@ interface NeoPageProps {
   usedMinutes: number;
   planLimit: number;
   onUsageUpdate: (m: number) => void;
+  subscriptionTier?: string;
 }
 
 const NeoPage = ({
   userId, section = 'behavior', companyName, voiceSpeed, setVoiceSpeed,
-  demoSession, usedMinutes, planLimit, onUsageUpdate,
+  demoSession, usedMinutes, planLimit, onUsageUpdate, subscriptionTier,
 }: NeoPageProps) => {
   const { toast } = useToast();
   const [customPrompt, setCustomPrompt] = useState('');
@@ -91,7 +92,7 @@ const NeoPage = ({
       )}
 
       {section === 'voice' && (
-        <VoiceSelector userId={userId} demoSession={demoSession} />
+        <VoiceSelector userId={userId} demoSession={demoSession} subscriptionTier={subscriptionTier} />
       )}
 
       {section === 'test' && (

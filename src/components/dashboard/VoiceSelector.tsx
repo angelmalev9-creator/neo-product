@@ -6,46 +6,54 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import VoiceTraining from './VoiceTraining';
 
 interface VoiceSelectorProps {
   userId: string;
   demoSession: any;
+  subscriptionTier?: string;
 }
 
 const VOICES = [
-  { id: 'Enceladus', name: 'Александър', description: 'Ясен и неутрален, професионален тон', gender: 'male' },
-  { id: 'Charon', name: 'Никола', description: 'Дълбок и авторитетен, вдъхва доверие', gender: 'male' },
-  { id: 'Puck', name: 'Мартин', description: 'Жизнерадостен и енергичен', gender: 'male' },
-  { id: 'Orus', name: 'Борис', description: 'Топъл и спокоен, разговорен стил', gender: 'male' },
-  { id: 'Sadachbia', name: 'Стефан', description: 'Мек и внимателен, подходящ за медицина', gender: 'male' },
-  { id: 'Kore', name: 'Елена', description: 'Силен и уверен женски глас', gender: 'female' },
-  { id: 'Aoede', name: 'Мария', description: 'Топъл и мелодичен женски глас', gender: 'female' },
-  { id: 'Zephyr', name: 'Виктория', description: 'Ярък и ясен женски глас', gender: 'female' },
+  { id: 'Enceladus', name: 'Александър', description: 'Ясен и неутрален, професионален тон', gender: 'male', hint: 'Най-ясна артикулация на български' },
+  { id: 'Charon', name: 'Никола', description: 'Дълбок и авторитетен, вдъхва доверие', gender: 'male', hint: 'Препоръчан за авторитетен тон' },
+  { id: 'Puck', name: 'Мартин', description: 'Жизнерадостен и енергичен', gender: 'male', hint: 'Идеален за млада аудитория' },
+  { id: 'Orus', name: 'Борис', description: 'Топъл и спокоен, разговорен стил', gender: 'male', hint: 'Оптимизиран за български език' },
+  { id: 'Sadachbia', name: 'Стефан', description: 'Мек и внимателен, подходящ за медицина', gender: 'male', hint: 'Оптимизиран за български език' },
+  { id: 'Kore', name: 'Елена', description: 'Силен и уверен женски глас', gender: 'female', hint: 'Прецизно женско произношение' },
+  { id: 'Aoede', name: 'Мария', description: 'Топъл и мелодичен женски глас', gender: 'female', hint: 'Оптимизиран за български език' },
+  { id: 'Zephyr', name: 'Виктория', description: 'Ярък и ясен женски глас', gender: 'female', hint: 'Оптимизиран за български език' },
 ];
 
-const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
+const VoiceSelector = ({ userId, demoSession, subscriptionTier }: VoiceSelectorProps) => {
   const { toast } = useToast();
   const [selectedVoice, setSelectedVoice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [customVoiceName, setCustomVoiceName] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (demoSession?.voice_name) {
       setSelectedVoice(demoSession.voice_name);
+      setCustomVoiceName((demoSession as any).custom_voice_name || null);
       setLoading(false);
     } else if (demoSession) {
       setSelectedVoice('Enceladus');
       setLoading(false);
     }
-  }, [demoSession]);
+  }, [demoSession, refreshKey]);
 
   const handleVoiceChange = async (voiceId: string) => {
     if (!demoSession?.id || saving) return;
     const previousVoice = selectedVoice;
-    const voiceName = VOICES.find(v => v.id === voiceId)?.name;
 
     setSelectedVoice(voiceId);
     setSaving(true);
+
+    const displayName = voiceId === 'custom'
+      ? (customVoiceName || 'Моят глас')
+      : VOICES.find(v => v.id === voiceId)?.name;
 
     try {
       const { error } = await supabase
@@ -54,7 +62,7 @@ const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
         .eq('id', demoSession.id);
 
       if (error) throw error;
-      toast({ title: `Гласът е сменен на ${voiceName}` });
+      toast({ title: `Гласът е сменен на ${displayName}` });
     } catch {
       setSelectedVoice(previousVoice);
       toast({ title: 'Грешка', description: 'Неуспешна промяна на гласа', variant: 'destructive' });
@@ -62,6 +70,8 @@ const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
       setSaving(false);
     }
   };
+
+  const hasCustomVoice = (demoSession as any)?.voice_training_status === 'ready';
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain space-y-4">
@@ -80,11 +90,49 @@ const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
             {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-28 rounded-xl" />
+              <Skeleton key={i} className="h-32 rounded-xl" />
             ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+            {/* Custom voice card */}
+            {hasCustomVoice && (
+              <Card
+                onClick={() => handleVoiceChange('custom')}
+                className={cn(
+                  'group relative cursor-pointer transition-all duration-200 hover:shadow-md',
+                  selectedVoice === 'custom'
+                    ? 'border-emerald-500/50 bg-emerald-500/5 shadow-sm ring-1 ring-emerald-500/20'
+                    : 'border-border/15 bg-background/40 hover:border-border/30'
+                )}
+              >
+                <CardContent className="p-4 space-y-2.5">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-primary/10">
+                        <Mic className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground leading-tight">
+                          {customVoiceName || 'Моят глас'}
+                        </p>
+                        <Badge className="bg-primary/10 text-primary text-[9px] px-1.5 py-0 mt-0.5">
+                          Моят глас
+                        </Badge>
+                      </div>
+                    </div>
+                    {selectedVoice === 'custom' && (
+                      <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 mt-0.5">
+                        <Check className="w-3 h-3 text-white" />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">Вашият персонализиран глас</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Preset voices */}
             {VOICES.map((voice) => {
               const isSelected = selectedVoice === voice.id;
               return (
@@ -124,6 +172,7 @@ const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
                     </div>
 
                     <p className="text-[11px] text-muted-foreground leading-relaxed">{voice.description}</p>
+                    <p className="text-[10px] text-muted-foreground/60 italic">{voice.hint}</p>
 
                     {/* Hover wave animation */}
                     <div className="flex items-end gap-[3px] h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -145,12 +194,13 @@ const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
         )}
       </div>
 
-      {/* Voice Clone — compact single-line placeholder */}
-      <div className="rounded-xl border border-border/10 bg-card/40 backdrop-blur-sm px-4 py-3 flex items-center gap-3 opacity-50">
-        <Mic className="w-4 h-4 text-muted-foreground shrink-0" />
-        <span className="text-[11px] text-muted-foreground">Говорете с вашия глас — очаквайте скоро</span>
-        <Badge variant="secondary" className="text-[9px] px-1.5 py-0 shrink-0 ml-auto">Скоро</Badge>
-      </div>
+      {/* Voice Training */}
+      <VoiceTraining
+        userId={userId}
+        demoSession={demoSession}
+        subscriptionTier={subscriptionTier}
+        onVoiceSaved={() => setRefreshKey(k => k + 1)}
+      />
 
       {/* CSS animation for wave bars */}
       <style>{`
