@@ -24,7 +24,7 @@ interface NeoPageProps {
 
 const NeoPage = ({
   userId, section = 'behavior', companyName, voiceSpeed, setVoiceSpeed,
-  demoSession, usedMinutes, planLimit, onUsageUpdate,
+  demoSession, usedMinutes, planLimit, onUsageUpdate, subscriptionTier,
 }: NeoPageProps) => {
   const { toast } = useToast();
   const [customPrompt, setCustomPrompt] = useState('');
