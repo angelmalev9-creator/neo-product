@@ -140,11 +140,11 @@ const WidgetCustomizer = ({
         </div>
         
         {showPreview && (
-          <div className="relative h-48 bg-muted/30 rounded-lg border border-border/30 overflow-hidden">
+          <div className="relative h-48 rounded-lg border border-border/30 overflow-hidden" style={{ backgroundColor: config.backgroundColor }}>
             <div className="absolute inset-0 p-4">
-              <div className="h-4 bg-muted/50 rounded w-3/4 mb-2" />
-              <div className="h-3 bg-muted/30 rounded w-1/2 mb-4" />
-              <div className="h-16 bg-muted/20 rounded" />
+              <div className="h-4 rounded w-3/4 mb-2" style={{ backgroundColor: isLightBg ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)' }} />
+              <div className="h-3 rounded w-1/2 mb-4" style={{ backgroundColor: isLightBg ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.07)' }} />
+              <div className="h-16 rounded" style={{ backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.05)' }} />
             </div>
             
             <div
