@@ -825,6 +825,7 @@ export type Database = {
           created_at: string
           custom_system_prompt: string | null
           email: string
+          email_style_config: Json | null
           full_name: string | null
           hide_neo_branding: boolean | null
           id: string
@@ -852,6 +853,7 @@ export type Database = {
           created_at?: string
           custom_system_prompt?: string | null
           email: string
+          email_style_config?: Json | null
           full_name?: string | null
           hide_neo_branding?: boolean | null
           id?: string
@@ -879,6 +881,7 @@ export type Database = {
           created_at?: string
           custom_system_prompt?: string | null
           email?: string
+          email_style_config?: Json | null
           full_name?: string | null
           hide_neo_branding?: boolean | null
           id?: string
