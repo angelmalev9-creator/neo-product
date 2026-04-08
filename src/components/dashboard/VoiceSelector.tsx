@@ -1,10 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Play, Pause, Mic, AudioLines, Volume2 } from 'lucide-react';
+import { Volume2, Check, Mic } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -27,22 +25,28 @@ const VOICES = [
 
 const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
   const { toast } = useToast();
-  const [selectedVoice, setSelectedVoice] = useState('Enceladus');
-  const [playingVoice, setPlayingVoice] = useState<string | null>(null);
+  const [selectedVoice, setSelectedVoice] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (demoSession?.voice_name) {
       setSelectedVoice(demoSession.voice_name);
+      setLoading(false);
+    } else if (demoSession) {
+      setSelectedVoice('Enceladus');
+      setLoading(false);
     }
   }, [demoSession]);
 
   const handleVoiceChange = async (voiceId: string) => {
-    setSelectedVoice(voiceId);
-    if (!demoSession?.id) return;
+    if (!demoSession?.id || saving) return;
+    const previousVoice = selectedVoice;
+    const voiceName = VOICES.find(v => v.id === voiceId)?.name;
 
+    setSelectedVoice(voiceId);
     setSaving(true);
+
     try {
       const { error } = await supabase
         .from('demo_sessions')
@@ -50,36 +54,17 @@ const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
         .eq('id', demoSession.id);
 
       if (error) throw error;
-      toast({ title: 'Гласът е променен', description: `NEO вече ще говори с глас "${VOICES.find(v => v.id === voiceId)?.name}"` });
+      toast({ title: `Гласът е сменен на ${voiceName}` });
     } catch {
+      setSelectedVoice(previousVoice);
       toast({ title: 'Грешка', description: 'Неуспешна промяна на гласа', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
   };
 
-  const togglePreview = (voiceId: string) => {
-    if (playingVoice === voiceId) {
-      audioRef.current?.pause();
-      setPlayingVoice(null);
-      return;
-    }
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
-    const audio = new Audio(`/audio/voice-preview-${voiceId.toLowerCase()}.mp3`);
-    audio.onended = () => setPlayingVoice(null);
-    audio.onerror = () => {
-      setPlayingVoice(null);
-      toast({ title: 'Примерен запис', description: 'Примерният запис ще бъде наличен скоро', variant: 'default' });
-    };
-    audioRef.current = audio;
-    audio.play().catch(() => setPlayingVoice(null));
-    setPlayingVoice(voiceId);
-  };
-
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain space-y-6">
+    <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain space-y-4">
       {/* Voice Selection */}
       <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5 space-y-5">
         <div className="flex items-center gap-3">
@@ -92,105 +77,88 @@ const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
           </div>
         </div>
 
-        <RadioGroup value={selectedVoice} onValueChange={handleVoiceChange}>
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-28 rounded-xl" />
+            ))}
+          </div>
+        ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
             {VOICES.map((voice) => {
               const isSelected = selectedVoice === voice.id;
               return (
-                <label key={voice.id} className="cursor-pointer">
-                  <Card className={cn(
-                    'relative transition-all duration-200 hover:shadow-md',
+                <Card
+                  key={voice.id}
+                  onClick={() => handleVoiceChange(voice.id)}
+                  className={cn(
+                    'group relative cursor-pointer transition-all duration-200 hover:shadow-md',
                     isSelected
-                      ? 'border-primary/40 bg-primary/5 shadow-sm ring-1 ring-primary/20'
+                      ? 'border-emerald-500/50 bg-emerald-500/5 shadow-sm ring-1 ring-emerald-500/20'
                       : 'border-border/15 bg-background/40 hover:border-border/30'
-                  )}>
-                    <CardContent className="p-4 space-y-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <div className={cn(
-                            'w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold',
-                            voice.gender === 'female'
-                              ? 'bg-accent/30 text-accent-foreground'
-                              : 'bg-primary/10 text-primary'
-                          )}>
-                            {voice.name[0]}
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-foreground leading-tight">{voice.name}</p>
-                            <p className="text-[10px] text-muted-foreground mt-0.5">
-                              {voice.gender === 'female' ? 'Женски' : 'Мъжки'}
-                            </p>
-                          </div>
+                  )}
+                >
+                  <CardContent className="p-4 space-y-2.5">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className={cn(
+                          'w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold',
+                          voice.gender === 'female'
+                            ? 'bg-accent/30 text-accent-foreground'
+                            : 'bg-primary/10 text-primary'
+                        )}>
+                          {voice.name[0]}
                         </div>
-                        <RadioGroupItem value={voice.id} className="mt-1" />
+                        <div>
+                          <p className="text-sm font-semibold text-foreground leading-tight">{voice.name}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {voice.gender === 'female' ? 'Женски' : 'Мъжки'}
+                          </p>
+                        </div>
                       </div>
+                      {isSelected && (
+                        <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 mt-0.5">
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+                      )}
+                    </div>
 
-                      <p className="text-[11px] text-muted-foreground leading-relaxed">{voice.description}</p>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">{voice.description}</p>
 
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="w-full h-8 text-[11px] gap-1.5 text-muted-foreground hover:text-foreground"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          togglePreview(voice.id);
-                        }}
-                      >
-                        {playingVoice === voice.id ? (
-                          <><Pause className="w-3 h-3" /> Спри</>
-                        ) : (
-                          <><Play className="w-3 h-3" /> Чуй примерен запис</>
-                        )}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </label>
+                    {/* Hover wave animation */}
+                    <div className="flex items-end gap-[3px] h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      {[1, 2, 3, 4].map((bar) => (
+                        <div
+                          key={bar}
+                          className="w-[3px] rounded-full bg-primary/40"
+                          style={{
+                            animation: `voice-bar-pulse 0.8s ease-in-out ${bar * 0.15}s infinite alternate`,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
               );
             })}
           </div>
-        </RadioGroup>
+        )}
       </div>
 
-      {/* Voice Clone Placeholder */}
-      <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5 opacity-60">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl bg-muted/30 flex items-center justify-center">
-            <Mic className="w-5 h-5 text-muted-foreground" />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-semibold text-foreground">Използвайте Вашия глас</h2>
-              <Badge variant="secondary" className="text-[9px] px-1.5 py-0">Очаквайте скоро</Badge>
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              Запишете 30 секунди от гласа си и НЕО ще говори с Вашия глас
-            </p>
-          </div>
-        </div>
-
-        {/* Static waveform decoration */}
-        <div className="flex items-center gap-0.5 h-8 px-2 mb-3">
-          {Array.from({ length: 40 }).map((_, i) => (
-            <div
-              key={i}
-              className="w-1 rounded-full bg-muted-foreground/20"
-              style={{ height: `${Math.max(4, Math.sin(i * 0.4) * 16 + Math.random() * 8 + 8)}px` }}
-            />
-          ))}
-        </div>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button disabled className="gap-2 w-full sm:w-auto" variant="outline">
-              <Mic className="w-4 h-4" />
-              Запиши гласа ми
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Тази функция предстои</TooltipContent>
-        </Tooltip>
+      {/* Voice Clone — compact single-line placeholder */}
+      <div className="rounded-xl border border-border/10 bg-card/40 backdrop-blur-sm px-4 py-3 flex items-center gap-3 opacity-50">
+        <Mic className="w-4 h-4 text-muted-foreground shrink-0" />
+        <span className="text-[11px] text-muted-foreground">Говорете с вашия глас — очаквайте скоро</span>
+        <Badge variant="secondary" className="text-[9px] px-1.5 py-0 shrink-0 ml-auto">Скоро</Badge>
       </div>
+
+      {/* CSS animation for wave bars */}
+      <style>{`
+        @keyframes voice-bar-pulse {
+          0% { height: 4px; }
+          100% { height: 14px; }
+        }
+      `}</style>
     </div>
   );
 };
