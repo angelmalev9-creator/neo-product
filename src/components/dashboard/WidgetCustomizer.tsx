@@ -12,11 +12,12 @@ import {
 } from "@/components/ui/select";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Phone, Eye, Crown } from 'lucide-react';
+import { Phone, Eye, Crown, Paintbrush } from 'lucide-react';
 
 interface WidgetConfig {
   position: string;
   color: string;
+  backgroundColor: string;
   buttonText: string;
   autoGreet: boolean;
   buttonSize: string;
@@ -36,6 +37,7 @@ interface WidgetCustomizerProps {
 const DEFAULT_CONFIG: WidgetConfig = {
   position: 'bottom-right',
   color: '#ea384c',
+  backgroundColor: '#1a1a2e',
   buttonText: 'Говори с NEO',
   autoGreet: true,
   buttonSize: 'medium',
@@ -48,6 +50,17 @@ const PRESET_COLORS = [
   { name: 'Лилаво', value: '#8b5cf6' },
   { name: 'Оранжево', value: '#f97316' },
   { name: 'Тъмно', value: '#1f2937' },
+];
+
+const BG_PRESET_COLORS = [
+  { name: 'Тъмно синьо', value: '#1a1a2e' },
+  { name: 'Антрацит', value: '#16213e' },
+  { name: 'Графит', value: '#1f2937' },
+  { name: 'Бяло', value: '#ffffff' },
+  { name: 'Кремаво', value: '#faf5ef' },
+  { name: 'Светло сиво', value: '#f1f5f9' },
+  { name: 'Тъмно', value: '#0f0f0f' },
+  { name: 'Морско', value: '#0d1b2a' },
 ];
 
 const WidgetCustomizer = ({ 
@@ -109,6 +122,15 @@ const WidgetCustomizer = ({
 
   const previewSize = getPreviewSize();
 
+  const hexToLuma = (hex: string) => {
+    const c = hex.replace('#', '');
+    const r = parseInt(c.substring(0, 2), 16);
+    const g = parseInt(c.substring(2, 4), 16);
+    const b = parseInt(c.substring(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  };
+  const isLightBg = hexToLuma(config.backgroundColor || '#1a1a2e') > 0.5;
+
   return (
     <div className="space-y-6">
       {/* Live Preview */}
@@ -127,11 +149,11 @@ const WidgetCustomizer = ({
         </div>
         
         {showPreview && (
-          <div className="relative h-48 bg-muted/30 rounded-lg border border-border/30 overflow-hidden">
+          <div className="relative h-48 rounded-lg border border-border/30 overflow-hidden" style={{ backgroundColor: config.backgroundColor }}>
             <div className="absolute inset-0 p-4">
-              <div className="h-4 bg-muted/50 rounded w-3/4 mb-2" />
-              <div className="h-3 bg-muted/30 rounded w-1/2 mb-4" />
-              <div className="h-16 bg-muted/20 rounded" />
+              <div className="h-4 rounded w-3/4 mb-2" style={{ backgroundColor: isLightBg ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)' }} />
+              <div className="h-3 rounded w-1/2 mb-4" style={{ backgroundColor: isLightBg ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.07)' }} />
+              <div className="h-16 rounded" style={{ backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.05)' }} />
             </div>
             
             <div
@@ -190,6 +212,36 @@ const WidgetCustomizer = ({
             className="w-8 h-8 p-0 border-0 cursor-pointer"
           />
         </div>
+      </div>
+
+      {/* Background Color */}
+      <div className="space-y-2">
+        <Label className="text-sm flex items-center gap-2">
+          <Paintbrush className="w-3.5 h-3.5 text-muted-foreground" />
+          Фон на уиджета
+        </Label>
+        <div className="flex flex-wrap gap-2">
+          {BG_PRESET_COLORS.map((c) => (
+            <button
+              key={c.value}
+              onClick={() => setConfig({ ...config, backgroundColor: c.value })}
+              className={`w-8 h-8 rounded-lg border-2 transition-all ${
+                config.backgroundColor === c.value ? 'border-foreground scale-110 ring-2 ring-primary/30' : 'border-border/40'
+              }`}
+              style={{ backgroundColor: c.value }}
+              title={c.name}
+            />
+          ))}
+          <div className="relative">
+            <Input
+              type="color"
+              value={config.backgroundColor || '#1a1a2e'}
+              onChange={(e) => setConfig({ ...config, backgroundColor: e.target.value })}
+              className="w-8 h-8 p-0 border-0 cursor-pointer rounded-lg"
+            />
+          </div>
+        </div>
+        <p className="text-[10px] text-muted-foreground">Изберете цвят за фона на чат прозореца</p>
       </div>
 
       {/* Button Size */}
