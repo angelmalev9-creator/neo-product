@@ -37,6 +37,7 @@ interface WidgetCustomizerProps {
 const DEFAULT_CONFIG: WidgetConfig = {
   position: 'bottom-right',
   color: '#ea384c',
+  backgroundColor: '#1a1a2e',
   buttonText: 'Говори с NEO',
   autoGreet: true,
   buttonSize: 'medium',
