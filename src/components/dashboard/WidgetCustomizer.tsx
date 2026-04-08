@@ -214,6 +214,36 @@ const WidgetCustomizer = ({
         </div>
       </div>
 
+      {/* Background Color */}
+      <div className="space-y-2">
+        <Label className="text-sm flex items-center gap-2">
+          <Paintbrush className="w-3.5 h-3.5 text-muted-foreground" />
+          Фон на уиджета
+        </Label>
+        <div className="flex flex-wrap gap-2">
+          {BG_PRESET_COLORS.map((c) => (
+            <button
+              key={c.value}
+              onClick={() => setConfig({ ...config, backgroundColor: c.value })}
+              className={`w-8 h-8 rounded-lg border-2 transition-all ${
+                config.backgroundColor === c.value ? 'border-foreground scale-110 ring-2 ring-primary/30' : 'border-border/40'
+              }`}
+              style={{ backgroundColor: c.value }}
+              title={c.name}
+            />
+          ))}
+          <div className="relative">
+            <Input
+              type="color"
+              value={config.backgroundColor || '#1a1a2e'}
+              onChange={(e) => setConfig({ ...config, backgroundColor: e.target.value })}
+              className="w-8 h-8 p-0 border-0 cursor-pointer rounded-lg"
+            />
+          </div>
+        </div>
+        <p className="text-[10px] text-muted-foreground">Изберете цвят за фона на чат прозореца</p>
+      </div>
+
       {/* Button Size */}
       <div className="space-y-2">
         <Label className="text-sm">Размер на бутона</Label>
