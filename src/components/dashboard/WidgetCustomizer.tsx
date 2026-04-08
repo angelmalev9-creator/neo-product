@@ -12,11 +12,12 @@ import {
 } from "@/components/ui/select";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Phone, Eye, Crown } from 'lucide-react';
+import { Phone, Eye, Crown, Paintbrush } from 'lucide-react';
 
 interface WidgetConfig {
   position: string;
   color: string;
+  backgroundColor: string;
   buttonText: string;
   autoGreet: boolean;
   buttonSize: string;
