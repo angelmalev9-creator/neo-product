@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Copy, Check, Code2 } from 'lucide-react';
 import WidgetAvatarUpload from '@/components/dashboard/WidgetAvatarUpload';
 import WidgetCustomizer from '@/components/dashboard/WidgetCustomizer';
+import EmailStyleEditor from '@/components/dashboard/EmailStyleEditor';
 import { useToast } from '@/hooks/use-toast';
 
 interface WidgetPageProps {
@@ -61,6 +62,12 @@ const WidgetPage = ({ userId, companyName, logoUrl, setLogoUrl }: WidgetPageProp
             <h3 className="text-xs font-semibold text-foreground mb-3">Персонализиране</h3>
             <WidgetCustomizer userId={userId} companyName={companyName} initialConfig={null} logoUrl={logoUrl} />
           </div>
+        </div>
+
+        {/* Email Style Editor */}
+        <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5">
+          <h3 className="text-xs font-semibold text-foreground mb-3">Стил на имейлите от NEO</h3>
+          <EmailStyleEditor userId={userId} companyName={companyName} />
         </div>
       </div>
     </div>
