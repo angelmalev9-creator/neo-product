@@ -508,6 +508,7 @@ export type Database = {
           business_detection: Json | null
           company_name: string | null
           created_at: string
+          custom_voice_name: string | null
           error_message: string | null
           id: string
           language: string | null
@@ -520,11 +521,14 @@ export type Database = {
           url: string
           user_id: string | null
           voice_name: string | null
+          voice_training_status: string | null
+          voice_training_submitted_at: string | null
         }
         Insert: {
           business_detection?: Json | null
           company_name?: string | null
           created_at?: string
+          custom_voice_name?: string | null
           error_message?: string | null
           id?: string
           language?: string | null
@@ -537,11 +541,14 @@ export type Database = {
           url: string
           user_id?: string | null
           voice_name?: string | null
+          voice_training_status?: string | null
+          voice_training_submitted_at?: string | null
         }
         Update: {
           business_detection?: Json | null
           company_name?: string | null
           created_at?: string
+          custom_voice_name?: string | null
           error_message?: string | null
           id?: string
           language?: string | null
@@ -554,6 +561,8 @@ export type Database = {
           url?: string
           user_id?: string | null
           voice_name?: string | null
+          voice_training_status?: string | null
+          voice_training_submitted_at?: string | null
         }
         Relationships: []
       }
