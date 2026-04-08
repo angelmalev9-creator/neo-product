@@ -3815,6 +3815,9 @@ export const useGeminiVoice = ({
           sessionId: data.sessionId || data.session_id || sessionId || "",
           session_id: data.session_id || data.sessionId || sessionId || "",
 
+          // voice name from backend
+          voiceName: data.voice_name || data.voiceName || "Enceladus",
+
           // keep schemas if present, but do NOT depend on them for auto reservation check
           ...(data.formSchemas ? { formSchemas: data.formSchemas } : {}),
           ...(data.form_schemas ? { form_schemas: data.form_schemas } : {}),
@@ -4812,7 +4815,7 @@ export const useGeminiVoice = ({
           // ── Voice selection ───────────────────────────────────────────────
           // Enceladus = ясен, неутрален мъжки глас — по-добро произношение на български
           // (Charon е добър за английски, но Enceladus/Sadachbia са по-чисти за славянски езици)
-          const voiceName = isNativeAudio ? "Enceladus" : "Enceladus";
+          const voiceName = (session as any).voiceName || "Enceladus";
 
           const setupPayload: any = {
             setup: {

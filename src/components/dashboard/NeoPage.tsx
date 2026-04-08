@@ -5,6 +5,7 @@ import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { Mic, Settings, Save, Loader2, Brain } from 'lucide-react';
 import VoiceTest from '@/components/dashboard/VoiceTest';
+import VoiceSelector from '@/components/dashboard/VoiceSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -87,6 +88,10 @@ const NeoPage = ({
             </Button>
           </div>
         </div>
+      )}
+
+      {section === 'voice' && (
+        <VoiceSelector userId={userId} demoSession={demoSession} />
       )}
 
       {section === 'test' && (

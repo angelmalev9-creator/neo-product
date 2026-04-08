@@ -191,6 +191,7 @@ const Dashboard = () => {
     if (activeTab.startsWith('neo')) {
       const sectionMap: Record<string, string> = {
         'neo-behavior': 'behavior',
+        'neo-voice': 'voice',
         'neo-test': 'test',
       };
       return (
