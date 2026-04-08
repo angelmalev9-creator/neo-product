@@ -43,7 +43,27 @@ const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
     }
   }, [demoSession]);
 
+  // Preload all voices in background on mount
   useEffect(() => {
+    const preload = async () => {
+      for (const voice of VOICES) {
+        if (audioCacheRef.current[voice.id]) continue;
+        try {
+          const { data, error } = await supabase.functions.invoke('voice-preview', {
+            body: { voice_id: voice.id, voice_name: voice.name },
+          });
+          if (error || !data?.audio) continue;
+          const mimeType = data.mimeType || 'audio/wav';
+          const binaryStr = atob(data.audio);
+          const bytes = new Uint8Array(binaryStr.length);
+          for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+          const blob = new Blob([bytes], { type: mimeType });
+          audioCacheRef.current[voice.id] = URL.createObjectURL(blob);
+        } catch { /* skip failed preloads */ }
+      }
+    };
+    preload();
+
     return () => {
       audioRef.current?.pause();
       Object.values(audioCacheRef.current).forEach(url => URL.revokeObjectURL(url));
