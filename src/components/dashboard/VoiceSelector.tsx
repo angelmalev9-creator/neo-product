@@ -30,6 +30,7 @@ const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
   const [saving, setSaving] = useState(false);
   const [playingVoice, setPlayingVoice] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState<string | null>(null);
+  const [preloadedCount, setPreloadedCount] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioCacheRef = useRef<Record<string, string>>({});
 
@@ -43,30 +44,35 @@ const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
     }
   }, [demoSession]);
 
-  // Preload all voices in background on mount
+  // Preload from Supabase Storage on mount (instant, no API calls)
   useEffect(() => {
-    const preload = async () => {
+    let cancelled = false;
+
+    const preloadFromStorage = async () => {
       for (const voice of VOICES) {
-        if (audioCacheRef.current[voice.id]) continue;
+        if (cancelled || audioCacheRef.current[voice.id]) continue;
         try {
-          const { data, error } = await supabase.functions.invoke('voice-preview', {
-            body: { voice_id: voice.id, voice_name: voice.name },
-          });
-          if (error || !data?.audio) continue;
-          const mimeType = data.mimeType || 'audio/wav';
-          const binaryStr = atob(data.audio);
-          const bytes = new Uint8Array(binaryStr.length);
-          for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-          const blob = new Blob([bytes], { type: mimeType });
-          audioCacheRef.current[voice.id] = URL.createObjectURL(blob);
-        } catch { /* skip failed preloads */ }
+          const { data } = await supabase.storage
+            .from('voice-samples')
+            .createSignedUrl(`previews/${voice.id}.wav`, 600);
+
+          if (data?.signedUrl) {
+            // Verify file exists by fetching headers
+            const headResp = await fetch(data.signedUrl, { method: 'HEAD' });
+            if (headResp.ok) {
+              audioCacheRef.current[voice.id] = data.signedUrl;
+              if (!cancelled) setPreloadedCount(prev => prev + 1);
+            }
+          }
+        } catch { /* skip */ }
       }
     };
-    preload();
+
+    preloadFromStorage();
 
     return () => {
+      cancelled = true;
       audioRef.current?.pause();
-      Object.values(audioCacheRef.current).forEach(url => URL.revokeObjectURL(url));
     };
   }, []);
 
@@ -96,22 +102,19 @@ const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
   const playPreview = async (voiceId: string, voiceName: string, e: React.MouseEvent) => {
     e.stopPropagation();
 
-    // If already playing this voice, stop it
     if (playingVoice === voiceId) {
       audioRef.current?.pause();
       setPlayingVoice(null);
       return;
     }
 
-    // Stop any current playback
     audioRef.current?.pause();
 
-    // Create Audio object synchronously in click handler to satisfy browser autoplay policy
     const audio = new Audio();
     audioRef.current = audio;
     audio.onended = () => setPlayingVoice(null);
 
-    // Check cache
+    // Try from cache (storage URL)
     if (audioCacheRef.current[voiceId]) {
       audio.src = audioCacheRef.current[voiceId];
       audio.play().catch(() => setPlayingVoice(null));
@@ -119,26 +122,41 @@ const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
       return;
     }
 
-    // Fetch from edge function
+    // Fallback: generate via edge function (will also cache to storage)
     setLoadingPreview(voiceId);
     try {
       const { data, error } = await supabase.functions.invoke('voice-preview', {
         body: { voice_id: voiceId, voice_name: voiceName },
       });
 
-      if (error || !data?.audio) throw new Error('No audio returned');
+      if (error) throw new Error('Edge function error');
+
+      // Check if we got a storage URL back (cached)
+      if (data?.storageUrl) {
+        audioCacheRef.current[voiceId] = data.storageUrl;
+        audio.src = data.storageUrl;
+        await audio.play();
+        setPlayingVoice(voiceId);
+        return;
+      }
+
+      // Check for rate limit / fallback
+      if (data?.fallback || data?.error) {
+        toast({ title: 'Моля, опитайте отново след момент', description: 'Гласовият запис се генерира...' });
+        setPlayingVoice(null);
+        return;
+      }
+
+      if (!data?.audio) throw new Error('No audio returned');
 
       const mimeType = data.mimeType || 'audio/wav';
       const binaryStr = atob(data.audio);
       const bytes = new Uint8Array(binaryStr.length);
-      for (let i = 0; i < binaryStr.length; i++) {
-        bytes[i] = binaryStr.charCodeAt(i);
-      }
+      for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
       const blob = new Blob([bytes], { type: mimeType });
       const url = URL.createObjectURL(blob);
 
       audioCacheRef.current[voiceId] = url;
-
       audio.src = url;
       await audio.play();
       setPlayingVoice(voiceId);
@@ -160,7 +178,9 @@ const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
           </div>
           <div>
             <h2 className="text-sm font-semibold text-foreground">Глас на асистента</h2>
-            <p className="text-[11px] text-muted-foreground">Изберете как ще звучи NEO — натиснете 🔊 за да чуете гласа</p>
+            <p className="text-[11px] text-muted-foreground">
+              Изберете как ще звучи NEO — натиснете 🔊 за да чуете гласа
+            </p>
           </div>
         </div>
 
@@ -176,6 +196,7 @@ const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
               const isSelected = selectedVoice === voice.id;
               const isPlaying = playingVoice === voice.id;
               const isLoading = loadingPreview === voice.id;
+              const isCached = !!audioCacheRef.current[voice.id];
 
               return (
                 <Card
@@ -216,7 +237,6 @@ const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
                     <p className="text-[11px] text-muted-foreground leading-relaxed">{voice.description}</p>
                     <p className="text-[10px] text-muted-foreground/60 italic">{voice.hint}</p>
 
-                    {/* Play preview button */}
                     <button
                       onClick={(e) => playPreview(voice.id, voice.name, e)}
                       disabled={isLoading}
