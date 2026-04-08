@@ -1,0 +1,1 @@
+ALTER TABLE public.demo_sessions ADD COLUMN IF NOT EXISTS voice_name varchar(50) DEFAULT 'Enceladus';

@@ -61,7 +61,7 @@ const Dashboard = () => {
     if (!user) return;
     try {
       const { data } = await supabase.from('demo_sessions')
-        .select('id, url, summary, language, status, created_at, company_name')
+        .select('id, url, summary, language, status, created_at, company_name, voice_name')
         .eq('user_id', user.id).eq('status', 'ready')
         .order('created_at', { ascending: false }).limit(1).maybeSingle();
       if (data) {
@@ -191,6 +191,7 @@ const Dashboard = () => {
     if (activeTab.startsWith('neo')) {
       const sectionMap: Record<string, string> = {
         'neo-behavior': 'behavior',
+        'neo-voice': 'voice',
         'neo-test': 'test',
       };
       return (

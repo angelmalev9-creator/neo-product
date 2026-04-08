@@ -519,6 +519,7 @@ export type Database = {
           updated_at: string
           url: string
           user_id: string | null
+          voice_name: string | null
         }
         Insert: {
           business_detection?: Json | null
@@ -535,6 +536,7 @@ export type Database = {
           updated_at?: string
           url: string
           user_id?: string | null
+          voice_name?: string | null
         }
         Update: {
           business_detection?: Json | null
@@ -551,6 +553,7 @@ export type Database = {
           updated_at?: string
           url?: string
           user_id?: string | null
+          voice_name?: string | null
         }
         Relationships: []
       }

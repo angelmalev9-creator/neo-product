@@ -3,7 +3,7 @@ import {
   Home, Globe, CalendarDays, Mail, Database,
   MessageSquare, Brain, Mic, BarChart3,
   Settings, Crown, User, LogOut, ChevronDown, Palette,
-  Sun, Moon,
+  Sun, Moon, Volume2,
 } from 'lucide-react';
 import NeoLogo from '@/components/ui/NeoLogo';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,7 @@ const NAV_GROUPS: NavGroup[] = [
     id: 'neo', label: 'Тест на NEO', icon: Mic, description: 'Чуйте как звучи', step: '2',
     children: [
       { id: 'neo-behavior', label: 'Поведение', icon: Settings },
+      { id: 'neo-voice', label: 'Глас', icon: Volume2 },
       { id: 'neo-test', label: 'Тествай на живо', icon: Mic },
     ],
   },
