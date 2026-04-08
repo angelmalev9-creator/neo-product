@@ -1,0 +1,1 @@
+INSERT INTO storage.buckets (id, name, public) VALUES ('widget-avatars', 'widget-avatars', true) ON CONFLICT (id) DO NOTHING;
