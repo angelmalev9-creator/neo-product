@@ -205,6 +205,7 @@ const Dashboard = () => {
           usedMinutes={usedMinutes}
           planLimit={planLimit}
           onUsageUpdate={setUsedMinutes}
+          subscriptionTier={subscription.tier || undefined}
         />
       );
     }

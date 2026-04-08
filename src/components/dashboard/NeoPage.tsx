@@ -92,7 +92,7 @@ const NeoPage = ({
       )}
 
       {section === 'voice' && (
-        <VoiceSelector userId={userId} demoSession={demoSession} />
+        <VoiceSelector userId={userId} demoSession={demoSession} subscriptionTier={subscriptionTier} />
       )}
 
       {section === 'test' && (
