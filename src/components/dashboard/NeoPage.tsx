@@ -19,6 +19,7 @@ interface NeoPageProps {
   usedMinutes: number;
   planLimit: number;
   onUsageUpdate: (m: number) => void;
+  subscriptionTier?: string;
 }
 
 const NeoPage = ({
