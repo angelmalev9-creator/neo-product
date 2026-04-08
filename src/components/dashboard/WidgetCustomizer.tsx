@@ -52,6 +52,17 @@ const PRESET_COLORS = [
   { name: 'Тъмно', value: '#1f2937' },
 ];
 
+const BG_PRESET_COLORS = [
+  { name: 'Тъмно синьо', value: '#1a1a2e' },
+  { name: 'Антрацит', value: '#16213e' },
+  { name: 'Графит', value: '#1f2937' },
+  { name: 'Бяло', value: '#ffffff' },
+  { name: 'Кремаво', value: '#faf5ef' },
+  { name: 'Светло сиво', value: '#f1f5f9' },
+  { name: 'Тъмно', value: '#0f0f0f' },
+  { name: 'Морско', value: '#0d1b2a' },
+];
+
 const WidgetCustomizer = ({ 
   userId, 
   companyName, 
