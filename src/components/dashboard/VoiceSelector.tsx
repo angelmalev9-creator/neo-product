@@ -86,12 +86,15 @@ const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
     // Stop any current playback
     audioRef.current?.pause();
 
+    // Create Audio object synchronously in click handler to satisfy browser autoplay policy
+    const audio = new Audio();
+    audioRef.current = audio;
+    audio.onended = () => setPlayingVoice(null);
+
     // Check cache
     if (audioCacheRef.current[voiceId]) {
-      const audio = new Audio(audioCacheRef.current[voiceId]);
-      audioRef.current = audio;
-      audio.onended = () => setPlayingVoice(null);
-      audio.play();
+      audio.src = audioCacheRef.current[voiceId];
+      audio.play().catch(() => setPlayingVoice(null));
       setPlayingVoice(voiceId);
       return;
     }
@@ -105,8 +108,7 @@ const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
 
       if (error || !data?.audio) throw new Error('No audio returned');
 
-      // Decode base64 to blob
-      const mimeType = data.mimeType || 'audio/mp3';
+      const mimeType = data.mimeType || 'audio/wav';
       const binaryStr = atob(data.audio);
       const bytes = new Uint8Array(binaryStr.length);
       for (let i = 0; i < binaryStr.length; i++) {
@@ -115,17 +117,15 @@ const VoiceSelector = ({ userId, demoSession }: VoiceSelectorProps) => {
       const blob = new Blob([bytes], { type: mimeType });
       const url = URL.createObjectURL(blob);
 
-      // Cache it
       audioCacheRef.current[voiceId] = url;
 
-      const audio = new Audio(url);
-      audioRef.current = audio;
-      audio.onended = () => setPlayingVoice(null);
-      audio.play();
+      audio.src = url;
+      await audio.play();
       setPlayingVoice(voiceId);
     } catch (err) {
       console.error('Voice preview error:', err);
       toast({ title: 'Грешка', description: 'Не може да се зареди примерен запис', variant: 'destructive' });
+      setPlayingVoice(null);
     } finally {
       setLoadingPreview(null);
     }
