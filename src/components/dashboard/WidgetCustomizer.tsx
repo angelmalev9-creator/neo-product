@@ -133,47 +133,82 @@ const WidgetCustomizer = ({
 
   return (
     <div className="space-y-6">
-      {/* Live Preview */}
-      <div className="relative">
-        <div className="flex items-center justify-between mb-3">
-          <Label className="text-sm font-medium">Преглед</Label>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowPreview(!showPreview)}
-            className="gap-1.5 text-xs"
-          >
-            <Eye className="w-3.5 h-3.5" />
-            {showPreview ? 'Скрий' : 'Покажи'} преглед
-          </Button>
-        </div>
-        
-        {showPreview && (
-          <div className="relative h-48 rounded-lg border border-border/30 overflow-hidden" style={{ backgroundColor: config.backgroundColor }}>
-            <div className="absolute inset-0 p-4">
-              <div className="h-4 rounded w-3/4 mb-2" style={{ backgroundColor: isLightBg ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)' }} />
-              <div className="h-3 rounded w-1/2 mb-4" style={{ backgroundColor: isLightBg ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.07)' }} />
-              <div className="h-16 rounded" style={{ backgroundColor: isLightBg ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.05)' }} />
-            </div>
-            
-            <div
-              className={`absolute ${config.position === 'bottom-left' ? 'left-4' : 'right-4'} bottom-4 rounded-full flex items-center justify-center shadow-lg transition-all`}
-              style={{
-                backgroundColor: config.color,
-                width: previewSize.width,
-                height: previewSize.height,
-              }}
-            >
-              <Phone className="text-white" style={{ width: previewSize.iconSize, height: previewSize.iconSize }} />
+      {/* Always-visible Live Preview */}
+      <div>
+        <Label className="text-sm font-medium mb-3 block">Преглед</Label>
+        <div className="relative rounded-2xl border border-border/20 overflow-hidden" style={{ backgroundColor: config.backgroundColor, height: 280 }}>
+          {/* Simulated chat window */}
+          <div className="absolute inset-0 flex flex-col">
+            {/* Chat header */}
+            <div className="flex items-center gap-2.5 px-4 py-3 border-b" style={{ borderColor: isLightBg ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)' }}>
+              <div className="w-8 h-8 rounded-xl overflow-hidden shrink-0">
+                {logoUrl ? (
+                  <img src={logoUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full rounded-xl flex items-center justify-center" style={{ backgroundColor: config.color }}>
+                    <Phone className="w-4 h-4 text-white" />
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="text-xs font-semibold" style={{ color: isLightBg ? '#1a1a2e' : '#ffffff' }}>{companyName || 'Вашата компания'}</p>
+                <div className="flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                  <span className="text-[9px]" style={{ color: isLightBg ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)' }}>AI Асистент</span>
+                </div>
+              </div>
             </div>
 
-            <div
-              className={`absolute ${config.position === 'bottom-left' ? 'left-16' : 'right-16'} bottom-6 bg-background text-foreground text-xs px-2 py-1 rounded shadow-lg border border-border/30`}
-            >
-              {config.buttonText}
+            {/* Chat messages preview */}
+            <div className="flex-1 px-4 py-3 space-y-2 overflow-hidden">
+              {/* Assistant message */}
+              <div className="flex gap-2">
+                <div className="w-5 h-5 rounded-lg shrink-0 flex items-center justify-center" style={{ backgroundColor: `${config.color}20` }}>
+                  <Phone className="w-2.5 h-2.5" style={{ color: config.color }} />
+                </div>
+                <div className="rounded-2xl rounded-tl-md px-3 py-2 max-w-[75%]" style={{ backgroundColor: isLightBg ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)' }}>
+                  <p className="text-[10px]" style={{ color: isLightBg ? '#333' : '#ddd' }}>Здравейте! Как мога да Ви помогна днес?</p>
+                </div>
+              </div>
+              {/* User message */}
+              <div className="flex justify-end">
+                <div className="rounded-2xl rounded-tr-md px-3 py-2 max-w-[75%]" style={{ backgroundColor: config.color }}>
+                  <p className="text-[10px] text-white">Искам да запазя час</p>
+                </div>
+              </div>
+              {/* Assistant response */}
+              <div className="flex gap-2">
+                <div className="w-5 h-5 rounded-lg shrink-0 flex items-center justify-center" style={{ backgroundColor: `${config.color}20` }}>
+                  <Phone className="w-2.5 h-2.5" style={{ color: config.color }} />
+                </div>
+                <div className="rounded-2xl rounded-tl-md px-3 py-2 max-w-[75%]" style={{ backgroundColor: isLightBg ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)' }}>
+                  <p className="text-[10px]" style={{ color: isLightBg ? '#333' : '#ddd' }}>Разбира се! Кога бихте желали?</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom call button preview */}
+            <div className="px-4 py-3 border-t" style={{ borderColor: isLightBg ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)' }}>
+              <div className="w-full py-2.5 rounded-xl flex items-center justify-center gap-2" style={{ backgroundColor: config.color }}>
+                <Phone className="w-3.5 h-3.5 text-white" />
+                <span className="text-[11px] text-white font-medium">{config.buttonText}</span>
+              </div>
             </div>
           </div>
-        )}
+
+          {/* Floating button preview (positioned) */}
+          <div
+            className={`absolute ${config.position === 'bottom-left' ? 'left-3' : 'right-3'} bottom-3 rounded-full flex items-center justify-center shadow-lg z-10`}
+            style={{
+              backgroundColor: config.color,
+              width: previewSize.width * 0.8,
+              height: previewSize.height * 0.8,
+              display: 'none', // Hidden since we show the full chat preview
+            }}
+          >
+            <Phone className="text-white" style={{ width: previewSize.iconSize * 0.8, height: previewSize.iconSize * 0.8 }} />
+          </div>
+        </div>
       </div>
 
       {/* Position */}
