@@ -1,31 +1,27 @@
-import { Mail, Zap, ArrowRight, ExternalLink } from 'lucide-react';
+import { Mail, ArrowRight, ExternalLink } from 'lucide-react';
 import NeoLogo from '@/components/ui/NeoLogo';
-import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 
 const Footer = () => {
-  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
 
-  const platformLinks = [
-    { label: t('footer.howItWorks'), href: '#demo', isScroll: true },
-    { label: t('footer.features'), href: '#features', isScroll: true },
-    { label: t('footer.pricing'), href: '#pricing', isScroll: true },
-    { label: t('footer.demo'), href: '#demo', isScroll: true },
+  const productLinks = [
+    { label: 'Функции', href: '#features', isScroll: true },
+    { label: 'Цени', href: '#pricing', isScroll: true },
+    { label: 'Демо', href: '#demo', isScroll: true },
   ];
 
-  const resourceLinks = [
-    { label: t('footer.helpCenter'), href: '/help' },
-    { label: t('footer.apiDocs'), href: '/api-docs' },
-    { label: t('footer.blog'), href: '/blog' },
+  const companyLinks = [
+    { label: 'Помощен център', href: '/help' },
+    { label: 'API документация', href: '/api-docs' },
+    { label: 'Блог', href: '/blog' },
   ];
 
   const legalLinks = [
-    { label: t('footer.terms'), href: '/terms' },
-    { label: t('footer.privacy'), href: '/privacy' },
-    { label: t('footer.gdpr'), href: '/gdpr' },
-    { label: t('footer.cookies'), href: '/cookies' },
+    { label: 'Условия за ползване', href: '/terms' },
+    { label: 'Политика за поверителност', href: '/privacy' },
+    { label: 'GDPR', href: '/gdpr' },
+    { label: 'Бисквитки', href: '/cookies' },
   ];
 
   const handleScrollClick = (href: string) => {
@@ -33,31 +29,8 @@ const Footer = () => {
   };
 
   return (
-    <footer className="relative overflow-hidden">
-      {/* Top CTA Section */}
-      <div className="border-t border-border/10">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
-          <div className="max-w-3xl mx-auto text-center">
-            <h3 className="text-xl sm:text-2xl lg:text-3xl font-display font-black text-foreground mb-4">
-              {t('footer.ctaTitle')}
-            </h3>
-            <p className="neo-subheading text-muted-foreground mb-6">
-              {t('footer.ctaSubtitle')}
-            </p>
-            <Button
-              size="lg"
-              className="neo-btn-primary text-sm sm:text-base px-8 py-4 sm:py-5 font-bold rounded-full gap-2 w-full sm:w-auto"
-              onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
-            >
-              <Zap className="w-4 h-4" />
-              {t('footer.ctaButton')}
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Footer */}
-      <div className="border-t border-border/10 py-10 lg:py-16">
+    <footer className="relative overflow-hidden border-t border-border/10">
+      <div className="py-10 lg:py-16">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-6 lg:gap-8">
             {/* Brand */}
@@ -66,7 +39,7 @@ const Footer = () => {
                 <NeoLogo size="md" />
               </div>
               <p className="text-muted-foreground text-xs sm:text-sm mb-4 max-w-xs leading-relaxed">
-                {t('footer.description')}
+                AI рецепционист за вашия бизнес. Отговаря на чат и телефон 24/7 на български.
               </p>
               <a href="mailto:admin@neo-assistant.com" className="inline-flex items-center gap-2 text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors group">
                 <Mail className="w-3.5 h-3.5 text-primary group-hover:scale-110 transition-transform" />
@@ -74,13 +47,13 @@ const Footer = () => {
               </a>
             </div>
 
-            {/* Platform */}
+            {/* Product */}
             <div>
-              <h4 className="font-bold text-foreground/60 mb-4 text-[10px] sm:text-xs uppercase tracking-[0.2em]">{t('footer.platform')}</h4>
+              <h4 className="font-bold text-foreground/60 mb-4 text-[10px] sm:text-xs uppercase tracking-[0.2em]">Продукт</h4>
               <ul className="space-y-2.5">
-                {platformLinks.map((link) => (
+                {productLinks.map((link) => (
                   <li key={link.label}>
-                    <button 
+                    <button
                       onClick={() => handleScrollClick(link.href)}
                       className="text-muted-foreground hover:text-foreground transition-colors text-xs sm:text-sm flex items-center gap-1.5 group"
                     >
@@ -92,11 +65,11 @@ const Footer = () => {
               </ul>
             </div>
 
-            {/* Resources */}
+            {/* Company */}
             <div>
-              <h4 className="font-bold text-foreground/60 mb-4 text-[10px] sm:text-xs uppercase tracking-[0.2em]">{t('footer.resources')}</h4>
+              <h4 className="font-bold text-foreground/60 mb-4 text-[10px] sm:text-xs uppercase tracking-[0.2em]">Компания</h4>
               <ul className="space-y-2.5">
-                {resourceLinks.map((link) => (
+                {companyLinks.map((link) => (
                   <li key={link.label}>
                     <Link to={link.href} className="text-muted-foreground hover:text-foreground transition-colors text-xs sm:text-sm flex items-center gap-1.5 group">
                       {link.label}
@@ -109,7 +82,7 @@ const Footer = () => {
 
             {/* Legal */}
             <div>
-              <h4 className="font-bold text-foreground/60 mb-4 text-[10px] sm:text-xs uppercase tracking-[0.2em]">{t('footer.legal')}</h4>
+              <h4 className="font-bold text-foreground/60 mb-4 text-[10px] sm:text-xs uppercase tracking-[0.2em]">Правни</h4>
               <ul className="space-y-2.5">
                 {legalLinks.map((link) => (
                   <li key={link.label}>
@@ -129,10 +102,10 @@ const Footer = () => {
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-[10px] sm:text-xs text-muted-foreground/50">
-              {t('footer.copyright', { year: currentYear })}
+              © {currentYear} NEO Assistant. Всички права запазени.
             </p>
             <p className="text-[10px] sm:text-xs text-muted-foreground/50 flex items-center gap-2">
-              {t('footer.madeIn')}
+              Направено в България
               <span className="text-border/30">|</span>
               <a href="https://webvision-bg.com" target="_blank" rel="noopener noreferrer" className="text-primary/60 hover:text-primary transition-colors">
                 webvision-bg.com

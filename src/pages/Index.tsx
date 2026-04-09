@@ -4,6 +4,7 @@ import Hero from '@/components/landing/Hero';
 import AnimatedBackground from '@/components/landing/AnimatedBackground';
 
 // Lazy load below-fold sections
+const StatsSection = lazy(() => import('@/components/landing/StatsSection'));
 const HowItWorks = lazy(() => import('@/components/landing/HowItWorks'));
 const DemoSection = lazy(() => import('@/components/landing/DemoSection'));
 const VoiceInterview = lazy(() => import('@/components/landing/VoiceInterview'));
@@ -14,6 +15,8 @@ const BusinessResults = lazy(() => import('@/components/landing/BusinessResults'
 const Comparison = lazy(() => import('@/components/landing/Comparison'));
 const Testimonials = lazy(() => import('@/components/landing/Testimonials'));
 const Pricing = lazy(() => import('@/components/landing/Pricing'));
+const FAQ = lazy(() => import('@/components/landing/FAQ'));
+const CTASection = lazy(() => import('@/components/landing/CTASection'));
 const EnterpriseContact = lazy(() => import('@/components/landing/EnterpriseContact'));
 const Footer = lazy(() => import('@/components/landing/Footer'));
 
@@ -26,10 +29,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen text-foreground relative flex flex-col items-center">
-      {/* Interactive dot grid background with mouse repulsion */}
       <AnimatedBackground />
 
-      {/* Ambient gradients */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-background" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-[60vh] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,hsl(355_65%_52%/0.06),transparent_70%)]" />
@@ -41,16 +42,19 @@ const Index = () => {
         <main className="relative z-10">
           <Hero />
           <Suspense fallback={<div className="min-h-[40vh]" />}>
+            <StatsSection />
+            <FeaturesGrid />
             <HowItWorks />
             <DemoSection onTrainingComplete={handleTrainingComplete} />
             <VoiceInterview key={sessionId || 'no-session'} sessionId={sessionId} />
-            <FeaturesGrid />
-            <BusinessResults />
             <UseCases />
+            <BusinessResults />
             <RevenueCalculator />
             <Comparison />
             <Testimonials />
             <Pricing />
+            <FAQ />
+            <CTASection />
             <EnterpriseContact />
           </Suspense>
         </main>
@@ -58,7 +62,6 @@ const Index = () => {
           <Footer />
         </Suspense>
       </div>
-
     </div>
   );
 };
