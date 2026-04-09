@@ -1,5 +1,5 @@
 import {
-  Home, Brain, MessageSquare, Mic, BarChart3,
+  Home, Brain, MessageSquare, Mic,
   Settings, Sun, Moon, Phone,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
