@@ -96,7 +96,7 @@ const NeoPage = ({
       )}
 
       {section === 'test' && (
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain space-y-4">
           <div className="rounded-2xl border border-border/10 bg-card/60  p-5 min-h-0">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
@@ -118,6 +118,24 @@ const NeoPage = ({
               onUsageUpdate={onUsageUpdate}
             />
           </div>
+
+          {/* Next step CTA */}
+          <button
+            onClick={() => {
+              // Navigate to channels-widget via parent
+              const event = new CustomEvent('neo-tab-change', { detail: 'channels-widget' });
+              window.dispatchEvent(event);
+            }}
+            className="w-full rounded-xl border border-primary/15 bg-primary/5 hover:bg-primary/10 p-4 flex items-center gap-3 transition-all group"
+          >
+            <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+              <ArrowRight className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-[13px] font-medium text-foreground group-hover:text-primary transition-colors">Следваща стъпка: Добавете NEO към сайта</p>
+              <p className="text-[11px] text-muted-foreground">Инсталирайте уиджет или свържете телефонен номер</p>
+            </div>
+          </button>
         </div>
       )}
     </div>
