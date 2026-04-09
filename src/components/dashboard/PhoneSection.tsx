@@ -250,7 +250,7 @@ const PhoneSection = ({ userId, sessionId }: PhoneSectionProps) => {
                   Номерът ще бъде активен веднага. NEO ще отговаря с гласа и знанията, които вече сте конфигурирали.
                 </p>
 
-                <Button variant="ghost" size="sm" onClick={() => { setShowNumbers(false); setAvailableNumbers([]); setSelectedNumber(null); }}>
+                <Button variant="ghost" size="sm" onClick={() => { setShowNumbers(false); setSelectedNumber(null); }}>
                   ← Назад
                 </Button>
               </>
