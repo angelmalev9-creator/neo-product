@@ -101,3 +101,12 @@ verify_jwt = false
 
 [functions.widget-book-slot]
 verify_jwt = false
+
+[functions.list-available-numbers]
+verify_jwt = false
+
+[functions.buy-phone-number]
+verify_jwt = false
+
+[functions.release-phone-number]
+verify_jwt = false
