@@ -268,7 +268,7 @@ const CalendarAutomation = () => {
       {/* Collapsible Settings */}
       <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen}>
         <CollapsibleTrigger asChild>
-          <button className="w-full flex items-center justify-between p-4 rounded-xl border border-border/30 bg-gradient-to-r from-card/60 to-card/30 backdrop-blur-sm hover:from-card/80 hover:to-card/50 transition-all">
+          <button className="w-full flex items-center justify-between p-4 rounded-xl border border-border/30 bg-gradient-to-r from-card/60 to-card/30  hover:from-card/80 hover:to-card/50 transition-all">
             <div className="flex items-center gap-3">
               <div className="p-1.5 rounded-lg bg-primary/10">
                 <Settings className="w-4 h-4 text-primary" />
@@ -279,7 +279,7 @@ const CalendarAutomation = () => {
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="mt-2 p-4 rounded-xl border border-border/30 bg-card/30 backdrop-blur-sm space-y-4">
+          <div className="mt-2 p-4 rounded-xl border border-border/30 bg-card/30  space-y-4">
             <div className="space-y-2">
               <Label className="text-xs font-medium">Тип записване</Label>
               <Select value={settings.booking_type} onValueChange={(v) => setSettings(prev => ({ ...prev, booking_type: v }))}>
@@ -374,7 +374,7 @@ const CalendarAutomation = () => {
       </Collapsible>
 
       {/* Calendar Grid */}
-      <div className="rounded-xl border border-border/30 bg-gradient-to-br from-card/60 via-card/30 to-card/10 backdrop-blur-sm overflow-hidden">
+      <div className="rounded-xl border border-border/30 bg-gradient-to-br from-card/60 via-card/30 to-card/10  overflow-hidden">
         <div className="p-4">
           {/* Month navigation */}
           <div className="flex items-center justify-between mb-4">
@@ -524,7 +524,7 @@ const CalendarAutomation = () => {
       </div>
 
       {/* Upcoming bookings list */}
-      <div className="rounded-xl border border-border/30 bg-gradient-to-br from-card/60 to-card/20 backdrop-blur-sm p-4">
+      <div className="rounded-xl border border-border/30 bg-gradient-to-br from-card/60 to-card/20  p-4">
         <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           Предстоящи {bookingLabelPlural.toLowerCase()}

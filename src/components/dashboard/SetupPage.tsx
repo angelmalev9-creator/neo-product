@@ -115,7 +115,7 @@ const SetupPage = ({
         {activeSection === 'training' && (
           <div className="space-y-4">
             {/* Website URL + Company */}
-            <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5 space-y-4">
+            <div className="rounded-2xl border border-border/10 bg-card/60  p-5 space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                   <Globe className="w-5 h-5 text-primary" />
@@ -139,7 +139,7 @@ const SetupPage = ({
             </div>
 
             {/* Knowledge Base (previously "Данни") */}
-            <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5">
+            <div className="rounded-2xl border border-border/10 bg-card/60  p-5">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                   <Database className="w-5 h-5 text-primary" />
@@ -202,7 +202,7 @@ const CalendarSection = ({ calendarConnected, userId }: { calendarConnected: boo
 
   return (
     <div className="space-y-3">
-      <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5 flex items-center gap-3">
+      <div className="rounded-2xl border border-border/10 bg-card/60  p-5 flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0">
           <CalendarDays className="w-5 h-5 text-primary" />
         </div>
@@ -250,7 +250,7 @@ const EmailLogsSection = ({ emailConnected, userId }: { emailConnected: boolean;
   if (loading) return <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
 
   return (
-    <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5 space-y-3">
+    <div className="rounded-2xl border border-border/10 bg-card/60  p-5 space-y-3">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0">
           <Mail className="w-5 h-5 text-primary" />

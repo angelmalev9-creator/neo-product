@@ -36,7 +36,7 @@ const DashboardMobileNav = ({ activeTab, onTabChange }: DashboardMobileNavProps)
   return (
     <>
       <header
-        className="lg:hidden sticky top-0 z-50 border-b border-border/10 bg-sidebar/95 backdrop-blur-xl px-5 py-3 flex items-center justify-between"
+        className="lg:hidden sticky top-0 z-50 border-b border-border/10 bg-sidebar/95  px-5 py-3 flex items-center justify-between"
         style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
       >
         <NeoLogo size="sm" />
@@ -49,7 +49,7 @@ const DashboardMobileNav = ({ activeTab, onTabChange }: DashboardMobileNavProps)
       </header>
 
       <nav
-        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-sidebar/95 backdrop-blur-xl border-t border-border/10"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-sidebar/95  border-t border-border/10"
         style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
       >
         <div className="flex items-center justify-around px-2 pt-2 pb-1">

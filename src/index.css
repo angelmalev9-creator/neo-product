@@ -293,12 +293,10 @@
   }
 
   .nav-glass-scrolled {
-    background: hsl(240 29% 10% / 0.9);
+    background: hsl(240 29% 10% / 0.97);
     border-color: hsl(0 0% 100% / 0.06);
     border-radius: 9999px;
     box-shadow: 0 4px 24px hsl(0 0% 0% / 0.4);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
   }
 
   /* ── Glow effects — using box-shadow only ── */

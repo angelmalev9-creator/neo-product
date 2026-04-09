@@ -36,7 +36,7 @@ const LanguageSwitcher = ({ variant = 'default', className = '' }: LanguageSwitc
       <DropdownMenuTrigger asChild>
         <Button {...triggerProps}>{triggerContent}</Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-xl border-border/50 min-w-[140px]">
+      <DropdownMenuContent align="end" className="bg-card/95  border-border/50 min-w-[140px]">
         {SUPPORTED_LANGUAGES.map((lang) => (
           <DropdownMenuItem key={lang} onClick={() => handleLanguageChange(lang)} className="cursor-pointer flex items-center justify-between gap-2">
             <span className="flex items-center gap-2">

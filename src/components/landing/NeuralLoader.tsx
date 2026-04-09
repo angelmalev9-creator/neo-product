@@ -126,7 +126,7 @@ const NeuralLoader = () => {
       {/* Neural canvas */}
       <div className="relative w-full max-w-[400px] h-[120px] rounded-2xl overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 rounded-2xl" />
-        <canvas ref={canvasRef} className="relative z-10 w-full h-full" />
+        <canvas ref={canvasRef} className="relative z-10 w-full h-full" style={{ willChange: 'auto' }} />
       </div>
 
       {/* Rotating status text */}

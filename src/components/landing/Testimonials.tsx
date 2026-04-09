@@ -44,7 +44,7 @@ const Testimonials = () => {
               initial={{ opacity: 0, y: 16 }}
               animate={isVisible ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.4, delay: i * 0.12 }}
-              className="relative rounded-2xl border border-border/15 bg-card/30 backdrop-blur-xl p-6"
+              className="relative rounded-2xl border border-border/15 bg-card/30  p-6"
             >
               <Quote className="absolute top-5 right-5 w-7 h-7 text-primary/6" />
 

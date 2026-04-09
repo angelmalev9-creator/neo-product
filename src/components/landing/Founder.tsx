@@ -14,7 +14,7 @@ const Founder = () => {
       className="neo-section-spacing relative overflow-hidden"
     >
       {/* Ambient glow */}
-      <div className="absolute top-1/2 left-0 w-[400px] h-[400px] rounded-full bg-primary/4 blur-[120px] pointer-events-none" />
+      <div className="absolute top-1/2 left-0 w-[400px] h-[400px] rounded-full bg-primary/4 opacity-30 pointer-events-none" />
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-4xl mx-auto">

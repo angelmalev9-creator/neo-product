@@ -95,12 +95,12 @@ const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({
     <div className="absolute inset-0 z-50 flex items-center justify-center p-2">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+        className="absolute inset-0 bg-background/80 "
         onClick={onClose}
       />
       
       {/* Modal - compact version */}
-      <div className="relative w-full max-w-[280px] max-h-[calc(100%-16px)] bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl shadow-2xl overflow-hidden animate-scale-in flex flex-col">
+      <div className="relative w-full max-w-[280px] max-h-[calc(100%-16px)] bg-card/95  border border-border/30 rounded-xl shadow-2xl overflow-hidden animate-scale-in flex flex-col">
         {/* Header */}
         <div className="relative p-3 border-b border-border/20 bg-gradient-to-r from-primary/10 to-transparent shrink-0">
           <button

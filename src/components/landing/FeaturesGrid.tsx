@@ -144,7 +144,7 @@ const FeaturesGrid = () => {
             transition={{ duration: 0.4, delay: 0.2 }}
             className="lg:col-span-3"
           >
-            <div className="relative rounded-2xl border border-border/15 bg-card/30 backdrop-blur-xl overflow-hidden min-h-[260px]">
+            <div className="relative rounded-2xl border border-border/15 bg-card/30  overflow-hidden min-h-[260px]">
               {/* Header bar */}
               <div className="flex items-center gap-2 px-5 py-2.5 border-b border-border/10 bg-card/40">
                 <div className="flex gap-1">

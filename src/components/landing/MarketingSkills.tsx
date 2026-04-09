@@ -30,8 +30,8 @@ const MarketingSkills = () => {
   return (
     <section ref={ref as React.RefObject<HTMLElement>} className="relative py-14 sm:py-24 px-4 overflow-hidden">
       {/* Ambient glows */}
-      <div className="absolute top-1/4 left-0 w-[500px] h-[500px] rounded-full bg-primary/5 blur-[180px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-0 w-[400px] h-[400px] rounded-full bg-accent/5 blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/4 left-0 w-[500px] h-[500px] rounded-full bg-primary/5 opacity-25 pointer-events-none" />
+      <div className="absolute bottom-1/4 right-0 w-[400px] h-[400px] rounded-full bg-accent/5 opacity-30 pointer-events-none" />
       
       <div className="max-w-6xl mx-auto relative z-10">
         {/* Header */}
@@ -58,7 +58,7 @@ const MarketingSkills = () => {
               transition={{ duration: 0.4, delay: index * 0.05 }}
               className="group relative"
             >
-              <div className="relative p-4 sm:p-5 rounded-xl sm:rounded-2xl h-full transition-all duration-500 hover:scale-[1.03] bg-card/40 backdrop-blur-sm border border-border/20 hover:border-border/40 overflow-hidden">
+              <div className="relative p-4 sm:p-5 rounded-xl sm:rounded-2xl h-full transition-all duration-500 hover:scale-[1.03] bg-card/40  border border-border/20 hover:border-border/40 overflow-hidden">
                 {/* Top gradient line */}
                 <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r ${skill.color} opacity-40 group-hover:opacity-80 transition-opacity duration-500`} />
                 

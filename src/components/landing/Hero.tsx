@@ -12,7 +12,7 @@ const RatingBadge = () => (
     initial={{ opacity: 0, y: 12 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5 }}
-    className="inline-flex items-center gap-2 px-3.5 py-1.5 mb-6 rounded-full bg-card/40 border border-border/10 backdrop-blur-sm"
+    className="inline-flex items-center gap-2 px-3.5 py-1.5 mb-6 rounded-full bg-card/40 border border-border/10 "
   >
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4].map(i => (
@@ -44,10 +44,10 @@ const LiveActivityTicker = () => {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: 1.8, duration: 0.4 }}
-      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-card/40 border border-border/10 backdrop-blur-sm"
+      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-card/40 border border-border/10 "
     >
       <span className="relative flex h-1.5 w-1.5">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+        <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-50" />
         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
       </span>
       <span className="text-[9px] text-foreground/40 font-medium">
@@ -153,7 +153,7 @@ const WidgetContent = () => (
       <div className="flex-1">
         <p className="text-[10px] font-bold text-foreground">NEO Асистент</p>
         <div className="flex items-center gap-1">
-          <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="w-1 h-1 rounded-full bg-emerald-500" />
           <span className="text-[8px] text-emerald-400 font-medium">Онлайн</span>
         </div>
       </div>
@@ -194,12 +194,11 @@ const WidgetContent = () => (
           </div>
         </div>
         <div className="flex items-center gap-[2px] flex-1 h-4">
-          {Array.from({ length: 14 }).map((_, i) => (
-            <motion.div
+          {[3, 8, 5, 12, 7, 14, 6, 10, 4, 11, 8, 5, 9, 6].map((h, i) => (
+            <div
               key={i}
               className="w-[1.5px] rounded-full bg-primary/35"
-              animate={{ height: [2, Math.random() * 10 + 4, 2] }}
-              transition={{ duration: 0.8 + Math.random() * 0.4, repeat: Infinity, delay: i * 0.04, ease: 'easeInOut' }}
+              style={{ height: `${h}px` }}
             />
           ))}
         </div>
@@ -297,7 +296,7 @@ const Hero = () => {
                 transition={{ duration: 0.7, delay: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
                 className="absolute -bottom-8 -right-4 lg:-right-8 w-[180px] z-10"
               >
-                <div className="absolute -inset-4 bg-primary/5 blur-[30px] rounded-full pointer-events-none" />
+                <div className="absolute -inset-4 bg-primary/5 rounded-full pointer-events-none opacity-40" />
                 <IPhoneFrame>
                   <WidgetContent />
                 </IPhoneFrame>

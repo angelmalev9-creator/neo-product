@@ -216,7 +216,7 @@ const VoiceTraining = ({ userId, demoSession, subscriptionTier, onVoiceSaved }: 
   // Plan gating
   if (!isAllowed) {
     return (
-      <div className="rounded-xl border border-border/10 bg-card/40 backdrop-blur-sm px-4 py-3 flex items-center gap-3">
+      <div className="rounded-xl border border-border/10 bg-card/40  px-4 py-3 flex items-center gap-3">
         <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
         <span className="text-[11px] text-muted-foreground">Тренирайте НЕО с вашия глас — налично в план Растеж</span>
         <Button
@@ -234,7 +234,7 @@ const VoiceTraining = ({ userId, demoSession, subscriptionTier, onVoiceSaved }: 
   // Processing state
   if (trainingStatus === 'processing') {
     return (
-      <div className="rounded-xl border border-border/10 bg-card/40 backdrop-blur-sm px-4 py-4 space-y-3">
+      <div className="rounded-xl border border-border/10 bg-card/40  px-4 py-4 space-y-3">
         <div className="flex items-center gap-3">
           <Loader2 className="w-5 h-5 text-primary animate-spin" />
           <div>
@@ -250,7 +250,7 @@ const VoiceTraining = ({ userId, demoSession, subscriptionTier, onVoiceSaved }: 
   // Ready state
   if (trainingStatus === 'ready') {
     return (
-      <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 backdrop-blur-sm px-4 py-4 flex items-center gap-3">
+      <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5  px-4 py-4 flex items-center gap-3">
         <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
           <Mic className="w-4 h-4 text-emerald-500" />
         </div>
@@ -266,7 +266,7 @@ const VoiceTraining = ({ userId, demoSession, subscriptionTier, onVoiceSaved }: 
   // Failed state
   if (trainingStatus === 'failed') {
     return (
-      <div className="rounded-xl border border-destructive/30 bg-destructive/5 backdrop-blur-sm px-4 py-4 space-y-2">
+      <div className="rounded-xl border border-destructive/30 bg-destructive/5  px-4 py-4 space-y-2">
         <p className="text-sm text-foreground">Възникна проблем при обработката.</p>
         <Button variant="outline" size="sm" onClick={() => { setTrainingStatus(null); resetRecording(); }}>
           <RotateCcw className="w-3 h-3 mr-1" /> Опитайте отново
@@ -277,7 +277,7 @@ const VoiceTraining = ({ userId, demoSession, subscriptionTier, onVoiceSaved }: 
 
   // Recording wizard
   return (
-    <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5 space-y-4">
+    <div className="rounded-2xl border border-border/10 bg-card/60  p-5 space-y-4">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
           <Mic className="w-5 h-5 text-primary" />
