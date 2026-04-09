@@ -30,8 +30,8 @@ const MarketingSkills = () => {
   return (
     <section ref={ref as React.RefObject<HTMLElement>} className="relative py-14 sm:py-24 px-4 overflow-hidden">
       {/* Ambient glows */}
-      <div className="absolute top-1/4 left-0 w-[500px] h-[500px] rounded-full bg-primary/5 blur-[180px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-0 w-[400px] h-[400px] rounded-full bg-accent/5 blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/4 left-0 w-[500px] h-[500px] rounded-full bg-primary/5 opacity-25 pointer-events-none" />
+      <div className="absolute bottom-1/4 right-0 w-[400px] h-[400px] rounded-full bg-accent/5 opacity-30 pointer-events-none" />
       
       <div className="max-w-6xl mx-auto relative z-10">
         {/* Header */}

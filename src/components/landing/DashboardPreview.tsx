@@ -11,7 +11,7 @@ const DashboardPreview = () => {
   return (
     <section ref={ref as React.RefObject<HTMLElement>} id="dashboard-features" className="py-10 sm:py-16 relative overflow-hidden">
       {/* Ambient glow */}
-      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-primary/4 blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-primary/4 opacity-30 pointer-events-none" />
       
       <div className="container mx-auto px-4 sm:px-4 relative z-10">
         {/* Header */}
