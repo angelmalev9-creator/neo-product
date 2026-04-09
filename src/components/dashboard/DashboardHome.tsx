@@ -34,52 +34,38 @@ const TIME_FILTER_LABELS: Record<TimeFilter, string> = {
   last_month: 'Мин. месец',
 };
 
-function getFilterRange(filter: TimeFilter): { start: string; end: string; bucketCount: number } {
+function getFilterRange(filter: TimeFilter) {
   const now = new Date();
   if (filter === 'today') {
     const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const end = new Date(start.getTime() + 86400000);
-    return { start: start.toISOString(), end: end.toISOString(), bucketCount: 24 };
+    return { start: start.toISOString(), end: new Date(start.getTime() + 86400000).toISOString(), bucketCount: 24 };
   }
   if (filter === 'week') {
-    const start = new Date(now);
-    start.setDate(start.getDate() - 6);
-    start.setHours(0, 0, 0, 0);
+    const start = new Date(now); start.setDate(start.getDate() - 6); start.setHours(0, 0, 0, 0);
     return { start: start.toISOString(), end: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString(), bucketCount: 7 };
   }
   if (filter === 'month') {
     const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    return { start: start.toISOString(), end: end.toISOString(), bucketCount: now.getDate() };
+    return { start: start.toISOString(), end: new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString(), bucketCount: now.getDate() };
   }
   const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const end = new Date(now.getFullYear(), now.getMonth(), 1);
-  return { start: start.toISOString(), end: end.toISOString(), bucketCount: new Date(now.getFullYear(), now.getMonth(), 0).getDate() };
+  return { start: start.toISOString(), end: new Date(now.getFullYear(), now.getMonth(), 1).toISOString(), bucketCount: new Date(now.getFullYear(), now.getMonth(), 0).getDate() };
 }
 
-function getBucketLabels(filter: TimeFilter): string[] {
-  const WEEKDAY_LABELS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
+function getBucketLabels(filter: TimeFilter) {
+  const WD = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
   if (filter === 'today') return Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
   if (filter === 'week') {
     const labels: string[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dow = d.getDay();
-      labels.push(WEEKDAY_LABELS[dow === 0 ? 6 : dow - 1]);
-    }
+    for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const dow = d.getDay(); labels.push(WD[dow === 0 ? 6 : dow - 1]); }
     return labels;
   }
-  if (filter === 'month') {
-    const now = new Date();
-    return Array.from({ length: now.getDate() }, (_, i) => String(i + 1));
-  }
-  const now = new Date();
-  const daysInLastMonth = new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+  if (filter === 'month') return Array.from({ length: new Date().getDate() }, (_, i) => String(i + 1));
+  const daysInLastMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 0).getDate();
   return Array.from({ length: daysInLastMonth }, (_, i) => String(i + 1));
 }
 
-function bucketIndex(createdAt: string, filter: TimeFilter, rangeStart: string): number {
+function bucketIndex(createdAt: string, filter: TimeFilter, rangeStart: string) {
   const d = new Date(createdAt);
   const s = new Date(rangeStart);
   if (filter === 'today') return d.getHours();
@@ -88,17 +74,11 @@ function bucketIndex(createdAt: string, filter: TimeFilter, rangeStart: string):
 }
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 12 },
-  visible: (i: number) => ({
-    opacity: 1, y: 0,
-    transition: { delay: i * 0.06, duration: 0.4, ease: "easeOut" as const },
-  }),
+  hidden: { opacity: 0, y: 10 },
+  visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.05, duration: 0.35, ease: [0.2, 0.8, 0.2, 1] } }),
 };
 
-const formatUsageMinutes = (value: number) => {
-  if (value <= 0) return '0';
-  return value < 10 ? value.toFixed(1) : value.toFixed(0);
-};
+const formatUsageMinutes = (v: number) => v <= 0 ? '0' : v < 10 ? v.toFixed(1) : v.toFixed(0);
 
 const DashboardHome = ({
   subscribed, tierName, subscriptionEnd, usedMinutes, planLimit,
@@ -120,11 +100,7 @@ const DashboardHome = ({
   const [chartFilter, setChartFilter] = useState<TimeFilter>('week');
   const [chartData, setChartData] = useState<{ label: string; conversations: number; clients: number }[]>([]);
 
-  const getTodayStart = () => {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    return now.toISOString();
-  };
+  const getTodayStart = () => { const n = new Date(); n.setHours(0, 0, 0, 0); return n.toISOString(); };
 
   const fetchTodayStats = async () => {
     if (!userId) return;
@@ -161,12 +137,11 @@ const DashboardHome = ({
     ]);
     const convos = convRes.data || [];
     const clientConvos = clientConvRes.data || [];
-    const result = labels.map((lbl, i) => ({
+    setChartData(labels.map((lbl, i) => ({
       label: lbl,
       conversations: convos.filter(c => bucketIndex(c.created_at, filter, start) === i).length,
       clients: clientConvos.filter(c => bucketIndex(c.created_at, filter, start) === i).length,
-    }));
-    setChartData(result);
+    })));
   };
 
   useEffect(() => {
@@ -180,9 +155,7 @@ const DashboardHome = ({
         fetchChartData(chartFilter);
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'conversations', filter: `user_id=eq.${userId}` }, (payload) => {
-        const newRow = payload.new as any;
-        const oldRow = payload.old as any;
-        if (newRow.lead_captured === true && oldRow.lead_captured !== true) {
+        if ((payload.new as any).lead_captured === true && (payload.old as any).lead_captured !== true) {
           setTodayClients(prev => prev + 1);
           setTotalLeads(prev => prev + 1);
         }
@@ -198,12 +171,12 @@ const DashboardHome = ({
   if (!subscribed) {
     return (
       <div className="h-full flex items-center justify-center p-6">
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} className="text-center space-y-5 max-w-sm">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mx-auto">
-            <Zap className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
+        <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="text-center space-y-5 max-w-sm">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+            <Zap className="w-8 h-8 text-primary" />
           </div>
-          <h2 className="text-lg sm:text-xl font-bold text-foreground">Активирайте NEO</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground">Изберете план, за да получите AI асистент 24/7.</p>
+          <h2 className="text-lg font-semibold text-[hsl(0_0%_100%/0.92)]">Активирайте NEO</h2>
+          <p className="text-[13px] text-[hsl(0_0%_100%/0.5)]">Изберете план, за да получите AI асистент 24/7.</p>
           <Button onClick={() => navigate('/#pricing')} size="lg" className="gap-2">
             Разгледайте плановете <ArrowRight className="w-4 h-4" />
           </Button>
@@ -215,36 +188,33 @@ const DashboardHome = ({
   const conversionRate = totalConversations > 0 ? Math.round((totalLeads / totalConversations) * 100) : 0;
   const bookingRate = totalConversations > 0 ? Math.round((totalBookings / totalConversations) * 100) : 0;
   const automationScore = Math.min(99, Math.max(12, Math.round((conversionRate * 0.45) + (bookingRate * 0.35) + ((100 - Math.min(usagePercent, 100)) * 0.2))));
-
-  const formatDuration = (s: number) => {
-    if (s < 60) return `${s}с`;
-    return `${Math.floor(s / 60)}м ${s % 60}с`;
-  };
+  const formatDuration = (s: number) => s < 60 ? `${s}с` : `${Math.floor(s / 60)}м ${s % 60}с`;
 
   return (
     <div className="h-full overflow-y-auto overflow-x-hidden overscroll-y-contain">
-      <div className="p-3 sm:p-5 lg:p-6 space-y-4 sm:space-y-5">
+      <div className="p-3 sm:p-5 lg:p-6 space-y-4 sm:space-y-5 max-w-[1400px]">
 
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
+        <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="flex items-center justify-between">
           <div>
-            <h1 className="text-base sm:text-lg font-bold text-foreground">Анализи</h1>
-            <p className="text-[11px] sm:text-xs text-muted-foreground/70">Преглед на активността на NEO</p>
+            <h1 className="text-[18px] sm:text-[20px] font-semibold text-[hsl(0_0%_100%/0.92)] tracking-tight">Анализи</h1>
+            <p className="text-[11px] text-[hsl(0_0%_100%/0.35)] mt-0.5">Преглед на активността на NEO</p>
           </div>
-          <div className="flex items-center gap-2">
-            <motion.span
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-semibold border ${isActive ? 'bg-[hsl(var(--neo-success))]/10 border-[hsl(var(--neo-success))]/25 text-[hsl(var(--neo-success))]' : 'bg-muted/50 border-border/20 text-muted-foreground'}`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-[hsl(var(--neo-success))] animate-pulse' : 'bg-muted-foreground/50'}`} />
-              {isActive ? 'Online' : 'Offline'}
-            </motion.span>
-          </div>
+          <motion.span
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.15 }}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium border ${isActive
+              ? 'bg-[#10b981]/10 border-[#10b981]/20 text-[#10b981]'
+              : 'bg-[hsl(0_0%_100%/0.03)] border-[hsl(0_0%_100%/0.06)] text-[hsl(0_0%_100%/0.4)]'
+            }`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-[#10b981] animate-pulse' : 'bg-[hsl(0_0%_100%/0.25)]'}`} />
+            {isActive ? 'Online' : 'Offline'}
+          </motion.span>
         </motion.div>
 
-        {/* Stat cards row */}
+        {/* Stat cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
           <StatCard i={0} icon={MessageCircle} label="Обаждания" value={statsLoading ? '—' : String(totalConversations)} change={todayConversations > 0 ? `+${todayConversations} днес` : 'днес'} positive={todayConversations > 0} />
           <StatCard i={1} icon={UserCheck} label="Клиенти" value={statsLoading ? '—' : String(totalLeads)} change={`${conversionRate}% конверсия`} positive={conversionRate > 0} />
@@ -252,31 +222,29 @@ const DashboardHome = ({
           <StatCard i={3} icon={Clock} label="Ср. продължителност" value={statsLoading ? '—' : formatDuration(avgDuration)} change={`${formatUsageMinutes(usedMinutes)}/${planLimit} мин`} positive={usagePercent < 80} />
         </div>
 
-        {/* Chart + Side panels */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
-          {/* Main Chart */}
+        {/* Chart + Side */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          {/* Chart */}
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.4 }}
-            className="lg:col-span-2 rounded-2xl border border-border/10 bg-card/60 p-4 sm:p-5 relative overflow-hidden"
+            transition={{ delay: 0.25, duration: 0.4 }}
+            className="lg:col-span-2 glass-card p-4 sm:p-5"
           >
-            <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.02] to-transparent pointer-events-none" />
-            {/* Chart header */}
-            <div className="relative flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-sm font-semibold text-foreground">Обаждания</h2>
-                <p className="text-[10px] text-muted-foreground/70 mt-0.5">Общо за периода</p>
+                <h2 className="text-[14px] font-medium text-[hsl(0_0%_100%/0.92)]">Обаждания</h2>
+                <p className="text-[10px] text-[hsl(0_0%_100%/0.28)] mt-0.5">Общо за периода</p>
               </div>
-              <div className="flex items-center gap-0.5 bg-muted/20 rounded-lg p-0.5">
+              <div className="flex items-center gap-px bg-[hsl(0_0%_100%/0.04)] rounded-lg p-0.5">
                 {(Object.keys(TIME_FILTER_LABELS) as TimeFilter[]).map((f) => (
                   <button
                     key={f}
                     onClick={() => { setChartFilter(f); fetchChartData(f); }}
                     className={`text-[10px] px-2.5 py-1 rounded-md transition-all ${
                       chartFilter === f
-                        ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
+                        ? 'bg-primary text-[hsl(0_0%_100%)] font-semibold'
+                        : 'text-[hsl(0_0%_100%/0.4)] hover:text-[hsl(0_0%_100%/0.7)]'
                     }`}
                   >
                     {TIME_FILTER_LABELS[f]}
@@ -284,96 +252,90 @@ const DashboardHome = ({
                 ))}
               </div>
             </div>
-            {/* Legend */}
-            <div className="relative flex items-center gap-4 mb-3">
-              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                <div className="w-2.5 h-2.5 rounded-full bg-primary" /> Обаждания
+            <div className="flex items-center gap-4 mb-3">
+              <div className="flex items-center gap-1.5 text-[10px] text-[hsl(0_0%_100%/0.45)]">
+                <div className="w-2 h-2 rounded-full bg-primary" /> Обаждания
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                <div className="w-2.5 h-2.5 rounded-full bg-[hsl(var(--neo-success))]" /> Клиенти
+              <div className="flex items-center gap-1.5 text-[10px] text-[hsl(0_0%_100%/0.45)]">
+                <div className="w-2 h-2 rounded-full bg-[#10b981]" /> Клиенти
               </div>
             </div>
-            {/* Chart */}
-            <div className="relative h-[200px] sm:h-[240px] lg:h-[280px]">
+            <div className="h-[200px] sm:h-[240px] lg:h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="gradConv" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
                       <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="gradClients" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--neo-success))" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="hsl(var(--neo-success))" stopOpacity={0} />
+                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.25} />
+                      <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.1} vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} interval={chartFilter === 'today' ? 3 : chartFilter === 'month' || chartFilter === 'last_month' ? 4 : 0} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 100% / 0.04)" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(0 0% 100% / 0.3)' }} axisLine={false} tickLine={false} interval={chartFilter === 'today' ? 3 : chartFilter === 'month' || chartFilter === 'last_month' ? 4 : 0} />
                   <YAxis hide allowDecimals={false} />
                   <Tooltip
-                    contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border)/0.2)', borderRadius: 12, fontSize: 11, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}
-                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                    contentStyle={{ background: 'hsl(240 32% 10%)', border: '1px solid hsl(0 0% 100% / 0.08)', borderRadius: 10, fontSize: 11, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
+                    labelStyle={{ color: 'hsl(0 0% 100% / 0.7)' }}
                     formatter={(value: number, name: string) => [value, name === 'conversations' ? 'Обаждания' : 'Нови клиенти']}
                   />
                   <Area type="monotone" dataKey="conversations" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#gradConv)" dot={false} activeDot={{ r: 4, strokeWidth: 2 }} />
-                  <Area type="monotone" dataKey="clients" stroke="hsl(var(--neo-success))" strokeWidth={2} fill="url(#gradClients)" dot={false} activeDot={{ r: 4, strokeWidth: 2 }} />
+                  <Area type="monotone" dataKey="clients" stroke="#10b981" strokeWidth={2} fill="url(#gradClients)" dot={false} activeDot={{ r: 4, strokeWidth: 2 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </motion.div>
 
-          {/* Right panels */}
+          {/* Right side */}
           <motion.div
-            initial={{ opacity: 0, x: 16 }}
+            initial={{ opacity: 0, x: 12 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.35, duration: 0.4 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
             className="flex flex-col gap-3"
           >
-            {/* Efficiency score */}
-            <div className="rounded-2xl border border-border/10 bg-card/60 p-4 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.04] to-transparent pointer-events-none" />
-              <div className="relative flex items-center justify-between mb-3">
+            {/* Efficiency */}
+            <div className="glass-card p-4">
+              <div className="flex items-center justify-between mb-3">
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground/70">Ефективност</p>
-                  <p className="text-2xl font-black text-foreground mt-0.5">{automationScore}<span className="text-xs font-normal text-muted-foreground/60">/100</span></p>
+                  <p className="text-[10px] uppercase tracking-[0.1em] text-[hsl(0_0%_100%/0.28)] font-medium">Ефективност</p>
+                  <p className="text-[24px] font-bold text-[hsl(0_0%_100%/0.92)] mt-0.5 leading-none">{automationScore}<span className="text-[12px] font-normal text-[hsl(0_0%_100%/0.3)]">/100</span></p>
                 </div>
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-primary" />
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-primary" />
                 </div>
               </div>
-              <div className="relative space-y-2.5">
+              <div className="space-y-2.5">
                 <MiniBar label="Конверсия" value={conversionRate} color="primary" />
                 <MiniBar label="Резервации" value={bookingRate} color="success" />
                 <MiniBar label="Използване" value={Math.min(Math.round(usagePercent), 100)} color="blue" />
               </div>
             </div>
 
-            {/* Plan card */}
-            <div className="rounded-2xl border border-border/10 bg-card/60 p-4 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] to-transparent pointer-events-none" />
-              <div className="relative flex items-center justify-between mb-3">
+            {/* Plan */}
+            <div className="glass-card p-4">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Crown className="w-4 h-4 text-primary" />
-                  <span className="text-xs font-semibold text-foreground">{tierName}</span>
+                  <Crown className="w-3.5 h-3.5 text-primary" />
+                  <span className="text-[12px] font-medium text-[hsl(0_0%_100%/0.85)]">{tierName}</span>
                 </div>
-                <Button variant="ghost" size="sm" onClick={onManageSubscription} disabled={portalLoading} className="text-[10px] h-7 px-2 text-muted-foreground hover:text-foreground">
+                <Button variant="ghost" size="sm" onClick={onManageSubscription} disabled={portalLoading} className="text-[10px] h-6 px-2 text-[hsl(0_0%_100%/0.35)] hover:text-[hsl(0_0%_100%/0.7)]">
                   {portalLoading ? '...' : 'Управление'}
                 </Button>
               </div>
-              <div className="relative">
-                <div className="flex justify-between mb-1.5">
-                  <span className="text-[10px] text-muted-foreground">{formatUsageMinutes(usedMinutes)} мин</span>
-                  <span className="text-[10px] text-muted-foreground">{planLimit} мин</span>
-                </div>
-                <Progress value={Math.min(usagePercent, 100)} className="h-2" />
-                {usagePercent > 80 && (
-                  <p className="text-[9px] text-[hsl(var(--neo-warning))] font-medium mt-1 animate-pulse">
-                    {usagePercent >= 100 ? 'Лимитът е достигнат' : 'Почти пълно'}
-                  </p>
-                )}
+              <div className="flex justify-between mb-1.5">
+                <span className="text-[10px] text-[hsl(0_0%_100%/0.4)]">{formatUsageMinutes(usedMinutes)} мин</span>
+                <span className="text-[10px] text-[hsl(0_0%_100%/0.4)]">{planLimit} мин</span>
               </div>
+              <Progress value={Math.min(usagePercent, 100)} className="h-1.5" />
+              {usagePercent > 80 && (
+                <p className="text-[9px] text-[#f59e0b] font-medium mt-1.5">
+                  {usagePercent >= 100 ? 'Лимитът е достигнат' : 'Почти пълно'}
+                </p>
+              )}
               {subscriptionEnd && (
-                <p className="relative text-[9px] text-muted-foreground/60 mt-2">
+                <p className="text-[9px] text-[hsl(0_0%_100%/0.25)] mt-2">
                   Активен до {new Date(subscriptionEnd).toLocaleDateString('bg-BG')}
                 </p>
               )}
@@ -391,43 +353,34 @@ function StatCard({ i, icon: Icon, label, value, change, positive }: {
   i: number; icon: React.ElementType; label: string; value: string; change: string; positive: boolean;
 }) {
   return (
-    <motion.div custom={i} initial="hidden" animate="visible" variants={fadeUp} whileHover={{ y: -2, transition: { duration: 0.2 } }}>
-      <div className="rounded-2xl border border-border/10 bg-card/60 p-3.5 sm:p-4 relative overflow-hidden h-full group hover:border-primary/20 transition-all duration-200 hover:shadow-lg hover:shadow-primary/5">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] to-transparent pointer-events-none" />
-        <div className="relative flex items-center justify-between mb-3">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-primary/8 flex items-center justify-center">
+    <motion.div custom={i} initial="hidden" animate="visible" variants={fadeUp} whileHover={{ y: -1, transition: { duration: 0.15 } }}>
+      <div className="glass-card p-3 sm:p-3.5 h-full group hover:border-[hsl(0_0%_100%/0.1)] transition-all duration-200">
+        <div className="flex items-center justify-between mb-2.5">
+          <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center">
             <Icon className="w-4 h-4 text-primary" />
           </div>
-          <span className={`text-[9px] sm:text-[10px] font-medium px-1.5 py-0.5 rounded-md ${positive ? 'text-[hsl(var(--neo-success))] bg-[hsl(var(--neo-success))]/10' : 'text-muted-foreground bg-muted/30'}`}>
+          <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-md ${positive ? 'text-[#10b981] bg-[#10b981]/10' : 'text-[hsl(0_0%_100%/0.35)] bg-[hsl(0_0%_100%/0.04)]'}`}>
             {change}
           </span>
         </div>
-        <p className="relative text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none">{value}</p>
-        <p className="relative text-[10px] sm:text-[11px] text-muted-foreground/70 mt-1">{label}</p>
+        <p className="text-[20px] sm:text-[22px] font-bold text-[hsl(0_0%_100%/0.92)] tracking-tight leading-none">{value}</p>
+        <p className="text-[10px] text-[hsl(0_0%_100%/0.35)] mt-1">{label}</p>
       </div>
     </motion.div>
   );
 }
 
 function MiniBar({ label, value, color }: { label: string; value: number; color: 'primary' | 'success' | 'blue' }) {
-  const colorMap = {
-    primary: 'bg-primary',
-    success: 'bg-[hsl(var(--neo-success))]',
-    blue: 'bg-[hsl(var(--neo-blue))]',
-  };
-  const pillColorMap = {
-    primary: 'bg-primary/15 text-primary',
-    success: 'bg-[hsl(var(--neo-success))]/15 text-[hsl(var(--neo-success))]',
-    blue: 'bg-[hsl(var(--neo-blue))]/15 text-[hsl(var(--neo-blue))]',
-  };
+  const colorMap = { primary: 'bg-primary', success: 'bg-[#10b981]', blue: 'bg-[#3b82f6]' };
+  const pillMap = { primary: 'bg-primary/15 text-primary', success: 'bg-[#10b981]/15 text-[#10b981]', blue: 'bg-[#3b82f6]/15 text-[#3b82f6]' };
   return (
     <div>
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[11px] text-muted-foreground font-medium">{label}</span>
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${pillColorMap[color]}`}>{value}%</span>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[11px] text-[hsl(0_0%_100%/0.45)] font-medium">{label}</span>
+        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${pillMap[color]}`}>{value}%</span>
       </div>
-      <div className="h-2.5 rounded-lg bg-muted/20 overflow-hidden flex">
-        <div className={`h-full rounded-lg ${colorMap[color]} transition-all duration-700`} style={{ width: `${Math.max(4, Math.min(value, 100))}%` }} />
+      <div className="h-1.5 rounded-full bg-[hsl(0_0%_100%/0.04)] overflow-hidden">
+        <div className={`h-full rounded-full ${colorMap[color]} transition-all duration-700`} style={{ width: `${Math.max(4, Math.min(value, 100))}%` }} />
       </div>
     </div>
   );
