@@ -34,8 +34,8 @@ serve(async (req) => {
     const body = await req.json();
     const { phoneNumber, sessionId } = body;
 
-    if (!phoneNumber || !sessionId) {
-      return new Response(JSON.stringify({ error: "Missing phoneNumber or sessionId" }), {
+    if (!phoneNumber) {
+      return new Response(JSON.stringify({ error: "Missing phoneNumber" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -79,7 +79,7 @@ serve(async (req) => {
     const { data: phoneRecord, error: dbErr } = await supabase
       .from("phone_numbers")
       .insert({
-        session_id: sessionId,
+        session_id: sessionId || null,
         user_id: user.id,
         twilio_sid: twilioNumber.sid,
         phone_number: twilioNumber.phone_number,
