@@ -1346,45 +1346,45 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
             </h2>
           </div>
 
-          <div className="neo-glass-subtle border border-border/20 rounded-lg lg:rounded-xl p-4 lg:p-6 text-center">
-            <div className="relative inline-flex items-center gap-4 mb-4 lg:mb-6">
-              {/* Mic mute button */}
+            <div className="neo-glass-subtle border border-border/20 rounded-lg lg:rounded-xl p-4 lg:p-6 text-center">
+              <div className="relative inline-flex items-center justify-center mb-4 lg:mb-6">
+                <button
+                  onClick={isConnected || textOnlyMode ? endCall : startCall}
+                  disabled={isConnecting}
+                  className={`relative w-20 h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    isConnected || textOnlyMode
+                      ? "bg-destructive"
+                      : isConnecting
+                        ? "bg-primary/50 cursor-wait"
+                        : "bg-gradient-to-br from-primary to-primary/80 neo-glow-soft hover:scale-105"
+                  }`}
+                >
+                  {isConnected || textOnlyMode ? (
+                    <PhoneOff className="w-8 h-8 lg:w-10 lg:h-10 text-white" />
+                  ) : (
+                    <Phone className="w-8 h-8 lg:w-10 lg:h-10 text-white" />
+                  )}
+                </button>
+
+                {(isConnected || textOnlyMode) && (
+                  <div className="absolute inset-0 rounded-full border-2 border-primary/40 animate-ping pointer-events-none" />
+                )}
+              </div>
+
+              {/* Mic mute button - below call button */}
               {(isConnected || textOnlyMode) && !textOnlyMode && (
                 <button
                   onClick={toggleMicMute}
-                  className={`w-12 h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center transition-all border-2 ${
+                  className={`flex items-center gap-2 mx-auto mb-4 px-4 py-2 rounded-full text-xs font-medium transition-all border ${
                     isMicMuted
-                      ? 'bg-destructive/15 border-destructive/40 text-destructive'
-                      : 'bg-muted/20 border-border/30 text-muted-foreground hover:text-foreground hover:border-border/50'
+                      ? 'bg-destructive/10 border-destructive/30 text-destructive hover:bg-destructive/20'
+                      : 'bg-muted/10 border-border/30 text-muted-foreground hover:text-foreground hover:border-border/50'
                   }`}
-                  title={isMicMuted ? 'Включи микрофона' : 'Изключи микрофона'}
                 >
-                  {isMicMuted ? <MicOff className="w-5 h-5 lg:w-6 lg:h-6" /> : <Mic className="w-5 h-5 lg:w-6 lg:h-6" />}
+                  {isMicMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                  {isMicMuted ? 'Включете микрофона си' : 'Изключете микрофона си'}
                 </button>
               )}
-
-              <button
-                onClick={isConnected || textOnlyMode ? endCall : startCall}
-                disabled={isConnecting}
-                className={`relative w-20 h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center transition-all duration-300 ${
-                  isConnected || textOnlyMode
-                    ? "bg-destructive"
-                    : isConnecting
-                      ? "bg-primary/50 cursor-wait"
-                      : "bg-gradient-to-br from-primary to-primary/80 neo-glow-soft hover:scale-105"
-                }`}
-              >
-                {isConnected || textOnlyMode ? (
-                  <PhoneOff className="w-8 h-8 lg:w-10 lg:h-10 text-white" />
-                ) : (
-                  <Phone className="w-8 h-8 lg:w-10 lg:h-10 text-white" />
-                )}
-              </button>
-
-              {(isConnected || textOnlyMode) && (
-                <div className="absolute inset-0 rounded-full border-2 border-primary/40 animate-ping pointer-events-none" style={{ left: textOnlyMode ? 0 : 'auto' }} />
-              )}
-            </div>
 
             {(isConnected || textOnlyMode) && (
               <div
