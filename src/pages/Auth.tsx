@@ -429,15 +429,15 @@ const Auth = () => {
             // Regular Login/Register Form
             <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               {!isLogin && (
-                <div className="space-y-1.5 sm:space-y-2">
-                  <Label htmlFor="fullName" className="text-sm">Име</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName" className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Име</Label>
                   <Input
                     id="fullName"
                     type="text"
                     placeholder="Вашето име"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="bg-background/50"
+                    className="bg-background/50 h-12 text-[15px] rounded-xl border-2 border-border/30 focus-visible:border-primary"
                   />
                 </div>
               )}
