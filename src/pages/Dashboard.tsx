@@ -70,7 +70,7 @@ const Dashboard = () => {
         if (data.url && !websiteUrl) setWebsiteUrl(data.url);
         if (data.company_name && !companyName) setCompanyName(data.company_name);
       }
-    } catch (err) { console.error('Failed to load demo session:', err); }
+    } catch (err) { /* silent */ }
   };
 
   const loadProfile = async () => {
@@ -89,24 +89,18 @@ const Dashboard = () => {
     try {
       const { data } = await supabase.functions.invoke('track-usage', { body: { action: 'get_usage' } });
       if (data) { setUsedMinutes(data.used_minutes || 0); setPlanLimit(data.plan_limit || 100); }
-    } catch (err) { console.error('Failed to load usage:', err); }
+    } catch { /* silent */ }
   }, [user]);
 
   useEffect(() => {
     if (!user) return;
-
-    const refreshUsage = () => {
-      void loadUsage();
-    };
-
+    const refreshUsage = () => { void loadUsage(); };
     const intervalId = window.setInterval(refreshUsage, 20000);
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') refreshUsage();
     };
-
     window.addEventListener('focus', refreshUsage);
     document.addEventListener('visibilitychange', handleVisibilityChange);
-
     return () => {
       window.clearInterval(intervalId);
       window.removeEventListener('focus', refreshUsage);
@@ -131,20 +125,21 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-primary text-sm">Зареждане...</div>
+      <div className="min-h-screen bg-[hsl(252_100%_4%)] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+          <span className="text-[12px] text-[hsl(0_0%_100%/0.4)]">Зареждане...</span>
+        </div>
       </div>
     );
   }
 
   const renderContent = () => {
-    // Redirect non-subscribed users to home
     if (!subscription.subscribed && activeTab !== 'home') {
       setActiveTab('home');
       return null;
     }
 
-    // Route by tab
     if (activeTab === 'home') {
       return (
         <DashboardHome
@@ -185,9 +180,7 @@ const Dashboard = () => {
       );
     }
 
-    if (activeTab.startsWith('conv')) {
-      return <ConversationsPage userId={user?.id || ''} />;
-    }
+    if (activeTab.startsWith('conv')) return <ConversationsPage userId={user?.id || ''} />;
 
     if (activeTab.startsWith('neo')) {
       const sectionMap: Record<string, string> = {
@@ -211,17 +204,9 @@ const Dashboard = () => {
       );
     }
 
-    if (activeTab.startsWith('results')) {
-      return <ResultsPage userId={user?.id || ''} />;
-    }
-
-    if (activeTab === 'widget') {
-      return <WidgetPage userId={user?.id || ''} companyName={companyName} logoUrl={logoUrl} setLogoUrl={setLogoUrl} />;
-    }
-
-    if (activeTab === 'phone') {
-      return <PhoneSection userId={user?.id || ''} sessionId={demoSession?.id} />;
-    }
+    if (activeTab.startsWith('results')) return <ResultsPage userId={user?.id || ''} />;
+    if (activeTab === 'widget') return <WidgetPage userId={user?.id || ''} companyName={companyName} logoUrl={logoUrl} setLogoUrl={setLogoUrl} />;
+    if (activeTab === 'phone') return <PhoneSection userId={user?.id || ''} sessionId={demoSession?.id} />;
 
     if (activeTab.startsWith('settings')) {
       const sectionMap: Record<string, string> = {
@@ -252,7 +237,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen h-screen bg-background flex overflow-hidden overflow-x-hidden">
+    <div className="min-h-screen h-screen bg-[hsl(252_100%_4%)] flex overflow-hidden">
       <div className="hidden lg:block">
         <DashboardSidebar
           activeTab={activeTab}
@@ -266,7 +251,7 @@ const Dashboard = () => {
 
       <div className="flex-1 flex flex-col min-w-0 h-screen">
         <DashboardMobileNav activeTab={activeTab} onTabChange={setActiveTab} />
-        <main className="flex-1 min-h-0 overflow-hidden overflow-x-hidden overscroll-y-none pb-[4.5rem] lg:pb-0">
+        <main className="flex-1 min-h-0 overflow-hidden overflow-x-hidden overscroll-y-none pb-[4.25rem] lg:pb-0">
           {renderContent()}
         </main>
       </div>
