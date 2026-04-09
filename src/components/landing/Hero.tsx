@@ -47,7 +47,7 @@ const LiveActivityTicker = () => {
       className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-card/40 border border-border/10 "
     >
       <span className="relative flex h-1.5 w-1.5">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+        <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-50" />
         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
       </span>
       <span className="text-[9px] text-foreground/40 font-medium">
@@ -153,7 +153,7 @@ const WidgetContent = () => (
       <div className="flex-1">
         <p className="text-[10px] font-bold text-foreground">NEO Асистент</p>
         <div className="flex items-center gap-1">
-          <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="w-1 h-1 rounded-full bg-emerald-500" />
           <span className="text-[8px] text-emerald-400 font-medium">Онлайн</span>
         </div>
       </div>
@@ -296,7 +296,7 @@ const Hero = () => {
                 transition={{ duration: 0.7, delay: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
                 className="absolute -bottom-8 -right-4 lg:-right-8 w-[180px] z-10"
               >
-                <div className="absolute -inset-4 bg-primary/5 blur-[30px] rounded-full pointer-events-none" />
+                <div className="absolute -inset-4 bg-primary/5 rounded-full pointer-events-none opacity-40" />
                 <IPhoneFrame>
                   <WidgetContent />
                 </IPhoneFrame>
