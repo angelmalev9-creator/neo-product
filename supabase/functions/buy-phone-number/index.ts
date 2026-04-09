@@ -79,7 +79,7 @@ serve(async (req) => {
     const { data: phoneRecord, error: dbErr } = await supabase
       .from("phone_numbers")
       .insert({
-        session_id: sessionId,
+        session_id: sessionId || null,
         user_id: user.id,
         twilio_sid: twilioNumber.sid,
         phone_number: twilioNumber.phone_number,
