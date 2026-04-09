@@ -893,6 +893,7 @@ export type Database = {
           id: string
           phone_number: string
           session_id: string | null
+          setup_completed: boolean | null
           status: string | null
           twilio_cost_monthly: number
           twilio_sid: string
@@ -907,6 +908,7 @@ export type Database = {
           id?: string
           phone_number: string
           session_id?: string | null
+          setup_completed?: boolean | null
           status?: string | null
           twilio_cost_monthly: number
           twilio_sid: string
@@ -921,6 +923,7 @@ export type Database = {
           id?: string
           phone_number?: string
           session_id?: string | null
+          setup_completed?: boolean | null
           status?: string | null
           twilio_cost_monthly?: number
           twilio_sid?: string
