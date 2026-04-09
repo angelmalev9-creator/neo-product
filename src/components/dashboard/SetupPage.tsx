@@ -111,7 +111,7 @@ const SetupPage = ({
       </div>
 
       {/* Section content */}
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain space-y-4">
         {activeSection === 'training' && (
           <div className="space-y-4">
             {/* Website URL + Company */}
@@ -138,7 +138,7 @@ const SetupPage = ({
               </div>
             </div>
 
-            {/* Knowledge Base (previously "Данни") */}
+            {/* Knowledge Base */}
             <div className="rounded-2xl border border-border/10 bg-card/60  p-5">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
@@ -146,7 +146,7 @@ const SetupPage = ({
                 </div>
                 <div className="flex-1">
                   <h2 className="text-sm font-semibold text-foreground">Данни от сайта</h2>
-                  <p className="text-[11px] text-muted-foreground">Информацията, която NEO знае за вас</p>
+                  <p className="text-[11px] text-muted-foreground">Информацията, която NEO знае за Вас</p>
                 </div>
                 {demoSession && <CheckCircle2 className="w-4 h-4 text-[hsl(var(--neo-success))]" />}
               </div>
@@ -161,6 +161,22 @@ const SetupPage = ({
                 onCompanyNameExtracted={(name) => setCompanyName(name)}
               />
             </div>
+
+            {/* Next step CTA */}
+            {demoSession && (
+              <button
+                onClick={() => onTabChange('neo-test')}
+                className="w-full rounded-xl border border-primary/15 bg-primary/5 hover:bg-primary/10 p-4 flex items-center gap-3 transition-all group"
+              >
+                <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+                  <ArrowRight className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-[13px] font-medium text-foreground group-hover:text-primary transition-colors">Следваща стъпка: Тествайте NEO</p>
+                  <p className="text-[11px] text-muted-foreground">Чуйте как NEO отговаря на клиентите Ви</p>
+                </div>
+              </button>
+            )}
           </div>
         )}
 
@@ -171,7 +187,6 @@ const SetupPage = ({
         {activeSection === 'email' && (
           <EmailLogsSection emailConnected={emailConnected} userId={userId} />
         )}
-
       </div>
     </div>
   );
