@@ -550,14 +550,14 @@
 
 /* ── Consistent Section Spacing ── */
 .neo-section-spacing {
-  padding-top: clamp(2.5rem, 5vw, 6rem);
-  padding-bottom: clamp(2.5rem, 5vw, 6rem);
+  padding-top: clamp(2rem, 4vw, 4rem);
+  padding-bottom: clamp(2rem, 4vw, 4rem);
 }
 
 @media (max-width: 768px) {
   .neo-section-spacing {
-    padding-top: clamp(2rem, 8vw, 3rem);
-    padding-bottom: clamp(2rem, 8vw, 3rem);
+    padding-top: clamp(1.5rem, 6vw, 2.5rem);
+    padding-bottom: clamp(1.5rem, 6vw, 2.5rem);
   }
 }
 
