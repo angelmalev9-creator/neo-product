@@ -10,7 +10,7 @@ const stats = [
 
 const TrustedCompaniesMarquee = () => {
   return (
-    <div className="mt-10 sm:mt-14">
+    <div className="mt-6 sm:mt-8">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-5 max-w-3xl mx-auto">
         {stats.map((stat, i) => (
           <motion.div
