@@ -79,10 +79,45 @@ const getCompactEmailPreview = (value: string | null) => {
     .replace(/<[^>]*>/g, ' ')
     .replace(/&nbsp;/g, ' ')
     .replace(/\s+/g, ' ')
+    // Remove technical prefixes and metadata patterns
+    .replace(/NEO Lead Alert[:\s]*/gi, '')
+    .replace(/Ново запитване[:\s]*/gi, '')
+    .replace(/Lead\s*summary[:\s]*/gi, '')
+    .replace(/Стандартен[:\s]*-?\s*S\d+/gi, '')
+    .replace(/\bfollow[-\s]?up\b/gi, '')
+    .replace(/\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g, '') // remove emails from preview
+    .replace(/\s+/g, ' ')
     .trim();
 
-  if (!clean) return 'Няма кратко съдържание';
+  if (!clean || clean.length < 5) return 'Имейл изпратен към клиента';
   return clean.length > 140 ? `${clean.slice(0, 140).trim()}…` : clean;
+};
+
+const INTENT_LABELS: Record<string, string> = {
+  lead_notification: 'Уведомление за клиент',
+  follow_up: 'Последващ контакт',
+  booking_confirmation: 'Потвърждение на резервация',
+  welcome: 'Добре дошли',
+  inquiry_response: 'Отговор на запитване',
+  thank_you: 'Благодарност',
+};
+
+const translateIntent = (intent: string | null) => {
+  if (!intent) return null;
+  return INTENT_LABELS[intent] || intent.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+};
+
+const translateSubject = (subject: string) => {
+  if (!subject) return 'Имейл от NEO';
+  // Clean common English patterns
+  return subject
+    .replace(/^NEO Lead Alert[:\s]*/i, 'Нов клиент: ')
+    .replace(/New lead captured/i, 'Нов заинтересован клиент')
+    .replace(/Lead notification/i, 'Уведомление за клиент')
+    .replace(/Follow[\s-]?up/i, 'Последващ контакт')
+    .replace(/Booking confirmation/i, 'Потвърждение на резервация')
+    .replace(/through NEO/i, 'чрез NEO')
+    .replace(/via NEO/i, 'чрез NEO');
 };
 
 const ActivityLog = ({ userId }: ActivityLogProps) => {
@@ -398,9 +433,9 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                                     {email.sent_at ? new Date(email.sent_at).toLocaleString('bg-BG', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
                                   </span>
                                 </div>
-                                <p className="text-xs font-medium text-foreground">{email.subject}</p>
+                                <p className="text-xs font-medium text-foreground">{translateSubject(email.subject)}</p>
                                 <p className="text-[10px] text-muted-foreground mt-0.5 break-all">До: {email.recipient_email}</p>
-                                {email.intent && <p className="text-[10px] text-muted-foreground/70 mt-0.5">Тип: {email.intent}</p>}
+                                {email.intent && <p className="text-[10px] text-muted-foreground/70 mt-0.5">{translateIntent(email.intent)}</p>}
                                 <p className="text-[10px] text-foreground/70 mt-1 leading-relaxed break-words">{getCompactEmailPreview(email.body)}</p>
                               </div>
                             ))}
