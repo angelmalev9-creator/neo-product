@@ -12,6 +12,7 @@ import NeoPage from '@/components/dashboard/NeoPage';
 import ResultsPage from '@/components/dashboard/ResultsPage';
 import SettingsPage from '@/components/dashboard/SettingsPage';
 import WidgetPage from '@/components/dashboard/WidgetPage';
+import PhoneSection from '@/components/dashboard/PhoneSection';
 
 const TIER_NAMES: Record<string, string> = {
   starter: 'NEO Старт',
@@ -216,6 +217,10 @@ const Dashboard = () => {
 
     if (activeTab === 'widget') {
       return <WidgetPage userId={user?.id || ''} companyName={companyName} logoUrl={logoUrl} setLogoUrl={setLogoUrl} />;
+    }
+
+    if (activeTab === 'phone') {
+      return <PhoneSection userId={user?.id || ''} sessionId={demoSession?.id} />;
     }
 
     if (activeTab.startsWith('settings')) {
