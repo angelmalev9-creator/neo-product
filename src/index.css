@@ -243,6 +243,16 @@
 }
 
 @layer components {
+  /* ── Dashboard Glass Card ── */
+  .glass-card {
+    @apply rounded-2xl border overflow-hidden;
+    background: hsl(240 30% 11% / 0.6);
+    border-color: hsl(0 0% 100% / 0.06);
+  }
+  .glass-card:hover {
+    border-color: hsl(0 0% 100% / 0.09);
+  }
+
   /* ── Performance: GPU-accelerated layers ── */
   .neo-gpu {
     will-change: transform;
