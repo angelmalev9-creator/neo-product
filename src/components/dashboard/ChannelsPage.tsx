@@ -1,22 +1,26 @@
 import { useState } from 'react';
-import ActivityLog from '@/components/dashboard/ActivityLog';
-import ConversationStats from '@/components/dashboard/ConversationStats';
+import WidgetPage from '@/components/dashboard/WidgetPage';
+import PhoneSection from '@/components/dashboard/PhoneSection';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { MessageSquare, BarChart3 } from 'lucide-react';
+import { Palette, Phone } from 'lucide-react';
 
-interface ConversationsPageProps {
+interface ChannelsPageProps {
   userId: string;
+  companyName: string;
+  logoUrl: string | null;
+  setLogoUrl: (url: string | null) => void;
+  sessionId?: string;
   section?: string;
 }
 
 const TABS = [
-  { id: 'log', label: 'Разговори', icon: MessageSquare },
-  { id: 'stats', label: 'Статистика', icon: BarChart3 },
+  { id: 'widget', label: 'Уиджет', icon: Palette },
+  { id: 'phone', label: 'Телефон', icon: Phone },
 ];
 
-const ConversationsPage = ({ userId, section }: ConversationsPageProps) => {
-  const [tab, setTab] = useState(section === 'stats' ? 'stats' : 'log');
+const ChannelsPage = ({ userId, companyName, logoUrl, setLogoUrl, sessionId, section }: ChannelsPageProps) => {
+  const [tab, setTab] = useState(section === 'phone' ? 'phone' : 'widget');
 
   return (
     <div className="h-full flex flex-col p-4 lg:p-6 overflow-hidden overflow-x-hidden">
@@ -48,12 +52,15 @@ const ConversationsPage = ({ userId, section }: ConversationsPageProps) => {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain rounded-2xl border border-border/10 bg-card/60 p-4 lg:p-5"
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain"
       >
-        {tab === 'log' ? <ActivityLog userId={userId} /> : <ConversationStats userId={userId} />}
+        {tab === 'widget'
+          ? <WidgetPage userId={userId} companyName={companyName} logoUrl={logoUrl} setLogoUrl={setLogoUrl} />
+          : <PhoneSection userId={userId} sessionId={sessionId} />
+        }
       </motion.div>
     </div>
   );
 };
 
-export default ConversationsPage;
+export default ChannelsPage;
