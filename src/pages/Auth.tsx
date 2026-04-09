@@ -230,12 +230,7 @@ const Auth = () => {
         const { error } = await signUp(email, password, fullName);
         if (error) {
           if (error.message.includes('already registered')) {
-            toast({
-              title: 'Грешка при регистрация',
-              description: 'Този имейл вече е регистриран. Влезте с паролата си.',
-              variant: 'destructive',
-            });
-            setIsLogin(true);
+            setErrors((prev) => ({ ...prev, email: 'already_registered' }));
           } else {
             toast({
               title: 'Грешка',
@@ -251,7 +246,6 @@ const Auth = () => {
             });
             navigate('/dashboard');
           }
-          // If selectedPlan exists, useEffect will handle redirect to checkout
         }
       }
     } catch (err) {
