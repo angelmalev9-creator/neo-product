@@ -194,12 +194,11 @@ const WidgetContent = () => (
           </div>
         </div>
         <div className="flex items-center gap-[2px] flex-1 h-4">
-          {Array.from({ length: 14 }).map((_, i) => (
-            <motion.div
+          {[3, 8, 5, 12, 7, 14, 6, 10, 4, 11, 8, 5, 9, 6].map((h, i) => (
+            <div
               key={i}
               className="w-[1.5px] rounded-full bg-primary/35"
-              animate={{ height: [2, Math.random() * 10 + 4, 2] }}
-              transition={{ duration: 0.8 + Math.random() * 0.4, repeat: Infinity, delay: i * 0.04, ease: 'easeInOut' }}
+              style={{ height: `${h}px` }}
             />
           ))}
         </div>
