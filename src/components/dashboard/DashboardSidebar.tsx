@@ -47,10 +47,14 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'neo-test', label: 'Тествай', icon: Mic },
     ],
   },
-  { id: 'widget', label: 'Уиджет', icon: Palette, step: '3' },
-  { id: 'phone', label: 'Телефон', icon: Phone, step: '4' },
+  {
+    id: 'channels', label: 'Канали', icon: Palette, step: '3',
+    children: [
+      { id: 'channels-widget', label: 'Уиджет', icon: Palette },
+      { id: 'channels-phone', label: 'Телефон', icon: Phone },
+    ],
+  },
   { id: 'conv-diary', label: 'Разговори', icon: MessageSquare },
-  { id: 'results-stats', label: 'Статистика', icon: BarChart3 },
   {
     id: 'settings-group', label: 'Акаунт', icon: Settings,
     children: [

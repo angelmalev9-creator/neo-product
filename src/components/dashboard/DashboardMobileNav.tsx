@@ -1,5 +1,5 @@
 import {
-  Home, Brain, MessageSquare, Mic, BarChart3,
+  Home, Brain, MessageSquare, Mic,
   Settings, Sun, Moon, Phone,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -15,9 +15,8 @@ const BOTTOM_TABS = [
   { id: 'home', label: 'Начало', icon: Home },
   { id: 'setup-training', label: 'Обучение', icon: Brain },
   { id: 'neo-test', label: 'NEO', icon: Mic },
-  { id: 'phone', label: 'Телефон', icon: Phone },
+  { id: 'channels-widget', label: 'Канали', icon: Phone },
   { id: 'conv-diary', label: 'Чат', icon: MessageSquare },
-  { id: 'results-stats', label: 'Данни', icon: BarChart3 },
   { id: 'settings-plan', label: 'Акаунт', icon: Settings },
 ];
 
@@ -26,9 +25,8 @@ const isTabActive = (activeTab: string, tabId: string) => {
   if (tabId === 'setup-training') return activeTab.startsWith('setup');
   if (tabId === 'conv-diary') return activeTab.startsWith('conv');
   if (tabId === 'neo-test') return activeTab.startsWith('neo');
-  if (tabId === 'results-stats') return activeTab.startsWith('results');
-  if (tabId === 'phone') return activeTab === 'phone';
-  if (tabId === 'settings-plan') return activeTab.startsWith('settings') || activeTab === 'widget';
+  if (tabId === 'channels-widget') return activeTab.startsWith('channels');
+  if (tabId === 'settings-plan') return activeTab.startsWith('settings');
   return false;
 };
 
