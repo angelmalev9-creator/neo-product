@@ -42,7 +42,7 @@ const AnimatedBackground = () => {
           const dy = nodes[i].y - nodes[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (dist < CONNECTION_DIST) {
-            const opacity = (1 - dist / CONNECTION_DIST) * 0.12;
+            const opacity = (1 - dist / CONNECTION_DIST) * 0.25;
             ctx.beginPath();
             ctx.moveTo(nodes[i].x, nodes[i].y);
             ctx.lineTo(nodes[j].x, nodes[j].y);
@@ -57,7 +57,7 @@ const AnimatedBackground = () => {
       for (const node of nodes) {
         ctx.beginPath();
         ctx.arc(node.x, node.y, node.size, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(220, 60, 80, 0.2)';
+        ctx.fillStyle = 'rgba(220, 60, 80, 0.45)';
         ctx.fill();
       }
 
