@@ -75,15 +75,15 @@ const DashboardSidebar = ({ activeTab, onTabChange, onLogout, userEmail, subscri
   const isChildActive = (group: NavGroup) => group.children?.some((c) => c.id === activeTab);
 
   return (
-    <aside className="w-[240px] h-screen sticky top-0 border-r border-border/10 bg-sidebar flex flex-col">
+    <aside className="w-[260px] h-screen sticky top-0 border-r border-border/10 bg-sidebar flex flex-col">
       {/* Logo */}
-      <div className="p-5 pb-4">
+      <div className="px-6 pt-6 pb-5">
         <NeoLogo size="sm" />
       </div>
 
       {/* Plan badge */}
       {subscribed && (
-        <div className="mx-4 mb-3 px-3 py-2 rounded-xl bg-primary/8 border border-primary/15">
+        <div className="mx-5 mb-4 px-3.5 py-2.5 rounded-xl bg-primary/8 border border-primary/15">
           <div className="flex items-center gap-2">
             <Crown className="w-3.5 h-3.5 text-primary" />
             <span className="text-[11px] font-semibold text-primary">{tierName}</span>
@@ -92,7 +92,7 @@ const DashboardSidebar = ({ activeTab, onTabChange, onLogout, userEmail, subscri
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto scrollbar-thin">
+      <nav className="flex-1 px-4 space-y-1 overflow-y-auto scrollbar-thin">
         {NAV_GROUPS.map((group) => {
           const hasChildren = !!group.children?.length;
           const isOpen = openGroups[group.id] || isChildActive(group);
@@ -109,7 +109,7 @@ const DashboardSidebar = ({ activeTab, onTabChange, onLogout, userEmail, subscri
                   }
                 }}
                 className={cn(
-                  'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150',
+                  'w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-[15px] leading-6 font-medium transition-all duration-150',
                   !hasChildren && activeTab === group.id
                     ? 'bg-primary/12 text-primary'
                     : isActive && hasChildren
@@ -119,19 +119,19 @@ const DashboardSidebar = ({ activeTab, onTabChange, onLogout, userEmail, subscri
               >
                 {group.step ? (
                   <span className={cn(
-                    'w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0 border',
+                    'w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-bold shrink-0 border',
                     isActive ? 'bg-primary/15 border-primary/30 text-primary' : 'bg-muted/30 border-border/20 text-muted-foreground'
                   )}>
                     {group.step}
                   </span>
                 ) : (
-                  <group.icon className="w-4 h-4 shrink-0" />
+                  <group.icon className="w-5 h-5 shrink-0" strokeWidth={1.8} />
                 )}
                 <span className="flex-1 text-left">{group.label}</span>
-                {group.step && <group.icon className="w-3.5 h-3.5 shrink-0 opacity-50" />}
+                {group.step && <group.icon className="w-4 h-4 shrink-0 opacity-40" strokeWidth={1.8} />}
                 {hasChildren && (
                   <ChevronDown className={cn(
-                    'w-3.5 h-3.5 transition-transform duration-200',
+                    'w-4 h-4 transition-transform duration-200 opacity-50',
                     isOpen && 'rotate-180'
                   )} />
                 )}
@@ -139,19 +139,19 @@ const DashboardSidebar = ({ activeTab, onTabChange, onLogout, userEmail, subscri
 
               {/* Children */}
               {hasChildren && isOpen && (
-                <div className="ml-4 mt-0.5 space-y-0.5 border-l border-border/10 pl-3">
+                <div className="ml-5 mt-0.5 space-y-0.5 border-l border-border/10 pl-4">
                   {group.children!.map((child) => (
                     <button
                       key={child.id}
                       onClick={() => onTabChange(child.id)}
                       className={cn(
-                        'w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-150',
+                        'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] leading-5 font-medium transition-all duration-150',
                         activeTab === child.id
                           ? 'bg-primary/10 text-primary'
                           : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
                       )}
                     >
-                      <child.icon className="w-3.5 h-3.5 shrink-0" />
+                      <child.icon className="w-4 h-4 shrink-0" strokeWidth={1.8} />
                       {child.label}
                     </button>
                   ))}
@@ -163,24 +163,24 @@ const DashboardSidebar = ({ activeTab, onTabChange, onLogout, userEmail, subscri
       </nav>
 
       {/* User footer */}
-      <div className="p-4 border-t border-border/10 space-y-2">
+      <div className="px-5 py-4 border-t border-border/10 space-y-2.5">
         <div className="flex items-center justify-between">
-          <div className="px-1 truncate text-[11px] text-muted-foreground flex-1">{userEmail}</div>
+          <div className="px-1 truncate text-[12px] text-muted-foreground flex-1">{userEmail}</div>
           <button
             onClick={toggleTheme}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
             title={theme === 'dark' ? 'Светъл режим' : 'Тъмен режим'}
           >
-            {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
         </div>
         <Button
           variant="ghost"
           size="sm"
           onClick={onLogout}
-          className="w-full justify-start gap-2 text-xs text-muted-foreground hover:text-foreground h-8"
+          className="w-full justify-start gap-2.5 text-[13px] text-muted-foreground hover:text-foreground h-9"
         >
-          <LogOut className="w-3.5 h-3.5" />
+          <LogOut className="w-4 h-4" />
           Изход
         </Button>
       </div>

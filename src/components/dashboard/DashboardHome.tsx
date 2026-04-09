@@ -415,14 +415,19 @@ function MiniBar({ label, value, color }: { label: string; value: number; color:
     success: 'bg-[hsl(var(--neo-success))]',
     blue: 'bg-[hsl(var(--neo-blue))]',
   };
+  const pillColorMap = {
+    primary: 'bg-primary/15 text-primary',
+    success: 'bg-[hsl(var(--neo-success))]/15 text-[hsl(var(--neo-success))]',
+    blue: 'bg-[hsl(var(--neo-blue))]/15 text-[hsl(var(--neo-blue))]',
+  };
   return (
     <div>
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-[10px] text-muted-foreground">{label}</span>
-        <span className="text-[10px] font-semibold text-foreground">{value}%</span>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[11px] text-muted-foreground font-medium">{label}</span>
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${pillColorMap[color]}`}>{value}%</span>
       </div>
-      <div className="h-1.5 rounded-full bg-muted/30 overflow-hidden">
-        <div className={`h-full rounded-full ${colorMap[color]} transition-all duration-700`} style={{ width: `${Math.max(4, Math.min(value, 100))}%` }} />
+      <div className="h-2.5 rounded-lg bg-muted/20 overflow-hidden flex">
+        <div className={`h-full rounded-lg ${colorMap[color]} transition-all duration-700`} style={{ width: `${Math.max(4, Math.min(value, 100))}%` }} />
       </div>
     </div>
   );

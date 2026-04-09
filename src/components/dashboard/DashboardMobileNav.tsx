@@ -36,23 +36,23 @@ const DashboardMobileNav = ({ activeTab, onTabChange }: DashboardMobileNavProps)
   return (
     <>
       <header
-        className="lg:hidden sticky top-0 z-50 border-b border-border/10 bg-sidebar/95 backdrop-blur-xl px-4 py-2.5 flex items-center justify-between"
-        style={{ paddingTop: 'max(0.625rem, env(safe-area-inset-top))' }}
+        className="lg:hidden sticky top-0 z-50 border-b border-border/10 bg-sidebar/95 backdrop-blur-xl px-5 py-3 flex items-center justify-between"
+        style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
       >
         <NeoLogo size="sm" />
         <button
           onClick={toggleTheme}
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+          className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
         >
-          {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          {theme === 'dark' ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
         </button>
       </header>
 
       <nav
         className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-sidebar/95 backdrop-blur-xl border-t border-border/10"
-        style={{ paddingBottom: 'max(0.25rem, env(safe-area-inset-bottom))' }}
+        style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
       >
-        <div className="flex items-center justify-around px-1 pt-1.5 pb-1">
+        <div className="flex items-center justify-around px-2 pt-2 pb-1">
           {BOTTOM_TABS.map((tab) => {
             const active = isTabActive(activeTab, tab.id);
             return (
@@ -60,18 +60,18 @@ const DashboardMobileNav = ({ activeTab, onTabChange }: DashboardMobileNavProps)
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
                 className={cn(
-                  'flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-all min-w-0 flex-1',
+                  'flex flex-col items-center gap-1 px-2.5 py-1.5 rounded-xl transition-all min-w-0 flex-1',
                   active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                 )}
               >
                 <div className={cn(
-                  'w-8 h-8 rounded-xl flex items-center justify-center transition-all',
+                  'w-9 h-9 rounded-xl flex items-center justify-center transition-all',
                   active && 'bg-primary/15 scale-110'
                 )}>
-                  <tab.icon className="w-4.5 h-4.5" strokeWidth={active ? 2.5 : 2} />
+                  <tab.icon className="w-5 h-5" strokeWidth={active ? 2.2 : 1.8} />
                 </div>
                 <span className={cn(
-                  'text-[10px] leading-tight truncate max-w-full',
+                  'text-[11px] leading-tight truncate max-w-full',
                   active ? 'font-semibold' : 'font-medium'
                 )}>
                   {tab.label}

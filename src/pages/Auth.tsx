@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, ArrowLeft, Crown, CheckCircle } from 'lucide-react';
 import { z } from 'zod';
+import { cn } from '@/lib/utils';
 import NeoLogo from '@/components/ui/NeoLogo';
 
 const authSchema = z.object({
@@ -230,12 +231,7 @@ const Auth = () => {
         const { error } = await signUp(email, password, fullName);
         if (error) {
           if (error.message.includes('already registered')) {
-            toast({
-              title: 'Грешка при регистрация',
-              description: 'Този имейл вече е регистриран. Влезте с паролата си.',
-              variant: 'destructive',
-            });
-            setIsLogin(true);
+            setErrors((prev) => ({ ...prev, email: 'already_registered' }));
           } else {
             toast({
               title: 'Грешка',
@@ -251,7 +247,6 @@ const Auth = () => {
             });
             navigate('/dashboard');
           }
-          // If selectedPlan exists, useEffect will handle redirect to checkout
         }
       }
     } catch (err) {
@@ -434,32 +429,50 @@ const Auth = () => {
             // Regular Login/Register Form
             <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               {!isLogin && (
-                <div className="space-y-1.5 sm:space-y-2">
-                  <Label htmlFor="fullName" className="text-sm">Име</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName" className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Име</Label>
                   <Input
                     id="fullName"
                     type="text"
                     placeholder="Вашето име"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="bg-background/50"
+                    className="bg-background/50 h-12 text-[15px] rounded-xl border-2 border-border/30 focus-visible:border-primary"
                   />
                 </div>
               )}
 
-              <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="email" className="text-sm">Имейл</Label>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Имейл</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="you@example.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={`bg-background/50 ${errors.email ? 'border-destructive' : ''}`}
+                  onChange={(e) => { setEmail(e.target.value); setErrors((prev) => ({ ...prev, email: '' })); }}
+                  className={cn(
+                    'bg-background/50 h-12 text-[15px] rounded-xl border-2 transition-colors',
+                    errors.email === 'already_registered'
+                      ? 'border-[hsl(40,80%,50%)] focus-visible:ring-[hsl(40,80%,50%)]'
+                      : errors.email
+                        ? 'border-destructive'
+                        : 'border-border/30 focus-visible:border-primary'
+                  )}
                 />
-                {errors.email && (
-                  <p className="text-xs sm:text-sm text-destructive">{errors.email}</p>
-                )}
+                {errors.email === 'already_registered' ? (
+                  <p className="text-[13px] text-[hsl(40,70%,45%)]">
+                    Този имейл вече съществува.{' '}
+                    <button
+                      type="button"
+                      onClick={() => { setIsLogin(true); setErrors({}); }}
+                      className="underline font-medium hover:text-foreground transition-colors"
+                    >
+                      Влезте вместо това?
+                    </button>
+                  </p>
+                ) : errors.email ? (
+                  <p className="text-xs text-destructive">{errors.email}</p>
+                ) : null}
               </div>
 
               <div className="space-y-1.5 sm:space-y-2">
