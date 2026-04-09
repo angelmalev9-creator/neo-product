@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mic, MessageSquare, Calendar, Users, Brain, BarChart3, Globe, Clock, Zap, CheckCircle, Phone, Shield, Palette } from 'lucide-react';
+import { Mic, MessageSquare, Calendar, Users, Brain, BarChart3, Globe, Clock, Zap, CheckCircle } from 'lucide-react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -17,20 +17,6 @@ const features = [
       { icon: Globe, text: 'BG / EN / RU — автоматично' },
     ],
     liveLabel: 'Активно в реално време',
-  },
-  {
-    icon: Phone,
-    title: 'Телефонен рецепционист',
-    desc: 'NEO отговаря на обажданията на вашия бизнес номер.',
-    color: 'text-blue-400',
-    bg: 'bg-blue-500/10',
-    border: 'border-blue-500/20',
-    demo: [
-      { icon: Phone, text: 'Български номер (+359)' },
-      { icon: Mic, text: 'Естествен глас на български' },
-      { icon: Calendar, text: 'Записва часове по телефона' },
-    ],
-    liveLabel: 'Нова функция',
   },
   {
     icon: Calendar,
@@ -61,23 +47,37 @@ const features = [
     liveLabel: 'Автоматично събиране',
   },
   {
-    icon: Palette,
-    title: 'Пълна персонализация',
-    desc: 'Цвят, лого, стил — всичко е ваше.',
+    icon: Brain,
+    title: 'AI разбира като човек',
+    desc: 'Естествен разговор, не скрипт.',
     color: 'text-violet-400',
     bg: 'bg-violet-500/10',
     border: 'border-violet-500/20',
     demo: [
-      { icon: Palette, text: 'Избирате цветове и шрифтове' },
-      { icon: Brain, text: 'Настройвате тон и поведение' },
-      { icon: Users, text: 'Добавяте лого и бранд' },
+      { icon: Brain, text: 'Контекстно разбиране на заявки' },
+      { icon: Zap, text: 'Препоръчва подходящи услуги' },
+      { icon: Users, text: 'Персонализира отговорите' },
     ],
-    liveLabel: 'Пълен контрол',
+    liveLabel: 'Обучен на Вашия бизнес',
+  },
+  {
+    icon: MessageSquare,
+    title: 'Работи 24/7',
+    desc: 'Не пропуска нито едно запитване.',
+    color: 'text-cyan-400',
+    bg: 'bg-cyan-500/10',
+    border: 'border-cyan-500/20',
+    demo: [
+      { icon: Clock, text: '3:00 AM — отговаря мигновено' },
+      { icon: Clock, text: '14:00 — отговаря мигновено' },
+      { icon: Zap, text: 'Без прекъсвания, без почивки' },
+    ],
+    liveLabel: 'Винаги онлайн',
   },
   {
     icon: BarChart3,
-    title: 'Анализи в реално време',
-    desc: 'Дашборд с детайлна статистика.',
+    title: 'Пълен контрол',
+    desc: 'Дашборд с анализи в реално време.',
     color: 'text-pink-400',
     bg: 'bg-pink-500/10',
     border: 'border-pink-500/20',
@@ -87,20 +87,6 @@ const features = [
       { icon: Clock, text: 'Средно 45 сек. до първи отговор' },
     ],
     liveLabel: 'Данни в реално време',
-  },
-  {
-    icon: Shield,
-    title: 'GDPR и сигурност',
-    desc: 'GDPR-съвместим. Данните ви са криптирани и защитени. Никога не споделяме информация с трети страни.',
-    color: 'text-cyan-400',
-    bg: 'bg-cyan-500/10',
-    border: 'border-cyan-500/20',
-    demo: [
-      { icon: Shield, text: 'Криптиране от край до край' },
-      { icon: CheckCircle, text: 'GDPR пълно съответствие' },
-      { icon: Globe, text: 'Данни само в ЕС сървъри' },
-    ],
-    liveLabel: 'Винаги защитен',
   },
 ];
 
@@ -126,7 +112,7 @@ const FeaturesGrid = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start max-w-5xl mx-auto">
           {/* Left: Feature list */}
-          <div className="lg:col-span-2 grid grid-cols-2 lg:grid-cols-1 gap-1">
+          <div className="lg:col-span-2 space-y-1">
             {features.map((f, i) => (
               <motion.button
                 key={f.title}
@@ -143,9 +129,9 @@ const FeaturesGrid = () => {
                 <div className={`w-8 h-8 rounded-lg ${active === i ? f.bg : 'bg-card/60'} border ${active === i ? f.border : 'border-border/10'} flex items-center justify-center shrink-0 transition-all`}>
                   <f.icon className={`w-3.5 h-3.5 ${active === i ? f.color : 'text-foreground/40'} transition-colors`} strokeWidth={1.5} />
                 </div>
-                <div className="min-w-0">
+                <div>
                   <p className={`text-xs font-bold ${active === i ? 'text-foreground' : 'text-foreground/60'} transition-colors`}>{f.title}</p>
-                  <p className={`text-[10px] ${active === i ? 'text-foreground/50' : 'text-foreground/30'} transition-colors leading-snug truncate`}>{f.desc}</p>
+                  <p className={`text-[10px] ${active === i ? 'text-foreground/50' : 'text-foreground/30'} transition-colors leading-snug`}>{f.desc}</p>
                 </div>
               </motion.button>
             ))}
@@ -158,7 +144,8 @@ const FeaturesGrid = () => {
             transition={{ duration: 0.4, delay: 0.2 }}
             className="lg:col-span-3"
           >
-            <div className="relative rounded-2xl border border-border/15 bg-card/30 overflow-hidden min-h-[260px]">
+            <div className="relative rounded-2xl border border-border/15 bg-card/30  overflow-hidden min-h-[260px]">
+              {/* Header bar */}
               <div className="flex items-center gap-2 px-5 py-2.5 border-b border-border/10 bg-card/40">
                 <div className="flex gap-1">
                   <span className="w-2 h-2 rounded-full bg-primary/30" />
@@ -178,6 +165,7 @@ const FeaturesGrid = () => {
                 </AnimatePresence>
               </div>
 
+              {/* Content */}
               <div className="p-5 sm:p-6">
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -188,6 +176,7 @@ const FeaturesGrid = () => {
                     transition={{ duration: 0.2 }}
                     className="space-y-3"
                   >
+                    {/* Icon + Title */}
                     <div className="flex items-center gap-3 mb-5">
                       <div className={`w-10 h-10 rounded-xl ${features[active].bg} border ${features[active].border} flex items-center justify-center`}>
                         {(() => { const Icon = features[active].icon; return <Icon className={`w-5 h-5 ${features[active].color}`} strokeWidth={1.5} />; })()}
@@ -198,6 +187,7 @@ const FeaturesGrid = () => {
                       </div>
                     </div>
 
+                    {/* Demo steps — no emojis, proper icons */}
                     <div className="space-y-2">
                       {features[active].demo.map((step, j) => (
                         <motion.div
@@ -213,6 +203,7 @@ const FeaturesGrid = () => {
                       ))}
                     </div>
 
+                    {/* Live indicator */}
                     <div className="flex items-center gap-2 pt-1">
                       <div className={`w-1.5 h-1.5 rounded-full ${features[active].color.replace('text-', 'bg-')} animate-pulse`} />
                       <span className="text-[10px] text-foreground/30 font-medium">{features[active].liveLabel}</span>

@@ -282,22 +282,12 @@ const Pricing = () => {
                   {loadingPlan === plan.id ? t('pricing.loading') : plan.cta}
                 </Button>
 
-                {(plan.id === 'growth' || plan.id === 'empire') && (
-                  <p className="text-[10px] text-muted-foreground/50 mt-2 text-center flex items-center justify-center gap-1">
-                    <Phone className="w-3 h-3" /> Телефонен номер: +$1.20/мес
-                  </p>
-                )}
-
               </motion.div>
             );
           })}
         </div>
 
         <SpotsCounter />
-        
-        <p className="text-center text-xs text-muted-foreground/40 mt-6">
-          Всички планове включват 14 дни безплатен пробен период. Без кредитна карта.
-        </p>
       </div>
 
       {checkoutModal && (
