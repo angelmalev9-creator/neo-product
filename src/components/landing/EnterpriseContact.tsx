@@ -93,7 +93,7 @@ const EnterpriseContact = () => {
 
               {/* Right: Contact Form */}
               <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 flex flex-col justify-center lg:border-l lg:border-border/20 lg:pl-10">
-                <h3 className="text-lg font-black text-foreground mb-1">Контактна форма</h3>
+                <h3 className="font-black text-foreground mb-1 text-xl">Контактна форма</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
