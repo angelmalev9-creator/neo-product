@@ -10,6 +10,7 @@ import {
   Sparkles, Bot, UserCircle, Globe, TrendingUp, CalendarDays,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Conversation {
   id: string;
@@ -286,7 +287,14 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
               const hasClientData = !!(clientName || clientEmail || clientPhone);
 
               return (
-                <div key={convo.id} className="rounded-xl border border-border/40 bg-card/80 overflow-hidden transition-colors hover:border-primary/30">
+                <motion.div
+                  key={convo.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: Math.min(conversations.indexOf(convo) * 0.05, 0.3) }}
+                  whileHover={{ scale: 1.005, transition: { duration: 0.2 } }}
+                  className="rounded-xl border border-border/40 bg-card/80 overflow-hidden transition-colors hover:border-primary/30"
+                >
                   {/* Collapsed row */}
                   <div className="p-3 cursor-pointer flex items-center gap-3" onClick={() => toggleExpand(convo.id)}>
                     {/* Time */}
@@ -318,9 +326,15 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                     </div>
                   </div>
 
-                  {/* Expanded */}
+                  <AnimatePresence>
                   {isExpanded && (
-                    <div className="border-t border-border/30 bg-card/40">
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25, ease: 'easeInOut' }}
+                      className="border-t border-border/30 bg-card/40 overflow-hidden"
+                    >
                       {/* Top section: Client data + Summary side by side */}
                       <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {/* Client data */}
