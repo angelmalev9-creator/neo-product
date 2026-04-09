@@ -75,7 +75,7 @@ function bucketIndex(createdAt: string, filter: TimeFilter, rangeStart: string) 
 
 const fadeUp = {
   hidden: { opacity: 0, y: 10 },
-  visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.05, duration: 0.35, ease: [0.2, 0.8, 0.2, 1] } }),
+  visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.05, duration: 0.35, ease: "easeOut" as const } }),
 };
 
 const formatUsageMinutes = (v: number) => v <= 0 ? '0' : v < 10 ? v.toFixed(1) : v.toFixed(0);
