@@ -213,7 +213,7 @@ const Hero = () => {
   const { t } = useTranslation();
 
   return (
-    <section className="relative min-h-[calc(100svh-3rem)] flex items-center neo-section-spacing overflow-hidden px-4 sm:px-0">
+    <section className="relative min-h-[calc(100svh-5rem)] flex items-center neo-section-spacing overflow-hidden px-4 sm:px-0">
       <div className="absolute inset-0 neo-grid-bg opacity-5 pointer-events-none" />
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 relative z-10 w-full">
