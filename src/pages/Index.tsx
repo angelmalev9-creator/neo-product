@@ -14,7 +14,9 @@ const BusinessResults = lazy(() => import('@/components/landing/BusinessResults'
 const Comparison = lazy(() => import('@/components/landing/Comparison'));
 const Testimonials = lazy(() => import('@/components/landing/Testimonials'));
 const Pricing = lazy(() => import('@/components/landing/Pricing'));
+const FAQ = lazy(() => import('@/components/landing/FAQ'));
 const EnterpriseContact = lazy(() => import('@/components/landing/EnterpriseContact'));
+const FinalCTA = lazy(() => import('@/components/landing/FinalCTA'));
 const Footer = lazy(() => import('@/components/landing/Footer'));
 
 const Index = () => {
