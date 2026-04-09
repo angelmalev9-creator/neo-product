@@ -391,8 +391,8 @@ function StatCard({ i, icon: Icon, label, value, change, positive }: {
   i: number; icon: React.ElementType; label: string; value: string; change: string; positive: boolean;
 }) {
   return (
-    <motion.div custom={i} initial="hidden" animate="visible" variants={fadeUp}>
-      <div className="rounded-2xl border border-border/10 bg-card/60 p-3.5 sm:p-4 relative overflow-hidden h-full group hover:border-primary/15 transition-colors">
+    <motion.div custom={i} initial="hidden" animate="visible" variants={fadeUp} whileHover={{ y: -2, transition: { duration: 0.2 } }}>
+      <div className="rounded-2xl border border-border/10 bg-card/60 p-3.5 sm:p-4 relative overflow-hidden h-full group hover:border-primary/20 transition-all duration-200 hover:shadow-lg hover:shadow-primary/5">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] to-transparent pointer-events-none" />
         <div className="relative flex items-center justify-between mb-3">
           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-primary/8 flex items-center justify-center">
