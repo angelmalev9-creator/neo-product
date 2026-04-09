@@ -221,7 +221,14 @@ const PhoneSection = ({ userId, sessionId }: PhoneSectionProps) => {
                     >
                       <div className="text-left">
                         <p className="font-mono font-semibold text-sm">{n.phoneNumber}</p>
-                        <p className="text-xs text-muted-foreground">{n.locality || n.region || 'България'}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          {n.type && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                              {n.type === 'TollFree' ? 'Toll-Free' : n.type}
+                            </Badge>
+                          )}
+                          <span className="text-xs text-muted-foreground">{n.locality || n.region || 'България'}</span>
+                        </div>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-semibold">${n.customerMonthly}/мес</p>

@@ -21,32 +21,39 @@ serve(async (req) => {
 
     const auth = "Basic " + btoa(`${TWILIO_SID}:${TWILIO_AUTH}`);
 
-    // Try Local first, then Mobile
+    // Try TollFree, Local, then Mobile
     let numbers: any[] = [];
 
-    for (const type of ["Local", "Mobile"]) {
+    for (const type of ["TollFree", "Local", "Mobile"]) {
       const url = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/AvailablePhoneNumbers/BG/${type}.json?VoiceEnabled=true&PageSize=20`;
       const resp = await fetch(url, { headers: { Authorization: auth } });
       if (resp.ok) {
         const data = await resp.json();
-        numbers = numbers.concat(data.available_phone_numbers || []);
+        const typed = (data.available_phone_numbers || []).map((n: any) => ({ ...n, _type: type }));
+        numbers = numbers.concat(typed);
       }
       if (numbers.length >= 10) break;
     }
 
-    const BASE_MONTHLY = 1.00;
+    const TOLL_FREE_MONTHLY = 110.00;
+    const LOCAL_MONTHLY = 1.00;
     const MARKUP = 1.20;
 
-    const formatted = numbers.map((n: any) => ({
-      phoneNumber: n.phone_number,
-      friendlyName: n.friendly_name,
-      locality: n.locality || "",
-      region: n.region || "",
-      capabilities: n.capabilities,
-      twilioMonthly: BASE_MONTHLY,
-      customerMonthly: parseFloat((BASE_MONTHLY * MARKUP).toFixed(2)),
-      customerMonthlyBGN: parseFloat((BASE_MONTHLY * MARKUP * 1.80).toFixed(2)),
-    }));
+    const formatted = numbers.map((n: any) => {
+      const isTollFree = n._type === "TollFree";
+      const baseCost = isTollFree ? TOLL_FREE_MONTHLY : LOCAL_MONTHLY;
+      return {
+        phoneNumber: n.phone_number,
+        friendlyName: n.friendly_name,
+        locality: n.locality || "",
+        region: n.region || "",
+        type: n._type,
+        capabilities: n.capabilities,
+        twilioMonthly: baseCost,
+        customerMonthly: parseFloat((baseCost * MARKUP).toFixed(2)),
+        customerMonthlyBGN: parseFloat((baseCost * MARKUP * 1.80).toFixed(2)),
+      };
+    });
 
     return new Response(JSON.stringify({ numbers: formatted }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
