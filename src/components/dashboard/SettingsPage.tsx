@@ -4,6 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Crown, User, CreditCard, Globe, Loader2, Save, Sparkles, Shield, Zap, ArrowUpRight } from 'lucide-react';
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -59,9 +60,21 @@ const SettingsPage = ({
 
   return (
     <div className="h-full flex flex-col p-4 lg:p-6 overflow-hidden">
-      <h1 className="text-lg font-bold text-foreground mb-3 shrink-0">Настройки</h1>
+      <motion.h1
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="text-lg font-bold text-foreground mb-3 shrink-0"
+      >
+        Настройки
+      </motion.h1>
 
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain space-y-4">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain space-y-4"
+      >
         {section === 'plan' && (
           <>
             {/* Plan card */}
@@ -178,7 +191,7 @@ const SettingsPage = ({
             </Button>
           </div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 };
