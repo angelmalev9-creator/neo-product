@@ -41,10 +41,28 @@ const getCompactEmailPreview = (value: string | null) => {
     .replace(/<[^>]*>/g, ' ')
     .replace(/&nbsp;/g, ' ')
     .replace(/\s+/g, ' ')
+    .replace(/NEO Lead Alert[:\s]*/gi, '')
+    .replace(/Lead\s*summary[:\s]*/gi, '')
+    .replace(/Стандартен[:\s]*-?\s*S\d+/gi, '')
+    .replace(/\bfollow[-\s]?up\b/gi, '')
+    .replace(/\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g, '')
+    .replace(/\s+/g, ' ')
     .trim();
 
-  if (!clean) return 'Няма кратко съдържание';
+  if (!clean || clean.length < 5) return 'Имейл изпратен към клиента';
   return clean.length > 110 ? `${clean.slice(0, 110).trim()}…` : clean;
+};
+
+const translateSubject = (subject: string) => {
+  if (!subject) return 'Имейл от NEO';
+  return subject
+    .replace(/^NEO Lead Alert[:\s]*/i, 'Нов клиент: ')
+    .replace(/New lead captured/i, 'Нов заинтересован клиент')
+    .replace(/Lead notification/i, 'Уведомление за клиент')
+    .replace(/Follow[\s-]?up/i, 'Последващ контакт')
+    .replace(/Booking confirmation/i, 'Потвърждение на резервация')
+    .replace(/through NEO/i, 'чрез NEO')
+    .replace(/via NEO/i, 'чрез NEO');
 };
 
 const EmailAutomation = () => {
@@ -494,7 +512,7 @@ const EmailAutomation = () => {
               {emailLogs.map((log) => (
                 <div key={log.id} className="flex items-start justify-between gap-3 p-3 rounded-lg bg-muted/20 overflow-hidden">
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{log.subject}</p>
+                    <p className="font-medium truncate">{translateSubject(log.subject)}</p>
                     <p className="text-sm text-muted-foreground break-all">{log.recipient_name || log.recipient_email}</p>
                     <p className="text-xs text-muted-foreground/80 mt-1 break-words">{getCompactEmailPreview(log.body)}</p>
                     <p className="text-[11px] text-muted-foreground mt-1">
