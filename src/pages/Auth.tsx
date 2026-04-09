@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, ArrowLeft, Crown, CheckCircle } from 'lucide-react';
 import { z } from 'zod';
+import { cn } from '@/lib/utils';
 import NeoLogo from '@/components/ui/NeoLogo';
 
 const authSchema = z.object({
