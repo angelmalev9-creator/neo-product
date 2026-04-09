@@ -302,11 +302,10 @@ const KnowledgeBaseEditor = ({ userId, currentSession, onSessionUpdate, onCompan
           </div>
 
           {currentSession.summary && !isEditing && (
-            <div className="bg-background/50 rounded-lg p-3 max-h-32 overflow-y-auto">
-              <p className="text-xs text-muted-foreground whitespace-pre-wrap">
-                {currentSession.summary.slice(0, 600)}
-                {currentSession.summary.length > 600 && '...'}
-              </p>
+            <div className="bg-background/50 rounded-lg p-3 max-h-48 overflow-y-auto">
+              <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-mono leading-relaxed break-words">
+                {currentSession.summary}
+              </pre>
             </div>
           )}
         </div>
@@ -315,18 +314,21 @@ const KnowledgeBaseEditor = ({ userId, currentSession, onSessionUpdate, onCompan
       {/* Fullscreen Edit Dialog */}
       <Dialog open={isEditing} onOpenChange={(open) => { if (!open) handleEditCancel(); }}>
         <DialogContent className="max-w-[95vw] w-[95vw] h-[90vh] max-h-[90vh] flex flex-col p-0 gap-0">
-          <DialogHeader className="px-5 py-4 border-b border-border/20 shrink-0">
-            <div className="flex items-center justify-between">
+          <DialogHeader className="px-4 sm:px-5 py-3 sm:py-4 border-b border-border/20 shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center">
-                  <FileText className="w-4.5 h-4.5 text-primary" />
+                <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                  <FileText className="w-4 h-4 text-primary" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <DialogTitle className="text-sm font-bold text-foreground">Редактиране на база знания</DialogTitle>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{currentSession?.url}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{currentSession?.url}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-[10px] text-muted-foreground tabular-nums">
+                  {editedSummary.length.toLocaleString()} символа • {editedSummary.split('\n').length} реда
+                </span>
                 <Button variant="ghost" size="sm" onClick={handleEditCancel} disabled={saving} className="text-xs gap-1.5 h-8">
                   <X className="w-3.5 h-3.5" /> Откажи
                 </Button>
@@ -336,12 +338,13 @@ const KnowledgeBaseEditor = ({ userId, currentSession, onSessionUpdate, onCompan
               </div>
             </div>
           </DialogHeader>
-          <div className="flex-1 min-h-0 p-4">
+          <div className="flex-1 min-h-0 p-2 sm:p-4">
             <Textarea
               value={editedSummary}
               onChange={(e) => setEditedSummary(e.target.value)}
-              className="w-full h-full resize-none text-sm bg-background/50 border-border/20 font-mono leading-relaxed"
+              className="w-full h-full resize-none text-[13px] sm:text-sm bg-background/50 border-border/20 font-mono leading-[1.7] tracking-wide p-4"
               placeholder="Въведете или редактирайте базата знания..."
+              style={{ tabSize: 2 }}
             />
           </div>
         </DialogContent>
