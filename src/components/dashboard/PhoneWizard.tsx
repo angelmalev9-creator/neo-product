@@ -262,9 +262,15 @@ export default function PhoneWizard({ userId, sessionId, activePhone, onComplete
                     </Button>
                   </>
                 ) : (
-                  <div className="text-center py-3">
-                    <p className="text-xs text-muted-foreground">Не успяхме да генерираме номер.</p>
-                    <Button variant="outline" size="sm" className="mt-2 h-7 text-xs" onClick={autoBuy}>Опитай отново</Button>
+                  <div className="text-center py-3 space-y-2">
+                    <AlertCircle className="w-5 h-5 text-destructive mx-auto" />
+                    <p className="text-xs text-muted-foreground">{buyError || 'Не успяхме да генерираме номер.'}</p>
+                    {!upgradeRequired && (
+                      <Button variant="outline" size="sm" className="mt-1 h-7 text-xs" onClick={autoBuy}>Опитай отново</Button>
+                    )}
+                    {upgradeRequired && (
+                      <a href="mailto:support@neo-assistant.com" className="text-xs text-primary underline">Свържете се с нас</a>
+                    )}
                   </div>
                 )}
               </div>
