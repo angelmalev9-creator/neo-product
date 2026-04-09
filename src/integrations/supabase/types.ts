@@ -289,6 +289,72 @@ export type Database = {
           },
         ]
       }
+      call_logs: {
+        Row: {
+          caller_number: string | null
+          customer_cost: number | null
+          direction: string | null
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          phone_number_id: string | null
+          session_id: string | null
+          started_at: string | null
+          status: string | null
+          transcript: string | null
+          twilio_call_sid: string | null
+          twilio_cost: number | null
+          user_id: string
+        }
+        Insert: {
+          caller_number?: string | null
+          customer_cost?: number | null
+          direction?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          phone_number_id?: string | null
+          session_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          transcript?: string | null
+          twilio_call_sid?: string | null
+          twilio_cost?: number | null
+          user_id: string
+        }
+        Update: {
+          caller_number?: string | null
+          customer_cost?: number | null
+          direction?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          phone_number_id?: string | null
+          session_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          transcript?: string | null
+          twilio_call_sid?: string | null
+          twilio_cost?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_logs_phone_number_id_fkey"
+            columns: ["phone_number_id"]
+            isOneToOne: false
+            referencedRelation: "phone_numbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "demo_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       captured_leads: {
         Row: {
           company: string | null
@@ -818,6 +884,59 @@ export type Database = {
           website_url?: string
         }
         Relationships: []
+      }
+      phone_numbers: {
+        Row: {
+          created_at: string | null
+          customer_price_monthly: number
+          friendly_name: string | null
+          id: string
+          phone_number: string
+          session_id: string | null
+          status: string | null
+          twilio_cost_monthly: number
+          twilio_sid: string
+          updated_at: string | null
+          user_id: string
+          webhook_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_price_monthly: number
+          friendly_name?: string | null
+          id?: string
+          phone_number: string
+          session_id?: string | null
+          status?: string | null
+          twilio_cost_monthly: number
+          twilio_sid: string
+          updated_at?: string | null
+          user_id: string
+          webhook_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_price_monthly?: number
+          friendly_name?: string | null
+          id?: string
+          phone_number?: string
+          session_id?: string | null
+          status?: string | null
+          twilio_cost_monthly?: number
+          twilio_sid?: string
+          updated_at?: string | null
+          user_id?: string
+          webhook_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_numbers_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "demo_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
