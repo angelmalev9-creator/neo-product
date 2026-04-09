@@ -2,13 +2,15 @@ import { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import {
-  Crown, Zap, ArrowRight,
+  Crown, Zap, ArrowRight, CheckCircle2, Circle,
   MessageCircle, UserCheck, CalendarCheck, TrendingUp, Clock,
+  Globe, Brain, Mic, Palette, Phone,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
 import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface DashboardHomeProps {
   subscribed: boolean;
@@ -99,8 +101,23 @@ const DashboardHome = ({
   const [totalBookings, setTotalBookings] = useState(0);
   const [chartFilter, setChartFilter] = useState<TimeFilter>('week');
   const [chartData, setChartData] = useState<{ label: string; conversations: number; clients: number }[]>([]);
+  const [hasSession, setHasSession] = useState(false);
+  const [hasWidget, setHasWidget] = useState(false);
 
   const getTodayStart = () => { const n = new Date(); n.setHours(0, 0, 0, 0); return n.toISOString(); };
+
+  useEffect(() => {
+    if (!userId || !subscribed) return;
+    // Check setup state
+    (async () => {
+      const [sessionRes, profileRes] = await Promise.all([
+        supabase.from('demo_sessions').select('id').eq('user_id', userId).eq('status', 'ready').limit(1),
+        supabase.from('profiles').select('widget_installed_at').eq('user_id', userId).single(),
+      ]);
+      setHasSession((sessionRes.data?.length ?? 0) > 0);
+      setHasWidget(!!profileRes.data?.widget_installed_at);
+    })();
+  }, [userId, subscribed]);
 
   const fetchTodayStats = async () => {
     if (!userId) return;
@@ -185,6 +202,19 @@ const DashboardHome = ({
     );
   }
 
+  // Determine setup state
+  const setupSteps = [
+    { id: 'train', label: 'Обучете NEO с Вашия сайт', description: 'Въведете URL и NEO ще научи всичко за бизнеса Ви', icon: Globe, done: hasSession, tab: 'setup-training' },
+    { id: 'test', label: 'Тествайте как звучи NEO', description: 'Чуйте жив разговор и проверете отговорите', icon: Mic, done: hasTestedNeo, tab: 'neo-test' },
+    { id: 'deploy', label: 'Добавете NEO към сайта Ви', description: 'Копирайте код за уиджет или свържете телефонен номер', icon: Palette, done: hasWidget, tab: 'channels-widget' },
+  ];
+  const completedSteps = setupSteps.filter(s => s.done).length;
+  const allDone = completedSteps === setupSteps.length;
+  const nextStep = setupSteps.find(s => !s.done);
+
+  // Show onboarding wizard if setup is not complete
+  const showOnboarding = !allDone && totalConversations === 0;
+
   const conversionRate = totalConversations > 0 ? Math.round((totalLeads / totalConversations) * 100) : 0;
   const bookingRate = totalConversations > 0 ? Math.round((totalBookings / totalConversations) * 100) : 0;
   const automationScore = Math.min(99, Math.max(12, Math.round((conversionRate * 0.45) + (bookingRate * 0.35) + ((100 - Math.min(usagePercent, 100)) * 0.2))));
@@ -197,8 +227,12 @@ const DashboardHome = ({
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="flex items-center justify-between">
           <div>
-            <h1 className="text-[18px] sm:text-[20px] font-semibold text-[hsl(0_0%_100%/0.92)] tracking-tight">Анализи</h1>
-            <p className="text-[11px] text-[hsl(0_0%_100%/0.35)] mt-0.5">Преглед на активността на NEO</p>
+            <h1 className="text-[18px] sm:text-[20px] font-semibold text-[hsl(0_0%_100%/0.92)] tracking-tight">
+              {showOnboarding ? 'Добре дошли в NEO' : 'Анализи'}
+            </h1>
+            <p className="text-[11px] text-[hsl(0_0%_100%/0.35)] mt-0.5">
+              {showOnboarding ? 'Настройте асистента си за 3 минути' : 'Преглед на активността на NEO'}
+            </p>
           </div>
           <motion.span
             initial={{ scale: 0.9, opacity: 0 }}
@@ -213,6 +247,91 @@ const DashboardHome = ({
             {isActive ? 'Online' : 'Offline'}
           </motion.span>
         </motion.div>
+
+        {/* Onboarding wizard */}
+        {showOnboarding && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.1 }}
+            className="glass-card p-4 sm:p-6 space-y-5"
+          >
+            {/* Progress */}
+            <div className="flex items-center gap-3">
+              <div className="flex gap-1.5 flex-1">
+                {setupSteps.map((step, i) => (
+                  <div key={i} className={cn('flex-1 h-2 rounded-full transition-all duration-500', step.done ? 'bg-primary' : 'bg-[hsl(0_0%_100%/0.06)]')} />
+                ))}
+              </div>
+              <span className="text-[11px] font-medium text-[hsl(0_0%_100%/0.45)]">{completedSteps}/{setupSteps.length}</span>
+            </div>
+
+            {/* Steps */}
+            <div className="space-y-2">
+              {setupSteps.map((step, i) => {
+                const isNext = nextStep?.id === step.id;
+                const StepIcon = step.icon;
+                return (
+                  <motion.button
+                    key={step.id}
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.15 + i * 0.08 }}
+                    onClick={() => onTabChange(step.tab)}
+                    className={cn(
+                      'w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl text-left transition-all duration-200',
+                      step.done
+                        ? 'bg-[#10b981]/5 border border-[#10b981]/15'
+                        : isNext
+                          ? 'bg-primary/8 border border-primary/20 hover:bg-primary/12 hover:border-primary/30'
+                          : 'bg-[hsl(0_0%_100%/0.02)] border border-[hsl(0_0%_100%/0.04)] opacity-50'
+                    )}
+                  >
+                    <div className={cn(
+                      'w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors',
+                      step.done ? 'bg-[#10b981]/15' : isNext ? 'bg-primary/15' : 'bg-[hsl(0_0%_100%/0.04)]'
+                    )}>
+                      {step.done
+                        ? <CheckCircle2 className="w-5 h-5 text-[#10b981]" />
+                        : <StepIcon className={cn('w-5 h-5', isNext ? 'text-primary' : 'text-[hsl(0_0%_100%/0.25)]')} />
+                      }
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          'text-[10px] font-bold rounded-full px-1.5 py-0.5',
+                          step.done ? 'bg-[#10b981]/15 text-[#10b981]' : isNext ? 'bg-primary/15 text-primary' : 'bg-[hsl(0_0%_100%/0.04)] text-[hsl(0_0%_100%/0.25)]'
+                        )}>
+                          {i + 1}
+                        </span>
+                        <p className={cn(
+                          'text-[13px] font-medium truncate',
+                          step.done ? 'text-[#10b981]' : isNext ? 'text-[hsl(0_0%_100%/0.92)]' : 'text-[hsl(0_0%_100%/0.35)]'
+                        )}>
+                          {step.label}
+                        </p>
+                      </div>
+                      <p className="text-[11px] text-[hsl(0_0%_100%/0.35)] mt-0.5 truncate">{step.description}</p>
+                    </div>
+                    {isNext && (
+                      <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center">
+                        <ArrowRight className="w-4 h-4 text-primary" />
+                      </div>
+                    )}
+                  </motion.button>
+                );
+              })}
+            </div>
+
+            {/* CTA */}
+            {nextStep && (
+              <Button onClick={() => onTabChange(nextStep.tab)} className="w-full sm:w-auto gap-2 h-10">
+                {nextStep.id === 'train' ? 'Започнете обучението' : nextStep.id === 'test' ? 'Тествайте NEO' : 'Добавете NEO към сайта'}
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            )}
+          </motion.div>
+        )}
 
         {/* Stat cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
@@ -340,6 +459,20 @@ const DashboardHome = ({
                 </p>
               )}
             </div>
+
+            {/* Quick actions when onboarding */}
+            {showOnboarding && nextStep && (
+              <button
+                onClick={() => onTabChange(nextStep.tab)}
+                className="glass-card p-4 text-left hover:border-primary/20 transition-all group"
+              >
+                <p className="text-[10px] uppercase tracking-[0.1em] text-primary/60 font-medium mb-1">Следваща стъпка</p>
+                <p className="text-[13px] font-medium text-[hsl(0_0%_100%/0.85)] group-hover:text-primary transition-colors">
+                  {nextStep.label}
+                </p>
+                <p className="text-[10px] text-[hsl(0_0%_100%/0.35)] mt-0.5">{nextStep.description}</p>
+              </button>
+            )}
           </motion.div>
         </div>
       </div>

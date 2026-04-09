@@ -39,6 +39,16 @@ const Dashboard = () => {
 
   useEffect(() => { if (!loading && !user) navigate('/auth'); }, [user, loading, navigate]);
 
+  // Listen for cross-component tab change events
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail) setActiveTab(detail);
+    };
+    window.addEventListener('neo-tab-change', handler);
+    return () => window.removeEventListener('neo-tab-change', handler);
+  }, []);
+
   useEffect(() => {
     if (user) { checkSubscription(); loadProfile(); loadUsage(); loadDemoSession(); }
   }, [user]);
