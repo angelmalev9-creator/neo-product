@@ -7,6 +7,7 @@ interface AvailableNumber {
   friendlyName: string;
   locality: string;
   region: string;
+  type?: string;
   customerMonthly: number;
   customerMonthlyBGN: number;
 }
