@@ -60,9 +60,13 @@ serve(async (req) => {
 
     if (!buyResp.ok) {
       const errData = await buyResp.json();
+      const msg = errData.message || errData.code || "Unknown error";
+      const isUpgradeNeeded = msg.toLowerCase().includes("upgrade");
       return new Response(JSON.stringify({
-        error: "Не успяхме да закупим номера",
-        details: errData.message || errData.code,
+        error: isUpgradeNeeded
+          ? "Twilio акаунтът е в пробен режим. Моля, ъпгрейднете го от console.twilio.com, за да можете да купувате номера."
+          : `Не успяхме да закупим номера: ${msg}`,
+        upgrade_required: isUpgradeNeeded,
       }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
