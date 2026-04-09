@@ -46,7 +46,7 @@ const HowItWorks = () => {
       className={`neo-section-spacing relative neo-section-hidden ${isVisible ? 'neo-section-visible' : ''}`}
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-14 sm:mb-16">
+        <div className="text-center mb-8 sm:mb-10">
           <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-primary text-xs font-semibold mb-5 uppercase tracking-[0.15em]">
             Как работи
           </span>
@@ -96,7 +96,7 @@ const HowItWorks = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={isVisible ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5, delay: 0.7 }}
-            className="mt-12 text-center sm:text-left sm:ml-20"
+            className="mt-8 text-center sm:text-left sm:ml-20"
           >
             <Button
               className="neo-btn-primary text-xs px-6 py-3 h-auto font-bold rounded-full group gap-2"

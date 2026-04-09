@@ -213,11 +213,11 @@ const Hero = () => {
   const { t } = useTranslation();
 
   return (
-    <section className="relative min-h-[calc(100svh-3rem)] flex items-center neo-section-spacing overflow-hidden px-4 sm:px-0">
+    <section className="relative min-h-[calc(100svh-5rem)] flex items-center neo-section-spacing overflow-hidden px-4 sm:px-0">
       <div className="absolute inset-0 neo-grid-bg opacity-5 pointer-events-none" />
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-center">
           {/* LEFT — Copy */}
           <div className="max-w-xl">
             <RatingBadge />
@@ -237,14 +237,14 @@ const Hero = () => {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="neo-subheading text-foreground/50 mb-7 max-w-md opacity-75"
+              className="neo-subheading text-foreground/50 mb-5 max-w-md opacity-75"
             >
               Отговаря на всеки клиент и не пропуска нито едно запитване — 24/7.
               <br />
               <span className="text-foreground/70 font-medium opacity-70">Готов за 5 минути. От 25 EUR/месец.</span>
             </motion.p>
 
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="flex flex-col sm:flex-row gap-2.5 mb-5">
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="flex flex-col sm:flex-row gap-2.5 mb-4">
               <Button
                 className="neo-btn-primary text-[13px] sm:text-xs px-5 py-3 sm:py-2.5 h-auto font-bold rounded-full group gap-1.5 w-full sm:w-auto"
                 onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
@@ -306,7 +306,7 @@ const Hero = () => {
         </div>
 
         {/* Trust Marquee */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.7 }} className="mt-8">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.7 }} className="mt-6">
           <TrustedCompaniesMarquee />
         </motion.div>
       </div>
