@@ -34,8 +34,8 @@ serve(async (req) => {
     const body = await req.json();
     const { phoneNumber, sessionId } = body;
 
-    if (!phoneNumber || !sessionId) {
-      return new Response(JSON.stringify({ error: "Missing phoneNumber or sessionId" }), {
+    if (!phoneNumber) {
+      return new Response(JSON.stringify({ error: "Missing phoneNumber" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
