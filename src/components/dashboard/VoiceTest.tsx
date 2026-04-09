@@ -230,8 +230,11 @@ const VoiceTest = ({
     if (!demoSession) return;
 
     const company = companyName || 'компанията';
-    // Gemini session handles knowledge injection via gemini-session edge function
-    const prompt = `TTS for ${company}`;
+    // Use custom prompt from profile if available, otherwise build a default
+    let prompt = customPrompt || promptTemplate || '';
+    if (!prompt) {
+      prompt = `Ти си NEO — AI гласов асистент на ${company}. Отговаряй кратко и професионално на български език.`;
+    }
     setSystemPrompt(prompt);
 
     prepareSession(prompt, company, demoSession.id).catch((err) => {
