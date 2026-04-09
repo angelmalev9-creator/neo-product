@@ -74,7 +74,7 @@ const Comparison = () => {
         <div className="text-center mt-8">
           <Button
             variant="ghost"
-            className="text-xs font-bold text-muted-foreground hover:text-foreground gap-1.5"
+            className="text-xs font-bold text-muted-foreground hover:text-foreground gap-1.5 w-full sm:w-auto"
             onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
           >
             Пресметнете колко спестявате <ArrowRight className="w-3.5 h-3.5" />

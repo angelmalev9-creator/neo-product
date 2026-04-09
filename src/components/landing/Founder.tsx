@@ -57,14 +57,14 @@ const Founder = () => {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
-                  <Button variant="outline" className="gap-2 rounded-xl border-border/30 hover:border-primary/30 h-11" asChild>
+                  <Button variant="outline" className="gap-2 rounded-xl border-border/30 hover:border-primary/30 h-11 w-full sm:w-auto" asChild>
                     <a href="mailto:support@neo-voice.ai">
                       <Mail className="w-4 h-4" />
                       Пишете ми директно
                     </a>
                   </Button>
                   <Button 
-                    className="neo-btn-primary gap-2 rounded-xl h-11"
+                    className="neo-btn-primary gap-2 rounded-xl h-11 w-full sm:w-auto"
                     onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
                   >
                     Опитайте NEO
