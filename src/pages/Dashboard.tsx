@@ -9,10 +9,8 @@ import DashboardHome from '@/components/dashboard/DashboardHome';
 import SetupPage from '@/components/dashboard/SetupPage';
 import ConversationsPage from '@/components/dashboard/ConversationsPage';
 import NeoPage from '@/components/dashboard/NeoPage';
-import ResultsPage from '@/components/dashboard/ResultsPage';
 import SettingsPage from '@/components/dashboard/SettingsPage';
-import WidgetPage from '@/components/dashboard/WidgetPage';
-import PhoneSection from '@/components/dashboard/PhoneSection';
+import ChannelsPage from '@/components/dashboard/ChannelsPage';
 
 const TIER_NAMES: Record<string, string> = {
   starter: 'NEO Старт',
@@ -180,7 +178,10 @@ const Dashboard = () => {
       );
     }
 
-    if (activeTab.startsWith('conv')) return <ConversationsPage userId={user?.id || ''} />;
+    if (activeTab.startsWith('conv')) {
+      const section = activeTab === 'conv-stats' ? 'stats' : 'log';
+      return <ConversationsPage userId={user?.id || ''} section={section} />;
+    }
 
     if (activeTab.startsWith('neo')) {
       const sectionMap: Record<string, string> = {
@@ -204,9 +205,18 @@ const Dashboard = () => {
       );
     }
 
-    if (activeTab.startsWith('results')) return <ResultsPage userId={user?.id || ''} />;
-    if (activeTab === 'widget') return <WidgetPage userId={user?.id || ''} companyName={companyName} logoUrl={logoUrl} setLogoUrl={setLogoUrl} />;
-    if (activeTab === 'phone') return <PhoneSection userId={user?.id || ''} sessionId={demoSession?.id} />;
+    if (activeTab.startsWith('channels')) {
+      return (
+        <ChannelsPage
+          userId={user?.id || ''}
+          companyName={companyName}
+          logoUrl={logoUrl}
+          setLogoUrl={setLogoUrl}
+          sessionId={demoSession?.id}
+          section={activeTab === 'channels-phone' ? 'phone' : 'widget'}
+        />
+      );
+    }
 
     if (activeTab.startsWith('settings')) {
       const sectionMap: Record<string, string> = {
