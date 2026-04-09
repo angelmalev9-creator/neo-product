@@ -35,7 +35,7 @@ const Comparison = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5 }}
-          className="max-w-2xl mx-auto rounded-2xl border border-border/15 bg-card/30 backdrop-blur-xl overflow-hidden"
+          className="max-w-2xl mx-auto rounded-2xl border border-border/15 bg-card/30  overflow-hidden"
         >
           {/* Header */}
           <div className="grid grid-cols-3 border-b border-border/10 bg-card/50">

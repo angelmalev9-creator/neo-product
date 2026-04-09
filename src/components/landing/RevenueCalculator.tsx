@@ -49,7 +49,7 @@ const RevenueCalculator = () => {
             transition={{ delay: 0.1 }}
             className="space-y-4"
           >
-            <div className="rounded-2xl border border-border/15 bg-card/30 backdrop-blur-xl overflow-hidden">
+            <div className="rounded-2xl border border-border/15 bg-card/30  overflow-hidden">
               <div className="px-5 py-3 border-b border-border/10 bg-card/40 flex items-center gap-2">
                 <TrendingDown className="w-4 h-4 text-primary" />
                 <span className="text-[10px] font-bold text-foreground/50 uppercase tracking-wider">Загуби без NEO</span>

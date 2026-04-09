@@ -40,7 +40,7 @@ const Navigation = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-4 lg:px-6 py-2 sm:py-2 lg:py-3">
       <div 
-        className={`mx-auto max-w-6xl border transition-all duration-500 rounded-full bg-background/85 backdrop-blur-2xl border-foreground/8 ${
+        className={`mx-auto max-w-6xl border transition-all duration-500 rounded-full bg-background/85 -2xl border-foreground/8 ${
           isScrolled 
             ? 'shadow-[0_4px_30px_hsl(0_0%_0%/0.5),0_0_60px_hsl(0_90%_58%/0.05)]' 
             : 'shadow-[0_2px_20px_hsl(0_0%_0%/0.3)]'
@@ -106,7 +106,7 @@ const Navigation = () => {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden mx-auto max-w-6xl mt-2 rounded-2xl bg-background/95 backdrop-blur-2xl border border-foreground/8 shadow-[0_8px_40px_hsl(0_0%_0%/0.6)] overflow-hidden">
+        <div className="md:hidden mx-auto max-w-6xl mt-2 rounded-2xl bg-background/95 -2xl border border-foreground/8 shadow-[0_8px_40px_hsl(0_0%_0%/0.6)] overflow-hidden">
           <div className="py-3 px-5">
             {navLinks.map((link) => (
               <button 

@@ -36,7 +36,7 @@ const WidgetPage = ({ userId, companyName, logoUrl, setLogoUrl }: WidgetPageProp
 
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain space-y-4">
         {/* Install code - compact */}
-        <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/8 to-card/60 backdrop-blur-sm p-4 flex items-center gap-4">
+        <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/8 to-card/60  p-4 flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
             <Code2 className="w-5 h-5 text-primary" />
           </div>
@@ -54,18 +54,18 @@ const WidgetPage = ({ userId, companyName, logoUrl, setLogoUrl }: WidgetPageProp
 
         {/* Avatar + Customizer side by side on desktop */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5">
+          <div className="rounded-2xl border border-border/10 bg-card/60  p-5">
             <h3 className="text-xs font-semibold text-foreground mb-3">Аватар на NEO</h3>
             <WidgetAvatarUpload userId={userId} currentAvatarUrl={logoUrl} onAvatarChange={setLogoUrl} />
           </div>
-          <div className="lg:col-span-2 rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5">
+          <div className="lg:col-span-2 rounded-2xl border border-border/10 bg-card/60  p-5">
             <h3 className="text-xs font-semibold text-foreground mb-3">Персонализиране</h3>
             <WidgetCustomizer userId={userId} companyName={companyName} initialConfig={null} logoUrl={logoUrl} />
           </div>
         </div>
 
         {/* Email Style Editor */}
-        <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5">
+        <div className="rounded-2xl border border-border/10 bg-card/60  p-5">
           <h3 className="text-xs font-semibold text-foreground mb-3">Стил на имейлите от NEO</h3>
           <EmailStyleEditor userId={userId} companyName={companyName} />
         </div>

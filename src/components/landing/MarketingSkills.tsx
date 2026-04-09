@@ -58,7 +58,7 @@ const MarketingSkills = () => {
               transition={{ duration: 0.4, delay: index * 0.05 }}
               className="group relative"
             >
-              <div className="relative p-4 sm:p-5 rounded-xl sm:rounded-2xl h-full transition-all duration-500 hover:scale-[1.03] bg-card/40 backdrop-blur-sm border border-border/20 hover:border-border/40 overflow-hidden">
+              <div className="relative p-4 sm:p-5 rounded-xl sm:rounded-2xl h-full transition-all duration-500 hover:scale-[1.03] bg-card/40  border border-border/20 hover:border-border/40 overflow-hidden">
                 {/* Top gradient line */}
                 <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r ${skill.color} opacity-40 group-hover:opacity-80 transition-opacity duration-500`} />
                 

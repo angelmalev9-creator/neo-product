@@ -78,7 +78,7 @@ const SettingsPage = ({
         {section === 'plan' && (
           <>
             {/* Plan card */}
-            <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/8 via-card/80 to-card/50 backdrop-blur-sm p-5 space-y-4 relative overflow-hidden">
+            <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/8 via-card/80 to-card/50  p-5 space-y-4 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-28 h-28 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
               <div className="flex items-start justify-between relative">
                 <div className="flex items-center gap-3">
@@ -126,7 +126,7 @@ const SettingsPage = ({
             </div>
 
             {subscribed && (
-              <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-4">
+              <div className="rounded-2xl border border-border/10 bg-card/60  p-4">
                 <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Какво включва</h3>
                 <div className="grid grid-cols-2 gap-1.5">
                   {[
@@ -147,7 +147,7 @@ const SettingsPage = ({
         )}
 
         {section === 'profile' && (
-          <div className="rounded-2xl border border-border/10 bg-card/60 backdrop-blur-sm p-5 space-y-5">
+          <div className="rounded-2xl border border-border/10 bg-card/60  p-5 space-y-5">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                 <User className="w-5 h-5 text-primary" />
