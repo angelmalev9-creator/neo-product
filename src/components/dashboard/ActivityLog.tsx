@@ -456,9 +456,10 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                           </div>
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   )}
-                </div>
+                  </AnimatePresence>
+                </motion.div>
               );
             })}
         </div>
