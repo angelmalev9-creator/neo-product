@@ -27,8 +27,16 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen text-foreground relative flex flex-col items-center" style={{ background: '#030014' }}>
+    <div className="min-h-screen text-foreground relative flex flex-col items-center">
+      {/* Interactive dot grid background with mouse repulsion */}
       <AnimatedBackground />
+
+      {/* Ambient gradients */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute inset-0 bg-background" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-[60vh] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,hsl(355_65%_52%/0.06),transparent_70%)]" />
+        <div className="absolute bottom-0 left-0 w-[60%] h-[40vh] bg-[radial-gradient(ellipse_80%_60%_at_0%_100%,hsl(350_55%_48%/0.03),transparent_60%)]" />
+      </div>
 
       <div className="neo-scaled-content pt-14 sm:pt-16 lg:pt-20 pb-16 sm:pb-12 w-full">
         <Navigation />
@@ -54,6 +62,7 @@ const Index = () => {
           <Footer />
         </Suspense>
       </div>
+
     </div>
   );
 };

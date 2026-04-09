@@ -2,149 +2,156 @@
 @tailwind components;
 @tailwind utilities;
 
-/* NEO AI — Premium Indigo Design System */
-/* Deep Space | Indigo | Violet */
+/* NEO AI — Dark Crimson Design System */
+/* Deep Obsidian | Dark Crimson | Warm Red */
 
 @layer base {
   :root {
-    /* Base: deep space */
-    --background: 260 100% 3%;
+    /* Base: deep obsidian */
+    --background: 252 100% 4%;
     --foreground: 0 0% 100%;
 
-    /* Card: glass surface */
-    --card: 240 20% 8%;
+    /* Card: richer surface */
+    --card: 240 32% 12%;
     --card-foreground: 240 8% 97%;
 
-    --popover: 240 20% 8%;
+    --popover: 240 32% 12%;
     --popover-foreground: 240 8% 97%;
 
-    /* PRIMARY: indigo */
-    --primary: 239 84% 67%;
+    /* PRIMARY: vivid crimson */
+    --primary: 355 82% 58%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary: deeper surface */
-    --secondary: 240 20% 12%;
+    --secondary: 240 30% 15%;
     --secondary-foreground: 240 8% 97%;
 
-    /* Muted */
-    --muted: 240 20% 13%;
-    --muted-foreground: 240 8% 55%;
+    /* Muted: warmer mid-tone */
+    --muted: 240 30% 16%;
+    --muted-foreground: 252 8% 62%;
 
-    /* ACCENT: violet */
-    --accent: 263 70% 50%;
+    /* ACCENT: rich deep red */
+    --accent: 356 76% 48%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 356 76% 48%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders */
-    --border: 240 10% 20%;
-    --input: 240 20% 12%;
-    --ring: 239 84% 67%;
+    /* Borders: more visible */
+    --border: 240 14% 34%;
+    --input: 240 30% 15%;
+    --ring: 355 82% 58%;
 
     --radius: 0.75rem;
 
-    /* NEO Brand Palette — indigo/violet */
-    --neo-blue: 239 84% 67%;
-    --neo-blue-glow: 263 70% 58%;
-    --neo-blue-dark: 239 70% 50%;
-    --neo-cyan: 263 70% 50%;
-    --neo-cyan-glow: 263 65% 65%;
-    --neo-indigo: 239 60% 45%;
-    --neo-purple: 263 60% 45%;
-    --neo-dark: 260 100% 3%;
-    --neo-dark-lighter: 240 20% 8%;
-    --neo-glass: 240 20% 12%;
-    --neo-glass-border: 240 10% 20%;
-    --neo-text-muted: 240 8% 55%;
+    /* NEO Brand Palette — saturated */
+    --neo-blue: 355 82% 58%;
+    --neo-blue-glow: 356 80% 68%;
+    --neo-blue-dark: 356 78% 44%;
+    --neo-cyan: 356 76% 48%;
+    --neo-cyan-glow: 356 78% 74%;
+    --neo-indigo: 356 78% 35%;
+    --neo-purple: 355 70% 38%;
+    --neo-dark: 252 100% 4%;
+    --neo-dark-lighter: 240 32% 12%;
+    --neo-glass: 240 30% 15%;
+    --neo-glass-border: 240 14% 34%;
+    --neo-text-muted: 252 8% 62%;
     --neo-text-bright: 240 8% 97%;
-    --neo-success: 160 84% 39%;
-    --neo-success-glow: 160 90% 48%;
+    --neo-success: 142 85% 52%;
+    --neo-success-glow: 142 92% 60%;
     --neo-warning: 45 100% 60%;
     --neo-gold: 40 100% 60%;
     --neo-orange: 20 100% 62%;
 
     /* Sidebar */
-    --sidebar-background: 240 20% 6%;
+    --sidebar-background: 240 32% 9%;
     --sidebar-foreground: 240 8% 97%;
-    --sidebar-primary: 239 84% 67%;
+    --sidebar-primary: 355 82% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 20% 12%;
+    --sidebar-accent: 240 30% 15%;
     --sidebar-accent-foreground: 240 8% 97%;
-    --sidebar-border: 240 10% 20%;
-    --sidebar-ring: 239 84% 67%;
+    --sidebar-border: 240 14% 34%;
+    --sidebar-ring: 355 82% 58%;
   }
 
   .light {
+    /* neutrals-3 */
     --background: 240 5% 96%;
-    --foreground: 260 100% 3%;
+    --foreground: 252 100% 4%;
+    /* neutrals-1 */
     --card: 0 0% 100%;
-    --card-foreground: 260 100% 3%;
+    --card-foreground: 252 100% 4%;
     --popover: 0 0% 100%;
-    --popover-foreground: 260 100% 3%;
-    --primary: 239 84% 67%;
+    --popover-foreground: 252 100% 4%;
+    /* primary-red-600 */
+    --primary: 355 64% 51%;
     --primary-foreground: 0 0% 100%;
+    /* neutrals-4 */
     --secondary: 240 4% 94%;
     --secondary-foreground: 249 22% 16%;
+    /* neutrals-5 */
     --muted: 240 4% 85%;
-    --muted-foreground: 240 9% 30%;
-    --accent: 263 70% 50%;
+    --muted-foreground: 252 9% 30%;
+    /* deep-red-600 */
+    --accent: 356 74% 40%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
+    --destructive: 356 74% 40%;
     --destructive-foreground: 0 0% 100%;
+    /* neutrals-6 */
     --border: 240 3% 76%;
     --input: 240 4% 91%;
-    --ring: 239 84% 67%;
-    --neo-blue: 239 84% 67%;
-    --neo-blue-glow: 263 70% 58%;
-    --neo-blue-dark: 239 70% 50%;
-    --neo-cyan: 263 70% 50%;
+    --ring: 355 64% 51%;
+    --neo-blue: 355 64% 51%;
+    --neo-blue-glow: 356 76% 65%;
+    --neo-blue-dark: 356 74% 40%;
+    --neo-cyan: 356 73% 44%;
     --neo-dark: 240 5% 96%;
     --neo-dark-lighter: 240 4% 94%;
     --neo-glass: 0 0% 100%;
     --neo-glass-border: 240 3% 76%;
-    --neo-text-muted: 240 9% 30%;
-    --neo-text-bright: 260 100% 3%;
-    --neo-success: 160 84% 39%;
+    --neo-text-muted: 252 9% 30%;
+    --neo-text-bright: 252 100% 4%;
+    --neo-success: 152 65% 35%;
     --neo-warning: 45 85% 42%;
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 260 100% 3%;
-    --sidebar-primary: 239 84% 67%;
+    --sidebar-foreground: 252 100% 4%;
+    --sidebar-primary: 355 64% 51%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 4% 94%;
     --sidebar-accent-foreground: 249 22% 16%;
     --sidebar-border: 240 3% 76%;
-    --sidebar-ring: 239 84% 67%;
+    --sidebar-ring: 355 64% 51%;
   }
 
   .dark {
-    --background: 260 100% 3%;
+    --background: 252 100% 4%;
     --foreground: 0 0% 100%;
-    --card: 240 20% 8%;
+    --card: 240 32% 12%;
     --card-foreground: 240 8% 97%;
-    --popover: 240 20% 8%;
+    --popover: 240 32% 12%;
     --popover-foreground: 240 8% 97%;
-    --primary: 239 84% 67%;
+    --primary: 355 82% 58%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 20% 12%;
+    --secondary: 240 30% 15%;
     --secondary-foreground: 240 8% 97%;
-    --muted: 240 20% 13%;
-    --muted-foreground: 240 8% 55%;
-    --accent: 263 70% 50%;
+    --muted: 240 30% 16%;
+    --muted-foreground: 252 8% 62%;
+    --accent: 356 76% 48%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
+    --destructive: 356 76% 48%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 10% 20%;
-    --input: 240 20% 12%;
-    --ring: 239 84% 67%;
-    --sidebar-background: 240 20% 6%;
+    --border: 240 14% 34%;
+    --input: 240 30% 15%;
+    --ring: 355 82% 58%;
+    --sidebar-background: 240 32% 9%;
     --sidebar-foreground: 240 8% 97%;
-    --sidebar-primary: 239 84% 67%;
+    --sidebar-primary: 355 82% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 20% 12%;
+    --sidebar-accent: 240 30% 15%;
     --sidebar-accent-foreground: 240 8% 97%;
-    --sidebar-border: 240 10% 20%;
-    --sidebar-ring: 239 84% 67%;
+    --sidebar-border: 240 14% 34%;
+    --sidebar-ring: 355 82% 58%;
   }
 }
 
@@ -166,12 +173,14 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-weight: 400;
-    font-size: 16px;
-    line-height: 1.6;
+    font-size: 13px;
     font-feature-settings: 'kern' 1, 'liga' 1;
-    background: hsl(var(--background));
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(355 78% 56% / 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 40% at 100% 80%, hsl(356 73% 44% / 0.04) 0%, transparent 40%),
+      hsl(var(--background));
     min-height: 100vh;
     overflow-x: hidden;
     max-width: 100vw;
@@ -179,8 +188,11 @@
 
   @media (max-width: 768px) {
     body {
-      font-size: 16px;
+      font-size: 15px;
       line-height: 1.55;
+      background:
+        radial-gradient(ellipse 120% 45% at 50% -15%, hsl(355 78% 56% / 0.10) 0%, transparent 50%),
+        hsl(var(--background));
     }
   }
 
@@ -192,35 +204,34 @@
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--primary) / 0.3);
+    background: hsl(var(--primary) / 0.4);
     border-radius: 10px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--primary) / 0.5);
+    background: hsl(var(--primary) / 0.7);
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Montserrat', system-ui, sans-serif;
     letter-spacing: -0.02em;
-    font-style: normal;
   }
 
   /* Desktop typography scale */
-  h1 { font-size: 48px; font-weight: 700; line-height: 1.1; letter-spacing: -0.03em; }
-  h2 { font-size: 36px; font-weight: 700; line-height: 1.15; }
+  h1 { font-size: 45px; font-weight: 700; line-height: 1.1; letter-spacing: -0.03em; }
+  h2 { font-size: 36px; font-weight: 500; line-height: 1.15; }
   h3 { font-size: 28px; font-weight: 700; line-height: 1.2; }
-  h4 { font-size: 22px; font-weight: 600; line-height: 1.3; }
-  h5 { font-size: 16px; font-weight: 500; line-height: 1.4; }
-  p { font-size: 16px; font-weight: 400; line-height: 1.6; }
+  h4 { font-size: 22px; font-weight: 500; line-height: 1.3; }
+  h5 { font-size: 15px; font-weight: 400; line-height: 1.4; }
+  p { font-size: 13px; font-weight: 400; line-height: 1.6; }
 
   /* Mobile typography scale */
   @media (max-width: 768px) {
-    h1 { font-size: 36px; font-weight: 700; line-height: 1.08; letter-spacing: -0.02em; }
-    h2 { font-size: 28px; font-weight: 700; line-height: 1.12; }
-    h3 { font-size: 22px; font-weight: 700; line-height: 1.2; }
-    h4 { font-size: 18px; font-weight: 600; line-height: 1.3; }
-    h5 { font-size: 14px; font-weight: 500; line-height: 1.4; }
-    p { font-size: 15px; font-weight: 400; line-height: 1.55; }
+    h1 { font-size: 38px; font-weight: 700; line-height: 1.08; letter-spacing: -0.01em; }
+    h2 { font-size: 28px; font-weight: 700; line-height: 1.12; letter-spacing: -0.01em; }
+    h3 { font-size: 20px; font-weight: 700; line-height: 1.2; }
+    h4 { font-size: 15px; font-weight: 500; line-height: 1.3; }
+    h5 { font-size: 13px; font-weight: 400; line-height: 1.4; }
+    p { font-size: 13px; font-weight: 400; line-height: 1.55; }
   }
 
   code, pre { font-family: 'JetBrains Mono', monospace; }
@@ -235,12 +246,11 @@
   /* ── Dashboard Glass Card ── */
   .glass-card {
     @apply rounded-2xl border overflow-hidden;
-    background: rgba(255, 255, 255, 0.03);
-    border-color: rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(16px);
+    background: hsl(240 30% 11% / 0.6);
+    border-color: hsl(0 0% 100% / 0.06);
   }
   .glass-card:hover {
-    border-color: rgba(255, 255, 255, 0.09);
+    border-color: hsl(0 0% 100% / 0.09);
   }
 
   /* ── Performance: GPU-accelerated layers ── */
@@ -250,89 +260,85 @@
     backface-visibility: hidden;
   }
 
-  /* ── Grid background ── */
+  /* ── Grid background — lightweight, no animation ── */
   .neo-grid-bg {
     background-image:
-      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-    background-size: 60px 60px;
+      linear-gradient(hsl(var(--neo-blue) / 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--neo-blue) / 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
     mask-image: radial-gradient(ellipse 70% 50% at 50% 50%, black 20%, transparent 75%);
   }
 
-  /* ── Glass effects ── */
+  /* ── Glass effects — simplified, no backdrop-blur for performance ── */
   .neo-glass {
     @apply border rounded-xl relative overflow-hidden;
-    background: rgba(255, 255, 255, 0.03);
-    border-color: rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(16px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(145deg, hsl(240 29% 12% / 0.96) 0%, hsl(252 100% 6% / 0.94) 100%);
+    border-color: hsl(240 10% 31% / 0.5);
+    box-shadow: 0 8px 32px hsl(252 100% 2% / 0.5), inset 0 1px 0 0 hsl(0 0% 100% / 0.04);
   }
   .neo-glass::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    background: linear-gradient(90deg, transparent, hsl(var(--neo-blue) / 0.25), hsl(var(--neo-cyan) / 0.15), transparent);
     pointer-events: none;
   }
 
   .neo-glass-subtle {
     @apply border rounded-lg;
-    background: rgba(255, 255, 255, 0.02);
-    border-color: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(145deg, hsl(240 27% 13% / 0.85) 0%, hsl(252 100% 6% / 0.7) 100%);
+    border-color: hsl(240 10% 31% / 0.4);
+    box-shadow: 0 4px 16px hsl(252 100% 2% / 0.3);
   }
 
   .neo-glass-premium {
     @apply border rounded-2xl relative overflow-hidden;
-    background: rgba(255, 255, 255, 0.03);
-    border-color: rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(20px);
-    box-shadow: 0 1px 0 0 rgba(255,255,255,0.05) inset, 0 16px 40px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(145deg, hsl(240 29% 12% / 0.8) 0%, hsl(240 29% 10% / 0.7) 100%);
+    border-color: hsl(0 0% 100% / 0.07);
+    box-shadow: 0 1px 0 0 hsl(0 0% 100% / 0.05) inset, 0 16px 40px hsl(252 100% 2% / 0.4);
   }
   .neo-glass-premium::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    background: linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.12), transparent);
     pointer-events: none;
   }
 
   .nav-glass-scrolled {
-    background: rgba(3, 0, 20, 0.95);
-    border-color: rgba(255, 255, 255, 0.06);
+    background: hsl(240 29% 10% / 0.97);
+    border-color: hsl(0 0% 100% / 0.06);
     border-radius: 9999px;
-    backdrop-filter: blur(20px);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 24px hsl(0 0% 0% / 0.4);
   }
 
-  /* ── Glow effects ── */
+  /* ── Glow effects — using box-shadow only ── */
   .neo-glow {
-    box-shadow: 0 0 20px hsl(var(--neo-blue) / 0.2), 0 0 40px hsl(var(--neo-blue) / 0.1), 0 16px 32px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 20px hsl(var(--neo-blue) / 0.3), 0 0 40px hsl(var(--neo-blue) / 0.15), 0 16px 32px hsl(252 100% 2% / 0.5);
     transition: box-shadow 0.3s ease, transform 0.3s ease;
   }
   .neo-glow:hover {
-    box-shadow: 0 0 30px hsl(var(--neo-blue) / 0.3), 0 0 60px hsl(var(--neo-blue) / 0.15), 0 24px 48px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 30px hsl(var(--neo-blue) / 0.4), 0 0 60px hsl(var(--neo-blue) / 0.2), 0 24px 48px hsl(252 100% 2% / 0.6);
     transform: translateY(-2px);
   }
 
   .neo-glow-soft {
-    box-shadow: 0 0 12px hsl(var(--neo-blue) / 0.15), 0 8px 24px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 12px hsl(var(--neo-blue) / 0.2), 0 8px 24px hsl(230 20% 2% / 0.3);
   }
 
   /* ── Text effects ── */
-  .neo-text-glow { text-shadow: 0 0 20px hsl(var(--neo-blue) / 0.4), 0 0 40px hsl(var(--neo-blue) / 0.15); }
+  .neo-text-glow { text-shadow: 0 0 20px hsl(var(--neo-blue) / 0.5), 0 0 40px hsl(var(--neo-blue) / 0.2); }
 
   .neo-gradient-text {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(239 84% 67%) 0%, hsl(263 70% 58%) 100%);
+    background-image: linear-gradient(135deg, hsl(var(--neo-blue)) 0%, hsl(var(--neo-cyan)) 50%, hsl(var(--neo-blue-glow)) 100%);
   }
 
   .neo-gradient-text-animated {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(239 84% 67%) 0%, hsl(263 70% 58%) 33%, hsl(239 84% 67%) 66%, hsl(263 70% 58%) 100%);
+    background-image: linear-gradient(135deg, hsl(var(--neo-blue)) 0%, hsl(var(--neo-cyan)) 33%, hsl(var(--neo-blue-glow)) 66%, hsl(var(--neo-blue)) 100%);
     background-size: 300% auto;
     animation: gradient-shift 6s ease infinite;
   }
@@ -340,13 +346,13 @@
 
   .neo-text-premium {
     @apply bg-clip-text text-transparent relative;
-    background-image: linear-gradient(90deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.9) 100%);
+    background-image: linear-gradient(90deg, hsl(var(--foreground)) 0%, hsl(var(--foreground) / 0.8) 50%, hsl(var(--foreground)) 100%);
     background-size: 200% auto;
     animation: text-shine 8s linear infinite;
   }
   @keyframes text-shine { 0%, 100% { background-position: 0% center; } 50% { background-position: 100% center; } }
 
-  /* ── Animations ── */
+  /* ── iOS-quality animations — spring easing (GPU composited) ── */
   .neo-fade-in { animation: neo-fade-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
   @keyframes neo-fade-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
@@ -356,9 +362,9 @@
   .neo-reveal { animation: neo-reveal 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
   @keyframes neo-reveal { from { opacity: 0; transform: translateY(16px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-  .pencil-underline-path { filter: drop-shadow(0 0 3px hsl(var(--primary) / 0.3)); }
+  .pencil-underline-path { filter: drop-shadow(0 0 3px hsl(var(--primary) / 0.4)); }
 
-  /* Section visibility */
+  /* Section visibility — instant, no heavy transitions */
   .neo-section-hidden, .neo-section-visible,
   .neo-section-flip-left, .neo-section-flip-left.neo-section-visible,
   .neo-section-flip-right, .neo-section-flip-right.neo-section-visible,
@@ -366,7 +372,7 @@
     opacity: 1; transform: none; filter: none; transition: none;
   }
 
-  /* Stagger */
+  /* Stagger — lightweight */
   .neo-stagger > * { animation: neo-fade-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; opacity: 0; }
   .neo-stagger > *:nth-child(1) { animation-delay: 0.04s; }
   .neo-stagger > *:nth-child(2) { animation-delay: 0.08s; }
@@ -376,12 +382,12 @@
   .neo-stagger > *:nth-child(6) { animation-delay: 0.24s; }
 
   .neo-hover-lift { transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
-  .neo-hover-lift:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4); }
+  .neo-hover-lift:hover { transform: translateY(-3px); box-shadow: 0 12px 28px hsl(230 20% 2% / 0.5); }
 
   .neo-pulse { animation: neo-pulse 3s ease-in-out infinite; }
   @keyframes neo-pulse {
-    0%, 100% { box-shadow: 0 0 16px hsl(var(--neo-blue) / 0.2); transform: scale(1); }
-    50% { box-shadow: 0 0 32px hsl(var(--neo-blue) / 0.35); transform: scale(1.01); }
+    0%, 100% { box-shadow: 0 0 16px hsl(var(--neo-blue) / 0.3); transform: scale(1); }
+    50% { box-shadow: 0 0 32px hsl(var(--neo-blue) / 0.5); transform: scale(1.01); }
   }
 
   .neo-float { animation: neo-float 6s ease-in-out infinite; }
@@ -390,25 +396,25 @@
   /* ── Cards ── */
   .neo-badge {
     @apply inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(12px);
+    background: linear-gradient(145deg, hsl(228 10% 12% / 0.98) 0%, hsl(230 12% 8% / 0.95) 100%);
+    border: 1px solid hsl(var(--border) / 0.4);
+    box-shadow: 0 4px 16px hsl(230 20% 2% / 0.4), inset 0 1px 0 0 hsl(0 0% 100% / 0.06);
   }
 
   .neo-feature-card {
     @apply neo-glass p-8 transition-all duration-300;
   }
   .neo-feature-card:hover {
-    border-color: rgba(99, 102, 241, 0.3);
+    @apply border-primary/30;
     transform: translateY(-6px);
-    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 30px rgba(99, 102, 241, 0.08);
+    box-shadow: 0 24px 48px hsl(230 20% 2% / 0.6), 0 0 30px hsl(var(--neo-blue) / 0.1);
   }
 
   .neo-spotlight-card { position: relative; overflow: hidden; }
   .neo-spotlight-card::after {
     content: '';
     position: absolute; inset: 0;
-    background: radial-gradient(500px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(99, 102, 241, 0.04), transparent 40%);
+    background: radial-gradient(500px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), hsl(var(--primary) / 0.04), transparent 40%);
     pointer-events: none; opacity: 0; transition: opacity 0.3s ease;
   }
   .neo-spotlight-card:hover::after { opacity: 1; }
@@ -417,37 +423,39 @@
     @apply neo-glass p-10 transition-all duration-300 relative;
   }
   .neo-pricing-card.featured {
-    border-color: rgba(99, 102, 241, 0.3);
-    box-shadow: 0 0 60px rgba(99, 102, 241, 0.15), 0 24px 48px rgba(0, 0, 0, 0.4);
+    @apply border-primary/50;
+    box-shadow: 0 0 60px hsl(var(--neo-blue) / 0.2), 0 24px 48px hsl(0 0% 0% / 0.5);
   }
 
   /* ── Input ── */
   .neo-input {
     @apply w-full px-5 py-4 rounded-xl text-foreground placeholder:text-muted-foreground/50 transition-colors duration-200;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1.5px solid rgba(255, 255, 255, 0.06);
+    background: hsl(230 20% 5%);
+    border: 1.5px solid hsl(var(--border) / 0.5);
+    font-family: 'Montserrat', system-ui, sans-serif;
+    font-weight: 500;
   }
   .neo-input:focus {
     @apply outline-none;
-    border-color: rgba(99, 102, 241, 0.5);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    border-color: hsl(var(--primary) / 0.6);
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
   }
 
-  /* ── Primary button — indigo ── */
+  /* ── Primary button — electric blue ── */
   .neo-btn-primary {
-    @apply rounded-xl font-bold text-white transition-all duration-200 relative overflow-hidden inline-flex items-center justify-center gap-2;
-    background: linear-gradient(135deg, hsl(239 84% 67%) 0%, hsl(263 70% 50%) 100%);
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+    @apply rounded-xl font-bold uppercase tracking-wider text-primary-foreground transition-all duration-200 relative overflow-hidden inline-flex items-center justify-center gap-2;
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--neo-blue-dark)) 100%);
+    box-shadow: 0 4px 20px hsl(var(--neo-blue) / 0.4), 0 2px 4px hsl(0 0% 0% / 0.3);
   }
   .neo-btn-primary::before {
     content: '';
     position: absolute; inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+    background: linear-gradient(135deg, hsl(0 0% 100% / 0.15) 0%, transparent 50%);
     opacity: 0; transition: opacity 0.2s;
   }
   .neo-btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 32px hsl(var(--neo-blue) / 0.5), 0 4px 12px hsl(0 0% 0% / 0.4);
   }
   .neo-btn-primary:hover::before { opacity: 1; }
 
@@ -456,7 +464,7 @@
 
   .neo-waveform-bar {
     animation: neo-waveform 0.5s ease-in-out infinite;
-    background: linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+    background: linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--neo-cyan)) 100%);
   }
   @keyframes neo-waveform { 0%, 100% { height: 8px; } 50% { height: 32px; } }
 
@@ -470,7 +478,7 @@
   .neo-call-btn::before {
     content: '';
     @apply absolute inset-0 rounded-full opacity-0 transition-opacity duration-200;
-    background: radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, transparent 60%);
+    background: radial-gradient(circle at center, hsl(0 0% 100% / 0.2) 0%, transparent 60%);
   }
   .neo-call-btn:hover::before { opacity: 1; }
 
@@ -480,63 +488,62 @@
   .neo-typing::after { content: '|'; animation: blink 1s step-end infinite; }
   @keyframes blink { 50% { opacity: 0; } }
 
-  /* ── Mobile overrides ── */
+  /* ── Mobile overrides — simplified glass ── */
   @media (max-width: 768px) {
     .neo-glass {
-      background: rgba(255, 255, 255, 0.03);
-      border-color: rgba(255, 255, 255, 0.06);
-      backdrop-filter: blur(12px);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      background: linear-gradient(145deg, hsl(228 14% 10% / 0.97) 0%, hsl(230 16% 5% / 0.95) 100%);
+      border-color: hsl(225 10% 20% / 0.5);
+      box-shadow: 0 4px 16px hsl(230 20% 2% / 0.4);
     }
     .neo-glass-subtle {
-      background: rgba(255, 255, 255, 0.02);
-      border-color: rgba(255, 255, 255, 0.04);
-      backdrop-filter: blur(8px);
+      background: linear-gradient(145deg, hsl(228 12% 10% / 0.92) 0%, hsl(230 14% 6% / 0.8) 100%);
+      border-color: hsl(225 10% 18% / 0.4);
+      box-shadow: 0 2px 8px hsl(230 20% 2% / 0.3);
     }
     .neo-glass-premium {
-      background: rgba(255, 255, 255, 0.03);
-      border-color: rgba(255, 255, 255, 0.06);
-      backdrop-filter: blur(16px);
+      background: linear-gradient(145deg, hsl(228 12% 12% / 0.85) 0%, hsl(230 14% 7% / 0.75) 100%);
+      border-color: hsl(0 0% 100% / 0.08);
+      box-shadow: 0 8px 24px hsl(230 20% 2% / 0.4);
     }
     .neo-gradient-text {
-      background-image: linear-gradient(135deg, hsl(239 84% 67%) 0%, hsl(263 70% 58%) 100%);
+      background-image: linear-gradient(135deg, hsl(var(--neo-blue)) 0%, hsl(var(--neo-cyan)) 60%, hsl(var(--neo-blue-glow)) 100%);
     }
   }
 }
 
   .neo-blur-layer {
     @apply absolute inset-0 pointer-events-none;
-    background: radial-gradient(ellipse 100% 50% at 50% 0%, rgba(99, 102, 241, 0.06) 0%, transparent 50%);
+    background: radial-gradient(ellipse 100% 50% at 50% 0%, hsl(var(--neo-blue) / 0.08) 0%, transparent 50%);
   }
 
 @layer utilities {
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-  .font-display { font-family: 'Inter', system-ui, -apple-system, sans-serif; font-weight: 700; letter-spacing: -0.02em; }
-  .font-headline { font-family: 'Inter', system-ui, -apple-system, sans-serif; font-weight: 700; letter-spacing: -0.02em; }
-  .font-sans { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-  .font-mono { font-family: 'Inter', system-ui, sans-serif; font-weight: 700; letter-spacing: -0.02em; }
+  .font-display { font-family: 'Montserrat', system-ui, -apple-system, sans-serif; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; }
+  .font-headline { font-family: 'Montserrat', system-ui, -apple-system, sans-serif; font-weight: 800; letter-spacing: 0.02em; }
+  .font-sans { font-family: 'Montserrat', system-ui, -apple-system, sans-serif; }
+  .font-mono { font-family: 'Montserrat', monospace; }
   .duration-400 { transition-duration: 400ms; }
   .text-balance { text-wrap: balance; }
   .gradient-border {
     background: linear-gradient(var(--background), var(--background)) padding-box,
-                linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent))) border-box;
+                linear-gradient(135deg, hsl(var(--primary)), hsl(var(--neo-cyan))) border-box;
     border: 1px solid transparent;
   }
-  .luxury-text { text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+  .luxury-text { text-transform: uppercase; letter-spacing: 0.15em; font-weight: 700; }
 }
 
-/* ── Global Layout System ── */
+/* ── Global Layout System — Compact desktop, readable mobile ── */
 .neo-scaled-content {
   max-width: 100vw;
   overflow-x: hidden;
-  font-size: 16px;
+  font-size: clamp(13px, 1.1vw, 14px);
 }
 
 @media (max-width: 768px) {
   .neo-scaled-content {
-    font-size: 16px;
+    font-size: 15px;
   }
 }
 
@@ -546,6 +553,7 @@
   overflow-x: hidden;
 }
 
+/* Snap sections */
 .neo-snap-section {
   scroll-snap-align: center;
   box-sizing: border-box;
@@ -557,54 +565,53 @@
 
 /* ── Consistent Section Spacing ── */
 .neo-section-spacing {
-  padding-top: clamp(3rem, 6vw, 6rem);
-  padding-bottom: clamp(3rem, 6vw, 6rem);
+  padding-top: clamp(2rem, 4vw, 4rem);
+  padding-bottom: clamp(2rem, 4vw, 4rem);
 }
 
 @media (max-width: 768px) {
   .neo-section-spacing {
-    padding-top: clamp(2rem, 6vw, 3rem);
-    padding-bottom: clamp(2rem, 6vw, 3rem);
+    padding-top: clamp(1.5rem, 6vw, 2.5rem);
+    padding-bottom: clamp(1.5rem, 6vw, 2.5rem);
   }
 }
 
 /* ── Fluid Typography Scale ── */
 .neo-heading-section {
-  font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
   line-height: 1.1;
   letter-spacing: -0.02em;
-  font-style: normal;
 }
 
 @media (max-width: 768px) {
   .neo-heading-section {
-    font-size: clamp(1.5rem, 6vw, 2rem);
+    font-size: clamp(1.4rem, 6vw, 1.75rem);
   }
 }
 
 .neo-subheading {
-  font-size: clamp(0.95rem, 1.2vw, 1.1rem);
+  font-size: clamp(0.875rem, 1.2vw, 1.05rem);
   line-height: 1.6;
 }
 
 @media (max-width: 768px) {
   .neo-subheading {
-    font-size: clamp(0.9rem, 3.8vw, 1rem);
+    font-size: clamp(0.875rem, 3.8vw, 1rem);
   }
 }
 
 .neo-body {
-  font-size: clamp(0.875rem, 1vw, 1rem);
+  font-size: clamp(0.8rem, 1vw, 0.9rem);
   line-height: 1.6;
 }
 
 @media (max-width: 768px) {
   .neo-body {
-    font-size: clamp(0.875rem, 3.5vw, 0.95rem);
+    font-size: clamp(0.825rem, 3.5vw, 0.9rem);
   }
 }
 
-/* ── Global refinements ── */
+/* ── iOS-quality global refinements ── */
 button, a, [role="button"] {
   transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease;
   cursor: pointer;
@@ -621,6 +628,7 @@ img, video {
   image-rendering: -webkit-optimize-contrast;
 }
 
+/* Smooth state transitions for all interactive elements */
 * {
   -webkit-backface-visibility: hidden;
 }
