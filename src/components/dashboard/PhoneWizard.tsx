@@ -61,28 +61,39 @@ export default function PhoneWizard({ userId, sessionId, activePhone, onComplete
   const [operator, setOperator] = useState('a1');
   const [showHelp, setShowHelp] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const [buyError, setBuyError] = useState<string | null>(null);
+  const [upgradeRequired, setUpgradeRequired] = useState(false);
 
   const autoBuy = useCallback(async () => {
     if (hasPhone || buying || boughtPhone) return;
     setBuying(true);
+    setBuyError(null);
     try {
       const { data: listData, error: listErr } = await supabase.functions.invoke('list-available-numbers');
       if (listErr) throw listErr;
       const numbers = listData?.numbers || [];
       if (!numbers.length) {
-        toast({ title: 'Няма налични номера', description: 'Моля, опитайте по-късно.', variant: 'destructive' });
+        setBuyError('Няма налични номера в момента. Моля, опитайте по-късно.');
         return;
       }
       const { data, error } = await supabase.functions.invoke('buy-phone-number', {
         body: { phoneNumber: numbers[0].phoneNumber, sessionId },
       });
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) {
+        if (data.upgrade_required) {
+          setUpgradeRequired(true);
+          setBuyError('Телефонната услуга все още не е активирана. Моля, свържете се с екипа на NEO за активиране.');
+        } else {
+          setBuyError(data.error);
+        }
+        return;
+      }
       setBoughtPhone(data.phone.phone_number);
       setBoughtPhoneId(data.phone.id);
       toast({ title: 'Номерът е готов!' });
     } catch (err: any) {
-      toast({ title: 'Грешка', description: err.message || 'Не успяхме да генерираме номер.', variant: 'destructive' });
+      setBuyError(err.message || 'Не успяхме да генерираме номер.');
     } finally {
       setBuying(false);
     }
