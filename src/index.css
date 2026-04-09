@@ -158,6 +158,8 @@
 @layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
   }
 
   html {
@@ -165,13 +167,16 @@
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Montserrat', system-ui, sans-serif;
+    font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-weight: 400;
     font-size: 13px;
+    font-feature-settings: 'kern' 1, 'liga' 1;
     background:
       radial-gradient(ellipse 80% 50% at 50% -20%, hsl(355 78% 56% / 0.08) 0%, transparent 50%),
       radial-gradient(ellipse 60% 40% at 100% 80%, hsl(356 73% 44% / 0.04) 0%, transparent 40%),
@@ -337,15 +342,15 @@
   }
   @keyframes text-shine { 0%, 100% { background-position: 0% center; } 50% { background-position: 100% center; } }
 
-  /* ── Lightweight animations — transform only (GPU composited) ── */
-  .neo-fade-in { animation: neo-fade-in 0.35s ease-out forwards; }
-  @keyframes neo-fade-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  /* ── iOS-quality animations — spring easing (GPU composited) ── */
+  .neo-fade-in { animation: neo-fade-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+  @keyframes neo-fade-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-  .neo-slide-up { animation: neo-slide-up 0.4s ease-out forwards; }
-  @keyframes neo-slide-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .neo-slide-up { animation: neo-slide-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+  @keyframes neo-slide-up { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-  .neo-reveal { animation: neo-reveal 0.4s ease-out forwards; }
-  @keyframes neo-reveal { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .neo-reveal { animation: neo-reveal 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+  @keyframes neo-reveal { from { opacity: 0; transform: translateY(16px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
   .pencil-underline-path { filter: drop-shadow(0 0 3px hsl(var(--primary) / 0.4)); }
 
@@ -366,8 +371,8 @@
   .neo-stagger > *:nth-child(5) { animation-delay: 0.20s; }
   .neo-stagger > *:nth-child(6) { animation-delay: 0.24s; }
 
-  .neo-hover-lift { transition: transform 0.25s ease, box-shadow 0.25s ease; }
-  .neo-hover-lift:hover { transform: translateY(-4px); box-shadow: 0 16px 32px hsl(230 20% 2% / 0.5); }
+  .neo-hover-lift { transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .neo-hover-lift:hover { transform: translateY(-3px); box-shadow: 0 12px 28px hsl(230 20% 2% / 0.5); }
 
   .neo-pulse { animation: neo-pulse 3s ease-in-out infinite; }
   @keyframes neo-pulse {
@@ -505,9 +510,9 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-  .font-display { font-family: 'Montserrat', system-ui, sans-serif; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; }
-  .font-headline { font-family: 'Montserrat', system-ui, sans-serif; font-weight: 800; letter-spacing: 0.02em; }
-  .font-sans { font-family: 'Montserrat', system-ui, sans-serif; }
+  .font-display { font-family: 'Montserrat', system-ui, -apple-system, sans-serif; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; }
+  .font-headline { font-family: 'Montserrat', system-ui, -apple-system, sans-serif; font-weight: 800; letter-spacing: 0.02em; }
+  .font-sans { font-family: 'Montserrat', system-ui, -apple-system, sans-serif; }
   .font-mono { font-family: 'Montserrat', monospace; }
   .duration-400 { transition-duration: 400ms; }
   .text-balance { text-wrap: balance; }
@@ -594,4 +599,26 @@
   .neo-body {
     font-size: clamp(0.825rem, 3.5vw, 0.9rem);
   }
+}
+
+/* ── iOS-quality global refinements ── */
+button, a, [role="button"] {
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease;
+  cursor: pointer;
+}
+button:active, a:active, [role="button"]:active {
+  transform: scale(0.97);
+}
+
+input, textarea, select {
+  transition: border-color 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+img, video {
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Smooth state transitions for all interactive elements */
+* {
+  -webkit-backface-visibility: hidden;
 }
