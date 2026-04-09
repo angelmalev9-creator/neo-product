@@ -217,7 +217,7 @@ const Hero = () => {
       <div className="absolute inset-0 neo-grid-bg opacity-5 pointer-events-none" />
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-center">
           {/* LEFT — Copy */}
           <div className="max-w-xl">
             <RatingBadge />
@@ -306,7 +306,7 @@ const Hero = () => {
         </div>
 
         {/* Trust Marquee */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.7 }} className="mt-8">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.7 }} className="mt-6">
           <TrustedCompaniesMarquee />
         </motion.div>
       </div>
