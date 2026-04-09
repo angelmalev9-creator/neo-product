@@ -99,7 +99,7 @@ const HowItWorks = () => {
             className="mt-8 text-center sm:text-left sm:ml-20"
           >
             <Button
-              className="neo-btn-primary text-xs px-6 py-3 h-auto font-bold rounded-full group gap-2"
+              className="neo-btn-primary text-xs px-6 py-3 h-auto font-bold rounded-full group gap-2 w-full sm:w-auto"
               onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
             >
               <Play className="w-3.5 h-3.5 fill-current" />

@@ -120,7 +120,7 @@ const UseCases = () => {
               <span className="text-sm font-bold text-neo-success">{current.savings}</span>
               <Button
                 variant="ghost"
-                className="text-xs font-bold text-primary gap-1.5 hover:bg-primary/10"
+                className="text-xs font-bold text-primary gap-1.5 hover:bg-primary/10 w-full sm:w-auto"
                 onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 Изпробвайте за Вашия бизнес <ArrowRight className="w-3.5 h-3.5" />

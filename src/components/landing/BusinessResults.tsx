@@ -73,7 +73,7 @@ const BusinessResults = () => {
         <div className="text-center">
           <Button
             size="lg"
-            className="neo-btn-primary text-sm px-8 py-5 rounded-full gap-2 font-bold"
+            className="neo-btn-primary text-sm px-8 py-5 rounded-full gap-2 font-bold w-full sm:w-auto"
             onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
           >
             Опитайте безплатно <ArrowRight className="w-4 h-4" />
