@@ -286,7 +286,7 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
               const hasClientData = !!(clientName || clientEmail || clientPhone);
 
               return (
-                <div key={convo.id} className="rounded-xl border border-border/30 bg-card/50 overflow-hidden transition-colors hover:border-primary/20">
+                <div key={convo.id} className="rounded-xl border border-border/40 bg-card/80 overflow-hidden transition-colors hover:border-primary/30">
                   {/* Collapsed row */}
                   <div className="p-3 cursor-pointer flex items-center gap-3" onClick={() => toggleExpand(convo.id)}>
                     {/* Time */}
@@ -320,11 +320,11 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
 
                   {/* Expanded */}
                   {isExpanded && (
-                    <div className="border-t border-border/20 bg-background/30">
+                    <div className="border-t border-border/30 bg-card/40">
                       {/* Top section: Client data + Summary side by side */}
                       <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {/* Client data */}
-                        <div className="rounded-lg bg-muted/20 border border-border/20 p-3">
+                        <div className="rounded-lg bg-card/60 border border-border/30 p-3">
                           <p className="text-[10px] uppercase font-semibold text-muted-foreground mb-2 flex items-center gap-1">
                             <User className="w-3 h-3 text-primary" /> Данни
                           </p>
@@ -352,7 +352,7 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                         </div>
 
                         {/* AI Summary */}
-                        <div className="rounded-lg bg-muted/20 border border-border/20 p-3">
+                        <div className="rounded-lg bg-card/60 border border-border/30 p-3">
                           <p className="text-[10px] uppercase font-semibold text-muted-foreground mb-2 flex items-center gap-1">
                             <Sparkles className="w-3 h-3 text-primary" /> Резюме
                           </p>
@@ -389,13 +389,13 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                         {loadingMessages === convo.id ? (
                           <div className="space-y-2"><Skeleton className="h-4 w-3/4" /><Skeleton className="h-4 w-1/2" /></div>
                         ) : convoMessages && convoMessages.length > 0 ? (
-                          <div className="space-y-1 max-h-64 overflow-y-auto rounded-lg bg-muted/10 border border-border/10 p-2">
+                          <div className="space-y-1 max-h-64 overflow-y-auto rounded-lg bg-card/40 border border-border/20 p-2">
                             {convoMessages.map((msg) => (
                               <div key={msg.id} className={`flex ${msg.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
                                 <div className={`rounded-lg px-2.5 py-1.5 max-w-[85%] text-xs leading-relaxed ${
                                   msg.role === 'assistant'
-                                    ? 'bg-primary/5 text-foreground'
-                                    : 'bg-muted/60 text-foreground'
+                                    ? 'bg-primary/10 text-foreground'
+                                    : 'bg-muted/40 text-foreground'
                                 }`}>
                                   <span className="text-[9px] font-medium text-muted-foreground">
                                     {msg.role === 'assistant' ? 'NEO' : 'Клиент'}
@@ -420,23 +420,23 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                           </p>
                           <div className="space-y-1.5">
                             {convoEmails.map((email) => (
-                              <div key={email.id} className="rounded-lg bg-muted/20 border border-border/20 p-2.5">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${
-                                    email.status === 'sent' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                                    email.status === 'failed' ? 'bg-destructive/10 text-destructive border-destructive/20' :
-                                    'bg-muted text-muted-foreground border-border/20'
+                              <div key={email.id} className="rounded-lg bg-card/60 border border-border/30 p-3">
+                                <div className="flex items-center justify-between mb-2">
+                                  <Badge variant="outline" className={`text-[10px] px-2 py-0.5 font-medium ${
+                                    email.status === 'sent' ? 'bg-green-500/15 text-green-400 border-green-500/30' :
+                                    email.status === 'failed' ? 'bg-destructive/15 text-destructive border-destructive/30' :
+                                    'bg-muted/40 text-muted-foreground border-border/30'
                                   }`}>
                                     {email.status === 'sent' ? 'Изпратен' : email.status === 'failed' ? 'Грешка' : email.status || 'Чакащ'}
                                   </Badge>
-                                  <span className="text-[9px] text-muted-foreground">
+                                  <span className="text-[10px] text-muted-foreground">
                                     {email.sent_at ? new Date(email.sent_at).toLocaleString('bg-BG', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
                                   </span>
                                 </div>
-                                <p className="text-xs font-medium text-foreground">{translateSubject(email.subject)}</p>
-                                <p className="text-[10px] text-muted-foreground mt-0.5 break-all">До: {email.recipient_email}</p>
-                                {email.intent && <p className="text-[10px] text-muted-foreground/70 mt-0.5">{translateIntent(email.intent)}</p>}
-                                <p className="text-[10px] text-foreground/70 mt-1 leading-relaxed break-words">{getCompactEmailPreview(email.body)}</p>
+                                <p className="text-sm font-semibold text-foreground">{translateSubject(email.subject)}</p>
+                                <p className="text-xs text-foreground/80 mt-1">До: {email.recipient_email}</p>
+                                {email.intent && <p className="text-[11px] text-primary/80 mt-1 font-medium">{translateIntent(email.intent)}</p>}
+                                <p className="text-xs text-foreground/60 mt-2 leading-relaxed">{getCompactEmailPreview(email.body)}</p>
                               </div>
                             ))}
                           </div>

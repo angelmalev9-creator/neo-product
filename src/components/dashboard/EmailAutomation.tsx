@@ -510,16 +510,17 @@ const EmailAutomation = () => {
           ) : (
             <div className="space-y-3">
               {emailLogs.map((log) => (
-                <div key={log.id} className="flex items-start justify-between gap-3 p-3 rounded-lg bg-muted/20 overflow-hidden">
+                <div key={log.id} className="flex items-start justify-between gap-3 p-4 rounded-lg bg-card/60 border border-border/30 overflow-hidden">
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{translateSubject(log.subject)}</p>
-                    <p className="text-sm text-muted-foreground break-all">{log.recipient_name || log.recipient_email}</p>
-                    <p className="text-xs text-muted-foreground/80 mt-1 break-words">{getCompactEmailPreview(log.body)}</p>
-                    <p className="text-[11px] text-muted-foreground mt-1">
+                    <p className="font-semibold text-foreground truncate">{translateSubject(log.subject)}</p>
+                    <p className="text-sm text-foreground/80 mt-0.5">{log.recipient_name || log.recipient_email}</p>
+                    <p className="text-xs text-foreground/60 mt-1.5 leading-relaxed break-words">{getCompactEmailPreview(log.body)}</p>
+                    <p className="text-[11px] text-muted-foreground mt-1.5">
                       {new Date(log.sent_at || log.created_at).toLocaleString('bg-BG', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
-                  <Badge variant={log.status === 'sent' ? 'default' : log.status === 'failed' ? 'destructive' : 'secondary'}>
+                  <Badge variant={log.status === 'sent' ? 'default' : log.status === 'failed' ? 'destructive' : 'secondary'}
+                    className={log.status === 'sent' ? 'bg-green-500/15 text-green-400 border-green-500/30' : ''}>
                     {log.status === 'sent' ? 'Изпратен' : log.status === 'failed' ? 'Неуспешен' : 'Изчакващ'}
                   </Badge>
                 </div>
