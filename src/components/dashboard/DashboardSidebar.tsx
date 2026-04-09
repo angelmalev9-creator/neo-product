@@ -3,7 +3,7 @@ import {
   Home, Globe, CalendarDays, Mail, Database,
   MessageSquare, Brain, Mic, BarChart3,
   Settings, Crown, User, LogOut, ChevronDown, Palette,
-  Sun, Moon, Volume2,
+  Sun, Moon, Volume2, Phone,
 } from 'lucide-react';
 import NeoLogo from '@/components/ui/NeoLogo';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,7 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   { id: 'widget', label: 'Уиджет', icon: Palette, description: 'Инсталирайте на сайта', step: '3' },
+  { id: 'phone', label: 'Телефон', icon: Phone, description: 'Телефонна линия', step: '4' },
   { id: 'conv-diary', label: 'Разговори', icon: MessageSquare, description: 'Чат история' },
   { id: 'results-stats', label: 'Статистика', icon: BarChart3, description: 'Резултати' },
   {
