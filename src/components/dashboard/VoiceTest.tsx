@@ -19,6 +19,7 @@ interface VoiceTestProps {
   customPrompt: string;
   promptTemplate: string;
   voiceSpeed: number;
+  setVoiceSpeed?: (speed: number) => void;
   demoSession: {
     id: string;
     url: string;
