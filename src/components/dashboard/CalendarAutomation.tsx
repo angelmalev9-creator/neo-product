@@ -470,10 +470,7 @@ const CalendarAutomation = () => {
                     <Label className="text-[10px]">Буфер (мин)</Label>
                     <Input type="number" value={settings.booking_buffer_minutes} onChange={(e) => setSettings(prev => ({ ...prev, booking_buffer_minutes: parseInt(e.target.value) || 15 }))} className="h-8 text-xs" />
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px]">Капацитет</Label>
-                    <Input type="number" value={settings.default_meeting_duration} disabled className="h-8 text-xs opacity-40" />
-                  </div>
+                
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
