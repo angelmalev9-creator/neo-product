@@ -1140,6 +1140,9 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
       console.error("[DEMO] initAgent in startCall failed", e);
     }
 
+    // Apply selected voice before connecting
+    setVoiceOverride(demoVoice);
+
     initAudioContext();
 
     // ✅ Check microphone permission BEFORE connecting
