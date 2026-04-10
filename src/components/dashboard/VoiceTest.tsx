@@ -445,6 +445,20 @@ const VoiceTest = ({
         <span className="text-primary font-medium">2-в-1</span>
       </div>
 
+      {/* Voice & speed picker — shown when not in call */}
+      {!isConnected && !textOnlyMode && (
+        <div className="bg-background/50 rounded-lg p-3 border border-border/30">
+          <p className="text-[11px] text-muted-foreground mb-2 font-medium">Глас и темпо</p>
+          <VoicePicker
+            selectedVoice={selectedVoice}
+            onVoiceChange={handleVoiceChange}
+            voiceSpeed={localVoiceSpeed}
+            onSpeedChange={handleSpeedChange}
+            disabled={isConnecting}
+          />
+        </div>
+      )}
+
       {/* Call interface */}
       <div className="text-center py-4">
         <div className="relative inline-block mb-4">
