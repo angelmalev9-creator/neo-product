@@ -165,6 +165,43 @@ serve(async (req) => {
 ВАЖНО: Ако клиентът не уточни дата, използвай ${tomorrowStr}. Ако попита кога си свободен, извикай get_slots.`;
     }
 
+    // Add booking catalog to system prompt
+    if (bookingItems && bookingItems.length > 0) {
+      const catalogLines = bookingItems.map((item: any) => {
+        let line = `• ${item.name}`;
+        if (item.category) line += ` (${item.category})`;
+        if (item.price) line += ` — ${item.price} лв/${item.price_unit || 'нощ'}`;
+        if (item.capacity) line += `, до ${item.capacity} гости`;
+        if (item.description) line += `\n  ${item.description}`;
+        if (item.amenities?.length) line += `\n  Удобства: ${item.amenities.join(', ')}`;
+        return line;
+      }).join('\n');
+
+      systemPrompt += `
+
+##############################
+# КАТАЛОГ С ПРЕДЛОЖЕНИЯ #
+##############################
+
+Ето какво предлага ${companyName}:
+${catalogLines}
+
+Когато клиент пита за стая, услуга или предложение — представи го подробно и привлекателно.
+Ако има снимки, те ще се покажат автоматично в уиджета.`;
+    }
+
+    // Build bookingCatalog for widget UI
+    const bookingCatalog = (bookingItems || []).map((item: any) => ({
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      priceUnit: item.price_unit,
+      capacity: item.capacity,
+      amenities: item.amenities,
+      images: item.images,
+      category: item.category,
+    }));
+
     const response = {
       systemPrompt,
       companyName,
@@ -173,8 +210,8 @@ serve(async (req) => {
       websiteUrl: profile.website_url || null,
       selectedVoice: profile.selected_voice || null,
       voiceSpeed: profile.voice_speed || 1,
-      // Pass sessionId so widget can use gemini-session with knowledge
       sessionId: demoSession?.id || null,
+      bookingCatalog: bookingCatalog.length > 0 ? bookingCatalog : null,
     };
 
     console.log("[WIDGET-SESSION] Returning session data, sessionId:", demoSession?.id || "none");
