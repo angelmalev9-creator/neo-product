@@ -95,6 +95,8 @@ const Dashboard = () => {
   const loadUsage = useCallback(async () => {
     if (!user) return;
     try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!currentSession) return;
       const { data } = await supabase.functions.invoke('track-usage', { body: { action: 'get_usage' } });
       if (data) { setUsedMinutes(data.used_minutes || 0); setPlanLimit(data.plan_limit || 100); }
     } catch { /* silent */ }
