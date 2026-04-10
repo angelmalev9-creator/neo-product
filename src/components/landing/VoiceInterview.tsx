@@ -1365,6 +1365,20 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
             </h2>
           </div>
 
+          {/* Voice picker — shown before call starts */}
+          {!isConnected && !textOnlyMode && (
+            <div className="mb-4 text-left">
+              <VoicePicker
+                selectedVoice={demoVoice}
+                onVoiceChange={handleDemoVoiceChange}
+                voiceSpeed={demoVoiceSpeed}
+                onSpeedChange={setDemoVoiceSpeed}
+                disabled={isConnecting}
+                compact
+              />
+            </div>
+          )}
+
             <div className="neo-glass-subtle border border-border/20 rounded-lg lg:rounded-xl p-4 lg:p-6 text-center">
               <div className="relative inline-flex items-center justify-center mb-4 lg:mb-6">
                 <button
