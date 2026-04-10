@@ -382,16 +382,25 @@ const EmailAutomation = () => {
             </div>
             <Switch
               checked={settings.email_enabled}
-              onCheckedChange={(checked) => setSettings(prev => ({ ...prev, email_enabled: checked }))}
-              disabled={!settings.gmail_connected}
+              onCheckedChange={(checked) => {
+                if (checked && !settings.gmail_connected) {
+                  // Auto-trigger Gmail connection when user tries to enable
+                  connectGmail();
+                  return;
+                }
+                setSettings(prev => ({ ...prev, email_enabled: checked }));
+              }}
             />
           </div>
 
           {!settings.gmail_connected && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-neo-warning/10 text-neo-warning text-sm">
-              <AlertCircle className="w-4 h-4" />
-              Първо свържете Gmail акаунта си, за да активирате автоматизацията
-            </div>
+            <button
+              onClick={connectGmail}
+              className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 text-primary text-sm w-full hover:bg-primary/15 transition-colors cursor-pointer border border-primary/20"
+            >
+              <Mail className="w-4 h-4" />
+              Свържете Gmail акаунт, за да активирате автоматизацията
+            </button>
           )}
 
           {/* Trigger Options */}
