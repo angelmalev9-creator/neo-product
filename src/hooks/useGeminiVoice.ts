@@ -2072,13 +2072,62 @@ export const useGeminiVoice = ({
 
   const commitUserMessage = useCallback(
     (text: string) => {
-      const clean = String(text || "")
+      let clean = String(text || "")
         .replace(/\s+/g, " ")
         .trim();
       if (!clean) {
         clearUserLiveTranscript();
         return false;
       }
+
+      // ★ STT SANITIZER ★
+      // 1) Strip [LOW_CONFIDENCE:NN%] markers that leaked in from partial-buffer
+      //    concatenation. They're a debug artifact and must never reach the UI.
+      clean = clean
+        .replace(/\s*\[LOW_CONFIDENCE:\d+%\]\s*/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      // 2) Collapse immediate substring duplicates. STT sometimes emits a
+      //    low-confidence fragment, then re-emits the full utterance including
+      //    that fragment, producing strings like:
+      //      "Ангел Малев, имейлът е angelmalev9@gmail, Малев, имейлът е angelmalev9@gmail.com"
+      //    Detect this specific pattern: if the first half is a prefix of the
+      //    second half (up to last 20+ chars), keep only the second.
+      if (clean.length > 30) {
+        const mid = Math.floor(clean.length / 2);
+        // Try to split around the midpoint on a word boundary
+        for (let splitAt = mid - 10; splitAt <= mid + 10 && splitAt < clean.length - 10; splitAt++) {
+          if (splitAt < 10) continue;
+          const firstHalf = clean
+            .slice(0, splitAt)
+            .trim()
+            .replace(/[,.\s]+$/, "");
+          const secondHalf = clean
+            .slice(splitAt)
+            .trim()
+            .replace(/^[,.\s]+/, "");
+          if (firstHalf.length < 10 || secondHalf.length < 10) continue;
+          // If the shorter half is a significant prefix of the longer half → dupe
+          const shorter = firstHalf.length <= secondHalf.length ? firstHalf : secondHalf;
+          const longer = firstHalf.length <= secondHalf.length ? secondHalf : firstHalf;
+          const shortNorm = shorter.toLowerCase().replace(/[^\wа-я@.]/gi, "");
+          const longNorm = longer.toLowerCase().replace(/[^\wа-я@.]/gi, "");
+          // Stronger check: shorter appears AT START of longer, at least 15 chars
+          if (shortNorm.length >= 15 && longNorm.startsWith(shortNorm)) {
+            console.log("[STT][DEDUPE] collapsing repeated fragment:", clean.slice(0, 200));
+            clean = longer;
+            break;
+          }
+        }
+      }
+
+      if (!clean) {
+        clearUserLiveTranscript();
+        return false;
+      }
+      // ★ END STT SANITIZER ★
+
       // Filter out [SYSTEM] trigger messages — they should never appear in chat
       if (clean.startsWith("[SYSTEM]")) {
         console.log("[USER] Filtered system trigger from chat");
@@ -5084,7 +5133,9 @@ export const useGeminiVoice = ({
 
                 // Query smells like it's about a form/order/reservation, not a product fact
                 const queryIsFormRelated =
-                  /поръчк|запитван|резерваци|потвърд|изпрат|submit|form|reservation|confirm/i.test(query) ||
+                  /поръчк|запитван|резерваци|потвърд|изпрат|submit|form|reservation|confirm|контакт|contact|име.*имейл|имейл.*телефон/i.test(
+                    query,
+                  ) ||
                   /@|gmail|abv|yahoo|hotmail/i.test(query) || // contains email
                   /\b\d{6,}\b/.test(query); // contains phone number
 
@@ -5100,7 +5151,12 @@ export const useGeminiVoice = ({
                   ) ||
                   /какъв план|кой план|кой пакет|какъв пакет|изберете план|изберете пакет/i.test(lastAssistantText) ||
                   /описание на проект|кратко описание|опишете/i.test(lastAssistantText) ||
-                  /стартов.*стандартен.*премиум|стандартен.*премиум|basic.*standard.*premium/i.test(lastAssistantText);
+                  /стартов.*стандартен.*премиум|стандартен.*премиум|basic.*standard.*premium/i.test(
+                    lastAssistantText,
+                  ) ||
+                  /как се казвате|ваш(ето|ия|ият) имейл|ваш(ият|ия) телефон|на кой имейл|изпратим|направя.*оферт|подготв.*оферт/i.test(
+                    lastAssistantText,
+                  );
 
                 // ★ NEW: query repeats plan/package enumeration that's already in
                 // the business context. Gemini sometimes searches for its own menu
@@ -5498,6 +5554,13 @@ export const useGeminiVoice = ({
                 // returning the required submit_form JSON. That leaves the user with
                 // a plain lie: the form was never actually sent. Detect that here and
                 // synthesize the submit_form JSON ourselves from captured contact data.
+                //
+                // NOTE: we deliberately do NOT gate this on userConfirmedRecently.
+                // Gemini sometimes treats ANY user response (including "nothing else",
+                // "Точно е", a phone repetition) as implicit confirmation and fires
+                // the lie. If Gemini claims it's done and we have all the data, the
+                // only correct action is to actually submit — regardless of what
+                // word the user used.
                 if (!handled && responseText && !responseText.includes("{")) {
                   try {
                     const captured = capturedSensitiveContactRef.current;
@@ -5509,10 +5572,6 @@ export const useGeminiVoice = ({
                     const lastUserText = String(lastCommittedUserRef.current?.text || "")
                       .toLowerCase()
                       .trim();
-                    const userConfirmedRecently =
-                      /^(да|ok|okay|добре|става|потвърждавам|потвърждавам\.|изпрати|изпрати\.|давай|готово|аха|yes|yep|ага)[\s.!?]*$/i.test(
-                        lastUserText,
-                      ) && Date.now() - (lastCommittedUserRef.current?.ts || 0) < 60_000;
 
                     // Detect the lie: Gemini is claiming success (past tense) OR
                     // announcing it's about to submit (future/present tense) without
@@ -5535,7 +5594,7 @@ export const useGeminiVoice = ({
 
                     const recentlyFired = Date.now() - lastSubmitFormFiredAtRef.current < 60_000;
 
-                    if (hasAllContact && userConfirmedRecently && claimsFormSent && !recentlyFired) {
+                    if (hasAllContact && claimsFormSent && !recentlyFired) {
                       console.warn(
                         "[FAKE_SUBMIT_GUARD] Gemini claimed form was sent without returning JSON. Synthesizing submit_form from captured data.",
                         {
@@ -6080,12 +6139,6 @@ export const useGeminiVoice = ({
     setIsMicMuted(newMuted);
   }, []);
 
-  const setVoiceOverride = useCallback((voiceName: string) => {
-    if (sessionDataRef.current) {
-      (sessionDataRef.current as any).voiceName = voiceName;
-    }
-  }, []);
-
   return {
     isConnected,
     isConnecting,
@@ -6098,7 +6151,6 @@ export const useGeminiVoice = ({
     prepareSession,
     preWarmMicrophone,
     sendText,
-    setVoiceOverride,
     getSessionData,
     interrupt: () => {
       assistantTurnCanceledRef.current = true;
