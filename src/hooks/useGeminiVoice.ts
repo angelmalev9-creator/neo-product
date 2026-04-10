@@ -6098,6 +6098,7 @@ export const useGeminiVoice = ({
     prepareSession,
     preWarmMicrophone,
     sendText,
+    setVoiceOverride,
     getSessionData,
     interrupt: () => {
       assistantTurnCanceledRef.current = true;
