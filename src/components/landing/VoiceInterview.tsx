@@ -1100,6 +1100,14 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     if (sessionId) fetchLatestEmailLog();
   }, [sessionId, fetchLatestEmailLog]);
 
+  const handleDemoVoiceChange = useCallback((voiceId: string) => {
+    setDemoVoice(voiceId);
+    setVoiceOverride(voiceId);
+    if (sessionId) {
+      supabase.from('demo_sessions').update({ voice_name: voiceId } as any).eq('id', sessionId).then();
+    }
+  }, [setVoiceOverride, sessionId]);
+
   const startCall = useCallback(async () => {
     if (!sessionId || !systemPrompt) {
       toast({
