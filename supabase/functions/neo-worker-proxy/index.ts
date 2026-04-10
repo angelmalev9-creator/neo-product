@@ -450,6 +450,38 @@ function buildClientEmailHtml(clientName: string, companyName: string): string {
   return `<!DOCTYPE html><html lang="bg"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet"><style>*{font-family:'Montserrat',Arial,Helvetica,sans-serif!important;}@media only screen and (max-width:480px){.neo-outer{padding:12px 8px!important;}.neo-pad{padding-left:16px!important;padding-right:16px!important;}.neo-card{border-radius:8px!important;}.neo-greeting{font-size:17px!important;}.neo-text{font-size:13px!important;}}</style></head><body style="margin:0;padding:0;background-color:#f3f4f6;font-family:'Montserrat',Arial,sans-serif;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;"><tr><td class="neo-outer" style="padding:24px 16px;"><table role="presentation" align="center" width="100%" cellpadding="0" cellspacing="0" class="neo-card" style="max-width:540px;margin:0 auto;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);"><tr><td style="background-color:#111827;padding:20px 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="width:36px;vertical-align:middle;"><div style="width:32px;height:32px;background-color:#dc2626;border-radius:6px;text-align:center;line-height:32px;"><span style="color:#ffffff;font-size:14px;font-weight:700;">N</span></div></td><td style="vertical-align:middle;padding-left:10px;"><p style="color:#ffffff;font-size:16px;font-weight:700;margin:0;"><span style="color:#dc2626;">NEO</span> Assistant</p></td></tr></table></td></tr><tr><td style="background-color:#dc2626;height:3px;font-size:1px;">&nbsp;</td></tr><tr><td class="neo-pad" style="padding:24px 24px 0;"><div style="background-color:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;text-align:center;"><p style="color:#166534;font-size:14px;font-weight:600;margin:0;">✅ Запитването Ви е изпратено успешно</p></div></td></tr><tr><td class="neo-pad" style="padding:20px 24px;"><p class="neo-greeting" style="color:#111827;font-size:18px;font-weight:700;margin:0 0 14px;">Здравейте${clientName?", "+escapeHtml(clientName):""}!</p><p class="neo-text" style="color:#374151;font-size:14px;line-height:1.7;margin:0 0 12px;">Вашето запитване към <strong>${escapeHtml(companyName)}</strong> беше изпратено успешно. Екипът ще се свърже с Вас възможно най-скоро.</p><p class="neo-text" style="color:#6b7280;font-size:13px;line-height:1.6;margin:0;">Обикновено отговор се получава в рамките на работния ден.</p></td></tr><tr><td class="neo-pad" style="padding:0 24px 20px;"><div style="border-top:1px solid #e5e7eb;padding-top:14px;"><p style="color:#9ca3af;font-size:12px;margin:0 0 2px;">С уважение,</p><p style="color:#111827;font-size:13px;font-weight:600;margin:0;"><span style="color:#dc2626;">NEO</span> — Вашият бизнес асистент</p></div></td></tr><tr><td style="background-color:#f9fafb;border-top:1px solid #f3f4f6;padding:16px 24px;"><p style="color:#9ca3af;font-size:11px;line-height:1.5;margin:0 0 8px;">Този имейл е подготвен от <strong style="color:#dc2626;">NEO</strong> — интелигентен AI асистент за бизнеси.</p><table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background-color:#dc2626;border-radius:5px;"><a href="https://neo-assistant.com" style="display:inline-block;color:#ffffff;text-decoration:none;padding:6px 16px;font-size:11px;font-weight:600;" target="_blank">Научете повече</a></td><td style="padding-left:10px;"><a href="https://neo-assistant.com" style="color:#dc2626;text-decoration:none;font-size:11px;" target="_blank">neo-assistant.com</a></td></tr></table></td></tr><tr><td style="background-color:#111827;padding:12px 24px;text-align:center;"><p style="color:#6b7280;font-size:10px;margin:0;">&copy; ${new Date().getFullYear()} NEO Assistant</p></td></tr></table></td></tr></table></body></html>`;
 }
 
+interface EmailStyleCfg {
+  backgroundColor?: string; accentColor?: string; fontFamily?: string; fontColor?: string;
+  fontWeight?: string; headerColor?: string; headerBgColor?: string; footerBgColor?: string;
+  footerTextColor?: string; textColor?: string; buttonColor?: string; buttonTextColor?: string;
+  footerText?: string; headerText?: string; logoUrl?: string;
+}
+
+const DEFAULT_EMAIL_STYLE: EmailStyleCfg = {
+  backgroundColor:"#ffffff", accentColor:"#ea384c", fontFamily:"'Montserrat',Arial,sans-serif",
+  fontColor:"#333333", fontWeight:"normal", headerColor:"#1a1a2e", headerBgColor:"#1a1a2e",
+  footerBgColor:"#1a1a2e", footerTextColor:"#999999", textColor:"#333333",
+  buttonColor:"#ea384c", buttonTextColor:"#ffffff", footerText:"", headerText:"", logoUrl:"",
+};
+
+async function loadEmailStyle(sb: any, userId: string): Promise<EmailStyleCfg> {
+  try {
+    const { data } = await sb.from("profiles").select("email_style_config, logo_url, company_name").eq("user_id", userId).single();
+    const cfg = (data?.email_style_config && typeof data.email_style_config === "object") ? data.email_style_config as EmailStyleCfg : {};
+    const merged = { ...DEFAULT_EMAIL_STYLE, ...cfg };
+    // Use profile logo as fallback
+    if (!merged.logoUrl && data?.logo_url) merged.logoUrl = data.logo_url;
+    return merged;
+  } catch { return { ...DEFAULT_EMAIL_STYLE }; }
+}
+
+function stripHtmlToText(html: string): string {
+  return html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " ").replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ").trim().slice(0, 500);
+}
+
 async function sendPostSubmitEmails(sessionId: string, fields: Record<string, unknown>): Promise<void> {
   try {
     const SUPABASE_URL = (Deno.env.get("SUPABASE_URL") || "").trim();
@@ -466,6 +498,9 @@ async function sendPostSubmitEmails(sessionId: string, fields: Record<string, un
         sessionUserId = sess?.user_id || null;
       } catch { /* ignore */ }
     }
+
+    // Load user's email style config
+    const style = (sb && sessionUserId) ? await loadEmailStyle(sb, sessionUserId) : { ...DEFAULT_EMAIL_STYLE };
 
     const [ownerEmail, companyName] = await Promise.all([loadOwnerEmail(sessionId), loadCompanyName(sessionId)]);
     const client = extractClientInfo(fields);
