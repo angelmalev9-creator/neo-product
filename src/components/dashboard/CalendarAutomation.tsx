@@ -419,116 +419,245 @@ const CalendarAutomation = () => {
 
   return (
     <div className="space-y-4">
-      {/* Collapsible Settings */}
+      {/* Unified Settings & Catalog */}
       <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen}>
         <CollapsibleTrigger asChild>
-          <button className="w-full flex items-center justify-between p-4 rounded-xl border border-border/30 bg-gradient-to-r from-card/60 to-card/30  hover:from-card/80 hover:to-card/50 transition-all">
+          <button className="w-full flex items-center justify-between p-4 rounded-xl border border-border/30 bg-gradient-to-r from-card/60 to-card/30 hover:from-card/80 hover:to-card/50 transition-all">
             <div className="flex items-center gap-3">
               <div className="p-1.5 rounded-lg bg-primary/10">
                 <Settings className="w-4 h-4 text-primary" />
               </div>
-              <span className="text-sm font-medium text-foreground">Настройки на календара</span>
+              <span className="text-sm font-medium text-foreground">Настройки и каталог</span>
+              {catalogItems.length > 0 && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">{catalogItems.length} оферти</span>
+              )}
             </div>
             <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${settingsOpen ? 'rotate-180' : ''}`} />
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="mt-2 p-4 rounded-xl border border-border/30 bg-card/30  space-y-4">
-            <div className="space-y-2">
-              <Label className="text-xs font-medium">Тип записване</Label>
-              <Select value={settings.booking_type} onValueChange={(v) => setSettings(prev => ({ ...prev, booking_type: v }))}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="consultation">Консултация</SelectItem>
-                  <SelectItem value="reservation">Резервация</SelectItem>
-                  <SelectItem value="meeting">Среща</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-[10px] text-muted-foreground">NEO ще казва &quot;{bookingLabel.toLowerCase()}&quot; в разговорите</p>
-            </div>
+          <div className="mt-2 rounded-xl border border-border/30 bg-card/30 overflow-hidden">
+            <Tabs defaultValue="schedule" className="w-full">
+              <TabsList className="w-full grid grid-cols-2 rounded-none border-b border-border/20 bg-transparent h-10">
+                <TabsTrigger value="schedule" className="text-xs gap-1.5 data-[state=active]:bg-primary/10 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <Clock className="w-3.5 h-3.5" /> Графици
+                </TabsTrigger>
+                <TabsTrigger value="catalog" className="text-xs gap-1.5 data-[state=active]:bg-primary/10 rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
+                  <Package className="w-3.5 h-3.5" /> Каталог
+                  {catalogItems.length > 0 && <span className="text-[9px] ml-1 px-1 rounded-full bg-primary/15 text-primary">{catalogItems.length}</span>}
+                </TabsTrigger>
+              </TabsList>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Продължителност (мин)</Label>
-                <Input type="number" value={settings.default_meeting_duration} onChange={(e) => setSettings(prev => ({ ...prev, default_meeting_duration: parseInt(e.target.value) || 30 }))} className="h-9 text-sm" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Буфер (мин)</Label>
-                <Input type="number" value={settings.booking_buffer_minutes} onChange={(e) => setSettings(prev => ({ ...prev, booking_buffer_minutes: parseInt(e.target.value) || 15 }))} className="h-9 text-sm" />
-              </div>
-            </div>
+              {/* Schedule Tab */}
+              <TabsContent value="schedule" className="p-4 space-y-4 mt-0">
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Тип записване</Label>
+                  <Select value={settings.booking_type} onValueChange={(v) => setSettings(prev => ({ ...prev, booking_type: v }))}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="consultation">Консултация</SelectItem>
+                      <SelectItem value="reservation">Резервация</SelectItem>
+                      <SelectItem value="meeting">Среща</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-muted-foreground">NEO ще казва &quot;{bookingLabel.toLowerCase()}&quot; в разговорите</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Продължителност (мин)</Label>
+                    <Input type="number" value={settings.default_meeting_duration} onChange={(e) => setSettings(prev => ({ ...prev, default_meeting_duration: parseInt(e.target.value) || 30 }))} className="h-9 text-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Буфер (мин)</Label>
+                    <Input type="number" value={settings.booking_buffer_minutes} onChange={(e) => setSettings(prev => ({ ...prev, booking_buffer_minutes: parseInt(e.target.value) || 15 }))} className="h-9 text-sm" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Работно време от</Label>
+                    <Input type="time" value={settings.working_hours_start} onChange={(e) => setSettings(prev => ({ ...prev, working_hours_start: e.target.value }))} className="h-9 text-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Работно време до</Label>
+                    <Input type="time" value={settings.working_hours_end} onChange={(e) => setSettings(prev => ({ ...prev, working_hours_end: e.target.value }))} className="h-9 text-sm" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Работни дни</Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {WEEKDAYS.map(day => (
+                      <button key={day.value} onClick={() => toggleWorkingDay(day.value)} className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${settings.working_days.includes(day.value) ? 'bg-primary/10 border-primary/30 text-primary' : 'border-border text-muted-foreground hover:bg-muted/50'}`}>
+                        {day.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Задължителни полета за записване</Label>
+                  <p className="text-[10px] text-muted-foreground">NEO ще събира тези данни от клиента преди да запише час</p>
+                  <div className="flex flex-wrap gap-3">
+                    {BOOKING_FIELDS.map(field => (
+                      <label key={field.value} className="flex items-center gap-1.5 cursor-pointer">
+                        <Checkbox checked={settings.required_booking_fields.includes(field.value)} onCheckedChange={(checked) => { setSettings(prev => ({ ...prev, required_booking_fields: checked ? [...prev.required_booking_fields, field.value] : prev.required_booking_fields.filter(f => f !== field.value) })); }} />
+                        <span className="text-xs text-foreground">{field.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between py-1">
+                  <div>
+                    <Label className="text-xs font-medium">Автоматично записване</Label>
+                    <p className="text-[10px] text-muted-foreground">NEO предлага часове по време на разговор</p>
+                  </div>
+                  <Switch checked={settings.auto_book_after_conversation} onCheckedChange={(checked) => setSettings(prev => ({ ...prev, auto_book_after_conversation: checked }))} />
+                </div>
+                <Button onClick={saveSettings} disabled={saving} className="w-full">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle className="w-4 h-4 mr-2" />}
+                  Запази настройки
+                </Button>
+              </TabsContent>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Работно време от</Label>
-                <Input type="time" value={settings.working_hours_start} onChange={(e) => setSettings(prev => ({ ...prev, working_hours_start: e.target.value }))} className="h-9 text-sm" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Работно време до</Label>
-                <Input type="time" value={settings.working_hours_end} onChange={(e) => setSettings(prev => ({ ...prev, working_hours_end: e.target.value }))} className="h-9 text-sm" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs">Работни дни</Label>
-              <div className="flex flex-wrap gap-1.5">
-                {WEEKDAYS.map(day => (
-                  <button
-                    key={day.value}
-                    onClick={() => toggleWorkingDay(day.value)}
-                    className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
-                      settings.working_days.includes(day.value)
-                        ? 'bg-primary/10 border-primary/30 text-primary'
-                        : 'border-border text-muted-foreground hover:bg-muted/50'
-                    }`}
-                  >
-                    {day.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs font-medium">Задължителни полета за записване</Label>
-              <p className="text-[10px] text-muted-foreground">NEO ще събира тези данни от клиента преди да запише час</p>
-              <div className="flex flex-wrap gap-3">
-                {BOOKING_FIELDS.map(field => (
-                  <label key={field.value} className="flex items-center gap-1.5 cursor-pointer">
-                    <Checkbox
-                      checked={settings.required_booking_fields.includes(field.value)}
-                      onCheckedChange={(checked) => {
-                        setSettings(prev => ({
-                          ...prev,
-                          required_booking_fields: checked
-                            ? [...prev.required_booking_fields, field.value]
-                            : prev.required_booking_fields.filter(f => f !== field.value),
-                        }));
-                      }}
-                    />
-                    <span className="text-xs text-foreground">{field.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between py-1">
-              <div>
-                <Label className="text-xs font-medium">Автоматично записване</Label>
-                <p className="text-[10px] text-muted-foreground">NEO предлага часове по време на разговор</p>
-              </div>
-              <Switch checked={settings.auto_book_after_conversation} onCheckedChange={(checked) => setSettings(prev => ({ ...prev, auto_book_after_conversation: checked }))} />
-            </div>
-
-            <Button onClick={saveSettings} disabled={saving} className="w-full">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle className="w-4 h-4 mr-2" />}
-              Запази настройки
-            </Button>
+              {/* Catalog Tab */}
+              <TabsContent value="catalog" className="p-4 mt-0">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[11px] text-muted-foreground">Добавете стаи, услуги или каквото предлагате — NEO ще ги показва на клиентите</p>
+                  <Dialog open={itemDialogOpen} onOpenChange={setItemDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" onClick={openNewItem} className="gap-1.5 shrink-0"><Plus className="w-3.5 h-3.5" /> Добави</Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                      <DialogHeader><DialogTitle className="text-base">{editingItem?.id ? 'Редактиране' : 'Ново предложение за клиентите'}</DialogTitle></DialogHeader>
+                      {editingItem && (
+                        <div className="space-y-4 mt-2">
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="space-y-1.5">
+                              <Label className="text-xs">Категория</Label>
+                              <Select value={editingItem.category || 'стая'} onValueChange={v => setEditingItem(prev => ({ ...prev!, category: v }))}>
+                                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                                <SelectContent>{CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
+                              </Select>
+                            </div>
+                            <div className="col-span-2 space-y-1.5">
+                              <Label className="text-xs">Как се казва? *</Label>
+                              <Input value={editingItem.name || ''} onChange={e => setEditingItem(prev => ({ ...prev!, name: e.target.value }))} placeholder="напр. Двойна стая Лукс" className="h-9 text-sm" />
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Опишете го с няколко изречения</Label>
+                            <Textarea value={editingItem.description || ''} onChange={e => setEditingItem(prev => ({ ...prev!, description: e.target.value }))} placeholder="Просторна стая с изглед към морето, кралско легло и модерна баня..." className="text-sm min-h-[70px] resize-none" />
+                          </div>
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="space-y-1.5">
+                              <Label className="text-xs">Цена</Label>
+                              <Input type="number" value={editingItem.price ?? ''} onChange={e => setEditingItem(prev => ({ ...prev!, price: e.target.value ? parseFloat(e.target.value) : null }))} placeholder="120" className="h-9 text-sm" />
+                            </div>
+                            <div className="space-y-1.5">
+                              <Label className="text-xs">За</Label>
+                              <Select value={editingItem.price_unit || 'нощ'} onValueChange={v => setEditingItem(prev => ({ ...prev!, price_unit: v }))}>
+                                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                                <SelectContent>{PRICE_UNITS.map(u => <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>)}</SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-1.5">
+                              <Label className="text-xs flex items-center gap-1"><Users className="w-3 h-3" /> Капацитет</Label>
+                              <Input type="number" value={editingItem.capacity ?? ''} onChange={e => setEditingItem(prev => ({ ...prev!, capacity: e.target.value ? parseInt(e.target.value) : null }))} placeholder="2" className="h-9 text-sm" />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs">Снимки — покажете най-доброто от Вашето предложение</Label>
+                            <div className="flex flex-wrap gap-2">
+                              {(editingItem.images || []).map((url, idx) => (
+                                <div key={idx} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border/30 group">
+                                  <img src={url} alt="" className="w-full h-full object-cover" />
+                                  <button onClick={() => removeImage(idx)} className="absolute top-0.5 right-0.5 p-0.5 rounded-full bg-background/80 text-foreground opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-3 h-3" /></button>
+                                </div>
+                              ))}
+                              <button onClick={() => fileInputRef.current?.click()} disabled={uploadingImage} className="w-20 h-20 rounded-lg border-2 border-dashed border-border/40 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors">
+                                {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
+                                <span className="text-[9px]">Качи</span>
+                              </button>
+                            </div>
+                            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs flex items-center gap-1"><Tag className="w-3 h-3" /> Удобства и характеристики</Label>
+                            <div className="flex gap-2">
+                              <Input value={amenityInput} onChange={e => setAmenityInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addAmenity())} placeholder="напр. WiFi, Климатик, Паркинг..." className="h-8 text-sm flex-1" />
+                              <Button size="sm" variant="outline" onClick={addAmenity} className="h-8 px-3 text-xs">+</Button>
+                            </div>
+                            {(editingItem.amenities || []).length > 0 && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {editingItem.amenities!.map((a, idx) => (
+                                  <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-primary/10 text-primary border border-primary/20">
+                                    {a}<button onClick={() => removeAmenity(idx)} className="hover:text-destructive"><X className="w-2.5 h-2.5" /></button>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between py-1">
+                            <div>
+                              <Label className="text-xs font-medium">Видимо за клиенти</Label>
+                              <p className="text-[10px] text-muted-foreground">NEO ще предлага само активните елементи</p>
+                            </div>
+                            <Switch checked={editingItem.is_active ?? true} onCheckedChange={v => setEditingItem(prev => ({ ...prev!, is_active: v }))} />
+                          </div>
+                          <Button onClick={saveCatalogItem} disabled={catalogSaving} className="w-full">
+                            {catalogSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                            {editingItem.id ? 'Запази промените' : 'Добави към каталога'}
+                          </Button>
+                        </div>
+                      )}
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                {catalogLoading ? (
+                  <div className="flex items-center justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+                ) : catalogItems.length === 0 ? (
+                  <div className="text-center py-6">
+                    <p className="text-sm text-muted-foreground">Все още нямате добавени предложения.</p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">NEO ще ги показва на клиентите със снимки при резервация.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <AnimatePresence>
+                      {catalogItems.map((item, idx) => (
+                        <motion.div key={item.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ delay: idx * 0.03 }} className="relative flex items-start gap-3 p-3 rounded-xl border border-border/20 bg-card/20 group overflow-hidden">
+                          {item.images.length > 0 ? (
+                            <img src={item.images[0]} alt={item.name} className="w-14 h-14 rounded-lg object-cover shrink-0 border border-border/20" />
+                          ) : (
+                            <div className="w-14 h-14 rounded-lg bg-muted/30 flex items-center justify-center shrink-0 border border-border/20"><ImagePlus className="w-4 h-4 text-muted-foreground/40" /></div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-semibold text-foreground truncate">{item.name}</p>
+                              {!item.is_active && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/30">скрито</span>}
+                            </div>
+                            <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                              <span className="text-[11px] text-muted-foreground">{CATEGORIES.find(c => c.value === item.category)?.label || item.category}</span>
+                              {item.price && <span className="text-[11px] font-medium text-primary">{item.price} лв/{item.price_unit}</span>}
+                              {item.capacity && <span className="text-[11px] text-muted-foreground flex items-center gap-0.5"><Users className="w-3 h-3" /> {item.capacity}</span>}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-0.5 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleItemActive(item)}>
+                              {item.is_active ? <Eye className="w-3.5 h-3.5 text-emerald-500" /> : <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />}
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditItem(item)}><Pencil className="w-3.5 h-3.5" /></Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/60 hover:text-destructive" disabled={catalogDeleting === item.id} onClick={() => deleteCatalogItem(item.id)}>
+                              {catalogDeleting === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                            </Button>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
         </CollapsibleContent>
       </Collapsible>
-
-      {/* Booking Items Catalog */}
-      <BookingItemsManager />
 
       {/* Calendar Grid */}
       <div className="rounded-xl border border-border/30 bg-gradient-to-br from-card/60 via-card/30 to-card/10  overflow-hidden">
