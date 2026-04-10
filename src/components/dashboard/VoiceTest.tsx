@@ -201,19 +201,26 @@ const VoiceTest = ({
           const totalUsedMinutes = sessionBaseUsedMinutesRef.current + currentSessionMinutes;
           setLocalUsedMinutes(totalUsedMinutes);
 
-          // Track every 30s
           if (elapsed > 0 && elapsed % 30 === 0) {
             const minutesToTrack = currentSessionMinutes - lastTrackedMinutesRef.current;
             if (minutesToTrack > 0) {
-              lastTrackedMinutesRef.current = currentSessionMinutes;
-              supabase.functions.invoke('track-usage', {
-                body: { action: 'add_usage', minutes: minutesToTrack },
-              }).then(({ data, error }) => {
-                if (data && !error) {
-                  onUsageUpdate(data.used_minutes);
-                  console.log('[USAGE] Tracked:', data.used_minutes);
+              void hasActiveSession().then((isAuthed) => {
+                if (!isAuthed) {
+                  if (timerRef.current) clearInterval(timerRef.current);
+                  timerRef.current = null;
+                  return;
                 }
-              }).catch(console.error);
+
+                lastTrackedMinutesRef.current = currentSessionMinutes;
+                supabase.functions.invoke('track-usage', {
+                  body: { action: 'add_usage', minutes: minutesToTrack },
+                }).then(({ data, error }) => {
+                  if (data && !error) {
+                    onUsageUpdate(data.used_minutes);
+                    console.log('[USAGE] Tracked:', data.used_minutes);
+                  }
+                }).catch(console.error);
+              });
             }
           }
 
@@ -228,7 +235,7 @@ const VoiceTest = ({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isConnected, textOnlyMode, planLimit, toast, onUsageUpdate]);
+  }, [isConnected, textOnlyMode, planLimit, toast, onUsageUpdate, usedMinutes, handleEndCall, hasActiveSession]);
 
   // Build system prompt & prepare session (Gemini gets knowledge via gemini-session + worker proxy)
   useEffect(() => {
