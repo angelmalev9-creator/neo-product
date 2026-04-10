@@ -2043,9 +2043,13 @@ export const useGeminiVoice = ({
       // ★ FIX: Never let a raw action_request JSON leak into the visible chat as an
       // assistant bubble. If parsing/execution failed upstream, we suppress the message
       // here rather than showing `{"type":"action_request",...}` to the user.
+      // Also block markdown-fenced JSON blocks (```json ... ```) which Gemini sometimes
+      // produces instead of raw JSON.
       if (
         (clean.startsWith("{") && clean.includes("action_request")) ||
-        /\{[\s\S]*"type"\s*:\s*"action_request"[\s\S]*\}/.test(clean)
+        /\{[\s\S]*"type"\s*:\s*"action_request"[\s\S]*\}/.test(clean) ||
+        /```\s*json[\s\S]*"action"\s*:\s*"(submit_form|make_reservation|book_slot)"/i.test(clean) ||
+        /```[\s\S]*"type"\s*:\s*"action_request"[\s\S]*```/.test(clean)
       ) {
         console.warn("[ASSISTANT][BLOCKED raw JSON leak]", clean.slice(0, 200));
         clearAssistantLiveTranscript();
@@ -2088,37 +2092,67 @@ export const useGeminiVoice = ({
         .replace(/\s+/g, " ")
         .trim();
 
-      // 2) Collapse immediate substring duplicates. STT sometimes emits a
-      //    low-confidence fragment, then re-emits the full utterance including
-      //    that fragment, producing strings like:
-      //      "Ангел Малев, имейлът е angelmalev9@gmail, Малев, имейлът е angelmalev9@gmail.com"
-      //    Detect this specific pattern: if the first half is a prefix of the
-      //    second half (up to last 20+ chars), keep only the second.
-      if (clean.length > 30) {
-        const mid = Math.floor(clean.length / 2);
-        // Try to split around the midpoint on a word boundary
-        for (let splitAt = mid - 10; splitAt <= mid + 10 && splitAt < clean.length - 10; splitAt++) {
-          if (splitAt < 10) continue;
-          const firstHalf = clean
-            .slice(0, splitAt)
-            .trim()
-            .replace(/[,.\s]+$/, "");
-          const secondHalf = clean
-            .slice(splitAt)
-            .trim()
-            .replace(/^[,.\s]+/, "");
-          if (firstHalf.length < 10 || secondHalf.length < 10) continue;
-          // If the shorter half is a significant prefix of the longer half → dupe
-          const shorter = firstHalf.length <= secondHalf.length ? firstHalf : secondHalf;
-          const longer = firstHalf.length <= secondHalf.length ? secondHalf : firstHalf;
-          const shortNorm = shorter.toLowerCase().replace(/[^\wа-я@.]/gi, "");
-          const longNorm = longer.toLowerCase().replace(/[^\wа-я@.]/gi, "");
-          // Stronger check: shorter appears AT START of longer, at least 15 chars
-          if (shortNorm.length >= 15 && longNorm.startsWith(shortNorm)) {
-            console.log("[STT][DEDUPE] collapsing repeated fragment:", clean.slice(0, 200));
-            clean = longer;
-            break;
-          }
+      // 2) STT agglutination dedupe — conservative, targeted patterns only.
+      //    We deliberately do NOT split on '.' (breaks emails) or try generic
+      //    fuzzy matching. Instead we target the exact failure modes observed:
+      //      - Same phone number repeated back-to-back with connector words
+      //      - Same email repeated back-to-back
+      //      - Immediate adjacent duplicate clauses ("X, Y, X, Y")
+      if (clean.length > 25) {
+        const beforeDedupe = clean;
+
+        // a) Phone repeats: "088 77 00 811 номерът ми е 088 77 00 811"
+        //    Pattern: same normalized digit sequence appearing twice, optionally
+        //    with up to ~30 chars of connector text between them. Replace with
+        //    the first occurrence only.
+        const phoneRe = /(\b[\d\s]{8,}\b)([^\d]{0,40}?)\1/g;
+        let prev = "";
+        while (prev !== clean) {
+          prev = clean;
+          clean = clean
+            .replace(phoneRe, (_m, p1) => p1)
+            .replace(/\s+/g, " ")
+            .trim();
+        }
+
+        // b) Email repeats: same address twice in a row
+        const emailRe = /([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,})([^@]{0,40}?)\1/gi;
+        prev = "";
+        while (prev !== clean) {
+          prev = clean;
+          clean = clean
+            .replace(emailRe, (_m, p1) => p1)
+            .replace(/\s+/g, " ")
+            .trim();
+        }
+
+        // c) Immediate adjacent duplicate clauses: split ONLY on commas (not
+        //    periods — those are inside emails). If two adjacent clauses are
+        //    identical after normalization, keep only one.
+        const parts = clean.split(",").map((s) => s.trim());
+        const dedupedParts: string[] = [];
+        for (const p of parts) {
+          if (!p) continue;
+          const norm = p.toLowerCase().replace(/\s+/g, "");
+          const lastNorm = dedupedParts.length
+            ? dedupedParts[dedupedParts.length - 1].toLowerCase().replace(/\s+/g, "")
+            : "";
+          if (norm && norm === lastNorm) continue; // exact adjacent dup
+          dedupedParts.push(p);
+        }
+        clean = dedupedParts.join(", ").replace(/\s+/g, " ").trim();
+
+        // d) Connector-word cleanup: strip dangling "а тов" / "а те" fragments
+        //    that appear when STT cuts off mid-word. These are always followed
+        //    by a comma or period, so we target precisely that.
+        clean = clean
+          .replace(/,\s*а\s+(тов|те|но)\s*,/gi, ",")
+          .replace(/\s+/g, " ")
+          .trim();
+
+        if (clean !== beforeDedupe) {
+          console.log("[STT][DEDUPE] before:", beforeDedupe.slice(0, 200));
+          console.log("[STT][DEDUPE] after :", clean.slice(0, 200));
         }
       }
 
@@ -5386,6 +5420,8 @@ export const useGeminiVoice = ({
 
                   const looksLikeAction =
                     partText.startsWith("{") ||
+                    partText.startsWith("```json") ||
+                    partText.startsWith("```") ||
                     partText.includes('"type":"action_request"') ||
                     partText.includes('"type": "action_request"') ||
                     partText.includes('"action":"make_reservation"') ||
@@ -5402,6 +5438,7 @@ export const useGeminiVoice = ({
                   // space separator INTO THE MIDDLE OF THE JSON — corrupting it.
                   const alreadyAccumulatingAction =
                     currentResponseTextRef.current.startsWith("{") ||
+                    currentResponseTextRef.current.startsWith("```") ||
                     currentResponseTextRef.current.includes('"type":"action_request"') ||
                     currentResponseTextRef.current.includes('"type": "action_request"');
 
@@ -5451,6 +5488,7 @@ export const useGeminiVoice = ({
               const txt = transcription.text.trim();
               const currentLooksLikeAction =
                 currentResponseTextRef.current.startsWith("{") ||
+                currentResponseTextRef.current.startsWith("```") ||
                 currentResponseTextRef.current.includes('"type":"action_request"') ||
                 currentResponseTextRef.current.includes('"type": "action_request"');
 
@@ -6139,12 +6177,6 @@ export const useGeminiVoice = ({
     setIsMicMuted(newMuted);
   }, []);
 
-  const setVoiceOverride = useCallback((voiceName: string) => {
-    if (sessionDataRef.current) {
-      (sessionDataRef.current as any).voiceName = voiceName;
-    }
-  }, []);
-
   return {
     isConnected,
     isConnecting,
@@ -6158,7 +6190,6 @@ export const useGeminiVoice = ({
     preWarmMicrophone,
     sendText,
     getSessionData,
-    setVoiceOverride,
     interrupt: () => {
       assistantTurnCanceledRef.current = true;
       scheduledSourcesRef.current.forEach((s) => {
