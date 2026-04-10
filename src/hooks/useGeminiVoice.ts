@@ -5076,27 +5076,62 @@ export const useGeminiVoice = ({
                   /@|gmail|abv|yahoo|hotmail/i.test(query) || // contains email
                   /\b\d{6,}\b/.test(query); // contains phone number
 
+                // ★ NEW: detect active form flow from assistant's last utterance.
+                // If NEO just asked for contacts / plan / description, we are in a
+                // form-filling flow and search is never appropriate — Gemini should
+                // be collecting data, not re-researching plan names that are already
+                // in its business context.
+                const lastAssistantText = String(lastCommittedAssistantRef.current?.text || "").toLowerCase();
+                const assistantIsCollectingFormData =
+                  /име.*имейл|имейл.*телефон|телефон.*имейл|контакт|вашите данни|вашите контакт/i.test(
+                    lastAssistantText,
+                  ) ||
+                  /какъв план|кой план|кой пакет|какъв пакет|изберете план|изберете пакет/i.test(lastAssistantText) ||
+                  /описание на проект|кратко описание|опишете/i.test(lastAssistantText) ||
+                  /стартов.*стандартен.*премиум|стандартен.*премиум|basic.*standard.*premium/i.test(lastAssistantText);
+
+                // ★ NEW: query repeats plan/package enumeration that's already in
+                // the business context. Gemini sometimes searches for its own menu
+                // options. That's never a legit search.
+                const queryIsPlanEnumeration =
+                  /стартов[^а-я]*стандартен|стандартен[^а-я]*премиум|basic[^a-z]*standard|essential[^a-z]*professional/i.test(
+                    query,
+                  );
+
+                // ★ NEW: captured contact data exists at all (even partial) → we are
+                // mid-flow and should be collecting, not searching, unless the query
+                // is clearly about a specific product fact (price/model/size).
+                const hasAnyCapturedContact = hasName || hasEmail || hasPhone;
+                const queryLooksLikeProductFact =
+                  /цена|price|размер|size|модел|model|наличност|stock|специфика|характеристик/i.test(query);
+
                 const shouldBlock =
                   // Case A: all contact data captured AND user is confirming → must return submit_form JSON
                   (hasAllContact && isConfirmationWord) ||
                   // Case B: reservation data complete AND user is confirming → must return make_reservation JSON
                   (hasReservationData && isConfirmationWord) ||
                   // Case C: the query itself references form/contact data — this is almost never a legit search
-                  queryIsFormRelated;
+                  queryIsFormRelated ||
+                  // Case D: NEO is actively collecting form data in its last message
+                  assistantIsCollectingFormData ||
+                  // Case E: query is just echoing plan names that are already in business context
+                  queryIsPlanEnumeration ||
+                  // Case F: we already have some contact data captured AND the query
+                  // is NOT about a concrete product fact → we're mid-flow, not researching
+                  (hasAnyCapturedContact && !queryLooksLikeProductFact);
 
                 if (shouldBlock) {
-                  console.warn(
-                    "[SEARCH WORKER][BLOCKED] Gemini tried to call search during form flow. query=",
-                    query,
-                    "hasAllContact=",
+                  console.warn("[SEARCH WORKER][BLOCKED] Gemini tried to call search during form flow. query=", query, {
                     hasAllContact,
-                    "hasReservationData=",
+                    hasAnyCapturedContact,
                     hasReservationData,
-                    "isConfirmation=",
                     isConfirmationWord,
-                    "queryIsFormRelated=",
                     queryIsFormRelated,
-                  );
+                    assistantIsCollectingFormData,
+                    queryIsPlanEnumeration,
+                    queryLooksLikeProductFact,
+                    lastAssistantSnippet: lastAssistantText.slice(0, 120),
+                  });
 
                   // Send empty tool_response so Gemini doesn't hang waiting for it
                   ws.send(
@@ -5139,13 +5174,23 @@ export const useGeminiVoice = ({
                           "Върни САМО JSON action_request submit_form с тези данни.",
                           "Никакъв текст. Само JSON.",
                         ].join("\n")
-                      : [
-                          "[SYSTEM_CORRECTION]",
-                          "⛔ ЗАБРАНЕНО да викаш search_site_content с контактни/форма данни в query-то.",
-                          "search_site_content е САМО за фактологични въпроси за продукти (цени, модели, размери, спецификации).",
-                          "Ако клиентът потвърждава форма/поръчка → върни action_request JSON.",
-                          "Ако клиентът дава контактна информация → запомни я и продължи flow-а, без да викаш search.",
-                        ].join("\n");
+                      : assistantIsCollectingFormData || queryIsPlanEnumeration
+                        ? [
+                            "[SYSTEM_CORRECTION]",
+                            "⛔ ЗАБРАНЕНО да викаш search_site_content в момента.",
+                            "Ти си в активен form-filling flow — събираш име/имейл/телефон/план/описание от клиента.",
+                            "Информацията за плановете и пакетите (Стартов, Стандартен, Премиум и т.н.) е ВЕЧЕ в твоя business context.",
+                            "НЕ търси имена на планове — те са ти подадени в системния prompt.",
+                            "Просто продължи разговора: изчакай клиентът да каже контактите/плана си, после запомни ги и върни submit_form JSON когато всичко е събрано.",
+                            "Никакви search повиквания докато формата не е изпратена.",
+                          ].join("\n")
+                        : [
+                            "[SYSTEM_CORRECTION]",
+                            "⛔ ЗАБРАНЕНО да викаш search_site_content с контактни/форма данни в query-то.",
+                            "search_site_content е САМО за фактологични въпроси за продукти (цени, модели, размери, спецификации).",
+                            "Ако клиентът потвърждава форма/поръчка → върни action_request JSON.",
+                            "Ако клиентът дава контактна информация → запомни я и продължи flow-а, без да викаш search.",
+                          ].join("\n");
 
                   try {
                     sendToGemini(nudge);
