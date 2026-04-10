@@ -184,6 +184,7 @@ const Dashboard = () => {
           demoSession={demoSession}
           setDemoSession={setDemoSession}
           onTabChange={setActiveTab}
+          subscriptionTier={subscription.tier || undefined}
         />
       );
     }
