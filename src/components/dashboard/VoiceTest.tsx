@@ -35,6 +35,7 @@ const VoiceTest = ({
   customPrompt,
   promptTemplate,
   voiceSpeed,
+  setVoiceSpeed,
   demoSession,
   usedMinutes,
   planLimit,
