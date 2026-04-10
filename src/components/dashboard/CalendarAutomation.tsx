@@ -29,11 +29,42 @@ interface CalendarSettings {
   required_booking_fields: string[];
 }
 
+interface BookingItem {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number | null;
+  price_unit: string;
+  capacity: number | null;
+  amenities: string[];
+  images: string[];
+  category: string;
+  is_active: boolean;
+  sort_order: number;
+}
+
 const BOOKING_FIELDS = [
   { value: 'name', label: 'Име' },
   { value: 'email', label: 'Имейл' },
   { value: 'phone', label: 'Телефон' },
   { value: 'service', label: 'Услуга' },
+];
+
+const CATEGORIES = [
+  { value: 'стая', label: '🛏️ Стая' },
+  { value: 'апартамент', label: '🏠 Апартамент' },
+  { value: 'услуга', label: '💆 Услуга' },
+  { value: 'маса', label: '🍽️ Маса' },
+  { value: 'зала', label: '🏢 Зала' },
+  { value: 'друго', label: '📦 Друго' },
+];
+
+const PRICE_UNITS = [
+  { value: 'нощ', label: 'на нощ' },
+  { value: 'час', label: 'на час' },
+  { value: 'сесия', label: 'на сесия' },
+  { value: 'човек', label: 'на човек' },
+  { value: 'бр', label: 'на брой' },
 ];
 
 interface CalendarBooking {
