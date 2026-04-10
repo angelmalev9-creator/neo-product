@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Settings, CheckCircle, Loader2, Clock, ChevronDown, ChevronLeft, ChevronRight, Trash2, User, Phone, Mail } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { motion, AnimatePresence } from 'framer-motion';
+import BookingItemsManager from './BookingItemsManager';
 
 interface CalendarSettings {
   id?: string;
@@ -372,6 +373,9 @@ const CalendarAutomation = () => {
           </div>
         </CollapsibleContent>
       </Collapsible>
+
+      {/* Booking Items Catalog */}
+      <BookingItemsManager />
 
       {/* Calendar Grid */}
       <div className="rounded-xl border border-border/30 bg-gradient-to-br from-card/60 via-card/30 to-card/10  overflow-hidden">

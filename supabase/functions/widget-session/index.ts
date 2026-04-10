@@ -58,6 +58,14 @@ serve(async (req) => {
       .eq("user_id", userId)
       .maybeSingle();
 
+    // Fetch booking catalog items (active only)
+    const { data: bookingItems } = await supabase
+      .from("booking_items")
+      .select("name, description, price, price_unit, capacity, amenities, images, category")
+      .eq("user_id", userId)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+
     // Resolve company name from multiple sources
     let companyName = profile.company_name || demoSession?.company_name || "";
     
