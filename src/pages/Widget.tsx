@@ -273,6 +273,9 @@ const Widget = () => {
       conversationIdRef.current = result.conversationId;
       setConversationId(result.conversationId);
       callStartTimeRef.current = Date.now();
+      messageSeqRef.current = 0;
+      persistedTranscriptKeysRef.current.clear();
+      lastPersistedTranscriptRef.current = { user: '', assistant: '' };
       lastTrackedTimeRef.current = 0;
       persistedTranscriptKeysRef.current.clear();
       console.log('[WIDGET] Conversation started:', result.conversationId);
