@@ -265,6 +265,114 @@ const CalendarAutomation = () => {
     }
   };
 
+  // ========== Catalog functions ==========
+  const loadCatalogItems = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from('booking_items')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('sort_order', { ascending: true });
+      setCatalogItems((data || []) as BookingItem[]);
+    } catch (e) {
+      console.error('Error loading catalog:', e);
+    } finally {
+      setCatalogLoading(false);
+    }
+  };
+
+  const openNewItem = () => {
+    setEditingItem({ name: '', description: '', price: null, price_unit: 'нощ', capacity: null, amenities: [], images: [], category: 'стая', is_active: true, sort_order: catalogItems.length });
+    setAmenityInput('');
+    setItemDialogOpen(true);
+  };
+
+  const openEditItem = (item: BookingItem) => {
+    setEditingItem({ ...item });
+    setAmenityInput('');
+    setItemDialogOpen(true);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingItem) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: 'Файлът е твърде голям', description: 'Максимум 5MB.', variant: 'destructive' });
+      return;
+    }
+    setUploadingImage(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const ext = file.name.split('.').pop();
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from('booking-images').upload(path, file);
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from('booking-images').getPublicUrl(path);
+      setEditingItem(prev => ({ ...prev!, images: [...(prev?.images || []), urlData.publicUrl] }));
+    } catch {
+      toast({ title: 'Грешка при качване', variant: 'destructive' });
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const removeImage = (idx: number) => setEditingItem(prev => ({ ...prev!, images: (prev?.images || []).filter((_, i) => i !== idx) }));
+  const addAmenity = () => { const v = amenityInput.trim(); if (!v) return; setEditingItem(prev => ({ ...prev!, amenities: [...(prev?.amenities || []), v] })); setAmenityInput(''); };
+  const removeAmenity = (idx: number) => setEditingItem(prev => ({ ...prev!, amenities: (prev?.amenities || []).filter((_, i) => i !== idx) }));
+
+  const saveCatalogItem = async () => {
+    if (!editingItem?.name?.trim()) { toast({ title: 'Моля, въведете име', variant: 'destructive' }); return; }
+    setCatalogSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const payload = {
+        user_id: user.id, name: editingItem.name!.trim(), description: editingItem.description || null,
+        price: editingItem.price || null, price_unit: editingItem.price_unit || 'нощ',
+        capacity: editingItem.capacity || null, amenities: editingItem.amenities || [],
+        images: editingItem.images || [], category: editingItem.category || 'стая',
+        is_active: editingItem.is_active ?? true, sort_order: editingItem.sort_order ?? 0,
+      };
+      if (editingItem.id) {
+        const { error } = await supabase.from('booking_items').update(payload).eq('id', editingItem.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('booking_items').insert(payload);
+        if (error) throw error;
+      }
+      toast({ title: editingItem.id ? 'Промените са запазени!' : 'Добавено успешно!' });
+      setItemDialogOpen(false);
+      setEditingItem(null);
+      loadCatalogItems();
+    } catch {
+      toast({ title: 'Грешка при запазване', variant: 'destructive' });
+    } finally {
+      setCatalogSaving(false);
+    }
+  };
+
+  const deleteCatalogItem = async (id: string) => {
+    setCatalogDeleting(id);
+    try {
+      await supabase.from('booking_items').delete().eq('id', id);
+      toast({ title: 'Елементът е изтрит.' });
+      loadCatalogItems();
+    } catch {
+      toast({ title: 'Грешка при изтриване', variant: 'destructive' });
+    } finally {
+      setCatalogDeleting(null);
+    }
+  };
+
+  const toggleItemActive = async (item: BookingItem) => {
+    await supabase.from('booking_items').update({ is_active: !item.is_active }).eq('id', item.id);
+    loadCatalogItems();
+  };
+
   const toggleWorkingDay = (day: number) => {
     setSettings(prev => ({
       ...prev,
