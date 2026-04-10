@@ -7,6 +7,7 @@ import { useAudioEffects } from '@/hooks/useAudioEffects';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import VoicePicker from '@/components/dashboard/VoicePicker';
 
 interface Message {
   role: 'user' | 'assistant';
