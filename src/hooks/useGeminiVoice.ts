@@ -4957,6 +4957,35 @@ export const useGeminiVoice = ({
 
               console.log("[SEARCH WORKER] functionCall query:", query);
 
+              // ── Guard: block search when query contains personal data (email/phone) ──
+              // This means Gemini is confused and should be submitting the form, not searching.
+              const hasEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(query);
+              const hasPhone = /(?:\+?\d[\d\s\-()]{6,})/.test(query);
+              const isActiveFormFlow = !!activeSubmitFlowRef.current?.session_id;
+
+              if (hasEmail || hasPhone || isActiveFormFlow) {
+                console.warn("[SEARCH WORKER] BLOCKED — query contains personal data or form flow is active. Returning empty results.", { hasEmail, hasPhone, isActiveFormFlow, query: query.slice(0, 80) });
+                ws.send(
+                  JSON.stringify({
+                    tool_response: {
+                      function_responses: [
+                        {
+                          id: fc.id,
+                          name: fc.name,
+                          response: {
+                            results: [],
+                            keywords: [],
+                            elapsed_ms: 0,
+                            note: "Search skipped: query contains personal contact data. Use the collected data to proceed with the form submission via action_request JSON instead of searching.",
+                          },
+                        },
+                      ],
+                    },
+                  }),
+                );
+                continue;
+              }
+
               if (!searchProxyUrl || !anonKey || !query || !sid) {
                 ws.send(
                   JSON.stringify({
