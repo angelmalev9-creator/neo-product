@@ -667,7 +667,7 @@ async function sendPostSubmitEmails(sessionId: string, fields: Record<string, un
 
       if (!sent && !gmailAccessToken && !RESEND_API_KEY && !INTERNAL_KEY) { console.error(`[POST-SUBMIT-EMAIL] No way to send email to ${to}`); }
 
-      // Log with sender info
+      // Log with sender info - store full HTML for dashboard preview
       if (sb && sessionUserId) {
         try {
           await sb.from("email_logs").insert({
@@ -675,7 +675,7 @@ async function sendPostSubmitEmails(sessionId: string, fields: Record<string, un
             recipient_email: to,
             recipient_name: client.name || null,
             subject,
-            body: stripHtmlToText(html),
+            body: html,
             status: sent ? "sent" : "failed",
             intent,
             sent_at: sent ? new Date().toISOString() : null,

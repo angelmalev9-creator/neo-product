@@ -105,6 +105,11 @@ serve(async (req) => {
       const latestAssistantMessage = recentMessages?.find((message) => message.role === "assistant")?.content || "";
 
       // Compute a base timestamp: use the conversation's started_at for consistency
+      // Also find the latest existing message timestamp to guarantee monotonic ordering
+      const latestExistingTs = recentMessages?.[0]?.created_at
+        ? new Date(recentMessages[0].created_at).getTime()
+        : 0;
+
       let baseTimestamp: number;
       if (seqNum > 0) {
         const { data: convoData } = await supabase
@@ -112,13 +117,21 @@ serve(async (req) => {
           .select("started_at")
           .eq("id", conversationId)
           .maybeSingle();
-        baseTimestamp = convoData?.started_at
+        const startedAt = convoData?.started_at
           ? new Date(convoData.started_at).getTime()
           : Date.now() - 60000;
+        // Use started_at as base, but ensure we never go before the latest existing message
+        const seqTs = startedAt + seqNum * 200;
+        if (seqTs <= latestExistingTs) {
+          // If seq-based timestamp would be before existing messages, use latest + offset
+          baseTimestamp = latestExistingTs - seqNum * 200 + 200;
+        } else {
+          baseTimestamp = startedAt;
+        }
       } else {
-        // Fallback: use last message timestamp (legacy behavior)
-        baseTimestamp = recentMessages?.[0]?.created_at
-          ? new Date(recentMessages[0].created_at).getTime()
+        // Fallback: always after existing messages
+        baseTimestamp = latestExistingTs
+          ? latestExistingTs
           : Date.now() - 100;
       }
 

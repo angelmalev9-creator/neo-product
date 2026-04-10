@@ -492,7 +492,24 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                                 </div>
                                 <p className="text-sm font-semibold text-foreground">{translateSubject(email.subject)}</p>
                                 <p className="text-xs text-foreground/80 mt-1">До: {email.recipient_email}</p>
-                                <p className="text-xs text-foreground/60 mt-2 leading-relaxed">{getCompactEmailPreview(email.body)}</p>
+                                {email.body && email.body.includes('<') ? (
+                                  <div className="mt-2 rounded-lg overflow-hidden border border-border/20">
+                                    <iframe
+                                      srcDoc={email.body}
+                                      className="w-full bg-white"
+                                      style={{ minHeight: '180px', maxHeight: '350px' }}
+                                      sandbox=""
+                                      onLoad={(e) => {
+                                        const iframe = e.target as HTMLIFrameElement;
+                                        if (iframe.contentDocument?.body) {
+                                          iframe.style.height = Math.min(iframe.contentDocument.body.scrollHeight + 16, 350) + 'px';
+                                        }
+                                      }}
+                                    />
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-foreground/60 mt-2 leading-relaxed">{getCompactEmailPreview(email.body)}</p>
+                                )}
                               </div>
                             ))}
                           </div>

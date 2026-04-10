@@ -28,7 +28,7 @@
 
     /* Muted: warmer mid-tone */
     --muted: 240 30% 16%;
-    --muted-foreground: 252 8% 62%;
+    --muted-foreground: 252 8% 72%;
 
     /* ACCENT: rich deep red */
     --accent: 356 76% 48%;
@@ -136,7 +136,7 @@
     --secondary: 240 30% 15%;
     --secondary-foreground: 240 8% 97%;
     --muted: 240 30% 16%;
-    --muted-foreground: 252 8% 62%;
+    --muted-foreground: 252 8% 72%;
     --accent: 356 76% 48%;
     --accent-foreground: 0 0% 100%;
     --destructive: 356 76% 48%;

@@ -489,9 +489,26 @@ const EmailLogsSection = ({ emailConnected, userId, subscriptionTier }: { emailC
                         <p className="text-foreground">{new Date(log.sent_at || log.created_at).toLocaleString('bg-BG', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
                     </div>
-                    <p className="mt-2 text-[10px] text-foreground/70 leading-relaxed break-words">
-                      {getCompactEmailPreview(log.body)}
-                    </p>
+                    {log.body && log.body.includes('<') ? (
+                      <div className="mt-2 rounded-lg overflow-hidden border border-border/20">
+                        <iframe
+                          srcDoc={log.body}
+                          className="w-full bg-white"
+                          style={{ minHeight: '200px', maxHeight: '400px' }}
+                          sandbox=""
+                          onLoad={(e) => {
+                            const iframe = e.target as HTMLIFrameElement;
+                            if (iframe.contentDocument?.body) {
+                              iframe.style.height = Math.min(iframe.contentDocument.body.scrollHeight + 16, 400) + 'px';
+                            }
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-[10px] text-foreground/70 leading-relaxed break-words">
+                        {getCompactEmailPreview(log.body)}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
