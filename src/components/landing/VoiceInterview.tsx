@@ -743,6 +743,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     preWarmMicrophone,
     sendText,
     getSessionData,
+    setVoiceOverride,
   } = useGeminiVoice({
     onMessage: handleMessage,
     onError: handleError,
