@@ -77,6 +77,8 @@ const Widget = () => {
   const persistedTranscriptKeysRef = useRef<Set<string>>(new Set());
   const lastPersistedTranscriptRef = useRef<{ user: string; assistant: string }>({ user: '', assistant: '' });
   const typedMessageAddedRef = useRef<string | null>(null);
+  const persistQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const messageSeqRef = useRef<number>(0);
   
   const { playConnectSound, playDisconnectSound, startAmbient, stopAmbient, initAudioContext } = useAudioEffects({ ambientVolume: 0.04, effectsVolume: 0.2 });
 
