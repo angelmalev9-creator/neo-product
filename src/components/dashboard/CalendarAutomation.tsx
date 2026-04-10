@@ -450,7 +450,7 @@ const CalendarAutomation = () => {
 
               {/* Schedule Tab */}
               <TabsContent value="schedule" className="p-3 space-y-2.5 mt-0">
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <div className="space-y-1">
                     <Label className="text-[10px]">Тип</Label>
                     <Select value={settings.booking_type} onValueChange={(v) => setSettings(prev => ({ ...prev, booking_type: v }))}>
