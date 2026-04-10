@@ -438,13 +438,15 @@ const EmailStyleEditor = ({ userId, companyName }: EmailStyleEditorProps) => {
                 {style.logoUrl ? (
                   <img src={style.logoUrl} alt={displayName} className="max-h-7 w-auto object-contain" style={{ maxWidth: '140px' }} />
                 ) : (
-                  <div className="w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-bold" style={{ backgroundColor: style.accentColor, color: '#ffffff' }}>
-                    {displayName.charAt(0).toUpperCase()}
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-bold" style={{ backgroundColor: style.accentColor, color: '#ffffff' }}>
+                      {displayName.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-xs font-semibold" style={{ color: headerTextColor, fontFamily: style.fontFamily }}>
+                      {displayName}
+                    </span>
                   </div>
                 )}
-                <span className="text-xs font-semibold" style={{ color: headerTextColor, fontFamily: style.fontFamily }}>
-                  {displayName}
-                </span>
               </div>
             </div>
             {/* Body */}
