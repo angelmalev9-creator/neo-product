@@ -1652,7 +1652,6 @@ export const useGeminiVoice = ({
   const autoReservationCheckKeyRef = useRef<string>("");
   const autoReservationCheckDoneKeyRef = useRef<string>("");
   const reservationCheckInFlightRef = useRef<boolean>(false);
-  const lastUserInputRef = useRef<string>("");
 
   // VAD refs
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -1694,12 +1693,6 @@ export const useGeminiVoice = ({
   // ★ NEW: track what context we prepared for (sessionId/companyName/systemPrompt)
   const preparedKeyRef = useRef<string>("");
   const lastSubmitFormTargetRef = useRef<SubmitFormTarget | null>(null);
-  const activeSubmitFlowRef = useRef<{
-    session_id: string;
-    form_id?: string;
-    fingerprint?: string;
-    missingRequired: string[];
-  } | null>(null);
   const conversationFocusRef = useRef<ConversationFocusState>({
     lastTopic: "",
     lastEntityType: "",
@@ -2088,7 +2081,6 @@ export const useGeminiVoice = ({
       }
 
       onMessage?.({ role: "user", content: clean });
-      lastUserInputRef.current = clean.toLowerCase();
       lastCommittedUserRef.current = { text: clean, ts: now };
       clearUserLiveTranscript();
       return true;
@@ -2708,12 +2700,18 @@ export const useGeminiVoice = ({
   ]);
 
   const handleUserUtterance = useCallback(
-    (text: string) => {
+    (text: string, opts?: { typed?: boolean }) => {
       if (!text.trim()) return;
 
-      if (Date.now() - speakEndRef.current < ECHO_GUARD_MS) return;
-      if (isPlayingRef.current && Date.now() - speakStartRef.current < ANTI_BARGE_IN_MS) return;
-      if (isPlayingRef.current && !shouldAllowBargeIn(text) && !looksLikeGeneralContactInput(text)) return;
+      const isTyped = !!opts?.typed;
+
+      // ── Echo / barge-in guards apply ONLY to voice STT input ──
+      // Typed text is clean & intentional — it must never be dropped by these guards.
+      if (!isTyped) {
+        if (Date.now() - speakEndRef.current < ECHO_GUARD_MS) return;
+        if (isPlayingRef.current && Date.now() - speakStartRef.current < ANTI_BARGE_IN_MS) return;
+        if (isPlayingRef.current && !shouldAllowBargeIn(text) && !looksLikeGeneralContactInput(text)) return;
+      }
 
       const now = Date.now();
       const isContactDictation =
@@ -2721,8 +2719,17 @@ export const useGeminiVoice = ({
       const recent = recentUtterancesRef.current.filter((u) => now - u.ts < 2000);
       recentUtterancesRef.current = recent;
       const normalized = text.trim().toLowerCase();
-      if (!isContactDictation && recent.some((u) => u.text === normalized)) return;
-      if (!isContactDictation) {
+
+      // ★ FIX: Dedupe ALWAYS runs for typed input (even contact-like).
+      // Previously contact dictation skipped dedupe entirely, which caused typed
+      // emails/phones/names to appear twice in the chat when sendText was fired
+      // twice (or when STT buffer merge produced near-duplicate strings).
+      const allowDedupe = isTyped || !isContactDictation;
+      if (allowDedupe && recent.some((u) => u.text === normalized)) {
+        console.log("[USER][DEDUPED handleUserUtterance]", normalized.slice(0, 80));
+        return;
+      }
+      if (allowDedupe) {
         recentUtterancesRef.current.push({ text: normalized, ts: now });
       }
 
@@ -2761,7 +2768,15 @@ export const useGeminiVoice = ({
       }
 
       let sensitiveMode = expectedSensitiveInputModeRef.current;
-      const aggregatedUserTranscript = mergeTranscriptCandidates(buildStableTranscriptFromBuffers(), text);
+      // ★ FIX: Typed input is already final & clean — never merge it with STT
+      // buffers. Previously we called mergeTranscriptCandidates(buildStableTranscriptFromBuffers(), text)
+      // for BOTH voice and typed input. For typed input this caused:
+      //   (1) leftover Soniox buffers getting glued onto the typed string,
+      //   (2) two near-duplicate commits that escaped the 1500ms text-equality dedupe,
+      //   (3) duplicate chat bubbles for emails/phones/names.
+      const aggregatedUserTranscript = isTyped
+        ? text.trim()
+        : mergeTranscriptCandidates(buildStableTranscriptFromBuffers(), text);
       const rawVisibleUserText = sanitizeUserTranscriptForUi(aggregatedUserTranscript);
       const autoDetectedIncomingMode = detectContactLikeMode(rawVisibleUserText || text);
       if (sensitiveMode !== "general" && autoDetectedIncomingMode === "general") {
@@ -3683,7 +3698,6 @@ export const useGeminiVoice = ({
     isPreparedRef.current = false;
     setIsPrepared(false);
     lastSubmitFormTargetRef.current = null;
-    activeSubmitFlowRef.current = null;
     greetingSentRef.current = false;
     currentResponseTextRef.current = "";
   }, []);
@@ -3914,7 +3928,6 @@ export const useGeminiVoice = ({
     isPreparedRef.current = false;
     setIsPrepared(false);
     lastSubmitFormTargetRef.current = null;
-    activeSubmitFlowRef.current = null;
 
     // Cleanup VAD
     if (vadRafRef.current) {
@@ -4720,13 +4733,6 @@ export const useGeminiVoice = ({
           const missing = extractMissingRequired(result);
           const first = missing[0] || "следващото задължително поле";
 
-          activeSubmitFlowRef.current = {
-            session_id: String(enrichedParsed?.session_id || ""),
-            form_id: enrichedParsed?.form_id ? String(enrichedParsed.form_id) : undefined,
-            fingerprint: enrichedParsed?.fingerprint ? String(enrichedParsed.fingerprint) : undefined,
-            missingRequired: missing,
-          };
-
           // Key point: keep loop tight & deterministic: ask for ONE field only.
           sendToGemini(
             [
@@ -4743,7 +4749,6 @@ export const useGeminiVoice = ({
         }
 
         if (result?.success) {
-          activeSubmitFlowRef.current = null;
           // Tell Gemini so it speaks the confirmation out loud
           sendToGemini(
             [
@@ -4755,7 +4760,6 @@ export const useGeminiVoice = ({
             ].join("\n"),
           );
         } else {
-          activeSubmitFlowRef.current = null;
           sendToGemini(
             [
               "WORKER_SUBMIT_FAILED:",
@@ -4956,35 +4960,6 @@ export const useGeminiVoice = ({
                 "";
 
               console.log("[SEARCH WORKER] functionCall query:", query);
-
-              // ── Guard: block search when query contains personal data (email/phone) ──
-              // This means Gemini is confused and should be submitting the form, not searching.
-              const hasEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(query);
-              const hasPhone = /(?:\+?\d[\d\s\-()]{6,})/.test(query);
-              const isActiveFormFlow = !!activeSubmitFlowRef.current?.session_id;
-
-              if (hasEmail || hasPhone || isActiveFormFlow) {
-                console.warn("[SEARCH WORKER] BLOCKED — query contains personal data or form flow is active. Returning empty results.", { hasEmail, hasPhone, isActiveFormFlow, query: query.slice(0, 80) });
-                ws.send(
-                  JSON.stringify({
-                    tool_response: {
-                      function_responses: [
-                        {
-                          id: fc.id,
-                          name: fc.name,
-                          response: {
-                            results: [],
-                            keywords: [],
-                            elapsed_ms: 0,
-                            note: "Search skipped: query contains personal contact data. Use the collected data to proceed with the form submission via action_request JSON instead of searching.",
-                          },
-                        },
-                      ],
-                    },
-                  }),
-                );
-                continue;
-              }
 
               if (!searchProxyUrl || !anonKey || !query || !sid) {
                 ws.send(
@@ -5339,11 +5314,23 @@ export const useGeminiVoice = ({
     ],
   );
 
+  // ★ FIX: Guard against double-fire of sendText from the chat input UI.
+  // Some input components fire BOTH an onKeyDown(Enter) AND an onClick/form-submit
+  // in the same tick, producing two identical sendText calls. We collapse any
+  // repeat of the same text within 400ms into a single call.
+  const lastSendTextRef = useRef<{ text: string; ts: number }>({ text: "", ts: 0 });
+
   const sendText = useCallback(
     (text: string) => {
       const t = String(text || "").trim();
-      lastUserInputRef.current = t.toLowerCase();
-      const activeSubmitFlow = activeSubmitFlowRef.current;
+      if (!t) return;
+
+      const now = Date.now();
+      if (lastSendTextRef.current.text === t && now - lastSendTextRef.current.ts < 400) {
+        console.log("[sendText][DEDUPED double-fire]", t.slice(0, 80));
+        return;
+      }
+      lastSendTextRef.current = { text: t, ts: now };
 
       try {
         const state = ((window as any).__neoReservationState || {}) as any;
@@ -5486,37 +5473,6 @@ export const useGeminiVoice = ({
         (window as any).__neoReservationState = next;
         console.log("[RESERVATION STATE][sendText]", next);
       } catch {}
-
-      // ── Active submit_form flow shortcut ─────────────────────────
-      if (activeSubmitFlow?.session_id && (activeSubmitFlow?.form_id || activeSubmitFlow?.fingerprint)) {
-        const firstMissing = String(activeSubmitFlow.missingRequired?.[0] || "value").trim() || "value";
-        const extracted = extractContactIntentFields(t);
-        const fields: Record<string, unknown> = {
-          [firstMissing]: t,
-        };
-
-        if (extracted.name) fields.name = extracted.name;
-        if (extracted.email) fields.email = extracted.email;
-        if (extracted.phone) fields.phone = extracted.phone;
-
-        console.log("[FORM FLOW] direct submit_form continuation:", {
-          firstMissing,
-          fields,
-          target: activeSubmitFlow,
-        });
-
-        void maybeExecuteActionFromGemini(
-          JSON.stringify({
-            type: "action_request",
-            action: "submit_form",
-            session_id: activeSubmitFlow.session_id,
-            ...(activeSubmitFlow.form_id ? { form_id: activeSubmitFlow.form_id } : {}),
-            ...(activeSubmitFlow.fingerprint ? { fingerprint: activeSubmitFlow.fingerprint } : {}),
-            fields,
-          }),
-        );
-        return;
-      }
 
       // ── Direct room selection detection ──────────────────────────
       // If user text matches an available room AND we have dates → fire reserve directly
@@ -5680,7 +5636,7 @@ export const useGeminiVoice = ({
       } catch {}
       // ─────────────────────────────────────────────────────────────
 
-      handleUserUtterance(`${text}`);
+      handleUserUtterance(`${text}`, { typed: true });
 
       window.setTimeout(() => {
         tryAutoRunReservationCheck();
@@ -5707,7 +5663,9 @@ export const useGeminiVoice = ({
     if (!stream) return;
     const tracks = stream.getAudioTracks();
     const newMuted = !isMicMutedRef.current;
-    tracks.forEach(t => { t.enabled = !newMuted; });
+    tracks.forEach((t) => {
+      t.enabled = !newMuted;
+    });
     isMicMutedRef.current = newMuted;
     setIsMicMuted(newMuted);
   }, []);
