@@ -426,7 +426,28 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                           <div className="space-y-2"><Skeleton className="h-4 w-3/4" /><Skeleton className="h-4 w-1/2" /></div>
                         ) : convoMessages && convoMessages.length > 0 ? (
                           <div className="space-y-1 max-h-64 overflow-y-auto rounded-lg bg-card/40 border border-border/20 p-2">
-                            {convoMessages.map((msg) => (
+                            {convoMessages
+                              .filter((msg) => {
+                                const c = msg.content || '';
+                                if (c.startsWith('[SYSTEM:') || c.startsWith('[CURRENT_DATE_CONTEXT:')) return false;
+                                if (c.trim().startsWith('{"action_request"')) return false;
+                                if (!c.replace(/\[SYSTEM:[^\]]*\]/g, '').replace(/\[CURRENT_DATE_CONTEXT:[^\]]*\]/g, '').trim()) return false;
+                                return true;
+                              })
+                              .reduce((acc: ConversationMessage[], msg) => {
+                                const last = acc[acc.length - 1];
+                                if (last && last.role === msg.role) {
+                                  const lastClean = last.content.replace(/\s+/g, ' ').trim();
+                                  const currClean = msg.content.replace(/\s+/g, ' ').trim();
+                                  if (lastClean === currClean || lastClean.includes(currClean) || currClean.includes(lastClean)) {
+                                    if (currClean.length > lastClean.length) acc[acc.length - 1] = msg;
+                                    return acc;
+                                  }
+                                }
+                                acc.push(msg);
+                                return acc;
+                              }, [])
+                              .map((msg) => (
                               <div key={msg.id} className={`flex ${msg.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
                                 <div className={`rounded-lg px-2.5 py-1.5 max-w-[85%] text-xs leading-relaxed ${
                                   msg.role === 'assistant'
