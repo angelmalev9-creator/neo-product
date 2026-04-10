@@ -47,6 +47,8 @@ const VoiceTest = ({
   const [textOnlyMode, setTextOnlyMode] = useState(false);
   const [liveAssistantTranscript, setLiveAssistantTranscript] = useState<string>('');
   const [liveUserTranscript, setLiveUserTranscript] = useState<string>('');
+  const [selectedVoice, setSelectedVoice] = useState<string>('Enceladus');
+  const [localVoiceSpeed, setLocalVoiceSpeed] = useState<number>(voiceSpeed);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
