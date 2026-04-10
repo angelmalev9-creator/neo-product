@@ -94,6 +94,13 @@ const Widget = () => {
       typedMessageAddedRef.current = null;
       return;
     }
+    // Filter out raw action_request JSON that leaks into messages
+    if (message.content && (
+      message.content.startsWith('action_request:') ||
+      message.content.startsWith('{"type":"action_request"')
+    )) {
+      return;
+    }
     setMessages(prev => {
       const next = [...prev, message];
       messagesRef.current = next;
