@@ -73,6 +73,11 @@ const VoiceTest = ({
   const remainingMinutes = Math.max(0, planLimit - localUsedMinutes);
   const usagePercent = planLimit > 0 ? (localUsedMinutes / planLimit) * 100 : 0;
 
+  const hasActiveSession = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return !!session;
+  }, []);
+
   const formatUsageMinutes = (value: number) => {
     if (value <= 0) return '0';
     return value < 10 ? value.toFixed(1) : value.toFixed(0);
@@ -179,6 +184,56 @@ const VoiceTest = ({
     }
   }, [messages, liveAssistantTranscript, liveUserTranscript]);
 
+  const handleEndCall = useCallback(() => {
+    isDisconnectingRef.current = true;
+    playDisconnectSound();
+    stopAmbient();
+
+    const pendingUser = liveUserTranscript.trim();
+    if (pendingUser) {
+      setMessages(prev => [...prev, { role: 'user' as const, content: pendingUser }]);
+    }
+    
+    const pendingAssistant = liveAssistantTranscript.trim();
+    if (pendingAssistant) {
+      setMessages(prev => [...prev, { role: 'assistant' as const, content: pendingAssistant }]);
+    }
+    setLiveAssistantTranscript('');
+    setLiveUserTranscript('');
+    
+    disconnect();
+    setTextOnlyMode(false);
+
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    const startTime = startTimeRef.current;
+    const lastTracked = lastTrackedMinutesRef.current;
+    startTimeRef.current = null;
+    lastTrackedMinutesRef.current = 0;
+    setCallDuration(0);
+
+    if (startTime) {
+      const totalMinutes = (Date.now() - startTime) / 1000 / 60;
+      const untrackedMinutes = totalMinutes - lastTracked;
+      if (untrackedMinutes > 0.01) {
+        void hasActiveSession().then((isAuthed) => {
+          if (!isAuthed) return;
+          supabase.functions.invoke('track-usage', {
+            body: { action: 'add_usage', minutes: untrackedMinutes },
+          }).then(({ data }) => {
+            if (data) {
+              onUsageUpdate(data.used_minutes);
+              setLocalUsedMinutes(data.used_minutes);
+            }
+          }).catch(console.error);
+        });
+      }
+    }
+  }, [disconnect, onUsageUpdate, playDisconnectSound, stopAmbient, liveAssistantTranscript, liveUserTranscript, hasActiveSession]);
+
   // Timer and usage tracking
   useEffect(() => {
     if (isConnected || textOnlyMode) {
@@ -196,19 +251,26 @@ const VoiceTest = ({
           const totalUsedMinutes = sessionBaseUsedMinutesRef.current + currentSessionMinutes;
           setLocalUsedMinutes(totalUsedMinutes);
 
-          // Track every 30s
           if (elapsed > 0 && elapsed % 30 === 0) {
             const minutesToTrack = currentSessionMinutes - lastTrackedMinutesRef.current;
             if (minutesToTrack > 0) {
-              lastTrackedMinutesRef.current = currentSessionMinutes;
-              supabase.functions.invoke('track-usage', {
-                body: { action: 'add_usage', minutes: minutesToTrack },
-              }).then(({ data, error }) => {
-                if (data && !error) {
-                  onUsageUpdate(data.used_minutes);
-                  console.log('[USAGE] Tracked:', data.used_minutes);
+              void hasActiveSession().then((isAuthed) => {
+                if (!isAuthed) {
+                  if (timerRef.current) clearInterval(timerRef.current);
+                  timerRef.current = null;
+                  return;
                 }
-              }).catch(console.error);
+
+                lastTrackedMinutesRef.current = currentSessionMinutes;
+                supabase.functions.invoke('track-usage', {
+                  body: { action: 'add_usage', minutes: minutesToTrack },
+                }).then(({ data, error }) => {
+                  if (data && !error) {
+                    onUsageUpdate(data.used_minutes);
+                    console.log('[USAGE] Tracked:', data.used_minutes);
+                  }
+                }).catch(console.error);
+              });
             }
           }
 
@@ -223,7 +285,7 @@ const VoiceTest = ({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isConnected, textOnlyMode, planLimit, toast, onUsageUpdate]);
+  }, [isConnected, textOnlyMode, planLimit, toast, onUsageUpdate, usedMinutes, handleEndCall, hasActiveSession]);
 
   // Build system prompt & prepare session (Gemini gets knowledge via gemini-session + worker proxy)
   useEffect(() => {
@@ -281,54 +343,6 @@ const VoiceTest = ({
       await connect(systemPrompt, companyName || 'компанията', demoSession.id, true);
     }
   }, [demoSession, systemPrompt, companyName, connect, toast, remainingMinutes, initAudioContext, playConnectSound, startAmbient]);
-
-  const handleEndCall = useCallback(() => {
-    isDisconnectingRef.current = true;
-    playDisconnectSound();
-    stopAmbient();
-
-    const pendingUser = liveUserTranscript.trim();
-    if (pendingUser) {
-      setMessages(prev => [...prev, { role: 'user' as const, content: pendingUser }]);
-    }
-    
-    // Commit any partial assistant transcript before disconnecting
-    const pendingAssistant = liveAssistantTranscript.trim();
-    if (pendingAssistant) {
-      setMessages(prev => [...prev, { role: 'assistant' as const, content: pendingAssistant }]);
-    }
-    setLiveAssistantTranscript('');
-    setLiveUserTranscript('');
-    
-    disconnect();
-    setTextOnlyMode(false);
-
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-
-    const startTime = startTimeRef.current;
-    const lastTracked = lastTrackedMinutesRef.current;
-    startTimeRef.current = null;
-    lastTrackedMinutesRef.current = 0;
-    setCallDuration(0);
-
-    if (startTime) {
-      const totalMinutes = (Date.now() - startTime) / 1000 / 60;
-      const untrackedMinutes = totalMinutes - lastTracked;
-      if (untrackedMinutes > 0.01) {
-        supabase.functions.invoke('track-usage', {
-          body: { action: 'add_usage', minutes: untrackedMinutes },
-        }).then(({ data }) => {
-          if (data) {
-            onUsageUpdate(data.used_minutes);
-            setLocalUsedMinutes(data.used_minutes);
-          }
-        }).catch(console.error);
-      }
-    }
-  }, [disconnect, onUsageUpdate, playDisconnectSound, stopAmbient, liveAssistantTranscript, liveUserTranscript]);
 
   // Send text (same as demo - useGeminiVoice handles worker proxy internally)
   const handleSendText = useCallback(async () => {

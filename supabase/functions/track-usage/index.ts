@@ -31,41 +31,60 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const { action, duration_seconds, session_id, minutes } = await req.json();
+    const unauthorizedPayload = action === 'get_usage'
+      ? {
+          success: false,
+          error: 'User not authenticated',
+          used_minutes: 0,
+          plan_limit: 100,
+          remaining_minutes: 100,
+          subscription_tier: 'starter',
+          days_until_reset: 30,
+        }
+      : {
+          success: false,
+          error: 'User not authenticated',
+        };
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      logStep('Auth missing', { action });
       return new Response(
-        JSON.stringify({ error: 'No authorization header', success: false }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify(unauthorizedPayload),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
 
     const token = authHeader.replace('Bearer ', '');
     let userId: string;
 
     try {
-      const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+      const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
       if (claimsError || !claimsData?.claims?.sub) {
-        logStep("Auth failed", { error: claimsError?.message });
+        logStep('Auth failed', { action, error: claimsError?.message });
         return new Response(
-          JSON.stringify({ error: 'User not authenticated', success: false }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify(unauthorizedPayload),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       userId = claimsData.claims.sub as string;
     } catch (authErr) {
-      logStep("Auth exception", { message: String(authErr) });
+      logStep('Auth exception', { action, message: String(authErr) });
       return new Response(
-        JSON.stringify({ error: 'User not authenticated', success: false }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify(unauthorizedPayload),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    logStep("User authenticated", { userId });
-
-    const { action, duration_seconds, session_id, minutes } = await req.json();
+    logStep("User authenticated", { userId, action });
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
