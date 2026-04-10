@@ -77,25 +77,15 @@ interface ActivityLogProps {
 
 const getCompactEmailPreview = (value: string | null) => {
   const clean = String(value || '')
-    // Strip style blocks and their content
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-    // Strip CSS rules that leak outside style tags
     .replace(/\*?\{[^}]*\}/g, '')
-    .replace(/@media[^{]*\{[^}]*(\{[^}]*\})*[^}]*\}/g, '')
+    .replace(/@media[^{]*\{[\s\S]*?\}\s*\}/gi, '')
     .replace(/@[a-z-]+[^;{]*[;{][^}]*/gi, '')
     .replace(/<[^>]*>/g, ' ')
     .replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ')
-    // Remove technical prefixes and metadata patterns
-    .replace(/NEO Lead Alert[:\s]*/gi, '')
-    .replace(/Ново запитване[:\s]*/gi, '')
-    .replace(/Lead\s*summary[:\s]*/gi, '')
-    .replace(/Стандартен[:\s]*-?\s*S\d+/gi, '')
-    .replace(/\bfollow[-\s]?up\b/gi, '')
-    .replace(/\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g, '')
-    // Remove CSS property fragments
-    .replace(/[a-z-]+\s*:\s*[^;,]+[;!]\s*/gi, '')
+    .replace(/[a-z-]+\s*:\s*[^;,]{3,}[;!]\s*/gi, '')
     .replace(/!important/gi, '')
+    .replace(/\.neo-[a-zA-Z0-9_-]+/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 
