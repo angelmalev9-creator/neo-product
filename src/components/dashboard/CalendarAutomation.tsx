@@ -449,71 +449,66 @@ const CalendarAutomation = () => {
               </TabsList>
 
               {/* Schedule Tab */}
-              <TabsContent value="schedule" className="p-4 space-y-4 mt-0">
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium">Тип записване</Label>
-                  <Select value={settings.booking_type} onValueChange={(v) => setSettings(prev => ({ ...prev, booking_type: v }))}>
-                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="consultation">Консултация</SelectItem>
-                      <SelectItem value="reservation">Резервация</SelectItem>
-                      <SelectItem value="meeting">Среща</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-[10px] text-muted-foreground">NEO ще казва &quot;{bookingLabel.toLowerCase()}&quot; в разговорите</p>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Продължителност (мин)</Label>
-                    <Input type="number" value={settings.default_meeting_duration} onChange={(e) => setSettings(prev => ({ ...prev, default_meeting_duration: parseInt(e.target.value) || 30 }))} className="h-9 text-sm" />
+              <TabsContent value="schedule" className="p-3 space-y-2.5 mt-0">
+                <div className="grid grid-cols-4 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Тип</Label>
+                    <Select value={settings.booking_type} onValueChange={(v) => setSettings(prev => ({ ...prev, booking_type: v }))}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="consultation">Консултация</SelectItem>
+                        <SelectItem value="reservation">Резервация</SelectItem>
+                        <SelectItem value="meeting">Среща</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Буфер (мин)</Label>
-                    <Input type="number" value={settings.booking_buffer_minutes} onChange={(e) => setSettings(prev => ({ ...prev, booking_buffer_minutes: parseInt(e.target.value) || 15 }))} className="h-9 text-sm" />
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Продълж. (мин)</Label>
+                    <Input type="number" value={settings.default_meeting_duration} onChange={(e) => setSettings(prev => ({ ...prev, default_meeting_duration: parseInt(e.target.value) || 30 }))} className="h-8 text-xs" />
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Работно време от</Label>
-                    <Input type="time" value={settings.working_hours_start} onChange={(e) => setSettings(prev => ({ ...prev, working_hours_start: e.target.value }))} className="h-9 text-sm" />
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Буфер (мин)</Label>
+                    <Input type="number" value={settings.booking_buffer_minutes} onChange={(e) => setSettings(prev => ({ ...prev, booking_buffer_minutes: parseInt(e.target.value) || 15 }))} className="h-8 text-xs" />
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Работно време до</Label>
-                    <Input type="time" value={settings.working_hours_end} onChange={(e) => setSettings(prev => ({ ...prev, working_hours_end: e.target.value }))} className="h-9 text-sm" />
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Капацитет</Label>
+                    <Input type="number" value={settings.default_meeting_duration} disabled className="h-8 text-xs opacity-40" />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Работни дни</Label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {WEEKDAYS.map(day => (
-                      <button key={day.value} onClick={() => toggleWorkingDay(day.value)} className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${settings.working_days.includes(day.value) ? 'bg-primary/10 border-primary/30 text-primary' : 'border-border text-muted-foreground hover:bg-muted/50'}`}>
-                        {day.label}
-                      </button>
-                    ))}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Работно време от</Label>
+                    <Input type="time" value={settings.working_hours_start} onChange={(e) => setSettings(prev => ({ ...prev, working_hours_start: e.target.value }))} className="h-8 text-xs" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Работно време до</Label>
+                    <Input type="time" value={settings.working_hours_end} onChange={(e) => setSettings(prev => ({ ...prev, working_hours_end: e.target.value }))} className="h-8 text-xs" />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium">Задължителни полета за записване</Label>
-                  <p className="text-[10px] text-muted-foreground">NEO ще събира тези данни от клиента преди да запише час</p>
-                  <div className="flex flex-wrap gap-3">
-                    {BOOKING_FIELDS.map(field => (
-                      <label key={field.value} className="flex items-center gap-1.5 cursor-pointer">
-                        <Checkbox checked={settings.required_booking_fields.includes(field.value)} onCheckedChange={(checked) => { setSettings(prev => ({ ...prev, required_booking_fields: checked ? [...prev.required_booking_fields, field.value] : prev.required_booking_fields.filter(f => f !== field.value) })); }} />
-                        <span className="text-xs text-foreground">{field.label}</span>
-                      </label>
-                    ))}
-                  </div>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <Label className="text-[10px] shrink-0">Работни дни</Label>
+                  {WEEKDAYS.map(day => (
+                    <button key={day.value} onClick={() => toggleWorkingDay(day.value)} className={`px-2 py-1 rounded-md border text-[10px] font-medium transition-colors ${settings.working_days.includes(day.value) ? 'bg-primary/10 border-primary/30 text-primary' : 'border-border text-muted-foreground hover:bg-muted/50'}`}>
+                      {day.label}
+                    </button>
+                  ))}
                 </div>
-                <div className="flex items-center justify-between py-1">
-                  <div>
-                    <Label className="text-xs font-medium">Автоматично записване</Label>
-                    <p className="text-[10px] text-muted-foreground">NEO предлага часове по време на разговор</p>
-                  </div>
-                  <Switch checked={settings.auto_book_after_conversation} onCheckedChange={(checked) => setSettings(prev => ({ ...prev, auto_book_after_conversation: checked }))} />
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Label className="text-[10px] shrink-0">Полета</Label>
+                  {BOOKING_FIELDS.map(field => (
+                    <label key={field.value} className="flex items-center gap-1 cursor-pointer">
+                      <Checkbox className="h-3.5 w-3.5" checked={settings.required_booking_fields.includes(field.value)} onCheckedChange={(checked) => { setSettings(prev => ({ ...prev, required_booking_fields: checked ? [...prev.required_booking_fields, field.value] : prev.required_booking_fields.filter(f => f !== field.value) })); }} />
+                      <span className="text-[10px] text-foreground">{field.label}</span>
+                    </label>
+                  ))}
                 </div>
-                <Button onClick={saveSettings} disabled={saving} className="w-full">
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle className="w-4 h-4 mr-2" />}
-                  Запази настройки
+                <div className="flex items-center justify-between">
+                  <Label className="text-[10px]">Автоматично записване</Label>
+                  <Switch className="scale-90" checked={settings.auto_book_after_conversation} onCheckedChange={(checked) => setSettings(prev => ({ ...prev, auto_book_after_conversation: checked }))} />
+                </div>
+                <Button onClick={saveSettings} disabled={saving} size="sm" className="w-full h-8 text-xs">
+                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <CheckCircle className="w-3.5 h-3.5 mr-1.5" />}
+                  Запази
                 </Button>
               </TabsContent>
 
