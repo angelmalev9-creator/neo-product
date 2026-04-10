@@ -124,12 +124,13 @@ const EmailAutomation = () => {
       if (data?.success) {
         toast({
           title: 'Gmail свързан успешно!',
-          description: `Акаунтът ${data.email} е свързан.`,
+          description: `Имейлите ще се изпращат от ${data.email}.`,
         });
         setSettings(prev => ({
           ...prev,
           gmail_connected: true,
           gmail_email: data.email,
+          email_enabled: true, // Auto-enable after connecting
         }));
       }
     } catch (error) {
