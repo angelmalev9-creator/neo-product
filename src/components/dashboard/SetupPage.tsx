@@ -29,13 +29,48 @@ interface SetupPageProps {
 
 const getCompactEmailPreview = (value: string | null) => {
   const clean = String(value || '')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/\*?\{[^}]*\}/g, '')
+    .replace(/@media[^{]*\{[\s\S]*?\}\s*\}/gi, '')
+    .replace(/@[a-z-]+[^;{]*[;{][^}]*/gi, '')
     .replace(/<[^>]*>/g, ' ')
     .replace(/&nbsp;/g, ' ')
+    .replace(/[a-z-]+\s*:\s*[^;,]{3,}[;!]\s*/gi, '')
+    .replace(/!important/gi, '')
+    .replace(/\.neo-[a-zA-Z0-9_-]+/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 
-  if (!clean) return 'Няма кратко съдържание';
-  return clean.length > 180 ? `${clean.slice(0, 180).trim()}…` : clean;
+  if (!clean || clean.length < 5) return 'Имейл изпратен към клиента';
+  return clean.length > 140 ? `${clean.slice(0, 140).trim()}…` : clean;
+};
+
+const INTENT_LABELS: Record<string, string> = {
+  client_confirmation: 'Потвърждение за клиента',
+  lead_notification: 'Уведомление за клиент',
+  executor_notification: 'Уведомление за бизнеса',
+  follow_up: 'Последващ контакт',
+  booking_confirmation: 'Потвърждение на резервация',
+  welcome: 'Добре дошли',
+  inquiry_response: 'Отговор на запитване',
+  thank_you: 'Благодарност',
+};
+
+const translateIntent = (intent: string | null) => {
+  if (!intent) return null;
+  return INTENT_LABELS[intent] || intent.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+};
+
+const translateSubject = (subject: string) => {
+  if (!subject) return 'Имейл от NEO';
+  return subject
+    .replace(/^NEO Lead Alert[:\s]*/i, 'Нов клиент: ')
+    .replace(/New lead captured/i, 'Нов заинтересован клиент')
+    .replace(/Lead notification/i, 'Уведомление за клиент')
+    .replace(/Follow[\s-]?up/i, 'Последващ контакт')
+    .replace(/Booking confirmation/i, 'Потвърждение на резервация')
+    .replace(/through NEO/i, 'чрез NEO')
+    .replace(/via NEO/i, 'чрез NEO');
 };
 
 const SetupPage = ({
@@ -248,38 +283,84 @@ const EmailLogsSection = ({ emailConnected, userId, subscriptionTier }: { emailC
   const [logs, setLogs] = useState<EmailLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [customEmail, setCustomEmail] = useState('');
-  const [savingEmail, setSavingEmail] = useState(false);
+  const [gmailEmail, setGmailEmail] = useState<string | null>(null);
+  const [connecting, setConnecting] = useState(false);
   const { toast } = useToast();
 
   const isGrowthOrAbove = subscriptionTier === 'growth' || subscriptionTier === 'empire';
 
   useEffect(() => {
-    (async () => {
-      const [logsRes, settingsRes] = await Promise.all([
-        supabase
-          .from('email_logs')
-          .select('id, recipient_email, recipient_name, subject, body, status, intent, sent_at, created_at')
-          .eq('user_id', userId).order('created_at', { ascending: false }).limit(30),
-        supabase
-          .from('email_settings')
-          .select('gmail_email')
-          .eq('user_id', userId).maybeSingle(),
-      ]);
-      setLogs((logsRes.data || []) as EmailLog[]);
-      if (settingsRes.data?.gmail_email) setCustomEmail(settingsRes.data.gmail_email);
-      setLoading(false);
-    })();
+    // Check for OAuth callback
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const gmailCallback = urlParams.get('gmail_callback');
+    if (code && gmailCallback) {
+      handleOAuthCallback(code);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else {
+      loadData();
+    }
   }, [userId]);
 
-  const handleSaveCustomEmail = async () => {
-    setSavingEmail(true);
-    await supabase.from('email_settings').upsert({
-      user_id: userId,
-      gmail_email: customEmail || null,
-    } as any, { onConflict: 'user_id' });
-    setSavingEmail(false);
-    toast({ title: 'Запазено', description: 'Имейл адресът е обновен' });
+  const loadData = async () => {
+    const [logsRes, settingsRes] = await Promise.all([
+      supabase
+        .from('email_logs')
+        .select('id, recipient_email, recipient_name, subject, body, status, intent, sent_at, created_at')
+        .eq('user_id', userId).order('created_at', { ascending: false }).limit(30),
+      supabase
+        .from('email_settings')
+        .select('gmail_email, gmail_connected')
+        .eq('user_id', userId).maybeSingle(),
+    ]);
+    setLogs((logsRes.data || []) as EmailLog[]);
+    if (settingsRes.data?.gmail_connected) setGmailEmail(settingsRes.data.gmail_email);
+    setLoading(false);
+  };
+
+  const handleOAuthCallback = async (code: string) => {
+    setConnecting(true);
+    try {
+      const redirectUri = `${window.location.origin}/dashboard?gmail_callback=true`;
+      const { data, error } = await supabase.functions.invoke('gmail-oauth', {
+        body: { action: 'exchange-code', code, redirectUri },
+      });
+      if (error) throw error;
+      if (data?.success) {
+        setGmailEmail(data.email);
+        toast({ title: 'Gmail свързан!', description: `Имейлите ще се изпращат от ${data.email}` });
+      }
+    } catch {
+      toast({ title: 'Грешка', description: 'Неуспешно свързване с Gmail', variant: 'destructive' });
+    } finally {
+      setConnecting(false);
+      loadData();
+    }
+  };
+
+  const connectGmail = async () => {
+    setConnecting(true);
+    try {
+      const redirectUri = `${window.location.origin}/dashboard?gmail_callback=true`;
+      const { data, error } = await supabase.functions.invoke('gmail-oauth', {
+        body: { action: 'get-auth-url', redirectUri },
+      });
+      if (error) throw error;
+      if (data?.authUrl) window.location.href = data.authUrl;
+    } catch {
+      toast({ title: 'Грешка', description: 'Неуспешно свързване с Gmail', variant: 'destructive' });
+      setConnecting(false);
+    }
+  };
+
+  const disconnectGmail = async () => {
+    try {
+      await supabase.functions.invoke('gmail-oauth', { body: { action: 'disconnect' } });
+      setGmailEmail(null);
+      toast({ title: 'Gmail изключен' });
+    } catch {
+      toast({ title: 'Грешка', variant: 'destructive' });
+    }
   };
 
   const statusBadge = (status: string) => {
@@ -292,11 +373,11 @@ const EmailLogsSection = ({ emailConnected, userId, subscriptionTier }: { emailC
 
   return (
     <div className="space-y-3">
-      {/* Custom email - growth+ only */}
+      {/* Gmail OAuth connection */}
       <div className="rounded-2xl border border-border/10 bg-card/60 p-4 space-y-2">
         <div className="flex items-center gap-2">
           <Mail className="w-4 h-4 text-primary" />
-          <h3 className="text-xs font-semibold text-foreground">Имейл на NEO</h3>
+          <h3 className="text-xs font-semibold text-foreground">Gmail акаунт</h3>
           {!isGrowthOrAbove && (
             <Badge variant="outline" className="text-[9px] ml-auto gap-1">
               <Lock className="w-2.5 h-2.5" /> Растеж+
@@ -304,32 +385,29 @@ const EmailLogsSection = ({ emailConnected, userId, subscriptionTier }: { emailC
           )}
         </div>
         <p className="text-[10px] text-muted-foreground">
-          {isGrowthOrAbove
-            ? 'Задайте имейл (напр. Gmail), от който NEO ще изпраща съобщения на клиентите'
-            : 'Надградете до план Растеж, за да използвате собствен имейл адрес за NEO'}
+          {gmailEmail
+            ? 'NEO изпраща имейли от свързания Gmail акаунт'
+            : 'Свържете Gmail акаунт, от който NEO ще изпраща имейли на клиентите'}
         </p>
-        {isGrowthOrAbove ? (
-          <div className="flex gap-2">
-            <Input
-              type="email"
-              placeholder="neo@yourbusiness.com"
-              value={customEmail}
-              onChange={(e) => setCustomEmail(e.target.value)}
-              className="bg-background/50 text-xs h-8 flex-1"
-            />
-            <Button size="sm" className="h-8 text-[11px] px-3" onClick={handleSaveCustomEmail} disabled={savingEmail}>
-              {savingEmail ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Запази'}
+        {gmailEmail ? (
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-[hsl(var(--neo-success))]" />
+              <span className="text-xs font-medium text-foreground">{gmailEmail}</span>
+            </div>
+            <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={disconnectGmail}>
+              Прекъсни
             </Button>
           </div>
+        ) : isGrowthOrAbove ? (
+          <Button size="sm" className="h-8 text-[11px] gap-1.5 w-full" onClick={connectGmail} disabled={connecting}>
+            {connecting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+            Свържи Gmail акаунт
+          </Button>
         ) : (
-          <div className="relative">
-            <Input
-              type="email"
-              placeholder="neo@yourbusiness.com"
-              disabled
-              className="bg-background/30 text-xs h-8 opacity-50"
-            />
-          </div>
+          <Button size="sm" disabled className="h-8 text-[11px] gap-1.5 w-full opacity-50">
+            <Lock className="w-3 h-3" /> Свържи Gmail акаунт
+          </Button>
         )}
       </div>
 
@@ -362,7 +440,7 @@ const EmailLogsSection = ({ emailConnected, userId, subscriptionTier }: { emailC
                   className="w-full flex items-center gap-2 p-2.5 text-left hover:bg-muted/20 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-medium text-foreground truncate">{log.subject}</p>
+                    <p className="text-[11px] font-medium text-foreground truncate">{translateSubject(log.subject)}</p>
                     <p className="text-[10px] text-muted-foreground truncate">
                       {log.recipient_name ? `${log.recipient_name}` : log.recipient_email}
                     </p>
@@ -387,7 +465,7 @@ const EmailLogsSection = ({ emailConnected, userId, subscriptionTier }: { emailC
                       {log.intent && (
                         <div>
                           <p className="text-muted-foreground">Тип</p>
-                          <p className="text-foreground">{log.intent}</p>
+                          <p className="text-foreground">{translateIntent(log.intent)}</p>
                         </div>
                       )}
                       <div>
