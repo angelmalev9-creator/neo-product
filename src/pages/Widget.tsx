@@ -342,6 +342,7 @@ const Widget = () => {
     if (!textInput.trim() || !isConnected) return;
     const msg = textInput.trim();
     setTextInput('');
+    typedMessageAddedRef.current = msg;
     setMessages(prev => [...prev, { role: 'user', content: msg }]);
     void persistTranscriptMessage('user', msg);
     sendText(msg);
