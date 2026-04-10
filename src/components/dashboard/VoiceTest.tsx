@@ -184,6 +184,56 @@ const VoiceTest = ({
     }
   }, [messages, liveAssistantTranscript, liveUserTranscript]);
 
+  const handleEndCall = useCallback(() => {
+    isDisconnectingRef.current = true;
+    playDisconnectSound();
+    stopAmbient();
+
+    const pendingUser = liveUserTranscript.trim();
+    if (pendingUser) {
+      setMessages(prev => [...prev, { role: 'user' as const, content: pendingUser }]);
+    }
+    
+    const pendingAssistant = liveAssistantTranscript.trim();
+    if (pendingAssistant) {
+      setMessages(prev => [...prev, { role: 'assistant' as const, content: pendingAssistant }]);
+    }
+    setLiveAssistantTranscript('');
+    setLiveUserTranscript('');
+    
+    disconnect();
+    setTextOnlyMode(false);
+
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    const startTime = startTimeRef.current;
+    const lastTracked = lastTrackedMinutesRef.current;
+    startTimeRef.current = null;
+    lastTrackedMinutesRef.current = 0;
+    setCallDuration(0);
+
+    if (startTime) {
+      const totalMinutes = (Date.now() - startTime) / 1000 / 60;
+      const untrackedMinutes = totalMinutes - lastTracked;
+      if (untrackedMinutes > 0.01) {
+        void hasActiveSession().then((isAuthed) => {
+          if (!isAuthed) return;
+          supabase.functions.invoke('track-usage', {
+            body: { action: 'add_usage', minutes: untrackedMinutes },
+          }).then(({ data }) => {
+            if (data) {
+              onUsageUpdate(data.used_minutes);
+              setLocalUsedMinutes(data.used_minutes);
+            }
+          }).catch(console.error);
+        });
+      }
+    }
+  }, [disconnect, onUsageUpdate, playDisconnectSound, stopAmbient, liveAssistantTranscript, liveUserTranscript, hasActiveSession]);
+
   // Timer and usage tracking
   useEffect(() => {
     if (isConnected || textOnlyMode) {
@@ -293,54 +343,6 @@ const VoiceTest = ({
       await connect(systemPrompt, companyName || 'компанията', demoSession.id, true);
     }
   }, [demoSession, systemPrompt, companyName, connect, toast, remainingMinutes, initAudioContext, playConnectSound, startAmbient]);
-
-  const handleEndCall = useCallback(() => {
-    isDisconnectingRef.current = true;
-    playDisconnectSound();
-    stopAmbient();
-
-    const pendingUser = liveUserTranscript.trim();
-    if (pendingUser) {
-      setMessages(prev => [...prev, { role: 'user' as const, content: pendingUser }]);
-    }
-    
-    // Commit any partial assistant transcript before disconnecting
-    const pendingAssistant = liveAssistantTranscript.trim();
-    if (pendingAssistant) {
-      setMessages(prev => [...prev, { role: 'assistant' as const, content: pendingAssistant }]);
-    }
-    setLiveAssistantTranscript('');
-    setLiveUserTranscript('');
-    
-    disconnect();
-    setTextOnlyMode(false);
-
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-
-    const startTime = startTimeRef.current;
-    const lastTracked = lastTrackedMinutesRef.current;
-    startTimeRef.current = null;
-    lastTrackedMinutesRef.current = 0;
-    setCallDuration(0);
-
-    if (startTime) {
-      const totalMinutes = (Date.now() - startTime) / 1000 / 60;
-      const untrackedMinutes = totalMinutes - lastTracked;
-      if (untrackedMinutes > 0.01) {
-        supabase.functions.invoke('track-usage', {
-          body: { action: 'add_usage', minutes: untrackedMinutes },
-        }).then(({ data }) => {
-          if (data) {
-            onUsageUpdate(data.used_minutes);
-            setLocalUsedMinutes(data.used_minutes);
-          }
-        }).catch(console.error);
-      }
-    }
-  }, [disconnect, onUsageUpdate, playDisconnectSound, stopAmbient, liveAssistantTranscript, liveUserTranscript]);
 
   // Send text (same as demo - useGeminiVoice handles worker proxy internally)
   const handleSendText = useCallback(async () => {
