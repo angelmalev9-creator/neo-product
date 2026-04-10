@@ -1652,6 +1652,7 @@ export const useGeminiVoice = ({
   const autoReservationCheckKeyRef = useRef<string>("");
   const autoReservationCheckDoneKeyRef = useRef<string>("");
   const reservationCheckInFlightRef = useRef<boolean>(false);
+  const lastUserInputRef = useRef<string>("");
 
   // VAD refs
   const analyserRef = useRef<AnalyserNode | null>(null);
