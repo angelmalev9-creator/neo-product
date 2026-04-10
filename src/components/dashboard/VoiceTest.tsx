@@ -73,6 +73,11 @@ const VoiceTest = ({
   const remainingMinutes = Math.max(0, planLimit - localUsedMinutes);
   const usagePercent = planLimit > 0 ? (localUsedMinutes / planLimit) * 100 : 0;
 
+  const hasActiveSession = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return !!session;
+  }, []);
+
   const formatUsageMinutes = (value: number) => {
     if (value <= 0) return '0';
     return value < 10 ? value.toFixed(1) : value.toFixed(0);
