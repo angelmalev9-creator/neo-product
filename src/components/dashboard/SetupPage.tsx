@@ -302,6 +302,22 @@ const EmailLogsSection = ({ emailConnected, userId, subscriptionTier }: { emailC
     }
   }, [userId]);
 
+  // Realtime email_logs updates
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase.channel(`setup-email-logs-${userId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'email_logs', filter: `user_id=eq.${userId}` }, (payload) => {
+        const newLog = payload.new as EmailLog;
+        setLogs(prev => [newLog, ...prev].slice(0, 30));
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'email_logs', filter: `user_id=eq.${userId}` }, (payload) => {
+        const updated = payload.new as EmailLog;
+        setLogs(prev => prev.map(l => l.id === updated.id ? updated : l));
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [userId]);
+
   const loadData = async () => {
     const [logsRes, settingsRes] = await Promise.all([
       supabase
