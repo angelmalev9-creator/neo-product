@@ -1694,6 +1694,12 @@ export const useGeminiVoice = ({
   // ★ NEW: track what context we prepared for (sessionId/companyName/systemPrompt)
   const preparedKeyRef = useRef<string>("");
   const lastSubmitFormTargetRef = useRef<SubmitFormTarget | null>(null);
+  const activeSubmitFlowRef = useRef<{
+    session_id: string;
+    form_id?: string;
+    fingerprint?: string;
+    missingRequired: string[];
+  } | null>(null);
   const conversationFocusRef = useRef<ConversationFocusState>({
     lastTopic: "",
     lastEntityType: "",
@@ -3677,6 +3683,7 @@ export const useGeminiVoice = ({
     isPreparedRef.current = false;
     setIsPrepared(false);
     lastSubmitFormTargetRef.current = null;
+    activeSubmitFlowRef.current = null;
     greetingSentRef.current = false;
     currentResponseTextRef.current = "";
   }, []);
@@ -3907,6 +3914,7 @@ export const useGeminiVoice = ({
     isPreparedRef.current = false;
     setIsPrepared(false);
     lastSubmitFormTargetRef.current = null;
+    activeSubmitFlowRef.current = null;
 
     // Cleanup VAD
     if (vadRafRef.current) {
@@ -4712,6 +4720,13 @@ export const useGeminiVoice = ({
           const missing = extractMissingRequired(result);
           const first = missing[0] || "следващото задължително поле";
 
+          activeSubmitFlowRef.current = {
+            session_id: String(enrichedParsed?.session_id || ""),
+            form_id: enrichedParsed?.form_id ? String(enrichedParsed.form_id) : undefined,
+            fingerprint: enrichedParsed?.fingerprint ? String(enrichedParsed.fingerprint) : undefined,
+            missingRequired: missing,
+          };
+
           // Key point: keep loop tight & deterministic: ask for ONE field only.
           sendToGemini(
             [
@@ -4728,6 +4743,7 @@ export const useGeminiVoice = ({
         }
 
         if (result?.success) {
+          activeSubmitFlowRef.current = null;
           // Tell Gemini so it speaks the confirmation out loud
           sendToGemini(
             [
@@ -4739,6 +4755,7 @@ export const useGeminiVoice = ({
             ].join("\n"),
           );
         } else {
+          activeSubmitFlowRef.current = null;
           sendToGemini(
             [
               "WORKER_SUBMIT_FAILED:",
@@ -4926,33 +4943,6 @@ export const useGeminiVoice = ({
           if (toolCall?.functionCalls?.length) {
             for (const fc of toolCall.functionCalls) {
               if (fc.name !== "search_site_content") continue;
-
-              // ★ CLIENT-SIDE GUARD: block search on user confirmation phrases
-              const lastInput = lastUserInputRef.current;
-              const confirmationPatterns = /^(да|yes|потвърж|потвърди|ок|добре|ok|okay|съгласен|искам|поръчвам|направи|давай|разбира се|нека|може|моля|go|confirm|sure|yep|yeah|точно|абсолютно)$/i;
-              const isConfirmation = confirmationPatterns.test(lastInput) || lastInput.length <= 4;
-              if (isConfirmation && lastInput.length > 0) {
-                console.log("[SEARCH WORKER] BLOCKED — last user input is confirmation:", lastInput);
-                ws.send(
-                  JSON.stringify({
-                    tool_response: {
-                      function_responses: [
-                        {
-                          id: fc.id,
-                          name: fc.name,
-                          response: {
-                            results: [],
-                            keywords: [],
-                            elapsed_ms: 0,
-                            note: "Search blocked: user confirmed an action. Proceed with action_request JSON instead.",
-                          },
-                        },
-                      ],
-                    },
-                  }),
-                );
-                continue;
-              }
 
               const query = String(fc.args?.query || "").trim();
               const searchProxyUrl = (sessionDataRef.current as any)?.searchProxyUrl || "";
@@ -5324,6 +5314,7 @@ export const useGeminiVoice = ({
     (text: string) => {
       const t = String(text || "").trim();
       lastUserInputRef.current = t.toLowerCase();
+      const activeSubmitFlow = activeSubmitFlowRef.current;
 
       try {
         const state = ((window as any).__neoReservationState || {}) as any;
@@ -5466,6 +5457,37 @@ export const useGeminiVoice = ({
         (window as any).__neoReservationState = next;
         console.log("[RESERVATION STATE][sendText]", next);
       } catch {}
+
+      // ── Active submit_form flow shortcut ─────────────────────────
+      if (activeSubmitFlow?.session_id && (activeSubmitFlow?.form_id || activeSubmitFlow?.fingerprint)) {
+        const firstMissing = String(activeSubmitFlow.missingRequired?.[0] || "value").trim() || "value";
+        const extracted = extractContactIntentFields(t);
+        const fields: Record<string, unknown> = {
+          [firstMissing]: t,
+        };
+
+        if (extracted.name) fields.name = extracted.name;
+        if (extracted.email) fields.email = extracted.email;
+        if (extracted.phone) fields.phone = extracted.phone;
+
+        console.log("[FORM FLOW] direct submit_form continuation:", {
+          firstMissing,
+          fields,
+          target: activeSubmitFlow,
+        });
+
+        void maybeExecuteActionFromGemini(
+          JSON.stringify({
+            type: "action_request",
+            action: "submit_form",
+            session_id: activeSubmitFlow.session_id,
+            ...(activeSubmitFlow.form_id ? { form_id: activeSubmitFlow.form_id } : {}),
+            ...(activeSubmitFlow.fingerprint ? { fingerprint: activeSubmitFlow.fingerprint } : {}),
+            fields,
+          }),
+        );
+        return;
+      }
 
       // ── Direct room selection detection ──────────────────────────
       // If user text matches an available room AND we have dates → fire reserve directly
