@@ -89,6 +89,11 @@ serve(async (req) => {
         });
       }
 
+      // Use client-provided seq number for reliable chronological ordering.
+      // Base timestamp = conversation start or now, then offset by seq * 100ms
+      // to guarantee strict monotonic order regardless of network timing.
+      const seqNum = typeof seq === "number" && seq > 0 ? seq : 0;
+
       const { data: recentMessages } = await supabase
         .from("conversation_messages")
         .select("role, content, created_at")
@@ -99,20 +104,38 @@ serve(async (req) => {
       const latestUserMessage = recentMessages?.find((message) => message.role === "user")?.content || "";
       const latestAssistantMessage = recentMessages?.find((message) => message.role === "assistant")?.content || "";
 
+      // Compute a base timestamp: use the conversation's started_at for consistency
+      let baseTimestamp: number;
+      if (seqNum > 0) {
+        const { data: convoData } = await supabase
+          .from("conversations")
+          .select("started_at")
+          .eq("id", conversationId)
+          .maybeSingle();
+        baseTimestamp = convoData?.started_at
+          ? new Date(convoData.started_at).getTime()
+          : Date.now() - 60000;
+      } else {
+        // Fallback: use last message timestamp (legacy behavior)
+        baseTimestamp = recentMessages?.[0]?.created_at
+          ? new Date(recentMessages[0].created_at).getTime()
+          : Date.now() - 100;
+      }
+
       const inserts: { conversation_id: string; role: string; content: string; created_at: string }[] = [];
-      let lastTimestamp = recentMessages?.[0]?.created_at
-        ? new Date(recentMessages[0].created_at).getTime()
-        : Date.now() - 100;
 
       if (userMessage) {
         const nextUserMessage = extractIncrementalMessage(latestUserMessage, userMessage);
         if (nextUserMessage) {
-          lastTimestamp = Math.max(Date.now(), lastTimestamp + 40);
+          // seq-based: started_at + seq * 100ms ensures perfect chronological order
+          const ts = seqNum > 0
+            ? new Date(baseTimestamp + seqNum * 100).toISOString()
+            : new Date(Math.max(Date.now(), baseTimestamp + 40)).toISOString();
           inserts.push({
             conversation_id: conversationId,
             role: "user",
             content: nextUserMessage,
-            created_at: new Date(lastTimestamp).toISOString(),
+            created_at: ts,
           });
         }
       }
@@ -120,12 +143,14 @@ serve(async (req) => {
       if (assistantMessage) {
         const nextAssistantMessage = extractIncrementalMessage(latestAssistantMessage, assistantMessage);
         if (nextAssistantMessage) {
-          lastTimestamp = Math.max(Date.now(), lastTimestamp + 40);
+          const ts = seqNum > 0
+            ? new Date(baseTimestamp + seqNum * 100).toISOString()
+            : new Date(Math.max(Date.now(), baseTimestamp + 40)).toISOString();
           inserts.push({
             conversation_id: conversationId,
             role: "assistant",
             content: nextAssistantMessage,
-            created_at: new Date(lastTimestamp).toISOString(),
+            created_at: ts,
           });
         }
       }
