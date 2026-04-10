@@ -38,6 +38,10 @@ interface EmailLog {
 
 const getCompactEmailPreview = (value: string | null) => {
   const clean = String(value || '')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/\*?\{[^}]*\}/g, '')
+    .replace(/@media[^{]*\{[^}]*(\{[^}]*\})*[^}]*\}/g, '')
+    .replace(/@[a-z-]+[^;{]*[;{][^}]*/gi, '')
     .replace(/<[^>]*>/g, ' ')
     .replace(/&nbsp;/g, ' ')
     .replace(/\s+/g, ' ')
@@ -46,6 +50,8 @@ const getCompactEmailPreview = (value: string | null) => {
     .replace(/Стандартен[:\s]*-?\s*S\d+/gi, '')
     .replace(/\bfollow[-\s]?up\b/gi, '')
     .replace(/\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g, '')
+    .replace(/[a-z-]+\s*:\s*[^;,]+[;!]\s*/gi, '')
+    .replace(/!important/gi, '')
     .replace(/\s+/g, ' ')
     .trim();
 
