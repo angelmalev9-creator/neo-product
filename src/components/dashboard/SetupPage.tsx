@@ -242,21 +242,43 @@ interface EmailLog {
   sent_at: string | null; created_at: string;
 }
 
-const EmailLogsSection = ({ emailConnected, userId }: { emailConnected: boolean; userId: string }) => {
+const EmailLogsSection = ({ emailConnected, userId, subscriptionTier }: { emailConnected: boolean; userId: string; subscriptionTier?: string }) => {
   const [logs, setLogs] = useState<EmailLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [customEmail, setCustomEmail] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
+  const { toast } = useToast();
+
+  const isGrowthOrAbove = subscriptionTier === 'growth' || subscriptionTier === 'empire';
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from('email_logs')
-        .select('id, recipient_email, recipient_name, subject, body, status, intent, sent_at, created_at')
-        .eq('user_id', userId).order('created_at', { ascending: false }).limit(30);
-      setLogs((data || []) as EmailLog[]);
+      const [logsRes, settingsRes] = await Promise.all([
+        supabase
+          .from('email_logs')
+          .select('id, recipient_email, recipient_name, subject, body, status, intent, sent_at, created_at')
+          .eq('user_id', userId).order('created_at', { ascending: false }).limit(30),
+        supabase
+          .from('email_settings')
+          .select('gmail_email')
+          .eq('user_id', userId).maybeSingle(),
+      ]);
+      setLogs((logsRes.data || []) as EmailLog[]);
+      if (settingsRes.data?.gmail_email) setCustomEmail(settingsRes.data.gmail_email);
       setLoading(false);
     })();
   }, [userId]);
+
+  const handleSaveCustomEmail = async () => {
+    setSavingEmail(true);
+    await supabase.from('email_settings').upsert({
+      user_id: userId,
+      gmail_email: customEmail || null,
+    } as any, { onConflict: 'user_id' });
+    setSavingEmail(false);
+    toast({ title: 'Запазено', description: 'Имейл адресът е обновен' });
+  };
 
   const statusBadge = (status: string) => {
     if (status === 'sent') return <Badge variant="outline" className="text-[9px] border-green-500/30 text-green-400">Изпратен</Badge>;
