@@ -492,9 +492,103 @@ async function sendPostSubmitEmails(sessionId: string, fields: Record<string, un
       } catch (e) { console.warn(`[POST-SUBMIT-EMAIL] log insert failed:`, e); }
     };
 
+    // Try Gmail first if user has it connected
+    const sendViaGmail = async (accessToken: string, from: string, to: string, subject: string, html: string): Promise<boolean> => {
+      try {
+        const rawEmail = [
+          `From: ${from}`,
+          `To: ${to}`,
+          `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`,
+          `MIME-Version: 1.0`,
+          `Content-Type: text/html; charset="UTF-8"`,
+          ``,
+          html,
+        ].join("\r\n");
+
+        // Base64url encode
+        const encoded = btoa(unescape(encodeURIComponent(rawEmail)))
+          .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+        const res = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ raw: encoded }),
+        });
+
+        if (res.ok) {
+          console.log(`[POST-SUBMIT-EMAIL] via Gmail to ${to}: OK`);
+          return true;
+        }
+        const errData = await res.json().catch(() => ({}));
+        console.warn(`[POST-SUBMIT-EMAIL] Gmail failed for ${to}: ${res.status}`, errData);
+        return false;
+      } catch (e) {
+        console.error(`[POST-SUBMIT-EMAIL] Gmail error for ${to}:`, e);
+        return false;
+      }
+    };
+
+    // Load Gmail settings for the user
+    let gmailAccessToken: string | null = null;
+    let gmailEmail: string | null = null;
+    if (sb && sessionUserId) {
+      try {
+        const { data: emailSettings } = await sb
+          .from("email_settings")
+          .select("gmail_connected, gmail_email, gmail_access_token, gmail_refresh_token, gmail_token_expires_at")
+          .eq("user_id", sessionUserId)
+          .maybeSingle();
+
+        if (emailSettings?.gmail_connected && emailSettings?.gmail_access_token) {
+          // Check if token is expired
+          const expiresAt = emailSettings.gmail_token_expires_at ? new Date(emailSettings.gmail_token_expires_at).getTime() : 0;
+          if (expiresAt > Date.now() + 60000) {
+            gmailAccessToken = emailSettings.gmail_access_token;
+            gmailEmail = emailSettings.gmail_email;
+          } else if (emailSettings.gmail_refresh_token) {
+            // Refresh the token
+            const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID") || "";
+            const GOOGLE_CLIENT_SECRET = Deno.env.get("GOOGLE_CLIENT_SECRET") || "";
+            if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
+              try {
+                const refreshRes = await fetch("https://oauth2.googleapis.com/token", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                  body: new URLSearchParams({
+                    client_id: GOOGLE_CLIENT_ID,
+                    client_secret: GOOGLE_CLIENT_SECRET,
+                    refresh_token: emailSettings.gmail_refresh_token,
+                    grant_type: "refresh_token",
+                  }),
+                });
+                const refreshData = await refreshRes.json();
+                if (refreshData.access_token) {
+                  gmailAccessToken = refreshData.access_token;
+                  gmailEmail = emailSettings.gmail_email;
+                  // Update stored token
+                  await sb.from("email_settings").update({
+                    gmail_access_token: refreshData.access_token,
+                    gmail_token_expires_at: new Date(Date.now() + (refreshData.expires_in || 3600) * 1000).toISOString(),
+                  }).eq("user_id", sessionUserId);
+                  console.log("[POST-SUBMIT-EMAIL] Gmail token refreshed successfully");
+                }
+              } catch (e) { console.warn("[POST-SUBMIT-EMAIL] Gmail token refresh failed:", e); }
+            }
+          }
+        }
+      } catch (e) { console.warn("[POST-SUBMIT-EMAIL] Gmail settings load failed:", e); }
+    }
+
     const sendEmail = async (to: string, subject: string, html: string, intent: string) => {
       let sent = false;
-      if (INTERNAL_KEY && emailExecutorUrl) {
+
+      // 1. Try Gmail first
+      if (gmailAccessToken && gmailEmail) {
+        sent = await sendViaGmail(gmailAccessToken, gmailEmail, to, subject, html);
+      }
+
+      // 2. Fallback to executor
+      if (!sent && INTERNAL_KEY && emailExecutorUrl) {
         try {
           const res = await fetch(emailExecutorUrl, { method:"POST", headers:{"Content-Type":"application/json","x-internal-key":INTERNAL_KEY}, body:JSON.stringify({mode:"real",to,subject,content:html}) });
           const result = await res.json().catch(()=>({}));
@@ -502,6 +596,8 @@ async function sendPostSubmitEmails(sessionId: string, fields: Record<string, un
           else console.warn(`[POST-SUBMIT-EMAIL] executor failed for ${to}: ${result?.error||res.status}`);
         } catch (e) { console.warn(`[POST-SUBMIT-EMAIL] executor error for ${to}:`, e); }
       }
+
+      // 3. Fallback to Resend
       if (!sent && RESEND_API_KEY) {
         try {
           const res = await fetch("https://api.resend.com/emails", { method:"POST", headers:{Authorization:`Bearer ${RESEND_API_KEY}`,"Content-Type":"application/json"}, body:JSON.stringify({from:EMAIL_FROM,to:[to],subject,html}) });
@@ -510,8 +606,27 @@ async function sendPostSubmitEmails(sessionId: string, fields: Record<string, un
           console.log(`[POST-SUBMIT-EMAIL] via Resend direct to ${to}: ${res.ok?"OK":data?.error||res.status}`);
         } catch (e) { console.error(`[POST-SUBMIT-EMAIL] Resend direct failed for ${to}:`, e); }
       }
-      if (!sent && !RESEND_API_KEY && !INTERNAL_KEY) { console.error(`[POST-SUBMIT-EMAIL] No way to send email to ${to}`); }
-      await logEmail(to, subject, html, sent ? "sent" : "failed", intent);
+
+      if (!sent && !gmailAccessToken && !RESEND_API_KEY && !INTERNAL_KEY) { console.error(`[POST-SUBMIT-EMAIL] No way to send email to ${to}`); }
+
+      // Log with sender info
+      if (sb && sessionUserId) {
+        try {
+          await sb.from("email_logs").insert({
+            user_id: sessionUserId,
+            recipient_email: to,
+            recipient_name: client.name || null,
+            subject,
+            body: html,
+            status: sent ? "sent" : "failed",
+            intent,
+            sent_at: sent ? new Date().toISOString() : null,
+            demo_session_id: sessionId,
+            is_demo: false,
+            sender_email: (sent && gmailAccessToken && gmailEmail) ? gmailEmail : null,
+          });
+        } catch (e) { console.warn(`[POST-SUBMIT-EMAIL] log insert failed:`, e); }
+      }
     };
     const promises: Promise<void>[] = [];
     if (ownerEmail) {
