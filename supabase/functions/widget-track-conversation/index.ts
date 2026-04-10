@@ -127,9 +127,9 @@ serve(async (req) => {
       if (userMessage) {
         const nextUserMessage = extractIncrementalMessage(latestUserMessage, userMessage);
         if (nextUserMessage) {
-          // seq-based: started_at + seq * 100ms ensures perfect chronological order
+          // User messages get seq * 200ms offset from base
           const ts = seqNum > 0
-            ? new Date(baseTimestamp + seqNum * 100).toISOString()
+            ? new Date(baseTimestamp + seqNum * 200).toISOString()
             : new Date(Math.max(Date.now(), baseTimestamp + 40)).toISOString();
           inserts.push({
             conversation_id: conversationId,
@@ -143,9 +143,10 @@ serve(async (req) => {
       if (assistantMessage) {
         const nextAssistantMessage = extractIncrementalMessage(latestAssistantMessage, assistantMessage);
         if (nextAssistantMessage) {
+          // Assistant messages get seq * 200ms + 100ms to always come AFTER the user message
           const ts = seqNum > 0
-            ? new Date(baseTimestamp + seqNum * 100).toISOString()
-            : new Date(Math.max(Date.now(), baseTimestamp + 40)).toISOString();
+            ? new Date(baseTimestamp + seqNum * 200 + 100).toISOString()
+            : new Date(Math.max(Date.now(), baseTimestamp + 80)).toISOString();
           inserts.push({
             conversation_id: conversationId,
             role: "assistant",

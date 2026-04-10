@@ -77,6 +77,12 @@ interface ActivityLogProps {
 
 const getCompactEmailPreview = (value: string | null) => {
   const clean = String(value || '')
+    // Strip style blocks and their content
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    // Strip CSS rules that leak outside style tags
+    .replace(/\*?\{[^}]*\}/g, '')
+    .replace(/@media[^{]*\{[^}]*(\{[^}]*\})*[^}]*\}/g, '')
+    .replace(/@[a-z-]+[^;{]*[;{][^}]*/gi, '')
     .replace(/<[^>]*>/g, ' ')
     .replace(/&nbsp;/g, ' ')
     .replace(/\s+/g, ' ')
@@ -86,7 +92,10 @@ const getCompactEmailPreview = (value: string | null) => {
     .replace(/Lead\s*summary[:\s]*/gi, '')
     .replace(/Стандартен[:\s]*-?\s*S\d+/gi, '')
     .replace(/\bfollow[-\s]?up\b/gi, '')
-    .replace(/\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g, '') // remove emails from preview
+    .replace(/\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g, '')
+    // Remove CSS property fragments
+    .replace(/[a-z-]+\s*:\s*[^;,]+[;!]\s*/gi, '')
+    .replace(/!important/gi, '')
     .replace(/\s+/g, ' ')
     .trim();
 
@@ -358,7 +367,7 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                                   <span>{booking.event_title} · {new Date(booking.event_start).toLocaleString('bg-BG', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
                                 </div>
                               )}
-                              {lead?.source && <div className="text-[10px] text-muted-foreground/60 mt-1">Източник: {lead.source}</div>}
+                              {lead?.source && !['fallback_extraction', 'fallback', 'system', 'auto'].includes(lead.source) && <div className="text-[10px] text-muted-foreground/60 mt-1">Източник: {lead.source}</div>}
                             </div>
                           ) : (
                             <p className="text-xs text-muted-foreground italic">Няма данни за клиента</p>
@@ -449,7 +458,6 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                                 </div>
                                 <p className="text-sm font-semibold text-foreground">{translateSubject(email.subject)}</p>
                                 <p className="text-xs text-foreground/80 mt-1">До: {email.recipient_email}</p>
-                                {email.intent && <p className="text-[11px] text-primary/80 mt-1 font-medium">{translateIntent(email.intent)}</p>}
                                 <p className="text-xs text-foreground/60 mt-2 leading-relaxed">{getCompactEmailPreview(email.body)}</p>
                               </div>
                             ))}
