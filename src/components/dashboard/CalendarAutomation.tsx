@@ -127,9 +127,21 @@ const CalendarAutomation = () => {
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
 
+  // Booking items state
+  const [catalogItems, setCatalogItems] = useState<BookingItem[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogSaving, setCatalogSaving] = useState(false);
+  const [catalogDeleting, setCatalogDeleting] = useState<string | null>(null);
+  const [itemDialogOpen, setItemDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<Partial<BookingItem> | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [amenityInput, setAmenityInput] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     loadSettings();
     loadBookings();
+    loadCatalogItems();
   }, []);
 
   useEffect(() => {
