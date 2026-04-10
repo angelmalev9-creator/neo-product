@@ -11,6 +11,8 @@ import {
 import KnowledgeBaseEditor from '@/components/dashboard/KnowledgeBaseEditor';
 import CalendarAutomation from '@/components/dashboard/CalendarAutomation';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Lock } from 'lucide-react';
 
 interface SetupPageProps {
   userId: string;
@@ -22,6 +24,7 @@ interface SetupPageProps {
   demoSession: any;
   setDemoSession: (s: any) => void;
   onTabChange: (tab: string) => void;
+  subscriptionTier?: string;
 }
 
 const getCompactEmailPreview = (value: string | null) => {
@@ -37,7 +40,7 @@ const getCompactEmailPreview = (value: string | null) => {
 
 const SetupPage = ({
   userId, section, websiteUrl, setWebsiteUrl, companyName, setCompanyName,
-  demoSession, setDemoSession, onTabChange,
+  demoSession, setDemoSession, onTabChange, subscriptionTier,
 }: SetupPageProps) => {
   const [calendarConnected, setCalendarConnected] = useState(false);
   const [emailConnected, setEmailConnected] = useState(false);
@@ -153,6 +156,7 @@ const SetupPage = ({
               <KnowledgeBaseEditor
                 userId={userId}
                 currentSession={demoSession}
+                externalUrl={websiteUrl}
                 onSessionUpdate={(session) => {
                   setDemoSession(session);
                   if (session.url) setWebsiteUrl(session.url);
@@ -185,7 +189,7 @@ const SetupPage = ({
         )}
 
         {activeSection === 'email' && (
-          <EmailLogsSection emailConnected={emailConnected} userId={userId} />
+          <EmailLogsSection emailConnected={emailConnected} userId={userId} subscriptionTier={subscriptionTier} />
         )}
       </div>
     </div>
@@ -240,21 +244,43 @@ interface EmailLog {
   sent_at: string | null; created_at: string;
 }
 
-const EmailLogsSection = ({ emailConnected, userId }: { emailConnected: boolean; userId: string }) => {
+const EmailLogsSection = ({ emailConnected, userId, subscriptionTier }: { emailConnected: boolean; userId: string; subscriptionTier?: string }) => {
   const [logs, setLogs] = useState<EmailLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [customEmail, setCustomEmail] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
+  const { toast } = useToast();
+
+  const isGrowthOrAbove = subscriptionTier === 'growth' || subscriptionTier === 'empire';
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from('email_logs')
-        .select('id, recipient_email, recipient_name, subject, body, status, intent, sent_at, created_at')
-        .eq('user_id', userId).order('created_at', { ascending: false }).limit(30);
-      setLogs((data || []) as EmailLog[]);
+      const [logsRes, settingsRes] = await Promise.all([
+        supabase
+          .from('email_logs')
+          .select('id, recipient_email, recipient_name, subject, body, status, intent, sent_at, created_at')
+          .eq('user_id', userId).order('created_at', { ascending: false }).limit(30),
+        supabase
+          .from('email_settings')
+          .select('gmail_email')
+          .eq('user_id', userId).maybeSingle(),
+      ]);
+      setLogs((logsRes.data || []) as EmailLog[]);
+      if (settingsRes.data?.gmail_email) setCustomEmail(settingsRes.data.gmail_email);
       setLoading(false);
     })();
   }, [userId]);
+
+  const handleSaveCustomEmail = async () => {
+    setSavingEmail(true);
+    await supabase.from('email_settings').upsert({
+      user_id: userId,
+      gmail_email: customEmail || null,
+    } as any, { onConflict: 'user_id' });
+    setSavingEmail(false);
+    toast({ title: 'Запазено', description: 'Имейл адресът е обновен' });
+  };
 
   const statusBadge = (status: string) => {
     if (status === 'sent') return <Badge variant="outline" className="text-[9px] border-green-500/30 text-green-400">Изпратен</Badge>;
@@ -265,17 +291,60 @@ const EmailLogsSection = ({ emailConnected, userId }: { emailConnected: boolean;
   if (loading) return <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
 
   return (
-    <div className="rounded-2xl border border-border/10 bg-card/60  p-5 space-y-3">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0">
-          <Mail className="w-5 h-5 text-primary" />
+    <div className="space-y-3">
+      {/* Custom email - growth+ only */}
+      <div className="rounded-2xl border border-border/10 bg-card/60 p-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <Mail className="w-4 h-4 text-primary" />
+          <h3 className="text-xs font-semibold text-foreground">Имейл на NEO</h3>
+          {!isGrowthOrAbove && (
+            <Badge variant="outline" className="text-[9px] ml-auto gap-1">
+              <Lock className="w-2.5 h-2.5" /> Растеж+
+            </Badge>
+          )}
         </div>
-        <div className="flex-1">
-          <h2 className="text-sm font-semibold text-foreground">Изпратени имейли</h2>
-          <p className="text-[11px] text-muted-foreground">Имейли от NEO</p>
-        </div>
-        {emailConnected && <CheckCircle className="w-4 h-4 text-green-500" />}
+        <p className="text-[10px] text-muted-foreground">
+          {isGrowthOrAbove
+            ? 'Задайте имейл (напр. Gmail), от който NEO ще изпраща съобщения на клиентите'
+            : 'Надградете до план Растеж, за да използвате собствен имейл адрес за NEO'}
+        </p>
+        {isGrowthOrAbove ? (
+          <div className="flex gap-2">
+            <Input
+              type="email"
+              placeholder="neo@yourbusiness.com"
+              value={customEmail}
+              onChange={(e) => setCustomEmail(e.target.value)}
+              className="bg-background/50 text-xs h-8 flex-1"
+            />
+            <Button size="sm" className="h-8 text-[11px] px-3" onClick={handleSaveCustomEmail} disabled={savingEmail}>
+              {savingEmail ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Запази'}
+            </Button>
+          </div>
+        ) : (
+          <div className="relative">
+            <Input
+              type="email"
+              placeholder="neo@yourbusiness.com"
+              disabled
+              className="bg-background/30 text-xs h-8 opacity-50"
+            />
+          </div>
+        )}
       </div>
+
+      {/* Email logs */}
+      <div className="rounded-2xl border border-border/10 bg-card/60 p-5 space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0">
+            <Mail className="w-5 h-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-sm font-semibold text-foreground">Изпратени имейли</h2>
+            <p className="text-[11px] text-muted-foreground">Имейли от NEO</p>
+          </div>
+          {emailConnected && <CheckCircle className="w-4 h-4 text-[hsl(var(--neo-success))]" />}
+        </div>
 
       {logs.length === 0 ? (
         <div className="text-center py-6">
@@ -336,6 +405,7 @@ const EmailLogsSection = ({ emailConnected, userId }: { emailConnected: boolean;
           })}
         </div>
       )}
+      </div>
     </div>
   );
 };
