@@ -1053,11 +1053,16 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     const fetchSessionData = async () => {
       const { data: session } = await supabase
         .from("demo_sessions")
-        .select("scraped_content, summary, url, company_name")
+        .select("scraped_content, summary, url, company_name, voice_name")
         .eq("id", sessionId)
         .single();
 
       if (!session) return;
+
+      // Load voice from session
+      if ((session as any).voice_name) {
+        setDemoVoice((session as any).voice_name);
+      }
 
       const extractedCompanyName =
         session.company_name?.trim() ||
