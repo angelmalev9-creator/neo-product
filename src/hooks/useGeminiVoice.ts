@@ -2082,6 +2082,7 @@ export const useGeminiVoice = ({
       }
 
       onMessage?.({ role: "user", content: clean });
+      lastUserInputRef.current = clean.toLowerCase();
       lastCommittedUserRef.current = { text: clean, ts: now };
       clearUserLiveTranscript();
       return true;
