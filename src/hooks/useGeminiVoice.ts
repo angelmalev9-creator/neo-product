@@ -4961,6 +4961,118 @@ export const useGeminiVoice = ({
 
               console.log("[SEARCH WORKER] functionCall query:", query);
 
+              // ★★★ FIX: Client-side guard against Gemini calling search_site_content
+              // when it should be returning a submit_form / make_reservation action_request JSON.
+              // Even after prompt hardening, Gemini Live sometimes prefers function calling over
+              // text output — so we intercept and block the call here when form state is ready.
+              try {
+                const captured = capturedSensitiveContactRef.current;
+                const hasName = !!captured?.name && captured.name.trim().length >= 2;
+                const hasEmail = !!captured?.email && looksLikeCompleteEmail(captured.email);
+                const hasPhone = !!captured?.phone && looksLikeCompletePhone(captured.phone);
+                const hasAllContact = hasName && hasEmail && hasPhone;
+
+                const lastUserText = String(lastCommittedUserRef.current?.text || "")
+                  .toLowerCase()
+                  .trim();
+                const isConfirmationWord =
+                  /^(да|ok|okay|добре|става|потвърждавам|потвърждавам\.|изпрати|изпрати\.|давай|готово|аха|yes|yep|ага)[\s.!?]*$/i.test(
+                    lastUserText,
+                  );
+
+                // Reservation state check (when user is in booking flow)
+                const resState = ((window as any).__neoReservationState || {}) as any;
+                const hasReservationData = !!resState?.check_in && !!resState?.check_out && !!resState?.room_type;
+
+                // Query smells like it's about a form/order/reservation, not a product fact
+                const queryIsFormRelated =
+                  /поръчк|запитван|резерваци|потвърд|изпрат|submit|form|reservation|confirm/i.test(query) ||
+                  /@|gmail|abv|yahoo|hotmail/i.test(query) || // contains email
+                  /\b\d{6,}\b/.test(query); // contains phone number
+
+                const shouldBlock =
+                  // Case A: all contact data captured AND user is confirming → must return submit_form JSON
+                  (hasAllContact && isConfirmationWord) ||
+                  // Case B: reservation data complete AND user is confirming → must return make_reservation JSON
+                  (hasReservationData && isConfirmationWord) ||
+                  // Case C: the query itself references form/contact data — this is almost never a legit search
+                  queryIsFormRelated;
+
+                if (shouldBlock) {
+                  console.warn(
+                    "[SEARCH WORKER][BLOCKED] Gemini tried to call search during form flow. query=",
+                    query,
+                    "hasAllContact=",
+                    hasAllContact,
+                    "hasReservationData=",
+                    hasReservationData,
+                    "isConfirmation=",
+                    isConfirmationWord,
+                    "queryIsFormRelated=",
+                    queryIsFormRelated,
+                  );
+
+                  // Send empty tool_response so Gemini doesn't hang waiting for it
+                  ws.send(
+                    JSON.stringify({
+                      tool_response: {
+                        function_responses: [
+                          {
+                            id: fc.id,
+                            name: fc.name,
+                            response: {
+                              results: [],
+                              keywords: [],
+                              elapsed_ms: 0,
+                              error:
+                                "BLOCKED_BY_CLIENT: you are in an active form/reservation flow. Do NOT call search_site_content. Return action_request JSON instead.",
+                            },
+                          },
+                        ],
+                      },
+                    }),
+                  );
+
+                  // Nudge Gemini with an explicit instruction telling it what to do next
+                  const nudge = hasReservationData
+                    ? [
+                        "[SYSTEM_CORRECTION]",
+                        "⛔ ЗАБРАНЕНО да викаш search_site_content в момента.",
+                        "Ти си в активен make_reservation flow и клиентът потвърди.",
+                        "Върни САМО JSON action_request make_reservation phase=reserve със събраните данни.",
+                        "Никакъв текст. Само JSON.",
+                      ].join("\n")
+                    : hasAllContact
+                      ? [
+                          "[SYSTEM_CORRECTION]",
+                          "⛔ ЗАБРАНЕНО да викаш search_site_content в момента.",
+                          "Всички required_keys за формата са събрани и клиентът потвърди.",
+                          `Име: ${captured?.name || ""}`,
+                          `Имейл: ${captured?.email || ""}`,
+                          `Телефон: ${captured?.phone || ""}`,
+                          "Върни САМО JSON action_request submit_form с тези данни.",
+                          "Никакъв текст. Само JSON.",
+                        ].join("\n")
+                      : [
+                          "[SYSTEM_CORRECTION]",
+                          "⛔ ЗАБРАНЕНО да викаш search_site_content с контактни/форма данни в query-то.",
+                          "search_site_content е САМО за фактологични въпроси за продукти (цени, модели, размери, спецификации).",
+                          "Ако клиентът потвърждава форма/поръчка → върни action_request JSON.",
+                          "Ако клиентът дава контактна информация → запомни я и продължи flow-а, без да викаш search.",
+                        ].join("\n");
+
+                  try {
+                    sendToGemini(nudge);
+                  } catch (nudgeErr) {
+                    console.warn("[SEARCH WORKER][BLOCKED] nudge failed:", nudgeErr);
+                  }
+
+                  continue; // skip real search call
+                }
+              } catch (guardErr) {
+                console.warn("[SEARCH WORKER] guard check failed, allowing call:", guardErr);
+              }
+
               if (!searchProxyUrl || !anonKey || !query || !sid) {
                 ws.send(
                   JSON.stringify({
