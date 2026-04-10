@@ -4720,6 +4720,13 @@ export const useGeminiVoice = ({
           const missing = extractMissingRequired(result);
           const first = missing[0] || "следващото задължително поле";
 
+          activeSubmitFlowRef.current = {
+            session_id: String(enrichedParsed?.session_id || ""),
+            form_id: enrichedParsed?.form_id ? String(enrichedParsed.form_id) : undefined,
+            fingerprint: enrichedParsed?.fingerprint ? String(enrichedParsed.fingerprint) : undefined,
+            missingRequired: missing,
+          };
+
           // Key point: keep loop tight & deterministic: ask for ONE field only.
           sendToGemini(
             [
@@ -4736,6 +4743,7 @@ export const useGeminiVoice = ({
         }
 
         if (result?.success) {
+          activeSubmitFlowRef.current = null;
           // Tell Gemini so it speaks the confirmation out loud
           sendToGemini(
             [
@@ -4747,6 +4755,7 @@ export const useGeminiVoice = ({
             ].join("\n"),
           );
         } else {
+          activeSubmitFlowRef.current = null;
           sendToGemini(
             [
               "WORKER_SUBMIT_FAILED:",
@@ -5305,6 +5314,7 @@ export const useGeminiVoice = ({
     (text: string) => {
       const t = String(text || "").trim();
       lastUserInputRef.current = t.toLowerCase();
+      const activeSubmitFlow = activeSubmitFlowRef.current;
 
       try {
         const state = ((window as any).__neoReservationState || {}) as any;
@@ -5447,6 +5457,37 @@ export const useGeminiVoice = ({
         (window as any).__neoReservationState = next;
         console.log("[RESERVATION STATE][sendText]", next);
       } catch {}
+
+      // ── Active submit_form flow shortcut ─────────────────────────
+      if (activeSubmitFlow?.session_id && (activeSubmitFlow?.form_id || activeSubmitFlow?.fingerprint)) {
+        const firstMissing = String(activeSubmitFlow.missingRequired?.[0] || "value").trim() || "value";
+        const extracted = extractContactIntentFields(t);
+        const fields: Record<string, unknown> = {
+          [firstMissing]: t,
+        };
+
+        if (extracted.name) fields.name = extracted.name;
+        if (extracted.email) fields.email = extracted.email;
+        if (extracted.phone) fields.phone = extracted.phone;
+
+        console.log("[FORM FLOW] direct submit_form continuation:", {
+          firstMissing,
+          fields,
+          target: activeSubmitFlow,
+        });
+
+        void maybeExecuteActionFromGemini(
+          JSON.stringify({
+            type: "action_request",
+            action: "submit_form",
+            session_id: activeSubmitFlow.session_id,
+            ...(activeSubmitFlow.form_id ? { form_id: activeSubmitFlow.form_id } : {}),
+            ...(activeSubmitFlow.fingerprint ? { fingerprint: activeSubmitFlow.fingerprint } : {}),
+            fields,
+          }),
+        );
+        return;
+      }
 
       // ── Direct room selection detection ──────────────────────────
       // If user text matches an available room AND we have dates → fire reserve directly
