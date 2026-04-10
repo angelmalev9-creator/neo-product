@@ -440,7 +440,7 @@ const EmailLogsSection = ({ emailConnected, userId, subscriptionTier }: { emailC
                   className="w-full flex items-center gap-2 p-2.5 text-left hover:bg-muted/20 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-medium text-foreground truncate">{log.subject}</p>
+                    <p className="text-[11px] font-medium text-foreground truncate">{translateSubject(log.subject)}</p>
                     <p className="text-[10px] text-muted-foreground truncate">
                       {log.recipient_name ? `${log.recipient_name}` : log.recipient_email}
                     </p>
@@ -465,7 +465,7 @@ const EmailLogsSection = ({ emailConnected, userId, subscriptionTier }: { emailC
                       {log.intent && (
                         <div>
                           <p className="text-muted-foreground">Тип</p>
-                          <p className="text-foreground">{log.intent}</p>
+                          <p className="text-foreground">{translateIntent(log.intent)}</p>
                         </div>
                       )}
                       <div>

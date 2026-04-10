@@ -104,7 +104,9 @@ const getCompactEmailPreview = (value: string | null) => {
 };
 
 const INTENT_LABELS: Record<string, string> = {
+  client_confirmation: 'Потвърждение за клиента',
   lead_notification: 'Уведомление за клиент',
+  executor_notification: 'Уведомление за бизнеса',
   follow_up: 'Последващ контакт',
   booking_confirmation: 'Потвърждение на резервация',
   welcome: 'Добре дошли',
