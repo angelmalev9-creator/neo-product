@@ -47,15 +47,15 @@ serve(async (req) => {
     let userId: string;
 
     try {
-      const { data: userData, error: userError } = await supabase.auth.getUser(token);
-      if (userError || !userData.user) {
-        logStep("Auth failed", { error: userError?.message });
+      const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+      if (claimsError || !claimsData?.claims?.sub) {
+        logStep("Auth failed", { error: claimsError?.message });
         return new Response(
           JSON.stringify({ error: 'User not authenticated', success: false }),
           { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      userId = userData.user.id;
+      userId = claimsData.claims.sub as string;
     } catch (authErr) {
       logStep("Auth exception", { message: String(authErr) });
       return new Response(
