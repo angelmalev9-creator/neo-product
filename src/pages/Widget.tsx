@@ -162,6 +162,9 @@ const Widget = () => {
     const cid = conversationIdRef.current;
     if (!cid || !normalized) return;
 
+    // Don't persist raw action_request JSON
+    if (normalized.startsWith('action_request:') || normalized.startsWith('{"type":"action_request"')) return;
+
     const incremental = extractIncrementalTranscript(lastPersistedTranscriptRef.current[role], normalized);
     if (!incremental) return;
 
