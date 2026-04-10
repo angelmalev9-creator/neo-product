@@ -103,6 +103,10 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
   // ✅ Text-only mode: when user declines mic, they can still chat with NEO
   const [textOnlyMode, setTextOnlyMode] = useState(false);
 
+  // Voice selection state for demo
+  const [demoVoice, setDemoVoice] = useState<string>("Enceladus");
+  const [demoVoiceSpeed, setDemoVoiceSpeed] = useState<number>(1.0);
+
   // Force-show contact panel when assistant explicitly asks for name/email.
   const [forceContactPanel, setForceContactPanel] = useState(false);
   const forceContactPanelRef = useRef(false);
