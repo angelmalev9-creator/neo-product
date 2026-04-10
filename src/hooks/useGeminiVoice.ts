@@ -2037,6 +2037,18 @@ export const useGeminiVoice = ({
         return false;
       }
 
+      // ★ FIX: Never let a raw action_request JSON leak into the visible chat as an
+      // assistant bubble. If parsing/execution failed upstream, we suppress the message
+      // here rather than showing `{"type":"action_request",...}` to the user.
+      if (
+        (clean.startsWith("{") && clean.includes("action_request")) ||
+        /\{[\s\S]*"type"\s*:\s*"action_request"[\s\S]*\}/.test(clean)
+      ) {
+        console.warn("[ASSISTANT][BLOCKED raw JSON leak]", clean.slice(0, 200));
+        clearAssistantLiveTranscript();
+        return false;
+      }
+
       const now = Date.now();
       const last = lastCommittedAssistantRef.current;
       const isDuplicate = !options?.force && last.text === clean && now - last.ts < 2500;
@@ -4060,9 +4072,83 @@ export const useGeminiVoice = ({
 
       console.log("[ACTION PARSER] raw preview:", trimmed.slice(0, 1200));
 
-      const directJson = trimmed.startsWith("{")
+      let directJson = trimmed.startsWith("{")
         ? trimmed
         : trimmed.match(/\{[\s\S]*"type"\s*:\s*"action_request"[\s\S]*\}/)?.[0] || "";
+
+      // ★ FIX: If the text contains a JSON-looking block but it's prefixed with transcription
+      // noise (e.g. spoken-out "отваряща скоба type две точки..." from outputTranscription),
+      // try to extract from the first "{" to the matching last "}".
+      if (!directJson) {
+        const firstBrace = trimmed.indexOf("{");
+        const lastBrace = trimmed.lastIndexOf("}");
+        if (firstBrace >= 0 && lastBrace > firstBrace) {
+          const candidate = trimmed.slice(firstBrace, lastBrace + 1);
+          if (
+            candidate.includes('"type"') &&
+            (candidate.includes("action_request") ||
+              candidate.includes("submit_form") ||
+              candidate.includes("make_reservation") ||
+              candidate.includes("book_slot"))
+          ) {
+            directJson = candidate;
+            console.log("[ACTION PARSER] extracted JSON from mixed text via brace scan");
+          }
+        }
+      }
+
+      // ★ FIX: If we see an action_request marker but direct parse would fail because
+      // streaming accumulation introduced stray whitespace (e.g. "submit _form", "action_ request"),
+      // try a sanitization pass: remove spaces that appear inside tokens like keys and known values.
+      // This is a last-resort recovery for corrupted streaming JSON.
+      const attemptJsonRecovery = (raw: string): string => {
+        if (!raw) return raw;
+        // Remove spaces inside common token corruptions produced by chunk-boundary concatenation.
+        // These are safe because none of our legitimate values contain these patterns.
+        let fixed = raw;
+        const substitutions: Array<[RegExp, string]> = [
+          [/"\s+type\s*"/g, '"type"'],
+          [/"\s+action\s*"/g, '"action"'],
+          [/"\s+session_id\s*"/g, '"session_id"'],
+          [/"\s+phase\s*"/g, '"phase"'],
+          [/"\s+fields\s*"/g, '"fields"'],
+          [/"\s+form_id\s*"/g, '"form_id"'],
+          [/"\s+fingerprint\s*"/g, '"fingerprint"'],
+          [/"\s+check_in\s*"/g, '"check_in"'],
+          [/"\s+check_out\s*"/g, '"check_out"'],
+          [/"\s+guests\s*"/g, '"guests"'],
+          [/"\s+rooms\s*"/g, '"rooms"'],
+          [/"\s+room_type\s*"/g, '"room_type"'],
+          [/action_ request/g, "action_request"],
+          [/submit_ form/g, "submit_form"],
+          [/make_ reservation/g, "make_reservation"],
+          [/book_ slot/g, "book_slot"],
+          [/session_ id/g, "session_id"],
+          [/form_ id/g, "form_id"],
+          [/check_ in/g, "check_in"],
+          [/check_ out/g, "check_out"],
+          [/room_ type/g, "room_type"],
+        ];
+        for (const [re, rep] of substitutions) fixed = fixed.replace(re, rep);
+        return fixed;
+      };
+
+      if (directJson) {
+        try {
+          JSON.parse(directJson);
+        } catch {
+          const recovered = attemptJsonRecovery(directJson);
+          if (recovered !== directJson) {
+            try {
+              JSON.parse(recovered);
+              console.warn("[ACTION PARSER] recovered corrupted JSON via sanitization");
+              directJson = recovered;
+            } catch {
+              console.warn("[ACTION PARSER] recovery attempt failed");
+            }
+          }
+        }
+      }
 
       console.log("[ACTION PARSER] directJson preview:", directJson ? directJson.slice(0, 1200) : "<none>");
 
@@ -5196,7 +5282,18 @@ export const useGeminiVoice = ({
                     partText.includes('"action":"book_slot"') ||
                     partText.includes('"action": "book_slot"');
 
+                  // ★ FIX: Check if we're ALREADY in the middle of an action JSON being streamed.
+                  // Gemini streams JSON in chunks — the first chunk starts with "{" and looksLikeAction
+                  // catches it, but subsequent chunks (e.g. '_form","session_id":"..."') do NOT match
+                  // the action markers and previously fell into the `else` branch, which inserted a
+                  // space separator INTO THE MIDDLE OF THE JSON — corrupting it.
+                  const alreadyAccumulatingAction =
+                    currentResponseTextRef.current.startsWith("{") ||
+                    currentResponseTextRef.current.includes('"type":"action_request"') ||
+                    currentResponseTextRef.current.includes('"type": "action_request"');
+
                   if (looksLikeAction) {
+                    // First chunk of an action JSON — replace buffer
                     currentResponseTextRef.current = partText;
                     // ★ FIX 2.2: Fire book_slot САМО ако JSON-ът е пълен и валиден.
                     // При streaming partText може да е непълен → JSON.parse гърми тихо
@@ -5214,6 +5311,11 @@ export const useGeminiVoice = ({
                         console.log("[EARLY ACTION] book_slot засечен, но JSON е непълен — чакаме TURN_COMPLETE");
                       }
                     }
+                  } else if (alreadyAccumulatingAction && partText) {
+                    // ★ FIX: Continuation of a streaming JSON — concatenate WITHOUT space.
+                    // A space inside a JSON key or value would corrupt the JSON.
+                    currentResponseTextRef.current += partText;
+                    console.log("[MODEL PART TEXT][JSON CONT]", currentResponseTextRef.current.slice(0, 200));
                   } else if (partText) {
                     if (currentResponseTextRef.current && !currentResponseTextRef.current.endsWith(" ")) {
                       currentResponseTextRef.current += " ";
