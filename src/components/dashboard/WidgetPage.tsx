@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Copy, Check, Code2 } from 'lucide-react';
 import WidgetAvatarUpload from '@/components/dashboard/WidgetAvatarUpload';
 import WidgetCustomizer from '@/components/dashboard/WidgetCustomizer';
 import EmailStyleEditor from '@/components/dashboard/EmailStyleEditor';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface WidgetPageProps {
@@ -16,6 +17,30 @@ interface WidgetPageProps {
 const WidgetPage = ({ userId, companyName, logoUrl, setLogoUrl }: WidgetPageProps) => {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [widgetConfig, setWidgetConfig] = useState<Record<string, unknown> | null>(null);
+  const [subscriptionTier, setSubscriptionTier] = useState<string | null>(null);
+  const [hideNeoBranding, setHideNeoBranding] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('widget_config, subscription_tier, hide_neo_branding')
+        .eq('user_id', userId)
+        .single();
+      if (data) {
+        setWidgetConfig(data.widget_config as Record<string, unknown> | null);
+        setSubscriptionTier(data.subscription_tier ?? null);
+        setHideNeoBranding(data.hide_neo_branding ?? false);
+      }
+    };
+    load();
+  }, [userId]);
+
+  const handleBrandingChange = async (hide: boolean) => {
+    setHideNeoBranding(hide);
+    await supabase.from('profiles').update({ hide_neo_branding: hide }).eq('user_id', userId);
+  };
 
   const getWidgetScriptUrl = () => {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -52,12 +77,20 @@ const WidgetPage = ({ userId, companyName, logoUrl, setLogoUrl }: WidgetPageProp
           </Button>
         </div>
 
-        {/* Avatar + Customizer — avatar is inline-compact */}
+        {/* Avatar + Customizer */}
         <div className="rounded-xl border border-border/10 bg-card/60 p-4">
           <div className="flex items-center gap-4 mb-4">
             <WidgetAvatarUpload userId={userId} currentAvatarUrl={logoUrl} onAvatarChange={setLogoUrl} />
           </div>
-          <WidgetCustomizer userId={userId} companyName={companyName} initialConfig={null} logoUrl={logoUrl} />
+          <WidgetCustomizer
+            userId={userId}
+            companyName={companyName}
+            initialConfig={widgetConfig as any}
+            subscriptionTier={subscriptionTier}
+            logoUrl={logoUrl}
+            hideNeoBranding={hideNeoBranding}
+            onBrandingChange={handleBrandingChange}
+          />
         </div>
 
         {/* Email Style Editor */}
