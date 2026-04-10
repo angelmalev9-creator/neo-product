@@ -6190,6 +6190,11 @@ export const useGeminiVoice = ({
     preWarmMicrophone,
     sendText,
     getSessionData,
+    setVoiceOverride: (voiceName: string) => {
+      if (sessionDataRef.current) {
+        (sessionDataRef.current as any).voiceName = voiceName;
+      }
+    },
     interrupt: () => {
       assistantTurnCanceledRef.current = true;
       scheduledSourcesRef.current.forEach((s) => {
