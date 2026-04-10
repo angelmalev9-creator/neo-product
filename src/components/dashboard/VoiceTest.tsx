@@ -291,6 +291,29 @@ const VoiceTest = ({
     };
   }, [isConnected, textOnlyMode, planLimit, toast, onUsageUpdate, usedMinutes, handleEndCall, hasActiveSession]);
 
+  // Load selected voice from demoSession
+  useEffect(() => {
+    if (demoSession) {
+      // Try to read voice_name from demoSession (cast to any since it may be extended)
+      const voice = (demoSession as any).voice_name || 'Enceladus';
+      setSelectedVoice(voice);
+    }
+  }, [demoSession]);
+
+  // Voice change handler — updates session data ref + saves to DB
+  const handleVoiceChange = useCallback((voiceId: string) => {
+    setSelectedVoice(voiceId);
+    setVoiceOverride(voiceId);
+    if (demoSession?.id) {
+      supabase.from('demo_sessions').update({ voice_name: voiceId } as any).eq('id', demoSession.id).then();
+    }
+  }, [setVoiceOverride, demoSession]);
+
+  const handleSpeedChange = useCallback((speed: number) => {
+    setLocalVoiceSpeed(speed);
+    setVoiceSpeed(speed);
+  }, [setVoiceSpeed]);
+
   // Build system prompt & prepare session (Gemini gets knowledge via gemini-session + worker proxy)
   useEffect(() => {
     if (!demoSession) return;
