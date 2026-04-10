@@ -26,6 +26,7 @@ interface KnowledgeBaseEditorProps {
     company_name?: string | null;
   }) => void;
   onCompanyNameExtracted?: (name: string) => void;
+  externalUrl?: string;
 }
 
 interface UploadedFile {
@@ -37,8 +38,15 @@ interface UploadedFile {
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_TYPES = ['.txt', '.md', '.csv', '.json', '.pdf'];
 
-const KnowledgeBaseEditor = ({ userId, currentSession, onSessionUpdate, onCompanyNameExtracted }: KnowledgeBaseEditorProps) => {
+const KnowledgeBaseEditor = ({ userId, currentSession, onSessionUpdate, onCompanyNameExtracted, externalUrl }: KnowledgeBaseEditorProps) => {
   const [url, setUrl] = useState(currentSession?.url || '');
+
+  // Sync external URL from parent (top field) into internal state
+  useEffect(() => {
+    if (externalUrl !== undefined && externalUrl !== url && externalUrl) {
+      setUrl(externalUrl);
+    }
+  }, [externalUrl]);
   const [status, setStatus] = useState<'idle' | 'scraping' | 'processing' | 'ready'>('idle');
   const [progress, setProgress] = useState(0);
   const [pagesScraped, setPagesScraped] = useState(0);
