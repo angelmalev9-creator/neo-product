@@ -405,6 +405,7 @@ const EmailLogsSection = ({ emailConnected, userId, subscriptionTier }: { emailC
           })}
         </div>
       )}
+      </div>
     </div>
   );
 };
