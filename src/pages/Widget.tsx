@@ -76,6 +76,7 @@ const Widget = () => {
   const lastTrackedTimeRef = useRef<number>(0);
   const persistedTranscriptKeysRef = useRef<Set<string>>(new Set());
   const lastPersistedTranscriptRef = useRef<{ user: string; assistant: string }>({ user: '', assistant: '' });
+  const typedMessageAddedRef = useRef<string | null>(null);
   
   const { playConnectSound, playDisconnectSound, startAmbient, stopAmbient, initAudioContext } = useAudioEffects({ ambientVolume: 0.04, effectsVolume: 0.2 });
 
@@ -85,6 +86,11 @@ const Widget = () => {
     }
     if (message.role === 'assistant') {
       setLiveAssistantTranscript('');
+    }
+    // Skip duplicate typed user messages (already added in handleSendText)
+    if (message.role === 'user' && typedMessageAddedRef.current === message.content) {
+      typedMessageAddedRef.current = null;
+      return;
     }
     setMessages(prev => {
       const next = [...prev, message];
@@ -336,6 +342,7 @@ const Widget = () => {
     if (!textInput.trim() || !isConnected) return;
     const msg = textInput.trim();
     setTextInput('');
+    typedMessageAddedRef.current = msg;
     setMessages(prev => [...prev, { role: 'user', content: msg }]);
     void persistTranscriptMessage('user', msg);
     sendText(msg);
