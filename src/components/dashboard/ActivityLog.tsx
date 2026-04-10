@@ -163,7 +163,28 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
           c.id === row.conversation_id ? { ...c, messages_count: (c.messages_count || 0) + 1 } : c
         ));
       }).subscribe();
-    return () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2); supabase.removeChannel(ch3); supabase.removeChannel(ch4); };
+    const ch5 = supabase.channel(`activity-emails-${userId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'email_logs', filter: `user_id=eq.${userId}` }, (payload) => {
+        const row = payload.new as EmailLog;
+        if (row?.conversation_id) {
+          setEmails(prev => ({
+            ...prev,
+            [row.conversation_id!]: [row, ...(prev[row.conversation_id!] || [])],
+          }));
+        }
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'email_logs', filter: `user_id=eq.${userId}` }, (payload) => {
+        const row = payload.new as EmailLog;
+        if (row?.conversation_id) {
+          setEmails(prev => {
+            const current = prev[row.conversation_id!];
+            if (!current) return prev;
+            return { ...prev, [row.conversation_id!]: current.map(e => e.id === row.id ? row : e) };
+          });
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2); supabase.removeChannel(ch3); supabase.removeChannel(ch4); supabase.removeChannel(ch5); };
   }, [userId]);
 
   const loadData = async () => {
