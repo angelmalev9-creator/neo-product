@@ -6080,6 +6080,12 @@ export const useGeminiVoice = ({
     setIsMicMuted(newMuted);
   }, []);
 
+  const setVoiceOverride = useCallback((voiceName: string) => {
+    if (sessionDataRef.current) {
+      (sessionDataRef.current as any).voiceName = voiceName;
+    }
+  }, []);
+
   return {
     isConnected,
     isConnecting,
@@ -6092,6 +6098,7 @@ export const useGeminiVoice = ({
     prepareSession,
     preWarmMicrophone,
     sendText,
+    setVoiceOverride,
     getSessionData,
     interrupt: () => {
       assistantTurnCanceledRef.current = true;

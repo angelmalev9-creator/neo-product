@@ -112,6 +112,7 @@ const NeoPage = ({
               customPrompt={customPrompt}
               promptTemplate="sales"
               voiceSpeed={voiceSpeed}
+              setVoiceSpeed={setVoiceSpeed}
               demoSession={demoSession}
               usedMinutes={usedMinutes}
               planLimit={planLimit}

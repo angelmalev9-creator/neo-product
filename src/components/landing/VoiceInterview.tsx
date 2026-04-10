@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Phone, PhoneOff, Clock, Send, MicOff, Mic } from "lucide-react";
+import VoicePicker from "@/components/dashboard/VoicePicker";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
@@ -101,6 +102,10 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
 
   // ✅ Text-only mode: when user declines mic, they can still chat with NEO
   const [textOnlyMode, setTextOnlyMode] = useState(false);
+
+  // Voice selection state for demo
+  const [demoVoice, setDemoVoice] = useState<string>("Enceladus");
+  const [demoVoiceSpeed, setDemoVoiceSpeed] = useState<number>(1.0);
 
   // Force-show contact panel when assistant explicitly asks for name/email.
   const [forceContactPanel, setForceContactPanel] = useState(false);
@@ -743,6 +748,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     preWarmMicrophone,
     sendText,
     getSessionData,
+    setVoiceOverride,
   } = useGeminiVoice({
     onMessage: handleMessage,
     onError: handleError,
@@ -1047,11 +1053,16 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     const fetchSessionData = async () => {
       const { data: session } = await supabase
         .from("demo_sessions")
-        .select("scraped_content, summary, url, company_name")
+        .select("scraped_content, summary, url, company_name, voice_name")
         .eq("id", sessionId)
         .single();
 
       if (!session) return;
+
+      // Load voice from session
+      if ((session as any).voice_name) {
+        setDemoVoice((session as any).voice_name);
+      }
 
       const extractedCompanyName =
         session.company_name?.trim() ||
@@ -1089,6 +1100,14 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     if (sessionId) fetchLatestEmailLog();
   }, [sessionId, fetchLatestEmailLog]);
 
+  const handleDemoVoiceChange = useCallback((voiceId: string) => {
+    setDemoVoice(voiceId);
+    setVoiceOverride(voiceId);
+    if (sessionId) {
+      supabase.from('demo_sessions').update({ voice_name: voiceId } as any).eq('id', sessionId).then();
+    }
+  }, [setVoiceOverride, sessionId]);
+
   const startCall = useCallback(async () => {
     if (!sessionId || !systemPrompt) {
       toast({
@@ -1120,6 +1139,9 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     } catch (e) {
       console.error("[DEMO] initAgent in startCall failed", e);
     }
+
+    // Apply selected voice before connecting
+    setVoiceOverride(demoVoice);
 
     initAudioContext();
 
@@ -1345,6 +1367,20 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
               {t("interview.callTitle")} <span className="neo-gradient-text capitalize">{companyName || "NEO"}</span>
             </h2>
           </div>
+
+          {/* Voice picker — shown before call starts */}
+          {!isConnected && !textOnlyMode && (
+            <div className="mb-4 text-left">
+              <VoicePicker
+                selectedVoice={demoVoice}
+                onVoiceChange={handleDemoVoiceChange}
+                voiceSpeed={demoVoiceSpeed}
+                onSpeedChange={setDemoVoiceSpeed}
+                disabled={isConnecting}
+                compact
+              />
+            </div>
+          )}
 
             <div className="neo-glass-subtle border border-border/20 rounded-lg lg:rounded-xl p-4 lg:p-6 text-center">
               <div className="relative inline-flex items-center justify-center mb-4 lg:mb-6">

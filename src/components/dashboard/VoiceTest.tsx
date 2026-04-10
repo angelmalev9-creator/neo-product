@@ -7,6 +7,7 @@ import { useAudioEffects } from '@/hooks/useAudioEffects';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import VoicePicker from '@/components/dashboard/VoicePicker';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -18,6 +19,7 @@ interface VoiceTestProps {
   customPrompt: string;
   promptTemplate: string;
   voiceSpeed: number;
+  setVoiceSpeed?: (speed: number) => void;
   demoSession: {
     id: string;
     url: string;
@@ -33,6 +35,7 @@ const VoiceTest = ({
   customPrompt,
   promptTemplate,
   voiceSpeed,
+  setVoiceSpeed,
   demoSession,
   usedMinutes,
   planLimit,
@@ -46,6 +49,8 @@ const VoiceTest = ({
   const [textOnlyMode, setTextOnlyMode] = useState(false);
   const [liveAssistantTranscript, setLiveAssistantTranscript] = useState<string>('');
   const [liveUserTranscript, setLiveUserTranscript] = useState<string>('');
+  const [selectedVoice, setSelectedVoice] = useState<string>('Enceladus');
+  const [localVoiceSpeed, setLocalVoiceSpeed] = useState<number>(voiceSpeed);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -150,6 +155,7 @@ const VoiceTest = ({
     prepareSession,
     preWarmMicrophone,
     sendText,
+    setVoiceOverride,
   } = useGeminiVoice({
     onMessage: handleMessage,
     onError: handleError,
@@ -287,6 +293,29 @@ const VoiceTest = ({
     };
   }, [isConnected, textOnlyMode, planLimit, toast, onUsageUpdate, usedMinutes, handleEndCall, hasActiveSession]);
 
+  // Load selected voice from demoSession
+  useEffect(() => {
+    if (demoSession) {
+      // Try to read voice_name from demoSession (cast to any since it may be extended)
+      const voice = (demoSession as any).voice_name || 'Enceladus';
+      setSelectedVoice(voice);
+    }
+  }, [demoSession]);
+
+  // Voice change handler — updates session data ref + saves to DB
+  const handleVoiceChange = useCallback((voiceId: string) => {
+    setSelectedVoice(voiceId);
+    setVoiceOverride(voiceId);
+    if (demoSession?.id) {
+      supabase.from('demo_sessions').update({ voice_name: voiceId } as any).eq('id', demoSession.id).then();
+    }
+  }, [setVoiceOverride, demoSession]);
+
+  const handleSpeedChange = useCallback((speed: number) => {
+    setLocalVoiceSpeed(speed);
+    setVoiceSpeed(speed);
+  }, [setVoiceSpeed]);
+
   // Build system prompt & prepare session (Gemini gets knowledge via gemini-session + worker proxy)
   useEffect(() => {
     if (!demoSession) return;
@@ -315,6 +344,8 @@ const VoiceTest = ({
       return;
     }
 
+    // Apply selected voice before connecting
+    setVoiceOverride(selectedVoice);
     initAudioContext();
 
     // Check mic
@@ -415,6 +446,20 @@ const VoiceTest = ({
         </div>
         <span className="text-primary font-medium">2-в-1</span>
       </div>
+
+      {/* Voice & speed picker — shown when not in call */}
+      {!isConnected && !textOnlyMode && (
+        <div className="bg-background/50 rounded-lg p-3 border border-border/30">
+          <p className="text-[11px] text-muted-foreground mb-2 font-medium">Глас и темпо</p>
+          <VoicePicker
+            selectedVoice={selectedVoice}
+            onVoiceChange={handleVoiceChange}
+            voiceSpeed={localVoiceSpeed}
+            onSpeedChange={handleSpeedChange}
+            disabled={isConnecting}
+          />
+        </div>
+      )}
 
       {/* Call interface */}
       <div className="text-center py-4">
