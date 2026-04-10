@@ -22,6 +22,7 @@ interface SetupPageProps {
   demoSession: any;
   setDemoSession: (s: any) => void;
   onTabChange: (tab: string) => void;
+  subscriptionTier?: string;
 }
 
 const getCompactEmailPreview = (value: string | null) => {
@@ -37,7 +38,7 @@ const getCompactEmailPreview = (value: string | null) => {
 
 const SetupPage = ({
   userId, section, websiteUrl, setWebsiteUrl, companyName, setCompanyName,
-  demoSession, setDemoSession, onTabChange,
+  demoSession, setDemoSession, onTabChange, subscriptionTier,
 }: SetupPageProps) => {
   const [calendarConnected, setCalendarConnected] = useState(false);
   const [emailConnected, setEmailConnected] = useState(false);
@@ -153,6 +154,7 @@ const SetupPage = ({
               <KnowledgeBaseEditor
                 userId={userId}
                 currentSession={demoSession}
+                externalUrl={websiteUrl}
                 onSessionUpdate={(session) => {
                   setDemoSession(session);
                   if (session.url) setWebsiteUrl(session.url);
@@ -185,7 +187,7 @@ const SetupPage = ({
         )}
 
         {activeSection === 'email' && (
-          <EmailLogsSection emailConnected={emailConnected} userId={userId} />
+          <EmailLogsSection emailConnected={emailConnected} userId={userId} subscriptionTier={subscriptionTier} />
         )}
       </div>
     </div>
