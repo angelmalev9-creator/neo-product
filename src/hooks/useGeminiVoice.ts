@@ -5514,13 +5514,24 @@ export const useGeminiVoice = ({
                         lastUserText,
                       ) && Date.now() - (lastCommittedUserRef.current?.ts || 0) < 60_000;
 
-                    // Detect the lie: Gemini is claiming success without having
-                    // returned any action_request JSON in this turn.
+                    // Detect the lie: Gemini is claiming success (past tense) OR
+                    // announcing it's about to submit (future/present tense) without
+                    // actually returning an action_request JSON in this turn.
+                    // Both are functionally broken: the user is expecting the form
+                    // to be sent, but nothing is happening.
                     const normalizedResponse = responseText.toLowerCase();
                     const claimsFormSent =
+                      // Past tense — Gemini lies it's already done
                       /изпратен|изпратих|подаден|подадох|пратен|успешно подаде|успешно изпрате|готово.*запитван|запитван.*готово|благодарим.*доверие|запитването.*получ|ще се свърж/i.test(
                         normalizedResponse,
-                      );
+                      ) ||
+                      // Future/present tense — Gemini announces it but produces no JSON
+                      /един момент.*(изпращ|подав|прат)|момент.*(изпращ|подав|прат)|сега.*(изпращ|подав|прат)|(изпращам|подавам|пращам)\s*(запитван|формата|данн)?|подавам запитван/i.test(
+                        normalizedResponse,
+                      ) ||
+                      // Bare "Един момент, изпращам" without anything else
+                      /^един момент[,.\s]*изпращам[.\s]*$/i.test(normalizedResponse.trim()) ||
+                      /^момент[,.\s]*подавам[.\s]*$/i.test(normalizedResponse.trim());
 
                     const recentlyFired = Date.now() - lastSubmitFormFiredAtRef.current < 60_000;
 
@@ -5584,10 +5595,18 @@ export const useGeminiVoice = ({
                             sendToGemini(
                               [
                                 "[SYSTEM_CORRECTION]",
-                                "⛔ Ти току-що каза на клиента, че запитването е изпратено, БЕЗ да си върнал action_request JSON.",
-                                "Това беше НЕВЯРНО — формата не беше изпратена в момента, в който го каза. Системата автоматично я подаде вместо теб.",
-                                "ПРАВИЛО: Никога не казвай 'изпратено', 'подадено', 'готово', 'благодарим за доверието' или подобни фрази, ДОКАТО не си върнал action_request submit_form JSON в предишен turn и не си получил WORKER_SUBMIT_SUCCESS.",
-                                "Ако клиентът потвърди и всички данни са събрани → връщаш САМО JSON action_request submit_form, никакъв текст. Текстът идва след WORKER_SUBMIT_SUCCESS.",
+                                "⛔ Ти току-що каза нещо като 'Един момент, изпращам' или 'Запитването е изпратено' БЕЗ да върнеш action_request JSON в същия turn.",
+                                "Това е счупен flow — клиентът чува 'изпращам' но нищо не се случва. Системата автоматично подаде формата вместо теб този път.",
+                                "",
+                                "СТРОГО ПРАВИЛО за следващия път:",
+                                "Когато клиентът потвърди и имаш всички данни → output-ът ти за този turn трябва да започва с '{' и да завършва с '}'. НИКАКЪВ текст.",
+                                "- ❌ Не казвай 'Един момент, изпращам.'",
+                                "- ❌ Не казвай 'Подавам запитването.'",
+                                "- ❌ Не казвай 'Сега изпращам.'",
+                                "- ❌ Не казвай 'Изпратено' или 'Готово' или 'Благодарим за доверието'.",
+                                "- ✅ Просто върни action_request submit_form JSON и нищо друго.",
+                                "",
+                                "Текстът към клиента идва САМО след WORKER_SUBMIT_SUCCESS, не преди.",
                               ].join("\n"),
                             );
                           } catch (nudgeErr) {
