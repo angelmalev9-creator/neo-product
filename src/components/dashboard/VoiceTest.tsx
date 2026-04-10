@@ -344,6 +344,8 @@ const VoiceTest = ({
       return;
     }
 
+    // Apply selected voice before connecting
+    setVoiceOverride(selectedVoice);
     initAudioContext();
 
     // Check mic
