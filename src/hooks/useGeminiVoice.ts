@@ -5295,6 +5295,7 @@ export const useGeminiVoice = ({
   const sendText = useCallback(
     (text: string) => {
       const t = String(text || "").trim();
+      lastUserInputRef.current = t.toLowerCase();
 
       try {
         const state = ((window as any).__neoReservationState || {}) as any;
