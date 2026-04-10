@@ -4926,6 +4926,33 @@ export const useGeminiVoice = ({
             for (const fc of toolCall.functionCalls) {
               if (fc.name !== "search_site_content") continue;
 
+              // ★ CLIENT-SIDE GUARD: block search on user confirmation phrases
+              const lastInput = lastUserInputRef.current;
+              const confirmationPatterns = /^(да|yes|потвърж|потвърди|ок|добре|ok|okay|съгласен|искам|поръчвам|направи|давай|разбира се|нека|може|моля|go|confirm|sure|yep|yeah|точно|абсолютно)$/i;
+              const isConfirmation = confirmationPatterns.test(lastInput) || lastInput.length <= 4;
+              if (isConfirmation && lastInput.length > 0) {
+                console.log("[SEARCH WORKER] BLOCKED — last user input is confirmation:", lastInput);
+                ws.send(
+                  JSON.stringify({
+                    tool_response: {
+                      function_responses: [
+                        {
+                          id: fc.id,
+                          name: fc.name,
+                          response: {
+                            results: [],
+                            keywords: [],
+                            elapsed_ms: 0,
+                            note: "Search blocked: user confirmed an action. Proceed with action_request JSON instead.",
+                          },
+                        },
+                      ],
+                    },
+                  }),
+                );
+                continue;
+              }
+
               const query = String(fc.args?.query || "").trim();
               const searchProxyUrl = (sessionDataRef.current as any)?.searchProxyUrl || "";
               const siteUrl = (sessionDataRef.current as any)?.searchSessionSiteUrl || "";
