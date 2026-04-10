@@ -4831,11 +4831,25 @@ export const useGeminiVoice = ({
         if (parsed?.action !== "submit_form") return false;
 
         // Inject live session + deterministic form target so proxy always has a target.
-        const _sid =
-          parsed?.session_id ||
-          (sessionDataRef.current as any)?.sessionId ||
-          (sessionDataRef.current as any)?.session_id ||
-          "";
+        // ★ FIX: Gemini sometimes hallucinates "default_session_id" / placeholder values
+        // instead of the real session id. Treat any known-bad placeholder as absent so
+        // we fall back to the real id from sessionDataRef.
+        const realSid = (sessionDataRef.current as any)?.sessionId || (sessionDataRef.current as any)?.session_id || "";
+        const parsedSid = String(parsed?.session_id || "").trim();
+        const isPlaceholderSid =
+          !parsedSid ||
+          parsedSid === "default_session_id" ||
+          parsedSid === "session_id" ||
+          parsedSid === "${sessionId}" ||
+          parsedSid === "<session_id>" ||
+          /^[<{][^>}]*[>}]$/.test(parsedSid); // e.g. "<sessionId>" / "{sessionId}"
+        const _sid = isPlaceholderSid ? realSid : parsedSid;
+        if (isPlaceholderSid && parsedSid) {
+          console.warn("[SUBMIT_FORM] Gemini sent placeholder session_id; overriding with real one", {
+            sent: parsedSid,
+            real: realSid,
+          });
+        }
 
         const inferredTarget =
           lastSubmitFormTargetRef.current ||
@@ -4849,7 +4863,7 @@ export const useGeminiVoice = ({
 
         const enrichedParsed = {
           ...parsed,
-          ...(_sid ? { session_id: _sid } : {}),
+          ...(_sid ? { session_id: _sid } : {}), // always overrides placeholder
           ...(!parsed?.form_id && inferredTarget?.form_id ? { form_id: inferredTarget.form_id } : {}),
           ...(!parsed?.fingerprint && inferredTarget?.fingerprint ? { fingerprint: inferredTarget.fingerprint } : {}),
         };
@@ -5729,6 +5743,45 @@ export const useGeminiVoice = ({
                 // ★★★ END FAKE-SUBMIT GUARD ★★★
 
                 if (!handled) {
+                  // ★ FINAL RAW JSON SUPPRESSOR ★
+                  // Defense-in-depth: if all execution attempts failed AND the text
+                  // still looks like action JSON (raw or markdown-fenced), NEVER
+                  // commit it as a visible assistant bubble. Swallow, log, and send
+                  // a correction nudge to Gemini so it can recover on the next turn.
+                  const trimmedResponse = responseText.trim();
+                  const looksLikeJsonLeak =
+                    trimmedResponse.startsWith("{") ||
+                    trimmedResponse.startsWith("```") ||
+                    /"type"\s*:\s*"action_request"/.test(responseText) ||
+                    /"action"\s*:\s*"(submit_form|make_reservation|book_slot)"/.test(responseText);
+
+                  if (looksLikeJsonLeak) {
+                    console.warn("[TURN_COMPLETE][SUPPRESSED raw JSON leak]", responseText.slice(0, 300));
+                    clearAssistantLiveTranscript();
+                    currentResponseTextRef.current = "";
+
+                    // Correct Gemini — tell it the previous turn failed and why
+                    try {
+                      sendToGemini(
+                        [
+                          "[SYSTEM_CORRECTION]",
+                          "⛔ Предишният ти turn съдържаше action_request JSON, който не беше изпълнен успешно.",
+                          "Възможни причини:",
+                          "- Използвал си невалиден session_id (например 'default_session_id' или placeholder)",
+                          "- Пропуснал си form_id или fingerprint",
+                          "- Обвил си JSON в markdown code fence (```json ... ```)",
+                          "- Добавил си текст преди или след JSON",
+                          "",
+                          "На следващия turn: ако клиентът все още чака submit, върни ЧИСТ JSON (без backticks, без текст) със session_id от системния prompt и точните form_id/fingerprint от ACTIONS контекста.",
+                          "Ако не си сигурен какво да направиш — попитай клиента дали да опиташ отново.",
+                        ].join("\n"),
+                      );
+                    } catch (nudgeErr) {
+                      console.warn("[TURN_COMPLETE][SUPPRESSOR] nudge failed:", nudgeErr);
+                    }
+                    return;
+                  }
+
                   commitAssistantMessage(responseText);
                   expectedSensitiveInputModeRef.current = detectExpectedSensitiveInputMode(responseText);
                   if (expectedSensitiveInputModeRef.current !== "general") {
@@ -6190,11 +6243,6 @@ export const useGeminiVoice = ({
     preWarmMicrophone,
     sendText,
     getSessionData,
-    setVoiceOverride: (voiceName: string) => {
-      if (sessionDataRef.current) {
-        (sessionDataRef.current as any).voiceName = voiceName;
-      }
-    },
     interrupt: () => {
       assistantTurnCanceledRef.current = true;
       scheduledSourcesRef.current.forEach((s) => {
