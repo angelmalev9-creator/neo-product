@@ -30,6 +30,36 @@ function normalizeSpokenEmailText(text: string) {
     .trim();
 }
 
+/**
+ * Clean up common spoken prefixes that get concatenated with email addresses.
+ * E.g. "imeilamieangelmalev7@gmail.com" → "angelmalev7@gmail.com"
+ */
+function cleanEmailPrefix(email: string): string {
+  // Remove common Bulgarian spoken prefixes that got merged into the local part
+  const prefixes = [
+    /^imeila?\s*mi\s*e\s*/i,
+    /^imeilat?\s*mi\s*e\s*/i,
+    /^emaila?\s*mi\s*e\s*/i,
+    /^moya(?:t)?\s*imeil\s*e\s*/i,
+    /^moya(?:t)?\s*email\s*e\s*/i,
+    /^imeil\s*/i,
+    /^email\s*/i,
+  ];
+  
+  let local = email.split("@")[0];
+  const domain = email.split("@").slice(1).join("@");
+  
+  for (const prefix of prefixes) {
+    const cleaned = local.replace(prefix, "");
+    if (cleaned !== local && cleaned.length >= 2) {
+      local = cleaned;
+      break;
+    }
+  }
+  
+  return `${local}@${domain}`;
+}
+
 function extractEmails(text: string) {
   const emails = new Set<string>();
   const variants = [text, normalizeSpokenEmailText(text)];
@@ -37,7 +67,7 @@ function extractEmails(text: string) {
   for (const variant of variants) {
     const matches = variant.match(/[a-z0-9._%+-]+\s*@\s*[a-z0-9.-]+\s*\.\s*[a-z]{2,}/gi) || [];
     for (const match of matches) {
-      const normalized = match
+      let normalized = match
         .toLowerCase()
         .replace(/\s+/g, "")
         .replace(/@gmail(?!\.)/g, "@gmail.com")
@@ -45,6 +75,9 @@ function extractEmails(text: string) {
         .replace(/@outlook(?!\.)/g, "@outlook.com")
         .replace(/@hotmail(?!\.)/g, "@hotmail.com")
         .replace(/@yahoo(?!\.)/g, "@yahoo.com");
+
+      // Clean spoken prefixes that got merged
+      normalized = cleanEmailPrefix(normalized);
 
       if (/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(normalized)) {
         emails.add(normalized);
@@ -77,11 +110,19 @@ function extractName(text: string) {
     /аз съм\s+([А-ЯA-Z][а-яa-z]+(?:\s+[А-ЯA-Z][а-яa-z]+)?)/u,
     /името ми е\s+([А-ЯA-Z][а-яa-z]+(?:\s+[А-ЯA-Z][а-яa-z]+)?)/u,
     /на името на\s+([А-ЯA-Z][а-яa-z]+(?:\s+[А-ЯA-Z][а-яa-z]+)?)/u,
+    // Transliterated patterns
+    /kazvam se\s+([a-z]+)/iu,
+    /az sam\s+([a-z]+)/iu,
+    /sa\s+([a-z]+)\s*[,.\s]/iu,
   ];
 
   for (const pattern of patterns) {
     const match = text.match(pattern);
-    if (match?.[1]) return normalizeWhitespace(match[1]);
+    if (match?.[1]) {
+      const name = normalizeWhitespace(match[1]);
+      // Capitalize first letter
+      return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+    }
   }
 
   const capitalized = text.match(/[А-ЯA-Z][а-яa-z]+\s+[А-ЯA-Z][а-яa-z]+/gu) || [];
@@ -99,11 +140,12 @@ function buildTags(text: string) {
   const normalized = text.toLowerCase();
 
   if (/резервац|час|консултац|среща/.test(normalized)) tags.add("резервация");
-  if (/цена|пакет|оферта/.test(normalized)) tags.add("цени");
+  if (/цена|пакет|оферта|купя|закупя/.test(normalized)) tags.add("покупка");
   if (/имейл|@/.test(normalized)) tags.add("имейл");
   if (/телефон|\+359|08\d{8}/.test(normalized)) tags.add("телефон");
   if (/уебсайт|сайт|seo|страници/.test(normalized)) tags.add("уебсайт");
   if (/видео|маркетинг|реклама/.test(normalized)) tags.add("маркетинг");
+  if (/paket|пакет|essential|professional|enterprise/i.test(normalized)) tags.add("пакет");
 
   return [...tags];
 }
@@ -116,28 +158,48 @@ function buildFallbackAnalysis(messages: Array<{ role: string; content: string }
   const name = lead?.name || [lead?.first_name, lead?.last_name].filter(Boolean).join(" ") || extractName(userTranscript) || extractName(transcript) || null;
   const bookingIntent = /резервац|запиш|час|консултац|среща/i.test(combined);
   const bookingConfirmed = /записан[ао]? успешно|консултацията е записана|потвърждавам|очакваме ви|насрочим/i.test(combined);
+  const purchaseIntent = /купя|купувам|закупя|искам.*пакет|поръчк/i.test(combined) || /kupq|kupya|iskam.*paket/i.test(combined);
   const pricingIntent = /цена|пакет|оферта/i.test(combined);
   const hasContact = Boolean(name || lead?.email || emails[0] || lead?.phone || phones[0]);
 
+  // Extract specific package/service mentioned
+  const packageMatch = combined.match(/пакет\s*(essential|professional|enterprise|1|2|3|стартов|базов|про)/i)
+    || combined.match(/paket\s*(essential|professional|enterprise|1|2|3)/i);
+  const packageName = packageMatch ? packageMatch[1] : null;
+
   return {
-    summary: bookingConfirmed
-      ? "Клиентът проявява интерес и разговорът приключва с потвърден час и ясна следваща стъпка."
-      : hasContact
-        ? "Клиентът проявява интерес и оставя данни за контакт за последваща комуникация."
-        : "Разговорът е информативен и изяснява интереса на клиента към услугата.",
-    client_intent: bookingIntent
-      ? "Клиентът иска записване на час или консултация."
-      : pricingIntent
-        ? "Клиентът търси информация за услуга, пакет или цена."
-        : "Клиентът задава въпроси и проучва следващите стъпки.",
+    summary: purchaseIntent && packageName
+      ? `Клиентът ${name || 'посетител'} иска да закупи пакет ${packageName}${hasContact ? ' и остави данни за контакт.' : '.'}`
+      : bookingConfirmed
+        ? `Разговорът с ${name || 'клиента'} приключва с потвърден час.`
+        : hasContact
+          ? `${name || 'Клиентът'} проявява интерес и оставя данни за контакт.`
+          : "Информативен разговор без конкретно действие.",
+    client_intent: purchaseIntent
+      ? `Клиентът иска да закупи${packageName ? ` пакет ${packageName}` : ' услуга'}.`
+      : bookingIntent
+        ? "Клиентът иска записване на час или консултация."
+        : pricingIntent
+          ? "Клиентът търси информация за цени и пакети."
+          : "Клиентът задава въпроси.",
     outcome: bookingConfirmed
-      ? "Разговорът завършва с потвърдена резервация или консултация."
-      : hasContact
-        ? "Събрани са данни за контакт за последващо свързване."
-        : "Разговорът остава на етап запитване без финално действие.",
+      ? "Потвърдена резервация/консултация."
+      : purchaseIntent && hasContact
+        ? "Заявка за покупка с предоставени контактни данни."
+        : hasContact
+          ? "Събрани контактни данни за последващо свързване."
+          : "Без финално действие.",
     sentiment: inferSentiment(combined),
     tags: buildTags(combined),
-    action_items: [bookingConfirmed ? "Потвърдете часа и продължете с обслужването." : hasContact ? "Свържете се с клиента по оставените данни." : "Прегледайте разговора и при нужда изпратете последващо съобщение."],
+    action_items: [
+      purchaseIntent && hasContact
+        ? `Свържете се с ${name || 'клиента'} за финализиране на покупката${packageName ? ` на пакет ${packageName}` : ''}.`
+        : bookingConfirmed
+          ? "Потвърдете часа и продължете с обслужването."
+          : hasContact
+            ? `Свържете се с ${name || 'клиента'} по оставените данни.`
+            : "Прегледайте разговора.",
+    ],
     client_name: name,
     client_email: lead?.email || emails[0] || null,
     client_phone: lead?.phone || phones[0] || null,
@@ -193,8 +255,16 @@ serve(async (req) => {
       );
     }
 
+    // Filter out system/action messages from transcript
+    const cleanMessages = messages.filter((m) => {
+      const c = m.content || "";
+      if (c.startsWith("[SYSTEM:") || c.startsWith("[CURRENT_DATE_CONTEXT:")) return false;
+      if (c.trim().startsWith('{"action_request"')) return false;
+      return true;
+    });
+
     // Build transcript for AI
-    const transcript = messages
+    const transcript = cleanMessages
       .map((m) => `${m.role === "assistant" ? "NEO" : "Клиент"}: ${m.content}`)
       .join("\n");
 
@@ -222,29 +292,39 @@ serve(async (req) => {
               messages: [
                 {
                   role: "system",
-                  content: `Ти си бизнес анализатор. Анализирай разговор между AI асистент (NEO) и клиент. Отговори САМО с валиден JSON обект (без markdown, без \`\`\`), съдържащ summary, client_intent, outcome, sentiment, tags, action_items, client_name, client_email, client_phone.`,
+                  content: `Ти си бизнес анализатор. Анализирай разговор между AI асистент (NEO) и клиент.
+
+ВАЖНО:
+- summary трябва да е КОНКРЕТНО за бизнеса: включи име на клиента, какво точно иска (пакет, услуга, час), дали е оставил данни.
+- client_intent трябва да описва ТОЧНОТО намерение: "Иска да закупи пакет Essential" е добре, "Проявява интерес" е лошо.
+- outcome трябва да описва КОНКРЕТНИЯ резултат: "Поръчка за пакет Essential изпратена, данни: Ангел, angelmalev7@gmail.com" е добре.
+- action_items трябва да са ДЕЙСТВИЯ: "Обадете се на 0887700811 за финализиране на покупката" е добре.
+- При имейли внимавай за грешни префикси: "imeilamieangelmalev7@gmail.com" всъщност е "angelmalev7@gmail.com" (имейла ми е = речеви префикс).
+- Разпознавай транслитериран български: "iskam da kupq" = "искам да купя", "kazvam sa" = "казвам се".
+
+Отговори САМО с валиден JSON обект (без markdown, без \`\`\`), съдържащ summary, client_intent, outcome, sentiment, tags, action_items, client_name, client_email, client_phone.`,
                 },
                 {
                   role: "user",
-                  content: `Разговор (${messages.length} съобщения, ${Math.round((convoRes.data.duration_seconds || 0) / 60)} мин):${leadInfo}\n\n${transcript}`,
+                  content: `Разговор (${cleanMessages.length} съобщения, ${Math.round((convoRes.data.duration_seconds || 0) / 60)} мин):${leadInfo}\n\n${transcript}`,
                 },
               ],
               tools: [{
                 type: "function",
                 function: {
                   name: "conversation_analysis",
-                  description: "Structured analysis of a customer conversation",
+                  description: "Structured analysis of a customer conversation with specific, actionable details",
                   parameters: {
                     type: "object",
                     properties: {
-                      summary: { type: "string" },
-                      client_intent: { type: "string" },
-                      outcome: { type: "string" },
+                      summary: { type: "string", description: "Кратко конкретно резюме с име на клиент и какво иска" },
+                      client_intent: { type: "string", description: "Точно намерение: какъв пакет/услуга/час" },
+                      outcome: { type: "string", description: "Конкретен резултат с детайли" },
                       sentiment: { type: "string", enum: ["positive", "neutral", "negative"] },
                       tags: { type: "array", items: { type: "string" } },
-                      action_items: { type: "array", items: { type: "string" } },
+                      action_items: { type: "array", items: { type: "string" }, description: "Конкретни действия с имена и контакти" },
                       client_name: { type: ["string", "null"] },
-                      client_email: { type: ["string", "null"] },
+                      client_email: { type: ["string", "null"], description: "Чист имейл без речеви префикси" },
                       client_phone: { type: ["string", "null"] },
                     },
                     required: ["summary", "client_intent", "outcome", "sentiment", "tags", "client_name", "client_email", "client_phone"],
@@ -283,7 +363,12 @@ serve(async (req) => {
     }
 
     if (!analysis || usedFallback) {
-      analysis = buildFallbackAnalysis(messages, transcript, lead);
+      analysis = buildFallbackAnalysis(cleanMessages, transcript, lead);
+    }
+
+    // Clean extracted email from spoken prefixes
+    if (analysis.client_email) {
+      analysis.client_email = cleanEmailPrefix(analysis.client_email);
     }
 
     // Build rich summary text
@@ -335,15 +420,15 @@ serve(async (req) => {
       // Parse name into first/last
       if (mergedClientName) {
         const nameParts = mergedClientName.trim().split(/\s+/);
-        leadData.first_name = nameParts[0] || null;
-        leadData.last_name = nameParts.slice(1).join(" ") || null;
-        leadData.name = mergedClientName;
+        leadData.first_name = nameParts[0] ? nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1).toLowerCase() : null;
+        leadData.last_name = nameParts.slice(1).map((p: string) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(" ") || null;
+        leadData.name = [leadData.first_name, leadData.last_name].filter(Boolean).join(" ");
       }
-      if (mergedClientEmail) leadData.email = mergedClientEmail;
+      // Clean email before saving
+      if (mergedClientEmail) leadData.email = cleanEmailPrefix(mergedClientEmail);
       if (mergedClientPhone) leadData.phone = mergedClientPhone;
 
       if (existingLead) {
-        // Update existing lead with new data
         await supabase
           .from("captured_leads")
           .update(leadData)
@@ -351,13 +436,11 @@ serve(async (req) => {
         console.log("[SUMMARIZE] Updated existing lead:", existingLead.id);
         await supabase.from("conversations").update({ lead_captured: true }).eq("id", conversationId);
       } else {
-        // Insert new lead
         const { error: leadError } = await supabase
           .from("captured_leads")
           .insert(leadData);
         if (leadError) console.error("[SUMMARIZE] Lead insert error:", leadError);
         else {
-          // Mark conversation as lead_captured
           await supabase
             .from("conversations")
             .update({ lead_captured: true })
