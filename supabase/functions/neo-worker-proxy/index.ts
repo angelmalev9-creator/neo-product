@@ -675,7 +675,7 @@ async function sendPostSubmitEmails(sessionId: string, fields: Record<string, un
             recipient_email: to,
             recipient_name: client.name || null,
             subject,
-            body: html,
+            body: stripHtmlToText(html),
             status: sent ? "sent" : "failed",
             intent,
             sent_at: sent ? new Date().toISOString() : null,
@@ -689,12 +689,12 @@ async function sendPostSubmitEmails(sessionId: string, fields: Record<string, un
     const promises: Promise<void>[] = [];
     if (ownerEmail) {
       const ownerSubject = `Ново запитване от ${client.name||"клиент"} чрез NEO`;
-      const ownerHtml = buildOwnerEmailHtml(client.name, client.email, client.phone, fields, companyName);
+      const ownerHtml = buildOwnerEmailHtml(client.name, client.email, client.phone, fields, companyName, style);
       promises.push(sendEmail(ownerEmail, ownerSubject, ownerHtml, "owner_notification"));
     }
     if (client.email && client.email.includes("@")) {
       const clientSubject = `Запитването Ви към ${companyName} е изпратено`;
-      const clientHtml = buildClientEmailHtml(client.name, companyName);
+      const clientHtml = buildClientEmailHtml(client.name, companyName, style);
       promises.push(sendEmail(client.email, clientSubject, clientHtml, "client_confirmation"));
     }
     await Promise.allSettled(promises);
