@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Globe, Loader2, CheckCircle, RefreshCw, FileText, Calendar, Edit3, Save, X, Upload, File, Trash2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
