@@ -11,6 +11,8 @@ import {
 import KnowledgeBaseEditor from '@/components/dashboard/KnowledgeBaseEditor';
 import CalendarAutomation from '@/components/dashboard/CalendarAutomation';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Lock } from 'lucide-react';
 
 interface SetupPageProps {
   userId: string;
