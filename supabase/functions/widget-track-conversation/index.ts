@@ -42,7 +42,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { action, userId, conversationId, userMessage, assistantMessage, durationSeconds } = await req.json();
+    const { action, userId, conversationId, userMessage, assistantMessage, durationSeconds, seq } = await req.json();
 
     if (!userId) {
       return new Response(JSON.stringify({ error: "Missing userId" }), {
