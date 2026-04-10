@@ -149,14 +149,11 @@ const Widget = () => {
     }
   }, [userId]);
 
-  const persistTranscriptMessage = useCallback(async (role: Message['role'], content: string) => {
+  const persistTranscriptMessage = useCallback((role: Message['role'], content: string) => {
     const cleaned = cleanTranscriptForStorage(content);
     const normalized = normalizeTranscriptChunk(cleaned);
     const cid = conversationIdRef.current;
-    if (!cid || !normalized) {
-      console.warn('[WIDGET-PERSIST] Skipped: no conversationId or empty content', { cid, normalized: normalized?.slice(0, 30) });
-      return;
-    }
+    if (!cid || !normalized) return;
 
     const incremental = extractIncrementalTranscript(lastPersistedTranscriptRef.current[role], normalized);
     if (!incremental) return;
@@ -165,17 +162,25 @@ const Widget = () => {
     if (persistedTranscriptKeysRef.current.has(key)) return;
     persistedTranscriptKeysRef.current.add(key);
 
-    const result = await trackConversation('message', role === 'user'
-      ? { userMessage: incremental, conversationId: cid }
-      : { assistantMessage: incremental, conversationId: cid }
-    );
+    // Assign a monotonic sequence number for server-side ordering
+    const seq = ++messageSeqRef.current;
 
-    if (!result) {
+    // Queue this persist call so they execute sequentially (no concurrent race)
+    persistQueueRef.current = persistQueueRef.current.then(async () => {
+      const result = await trackConversation('message', role === 'user'
+        ? { userMessage: incremental, conversationId: cid, seq }
+        : { assistantMessage: incremental, conversationId: cid, seq }
+      );
+
+      if (!result) {
+        persistedTranscriptKeysRef.current.delete(key);
+        return;
+      }
+
+      lastPersistedTranscriptRef.current[role] = normalized;
+    }).catch(() => {
       persistedTranscriptKeysRef.current.delete(key);
-      return;
-    }
-
-    lastPersistedTranscriptRef.current[role] = normalized;
+    });
   }, [trackConversation]);
 
   // Lead modal only shows on disconnect (endCall), not during conversation
