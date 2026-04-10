@@ -1693,6 +1693,9 @@ export const useGeminiVoice = ({
   // ★ NEW: track what context we prepared for (sessionId/companyName/systemPrompt)
   const preparedKeyRef = useRef<string>("");
   const lastSubmitFormTargetRef = useRef<SubmitFormTarget | null>(null);
+  // ★ NEW: timestamp of last successful submit_form — used by the "Gemini lies
+  // about having sent the form" guard to avoid double-submits.
+  const lastSubmitFormFiredAtRef = useRef<number>(0);
   const conversationFocusRef = useRef<ConversationFocusState>({
     lastTopic: "",
     lastEntityType: "",
@@ -4835,6 +4838,7 @@ export const useGeminiVoice = ({
         }
 
         if (result?.success) {
+          lastSubmitFormFiredAtRef.current = Date.now();
           // Tell Gemini so it speaks the confirmation out loud
           sendToGemini(
             [
@@ -5479,6 +5483,126 @@ export const useGeminiVoice = ({
                     handled = await maybeExecuteActionFromGemini(forcedAction);
                   }
                 }
+
+                // ★★★ FAKE-SUBMIT GUARD ★★★
+                // Gemini Live has a strong bias to respond with text ("Thanks, your
+                // request has been submitted") when the user confirms, instead of
+                // returning the required submit_form JSON. That leaves the user with
+                // a plain lie: the form was never actually sent. Detect that here and
+                // synthesize the submit_form JSON ourselves from captured contact data.
+                if (!handled && responseText && !responseText.includes("{")) {
+                  try {
+                    const captured = capturedSensitiveContactRef.current;
+                    const hasName = !!captured?.name && captured.name.trim().length >= 2;
+                    const hasEmail = !!captured?.email && looksLikeCompleteEmail(captured.email);
+                    const hasPhone = !!captured?.phone && looksLikeCompletePhone(captured.phone);
+                    const hasAllContact = hasName && hasEmail && hasPhone;
+
+                    const lastUserText = String(lastCommittedUserRef.current?.text || "")
+                      .toLowerCase()
+                      .trim();
+                    const userConfirmedRecently =
+                      /^(да|ok|okay|добре|става|потвърждавам|потвърждавам\.|изпрати|изпрати\.|давай|готово|аха|yes|yep|ага)[\s.!?]*$/i.test(
+                        lastUserText,
+                      ) && Date.now() - (lastCommittedUserRef.current?.ts || 0) < 60_000;
+
+                    // Detect the lie: Gemini is claiming success without having
+                    // returned any action_request JSON in this turn.
+                    const normalizedResponse = responseText.toLowerCase();
+                    const claimsFormSent =
+                      /изпратен|изпратих|подаден|подадох|пратен|успешно подаде|успешно изпрате|готово.*запитван|запитван.*готово|благодарим.*доверие|запитването.*получ|ще се свърж/i.test(
+                        normalizedResponse,
+                      );
+
+                    const recentlyFired = Date.now() - lastSubmitFormFiredAtRef.current < 60_000;
+
+                    if (hasAllContact && userConfirmedRecently && claimsFormSent && !recentlyFired) {
+                      console.warn(
+                        "[FAKE_SUBMIT_GUARD] Gemini claimed form was sent without returning JSON. Synthesizing submit_form from captured data.",
+                        {
+                          captured,
+                          lastUserText,
+                          responsePreview: responseText.slice(0, 160),
+                        },
+                      );
+
+                      const sid =
+                        (sessionDataRef.current as any)?.sessionId || (sessionDataRef.current as any)?.session_id || "";
+                      const target =
+                        lastSubmitFormTargetRef.current ||
+                        pickPreferredSubmitFormTarget(
+                          extractSubmitFormTargetsFromInstruction(
+                            (sessionDataRef.current as any)?.systemInstruction || "",
+                          ),
+                        );
+
+                      if (sid && (target?.form_id || target?.fingerprint)) {
+                        // Pull plan / message from captured data if the parser
+                        // stashed them there, otherwise let the proxy ask for them.
+                        const extraFields: Record<string, string> = {};
+                        if ((captured as any)?.plan) extraFields.plan = String((captured as any).plan);
+                        if ((captured as any)?.message) extraFields.message = String((captured as any).message);
+
+                        const synthesized = {
+                          type: "action_request",
+                          action: "submit_form",
+                          session_id: sid,
+                          ...(target?.form_id ? { form_id: target.form_id } : {}),
+                          ...(target?.fingerprint ? { fingerprint: target.fingerprint } : {}),
+                          fields: {
+                            name: captured!.name,
+                            email: captured!.email,
+                            phone: captured!.phone,
+                            ...extraFields,
+                          },
+                        };
+
+                        console.log(
+                          "[FAKE_SUBMIT_GUARD] firing synthesized action_request:",
+                          JSON.stringify(synthesized).slice(0, 400),
+                        );
+
+                        // Don't show Gemini's lie to the user. Swallow the text.
+                        clearAssistantLiveTranscript();
+                        currentResponseTextRef.current = "";
+
+                        // Fire through the existing action parser so all the normal
+                        // enrichment / proxy logic runs unchanged.
+                        const synthHandled = await maybeExecuteActionFromGemini(JSON.stringify(synthesized));
+
+                        if (synthHandled) {
+                          // Correct Gemini so it stops lying in future turns.
+                          try {
+                            sendToGemini(
+                              [
+                                "[SYSTEM_CORRECTION]",
+                                "⛔ Ти току-що каза на клиента, че запитването е изпратено, БЕЗ да си върнал action_request JSON.",
+                                "Това беше НЕВЯРНО — формата не беше изпратена в момента, в който го каза. Системата автоматично я подаде вместо теб.",
+                                "ПРАВИЛО: Никога не казвай 'изпратено', 'подадено', 'готово', 'благодарим за доверието' или подобни фрази, ДОКАТО не си върнал action_request submit_form JSON в предишен turn и не си получил WORKER_SUBMIT_SUCCESS.",
+                                "Ако клиентът потвърди и всички данни са събрани → връщаш САМО JSON action_request submit_form, никакъв текст. Текстът идва след WORKER_SUBMIT_SUCCESS.",
+                              ].join("\n"),
+                            );
+                          } catch (nudgeErr) {
+                            console.warn("[FAKE_SUBMIT_GUARD] nudge failed:", nudgeErr);
+                          }
+                          return;
+                        } else {
+                          console.warn(
+                            "[FAKE_SUBMIT_GUARD] synthesized action was not handled by parser; falling through to normal text commit.",
+                          );
+                        }
+                      } else {
+                        console.warn("[FAKE_SUBMIT_GUARD] cannot synthesize — missing session_id or form target", {
+                          sid,
+                          target,
+                        });
+                      }
+                    }
+                  } catch (guardErr) {
+                    console.warn("[FAKE_SUBMIT_GUARD] guard threw:", guardErr);
+                  }
+                }
+                // ★★★ END FAKE-SUBMIT GUARD ★★★
 
                 if (!handled) {
                   commitAssistantMessage(responseText);
