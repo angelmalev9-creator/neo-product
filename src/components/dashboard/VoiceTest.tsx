@@ -150,6 +150,7 @@ const VoiceTest = ({
     prepareSession,
     preWarmMicrophone,
     sendText,
+    setVoiceOverride,
   } = useGeminiVoice({
     onMessage: handleMessage,
     onError: handleError,
