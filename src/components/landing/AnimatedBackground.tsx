@@ -149,6 +149,99 @@ const AnimatedBackground = () => {
         <motion.circle cx="50%" cy="50%" r="450" fill="none" stroke="hsl(260 55% 55%)" strokeWidth="0.3" strokeOpacity="0.035" strokeDasharray="4 20"
           initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1, rotate: -360 }}
           transition={{ scale: { duration: 2, delay: 1.5 }, opacity: { duration: 2, delay: 1.5 }, rotate: { duration: 180, repeat: Infinity, ease: 'linear' } }} />
+
+        {/* Neural burst — branching lines from a central node */}
+        <g opacity="0.12">
+          {/* Central core */}
+          <motion.circle cx="72%" cy="18%" r="6" fill="url(#ai-line1-fill)" 
+            initial={{ scale: 0 }} animate={{ scale: [1, 1.3, 1] }}
+            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }} />
+          <circle cx="72%" cy="18%" r="18" fill="none" stroke="hsl(220 70% 55%)" strokeWidth="0.4" strokeOpacity="0.3" strokeDasharray="3 6" />
+          <circle cx="72%" cy="18%" r="35" fill="none" stroke="hsl(260 55% 55%)" strokeWidth="0.3" strokeOpacity="0.15" strokeDasharray="2 8" />
+          
+          {/* Branching neural paths from center */}
+          {[
+            { x2: '85%', y2: '8%', curve: '76% 12%' },
+            { x2: '90%', y2: '22%', curve: '80% 16%' },
+            { x2: '88%', y2: '32%', curve: '78% 22%' },
+            { x2: '60%', y2: '6%', curve: '68% 10%' },
+            { x2: '55%', y2: '15%', curve: '64% 14%' },
+            { x2: '62%', y2: '28%', curve: '66% 22%' },
+            { x2: '80%', y2: '5%', curve: '74% 8%' },
+            { x2: '95%', y2: '16%', curve: '82% 14%' },
+            { x2: '58%', y2: '24%', curve: '65% 20%' },
+            { x2: '82%', y2: '30%', curve: '76% 26%' },
+          ].map((path, i) => (
+            <motion.path
+              key={`neural-burst-${i}`}
+              d={`M 72% 18% Q ${path.curve} ${path.x2} ${path.y2}`}
+              fill="none"
+              stroke={i % 2 === 0 ? 'hsl(220 70% 55%)' : 'hsl(260 55% 55%)'}
+              strokeWidth={0.6 - i * 0.03}
+              strokeOpacity={0.5 - i * 0.03}
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              transition={{ duration: 2 + i * 0.3, delay: 1.5 + i * 0.15, ease: 'easeOut' }}
+            />
+          ))}
+          {/* End nodes */}
+          {[
+            { cx: '85%', cy: '8%' }, { cx: '90%', cy: '22%' }, { cx: '88%', cy: '32%' },
+            { cx: '60%', cy: '6%' }, { cx: '55%', cy: '15%' }, { cx: '62%', cy: '28%' },
+            { cx: '80%', cy: '5%' }, { cx: '95%', cy: '16%' },
+          ].map((node, i) => (
+            <motion.circle
+              key={`burst-node-${i}`}
+              cx={node.cx} cy={node.cy} r={1.5}
+              fill={i % 2 === 0 ? 'hsl(220 70% 55%)' : 'hsl(260 55% 55%)'}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 0.6 }}
+              transition={{ duration: 0.5, delay: 2.5 + i * 0.2 }}
+            />
+          ))}
+        </g>
+
+        {/* Second neural burst — bottom left */}
+        <g opacity="0.09">
+          <motion.circle cx="22%" cy="75%" r="5" fill="url(#ai-line3-fill)"
+            initial={{ scale: 0 }} animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 2 }} />
+          <circle cx="22%" cy="75%" r="22" fill="none" stroke="hsl(260 55% 55%)" strokeWidth="0.3" strokeOpacity="0.25" strokeDasharray="3 8" />
+          {[
+            { x2: '10%', y2: '68%', curve: '16% 70%' },
+            { x2: '8%', y2: '80%', curve: '14% 78%' },
+            { x2: '15%', y2: '88%', curve: '18% 82%' },
+            { x2: '35%', y2: '70%', curve: '28% 72%' },
+            { x2: '38%', y2: '82%', curve: '30% 78%' },
+            { x2: '30%', y2: '65%', curve: '26% 68%' },
+            { x2: '12%', y2: '62%', curve: '18% 66%' },
+            { x2: '32%', y2: '88%', curve: '28% 84%' },
+          ].map((path, i) => (
+            <motion.path
+              key={`neural-burst2-${i}`}
+              d={`M 22% 75% Q ${path.curve} ${path.x2} ${path.y2}`}
+              fill="none"
+              stroke={i % 2 === 0 ? 'hsl(260 55% 55%)' : 'hsl(220 70% 55%)'}
+              strokeWidth={0.5 - i * 0.03}
+              strokeOpacity={0.4 - i * 0.03}
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              transition={{ duration: 2.5 + i * 0.2, delay: 3 + i * 0.2, ease: 'easeOut' }}
+            />
+          ))}
+        </g>
+
+        {/* Radial fill defs for neural bursts */}
+        <defs>
+          <radialGradient id="ai-line1-fill">
+            <stop offset="0%" stopColor="hsl(220 70% 65%)" />
+            <stop offset="100%" stopColor="hsl(220 70% 45%)" />
+          </radialGradient>
+          <radialGradient id="ai-line3-fill">
+            <stop offset="0%" stopColor="hsl(260 55% 65%)" />
+            <stop offset="100%" stopColor="hsl(260 55% 45%)" />
+          </radialGradient>
+        </defs>
       </svg>
 
       {/* Floating dot particles — scattered across entire viewport */}
