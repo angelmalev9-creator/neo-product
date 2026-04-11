@@ -28,6 +28,9 @@ const RevenueCalculator = () => {
           <h2 className="neo-heading-section font-black text-foreground mb-3 font-mono">
             Колко губите от <span className="text-primary">пропуснати обаждания?</span>
           </h2>
+          <p className="text-sm text-muted-foreground">
+            Преместете плъзгачите. Вижте колко струва мълчанието Ви.
+          </p>
         </div>
 
         <div className="max-w-3xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
@@ -37,9 +40,9 @@ const RevenueCalculator = () => {
             animate={isVisible ? { opacity: 1, x: 0 } : {}}
             className="space-y-5"
           >
-            <SliderRow icon={Phone} color="text-primary" accent="accent-primary" label="Пропуснати обаждания/ден" value={missedCalls} min={1} max={30} step={1} onChange={setMissedCalls} />
-            <SliderRow icon={DollarSign} color="text-emerald-400" accent="accent-emerald-400" label="Средна стойност (EUR)" value={avgDealValue} min={10} max={500} step={10} onChange={setAvgDealValue} />
-            <SliderRow icon={Clock} color="text-amber-400" accent="accent-amber-400" label="Конверсия (%)" value={conversionRate} min={5} max={80} step={5} onChange={setConversionRate} suffix="%" />
+            <SliderRow icon={Phone} color="text-primary" label="Пропуснати обаждания/ден" value={missedCalls} min={1} max={30} step={1} onChange={setMissedCalls} />
+            <SliderRow icon={DollarSign} color="text-emerald-400" label="Средна стойност (EUR)" value={avgDealValue} min={10} max={500} step={10} onChange={setAvgDealValue} />
+            <SliderRow icon={Clock} color="text-amber-400" label="Конверсия (%)" value={conversionRate} min={5} max={80} step={5} onChange={setConversionRate} suffix="%" />
           </motion.div>
 
           {/* Results */}
@@ -49,32 +52,32 @@ const RevenueCalculator = () => {
             transition={{ delay: 0.1 }}
             className="space-y-4"
           >
-            <div className="rounded-2xl border border-border/15 bg-card/30  overflow-hidden">
+            <div className="rounded-2xl border border-border/15 bg-card/30 overflow-hidden">
               <div className="px-5 py-3 border-b border-border/10 bg-card/40 flex items-center gap-2">
                 <TrendingDown className="w-4 h-4 text-primary" />
-                <span className="text-[10px] font-bold text-foreground/50 uppercase tracking-wider">Загуби без NEO</span>
+                <span className="text-[10px] font-bold text-foreground/50 uppercase tracking-wider">Губите в момента</span>
               </div>
               <div className="p-5 space-y-3">
-                <ResultRow label="На ден" value={`-${results.dailyLost.toFixed(0)} EUR`} size="sm" />
-                <ResultRow label="На месец" value={`-${results.monthlyLost.toFixed(0)} EUR`} size="md" />
+                <ResultRow label="Дневно" value={`-${results.dailyLost.toFixed(0)} EUR`} size="sm" />
+                <ResultRow label="Месечно" value={`-${results.monthlyLost.toFixed(0)} EUR`} size="md" />
                 <div className="rounded-xl bg-red-500/8 px-4 py-3 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-foreground">На година</span>
+                  <span className="text-sm font-semibold text-foreground">Годишно</span>
                   <span className="text-2xl font-black text-red-400 tabular-nums">-{results.yearlyLost.toFixed(0)} EUR</span>
                 </div>
               </div>
             </div>
 
             <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-5 py-4">
-              <p className="text-xs text-foreground/50 mb-1">С NEO (от 25 EUR/мес):</p>
-              <p className="text-xl font-black text-emerald-400">{results.monthlyLost.toFixed(0)} EUR / месец спасени</p>
-              <p className="text-[10px] text-foreground/30 mt-1">ROI: {results.roi.toFixed(0)}x</p>
+              <p className="text-xs text-foreground/50 mb-1">С NEO това става:</p>
+              <p className="text-xl font-black text-emerald-400">Спасявате {results.monthlyLost.toFixed(0)} EUR всеки месец</p>
+              <p className="text-[10px] text-foreground/30 mt-1">NEO се изплаща {results.roi.toFixed(0)} пъти.</p>
             </div>
 
             <Button
               className="neo-btn-primary w-full text-xs px-6 py-3 h-auto font-bold rounded-full gap-2"
               onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
             >
-              Спрете загубите — пробвайте NEO <ArrowRight className="w-3.5 h-3.5" />
+              Спрете загубите днес <ArrowRight className="w-3.5 h-3.5" />
             </Button>
           </motion.div>
         </div>

@@ -7,36 +7,61 @@ import { Button } from '@/components/ui/button';
 const industries = [
   {
     icon: Stethoscope, title: 'Клиники',
-    tagline: 'Пациентите записват часове 24/7',
-    benefits: ['Мигновен отговор без чакане', 'Автоматични записвания', '94% по-малко пропуснати'],
+    tagline: 'Пациентите записват часове, докато спите.',
+    benefits: [
+      'Пациентите записват часове в 2 сутринта, без да чакат рецепцията.',
+      'Автоматично попълва свободните часове в графика на лекаря.',
+      'Напомня за часа ден преди срещата — намалява отсъствията с 40%.',
+      'Обяснява подготовка за прегледи на български и английски.',
+    ],
     color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/25',
     savings: '~1 200 EUR/мес спестявания',
   },
   {
     icon: Scissors, title: 'Салони',
-    tagline: 'Записвания ден и нощ — без рецепция',
-    benefits: ['Записване извън работно време', 'Автоматични напомняния', '+38% повече записвания'],
+    tagline: 'Записвания ден и нощ — без рецепция.',
+    benefits: [
+      'Клиентките записват час по телефона в 10 вечерта.',
+      'NEO предлага свободен час при любимия стилист.',
+      'Изпраща напомняне с час и адрес на салона.',
+      'Събира имейл и телефон за бъдещи промоции.',
+    ],
     color: 'text-pink-400', bg: 'bg-pink-500/10', border: 'border-pink-500/25',
     savings: '~900 EUR/мес спестявания',
   },
   {
     icon: Car, title: 'Автосервизи',
-    tagline: 'NEO приема заявки докато екипът работи',
-    benefits: ['Отговаря вместо механиците', 'Дава ориентировъчни цени', '12ч/сед спестено време'],
+    tagline: 'NEO приема заявки, докато екипът работи.',
+    benefits: [
+      'Клиентите описват проблема, NEO записва заявка.',
+      'Дава ориентировъчни цени за стандартни услуги.',
+      'Приема обаждания, докато механиците са под колата.',
+      'Събира марка, модел и описание преди визитата.',
+    ],
     color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/25',
     savings: '~1 000 EUR/мес спестявания',
   },
   {
     icon: Dumbbell, title: 'Фитнеси',
-    tagline: 'Записвания за тренировки без чакане',
-    benefits: ['Информация за абонаменти 24/7', 'Записване за персонални', '+45% по-доволни клиенти'],
+    tagline: 'Записвания за тренировки без чакане.',
+    benefits: [
+      'Нови клиенти питат за абонаменти в 6 сутринта — NEO отговаря.',
+      'Записва за персонална тренировка в свободен слот.',
+      'Обяснява разликата между плановете без човешка намеса.',
+      'Изпраща линк за плащане след записване.',
+    ],
     color: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/25',
     savings: '~800 EUR/мес спестявания',
   },
   {
     icon: Building2, title: 'Хотели',
-    tagline: 'Резервации на 3 езика — без нощна смяна',
-    benefits: ['Мигновена проверка на наличност', 'Многоезична комуникация', '+27% повече резервации'],
+    tagline: 'Резервации на 3 езика — без нощна смяна.',
+    benefits: [
+      'Гости резервират стая на български, английски или руски.',
+      'NEO проверява наличност и потвърждава дати.',
+      'Отговаря на въпроси за паркинг, закуска и настаняване.',
+      'Събира данни за фактура автоматично.',
+    ],
     color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/25',
     savings: '~1 500 EUR/мес спестявания',
   },
@@ -56,10 +81,10 @@ const UseCases = () => {
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-10">
           <h2 className="neo-heading-section font-black text-foreground mb-3 font-mono">
-            За всеки бизнес, <span className="text-primary">който говори с клиенти</span>
+            Работи за бизнеси, <span className="text-primary">които живеят от обаждания.</span>
           </h2>
           <p className="neo-subheading text-muted-foreground max-w-lg mx-auto">
-            NEO се адаптира към Вашата индустрия за минути.
+            Настройва се за Вашата индустрия за минути — без технически познания.
           </p>
         </div>
 
@@ -101,17 +126,17 @@ const UseCases = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
               {current.benefits.map((b, j) => (
                 <motion.div
                   key={b}
                   initial={{ opacity: 0, x: 10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: j * 0.1 }}
-                  className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-card/40 border border-border/10"
+                  transition={{ delay: j * 0.08 }}
+                  className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-card/40 border border-border/10"
                 >
-                  <CheckCircle2 className={`w-4 h-4 ${current.color} shrink-0`} />
-                  <span className="text-xs text-foreground/80 font-medium">{b}</span>
+                  <CheckCircle2 className={`w-4 h-4 ${current.color} shrink-0 mt-0.5`} />
+                  <span className="text-xs text-foreground/80 font-medium leading-relaxed">{b}</span>
                 </motion.div>
               ))}
             </div>
@@ -123,7 +148,7 @@ const UseCases = () => {
                 className="text-xs font-bold text-primary gap-1.5 hover:bg-primary/10 w-full sm:w-auto"
                 onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
               >
-                Изпробвайте за Вашия бизнес <ArrowRight className="w-3.5 h-3.5" />
+                Пробвайте за Вашия бизнес <ArrowRight className="w-3.5 h-3.5" />
               </Button>
             </div>
           </motion.div>

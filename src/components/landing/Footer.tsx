@@ -9,7 +9,7 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   const platformLinks = [
-    { label: t('footer.howItWorks'), href: '#demo', isScroll: true },
+    { label: t('footer.howItWorks'), href: '#how-it-works', isScroll: true },
     { label: t('footer.features'), href: '#features', isScroll: true },
     { label: t('footer.pricing'), href: '#pricing', isScroll: true },
     { label: t('footer.demo'), href: '#demo', isScroll: true },
@@ -66,7 +66,7 @@ const Footer = () => {
                 <NeoLogo size="md" />
               </div>
               <p className="text-muted-foreground text-xs sm:text-sm mb-4 max-w-xs leading-relaxed">
-                {t('footer.description')}
+                AI рецепционист за български бизнеси. Настройка без код за 5 минути.
               </p>
               <a href="mailto:admin@neo-assistant.com" className="inline-flex items-center gap-2 text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors group">
                 <Mail className="w-3.5 h-3.5 text-primary group-hover:scale-110 transition-transform" />
@@ -132,7 +132,7 @@ const Footer = () => {
               {t('footer.copyright', { year: currentYear })}
             </p>
             <p className="text-[10px] sm:text-xs text-muted-foreground/50 flex items-center gap-2">
-              {t('footer.madeIn')}
+              Създадено в България
               <span className="text-border/30">|</span>
               <a href="https://webvision-bg.com" target="_blank" rel="noopener noreferrer" className="text-primary/60 hover:text-primary transition-colors">
                 webvision-bg.com

@@ -1,8 +1,7 @@
-import { Play, ArrowRight, Mic, Calendar, MessageSquare, Phone, TrendingUp, Star } from 'lucide-react';
+import { Play, ArrowRight, Mic, Calendar, MessageSquare, Phone, TrendingUp, Star, Check } from 'lucide-react';
 import neoLogoImg from '@/assets/neo-logo.png';
 import { Button } from '@/components/ui/button';
 import TrustedCompaniesMarquee from '@/components/landing/TrustedCompaniesMarquee';
-import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 
@@ -12,7 +11,7 @@ const RatingBadge = () => (
     initial={{ opacity: 0, y: 12 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5 }}
-    className="inline-flex items-center gap-2 px-3.5 py-1.5 mb-6 rounded-full bg-card/40 border border-border/10 "
+    className="inline-flex items-center gap-2 px-3.5 py-1.5 mb-6 rounded-full bg-card/40 border border-border/10"
   >
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4].map(i => (
@@ -21,48 +20,15 @@ const RatingBadge = () => (
       <Star className="w-3 h-3 text-primary/40" />
     </div>
     <span className="text-foreground/50 text-[10px] sm:text-xs font-semibold tracking-[0.08em] uppercase">
-      4.92/5 от над 200 клиенти
+      ★ 4.9/5 — използва се от 200+ български бизнеса
     </span>
   </motion.div>
 );
 
-/* ───── Live counter ───── */
-const LiveActivityTicker = () => {
-  const [count, setCount] = useState(14);
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCount(prev => {
-        const delta = Math.random() > 0.5 ? 1 : -1;
-        return Math.max(8, Math.min(23, prev + delta));
-      });
-    }, 4000 + Math.random() * 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: 1.8, duration: 0.4 }}
-      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-card/40 border border-border/10 "
-    >
-      <span className="relative flex h-1.5 w-1.5">
-        <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-50" />
-        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
-      </span>
-      <span className="text-[9px] text-foreground/40 font-medium">
-        {count} бизнеса използват NEO в момента
-      </span>
-    </motion.div>
-  );
-};
-
 /* ───── MacBook Frame ───── */
 const MacBookFrame = ({ children }: { children: React.ReactNode }) => (
   <div className="relative">
-    {/* Screen */}
     <div className="rounded-t-xl border-[3px] border-foreground/15 bg-background overflow-hidden">
-      {/* Menu bar */}
       <div className="flex items-center gap-1.5 px-3 py-1.5 bg-foreground/5 border-b border-border/10">
         <span className="w-2 h-2 rounded-full bg-[hsl(0,70%,55%)]" />
         <span className="w-2 h-2 rounded-full bg-[hsl(45,80%,55%)]" />
@@ -71,7 +37,6 @@ const MacBookFrame = ({ children }: { children: React.ReactNode }) => (
       </div>
       {children}
     </div>
-    {/* Bottom hinge */}
     <div className="relative mx-auto">
       <div className="h-[14px] bg-gradient-to-b from-foreground/12 to-foreground/8 rounded-b-md border-x-[3px] border-b-[3px] border-foreground/15" />
       <div className="h-[4px] bg-foreground/10 rounded-b-lg mx-[10%]" />
@@ -83,12 +48,10 @@ const MacBookFrame = ({ children }: { children: React.ReactNode }) => (
 const IPhoneFrame = ({ children }: { children: React.ReactNode }) => (
   <div className="relative">
     <div className="rounded-[20px] border-[3px] border-foreground/15 bg-background overflow-hidden">
-      {/* Notch / Dynamic Island */}
       <div className="flex justify-center py-1.5 bg-foreground/5">
         <div className="w-16 h-[5px] rounded-full bg-foreground/15" />
       </div>
       {children}
-      {/* Home indicator */}
       <div className="flex justify-center py-2 bg-foreground/3">
         <div className="w-10 h-[3px] rounded-full bg-foreground/15" />
       </div>
@@ -210,8 +173,6 @@ const WidgetContent = () => (
 
 /* ───── Hero ───── */
 const Hero = () => {
-  const { t } = useTranslation();
-
   return (
     <section className="relative min-h-[calc(100svh-5rem)] flex items-center neo-section-spacing overflow-hidden px-4 sm:px-0">
       <div className="absolute inset-0 neo-grid-bg opacity-5 pointer-events-none" />
@@ -228,9 +189,8 @@ const Hero = () => {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="lg:text-5xl font-black text-foreground tracking-tight mb-4 sm:mb-5 leading-[1.08] sm:text-2xl text-2xl shadow-none font-mono"
             >
-              Докато Вие спите, NEO говори с клиенти и{' '}
-              <span className="neo-gradient-text shadow-inner">записва часове</span>{' '}
-              вместо Вас.
+              AI рецепционист, който{' '}
+              <span className="neo-gradient-text shadow-inner">вдига вместо Вас.</span>
             </motion.h1>
 
             <motion.p
@@ -239,9 +199,7 @@ const Hero = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="neo-subheading text-foreground/50 mb-5 max-w-md opacity-75"
             >
-              Отговаря на всеки клиент и не пропуска нито едно запитване — 24/7.
-              <br />
-              <span className="text-foreground/70 font-medium opacity-70">Готов за 5 минути. От 25 EUR/месец.</span>
+              NEO отговаря на обажданията Ви 24/7, записва часове в календара и събира запитвания — за бизнеси, които губят клиенти извън работно време.
             </motion.p>
 
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="flex flex-col sm:flex-row gap-2.5 mb-4">
@@ -250,35 +208,33 @@ const Hero = () => {
                 onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 <Play className="w-3.5 h-3.5 fill-current" />
-                Изпробвайте безплатното демо
+                Пробвайте безплатно
               </Button>
               <Button
                 variant="outline"
                 className="neo-glass-premium border-0 text-foreground/50 hover:text-foreground text-[13px] sm:text-xs px-5 py-3 sm:py-2.5 h-auto rounded-full font-bold gap-1.5 w-full sm:w-auto"
-                onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
               >
-                Изберете план
+                Вижте как работи
                 <ArrowRight className="w-3.5 h-3.5" />
               </Button>
             </motion.div>
 
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.5 }} className="space-y-3">
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-foreground/25 text-[10px] font-medium">
-                {['Без кредитна карта', 'Без код', '14 дни гаранция'].map((text) => (
+                {['Готов за 5 минути', 'Без кредитна карта', 'Отказ по всяко време'].map((text) => (
                   <span key={text} className="flex items-center gap-1">
-                    <span className="w-1 h-1 rounded-full bg-primary/60" />
+                    <Check className="w-3 h-3 text-primary/60" />
                     {text}
                   </span>
                 ))}
               </div>
-              
             </motion.div>
           </div>
 
           {/* RIGHT — MacBook + iPhone device mockups */}
           <div className="hidden sm:block">
             <div className="relative w-full max-w-[480px] mx-auto">
-              {/* MacBook — Dashboard */}
               <motion.div
                 initial={{ opacity: 0, y: 20, scale: 0.96 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -289,7 +245,6 @@ const Hero = () => {
                 </MacBookFrame>
               </motion.div>
 
-              {/* iPhone — Widget, overlapping bottom-right */}
               <motion.div
                 initial={{ opacity: 0, y: 30, scale: 0.92 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
