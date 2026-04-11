@@ -62,7 +62,7 @@ const industries = [
       'Отговаря на въпроси за паркинг, закуска и настаняване.',
       'Събира данни за фактура автоматично.',
     ],
-    color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/25',
+    color: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/25',
     savings: '~1 500 EUR/мес спестявания',
   },
 ];
