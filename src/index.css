@@ -326,7 +326,7 @@
   .neo-text-glow { text-shadow: 0 0 20px hsl(var(--neo-blue) / 0.5), 0 0 40px hsl(var(--neo-blue) / 0.2); }
 
   .neo-gradient-text {
-    color: hsl(210 60% 75%);
+    color: #15315e;
   }
 
   .neo-gradient-text-animated {
