@@ -58,9 +58,9 @@ const FAQ = () => {
           transition={{ duration: 0.5 }}
           className="text-center mb-10"
         >
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-foreground mb-3 font-mono">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-primary-foreground mb-3 font-mono">
             Често задавани{' '}
-            <span className="text-primary">въпроси</span>
+            <span className="text-secondary">въпроси</span>
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground">
             Всичко, което трябва да знаете за NEO.

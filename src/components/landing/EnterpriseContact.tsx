@@ -44,11 +44,11 @@ const EnterpriseContact = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
-            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-primary text-xs font-medium mb-4">
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-secondary border border-secondary text-accent text-xs font-medium mb-4">
               <MessageSquare className="w-3.5 h-3.5" />
               Контакт
             </span>
-            <h2 className="neo-heading-section font-display font-black text-foreground mb-2">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-primary-foreground mb-2 font-mono">
               {t('contact.title1')}
             </h2>
             <p className="text-sm text-muted-foreground">

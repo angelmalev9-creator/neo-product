@@ -17,11 +17,11 @@ const FinalCTA = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="relative rounded-3xl border border-foreground/8 bg-foreground/[0.02] p-10 sm:p-14 text-center overflow-hidden"
+          className="relative rounded-3xl border border-secondary bg-card/30 p-10 sm:p-14 text-center overflow-hidden"
         >
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_50%_50%,hsl(355_65%_52%/0.06),transparent_70%)] pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_50%_50%,hsl(200_70%_40%/0.1),transparent_70%)] pointer-events-none" />
 
-          <h2 className="relative text-2xl sm:text-3xl lg:text-4xl font-black text-foreground mb-4 font-mono leading-tight">
+          <h2 className="relative text-2xl sm:text-3xl lg:text-4xl font-black text-primary-foreground mb-4 font-mono leading-tight">
             Всеки ден, който чакате, е изгубени клиенти.
           </h2>
           <p className="relative text-sm sm:text-base text-muted-foreground mb-8">

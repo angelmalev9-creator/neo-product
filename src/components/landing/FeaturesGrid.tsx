@@ -309,8 +309,8 @@ const FeaturesGrid = () => {
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8 sm:mb-10">
-          <h2 className="neo-heading-section font-black text-foreground mb-4 font-mono">
-            Един инструмент. <span className="text-primary">Работата на трима служители.</span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-primary-foreground mb-4 font-mono">
+            Един инструмент. <span className="text-secondary">Работата на трима служители.</span>
           </h2>
           <p className="neo-subheading text-muted-foreground max-w-lg mx-auto">
             NEO замества рецепционист, чат на сайта и нощен колцентър.
@@ -351,7 +351,7 @@ const FeaturesGrid = () => {
             transition={{ duration: 0.4, delay: 0.2 }}
             className="lg:col-span-3"
           >
-            <div className="relative rounded-2xl border border-border/15 bg-card/30 overflow-hidden min-h-[300px]">
+            <div className="relative rounded-2xl border border-secondary bg-card/30 overflow-hidden min-h-[300px]">
               <div className="flex items-center gap-2 px-4 py-2 border-b border-border/10 bg-card/40">
                 <div className="flex gap-1">
                   <span className="w-2 h-2 rounded-full bg-primary/30" />
