@@ -7,8 +7,8 @@ const steps = [
   {
     icon: Link,
     number: '01',
-    title: 'Добавете линка на сайта си',
-    desc: 'NEO анализира съдържанието и се обучава за секунди.',
+    title: 'Поставете линка на сайта си.',
+    desc: 'NEO прочита всичко — услуги, цени, работно време — и се учи сам.',
     color: 'text-primary',
     bg: 'bg-primary/10',
     border: 'border-primary/30',
@@ -17,8 +17,8 @@ const steps = [
   {
     icon: Settings,
     number: '02',
-    title: 'Настройте поведението',
-    desc: 'Изберете глас, тон и какво да прави NEO — резервации, запитвания, информация.',
+    title: 'Изберете глас и стил.',
+    desc: 'Мъжки или женски, официален или приятелски. Тествайте на живо преди да пуснете.',
     color: 'text-violet-400',
     bg: 'bg-violet-500/10',
     border: 'border-violet-500/30',
@@ -27,8 +27,8 @@ const steps = [
   {
     icon: Rocket,
     number: '03',
-    title: 'Готово — NEO работи',
-    desc: 'Добавете уиджета на сайта си с един ред код. Или свържете телефонен номер.',
+    title: 'Свържете телефон или сайт.',
+    desc: 'Един ред код за уиджета, или пренасочете номер към NEO. Готово.',
     color: 'text-emerald-400',
     bg: 'bg-emerald-500/10',
     border: 'border-emerald-500/30',
@@ -51,15 +51,14 @@ const HowItWorks = () => {
             Как работи
           </span>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-foreground mb-4 font-mono">
-            3 стъпки.{' '}
-            <span className="text-primary">5 минути. Готово.</span>
+            Готов за 5 минути.{' '}
+            <span className="text-primary">Наистина.</span>
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
-            Ако можете да копирате текст — можете да настроите NEO.
+            Без код, без интеграции, без обаждания с продажбен отдел.
           </p>
         </div>
 
-        {/* 3-column cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 max-w-4xl mx-auto">
           {steps.map((step, i) => (
             <motion.div
@@ -69,20 +68,16 @@ const HowItWorks = () => {
               transition={{ duration: 0.5, delay: i * 0.15 }}
               className="flex flex-col items-center text-center group"
             >
-              {/* Icon */}
               <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl ${step.bg} border ${step.border} ${step.glow} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
                 <step.icon className={`w-7 h-7 sm:w-8 sm:h-8 ${step.color}`} strokeWidth={1.5} />
               </div>
 
-              {/* Number */}
               <span className={`text-2xl sm:text-3xl font-black ${step.color} font-mono mb-3`}>
                 {step.number}
               </span>
 
-              {/* Title */}
               <h3 className="text-base sm:text-lg font-bold text-foreground mb-2">{step.title}</h3>
 
-              {/* Description */}
               <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-[220px]">
                 {step.desc}
               </p>
@@ -90,7 +85,6 @@ const HowItWorks = () => {
           ))}
         </div>
 
-        {/* CTA */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
@@ -102,7 +96,7 @@ const HowItWorks = () => {
             onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
           >
             <Play className="w-3.5 h-3.5 fill-current" />
-            Изпробвайте сега — без регистрация
+            Пробвайте безплатно
           </Button>
         </motion.div>
       </div>

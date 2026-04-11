@@ -3,11 +3,10 @@ import { Mic, MessageSquare, Calendar, Users, Brain, BarChart3, Globe, Clock, Za
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { motion, AnimatePresence } from 'framer-motion';
 
-/* ───── Feature Visual Previews ───── */
+/* ───── Feature Visual Previews (unchanged) ───── */
 
 const VoiceChatPreview = () => (
   <div className="space-y-3">
-    {/* Chat header */}
     <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10">
       <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
         <span className="text-[8px] font-bold text-white">N</span>
@@ -24,7 +23,6 @@ const VoiceChatPreview = () => (
         <span className="text-[8px] text-primary font-medium">BG</span>
       </div>
     </div>
-    {/* Messages */}
     <div className="space-y-2 px-1">
       <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="flex gap-2 items-end">
         <div className="bg-card/80 border border-border/15 rounded-xl rounded-bl-sm px-3 py-2 max-w-[200px]">
@@ -42,7 +40,6 @@ const VoiceChatPreview = () => (
         </div>
       </motion.div>
     </div>
-    {/* Voice indicator */}
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/5 border border-primary/10">
       <Mic className="w-3 h-3 text-primary" />
       <div className="flex items-center gap-[2px] flex-1 h-3">
@@ -246,8 +243,8 @@ const featureVisuals: Record<number, React.FC> = {
 const features = [
   {
     icon: Mic,
-    title: 'Глас + чат',
-    desc: 'Говори и пише като истински човек — на 3 езика.',
+    title: 'Говори и пише',
+    desc: 'На български, английски и руски, в чат и по телефон, с един и същ глас.',
     color: 'text-primary',
     bg: 'bg-primary/10',
     border: 'border-primary/20',
@@ -255,8 +252,8 @@ const features = [
   },
   {
     icon: Calendar,
-    title: 'Автоматични резервации',
-    desc: 'Записва часове директно в календара ви.',
+    title: 'Записва часове сам',
+    desc: 'Синхронизира се с Google Calendar. Без двойни записи, без пропуснати срещи.',
     color: 'text-emerald-400',
     bg: 'bg-emerald-500/10',
     border: 'border-emerald-500/20',
@@ -264,8 +261,8 @@ const features = [
   },
   {
     icon: Users,
-    title: 'Събира контакти',
-    desc: 'Име, имейл, телефон — автоматично.',
+    title: 'Хваща всеки контакт',
+    desc: 'Име, телефон, имейл — влизат автоматично в дашборда Ви.',
     color: 'text-amber-400',
     bg: 'bg-amber-500/10',
     border: 'border-amber-500/20',
@@ -273,17 +270,17 @@ const features = [
   },
   {
     icon: Brain,
-    title: 'AI разбира като човек',
-    desc: 'Естествен разговор, не скрипт.',
+    title: 'Разбира от половин дума',
+    desc: 'Клиентите говорят нормално, без да се чувстват, че говорят с робот.',
     color: 'text-violet-400',
     bg: 'bg-violet-500/10',
     border: 'border-violet-500/20',
     liveLabel: 'Обучен на Вашия бизнес',
   },
   {
-    icon: MessageSquare,
-    title: 'Работи 24/7',
-    desc: 'Не пропуска нито едно запитване.',
+    icon: Clock,
+    title: 'Не спи, не почива',
+    desc: 'Отговаря за 2 секунди, по всяко време на денонощието.',
     color: 'text-cyan-400',
     bg: 'bg-cyan-500/10',
     border: 'border-cyan-500/20',
@@ -291,8 +288,8 @@ const features = [
   },
   {
     icon: BarChart3,
-    title: 'Пълен контрол',
-    desc: 'Дашборд с анализи в реално време.',
+    title: 'Всичко на едно място',
+    desc: 'Дашборд с разговори, записи и анализи в реално време.',
     color: 'text-pink-400',
     bg: 'bg-pink-500/10',
     border: 'border-pink-500/20',
@@ -313,10 +310,10 @@ const FeaturesGrid = () => {
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8 sm:mb-10">
           <h2 className="neo-heading-section font-black text-foreground mb-4 font-mono">
-            Всичко, което <span className="text-primary">Ви трябва</span>
+            Един инструмент. <span className="text-primary">Работата на трима служители.</span>
           </h2>
           <p className="neo-subheading text-muted-foreground max-w-lg mx-auto">
-            NEO заменя рецепционист, чатбот и колцентър — в един инструмент.
+            NEO замества рецепционист, чат на сайта и нощен колцентър.
           </p>
         </div>
 
@@ -355,7 +352,6 @@ const FeaturesGrid = () => {
             className="lg:col-span-3"
           >
             <div className="relative rounded-2xl border border-border/15 bg-card/30 overflow-hidden min-h-[300px]">
-              {/* Header bar — browser style */}
               <div className="flex items-center gap-2 px-4 py-2 border-b border-border/10 bg-card/40">
                 <div className="flex gap-1">
                   <span className="w-2 h-2 rounded-full bg-primary/30" />
@@ -375,7 +371,6 @@ const FeaturesGrid = () => {
                 </AnimatePresence>
               </div>
 
-              {/* Content */}
               <div className="p-4 sm:p-5">
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -393,7 +388,6 @@ const FeaturesGrid = () => {
                 </AnimatePresence>
               </div>
 
-              {/* Footer — live indicator */}
               <div className="px-4 py-2 border-t border-border/8 bg-card/20">
                 <div className="flex items-center gap-2">
                   <div className={`w-1.5 h-1.5 rounded-full ${features[active].color.replace('text-', 'bg-')} animate-pulse`} />

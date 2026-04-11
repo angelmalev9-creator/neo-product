@@ -1,8 +1,8 @@
-import { Check, Crown, PiggyBank, ShieldCheck, Phone, BarChart3, Headphones, Users, Mail, Sparkles, Clock, ArrowRight, Calendar, Brain, Globe, Palette, TrendingUp } from 'lucide-react';
+import { Check, Crown, Phone, BarChart3, Headphones, Users, Mail, Sparkles, ArrowRight, Calendar, Brain, Globe, Palette, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -13,28 +13,6 @@ const PRICE_IDS = {
   starter: { monthly: 'price_1SnZt6JnrCo2ucK9XL1FGEEn', yearly: 'price_1SnZtYJnrCo2ucK9KDk4xZd6' },
   growth: { monthly: 'price_1SnZtFJnrCo2ucK95hcj2Gqy', yearly: 'price_1SnZtiJnrCo2ucK9kXjVEPkf' },
   empire: { monthly: 'price_1SnZtOJnrCo2ucK9zta7lV0A', yearly: 'price_1SnZtrJnrCo2ucK9Md9j1egd' },
-};
-
-/* ── Urgency counter — seats left ── */
-const SpotsCounter = () => {
-  const [spots, setSpots] = useState(7);
-  useEffect(() => {
-    const t = setInterval(() => {
-      setSpots(prev => Math.max(3, prev + (Math.random() > 0.6 ? -1 : 0)));
-    }, 12000);
-    return () => clearInterval(t);
-  }, []);
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.6 }}
-      className="flex items-center justify-center gap-2 text-xs text-foreground/40 mt-6"
-    >
-      <Clock className="w-3.5 h-3.5 text-primary/60" />
-      <span>Остават <span className="text-primary font-bold">{spots}</span> места на промоционалната цена тази седмица</span>
-    </motion.div>
-  );
 };
 
 const Pricing = () => {
@@ -48,55 +26,49 @@ const Pricing = () => {
 
   const getPlans = (yearly: boolean) => [
     {
-      id: 'starter', name: t('pricing.starter'), price: yearly ? '15' : '25', yearlyTotal: '180',
-      minutes: '500', callsPerDay: `~25 ${t('pricing.callsPerDay')}`, savings: '97%',
-      description: 'За малки бизнеси, които искат да не пропускат обаждания.',
-      anchor: '1 000 EUR/мес за рецепционист',
-      upgradeHook: 'Нужда от резервации и имейл автоматизация?',
+      id: 'starter', name: 'Основен', price: yearly ? '15' : '25', yearlyTotal: '180',
+      minutes: '500', callsPerDay: '~25 обаждания/ден',
+      description: 'За малки бизнеси, които не искат да пропускат обаждания.',
       features: [
-        { text: `500 ${t('pricing.minutes')} / ${t('pricing.perMonthShort')}`, icon: Phone },
-        { text: t('pricing.feature_247'), icon: Headphones },
-        { text: t('pricing.feature_bulgarian'), icon: Globe },
-        { text: t('pricing.feature_widget'), icon: Palette },
-        { text: 'Базова статистика', icon: BarChart3 },
-        { text: 'База знания с обучение', icon: Brain },
+        { text: '500 минути / месец', icon: Phone },
+        { text: 'Отговаря 24/7 на чат и телефон', icon: Headphones },
+        { text: 'Говори на български и английски', icon: Globe },
+        { text: 'Уиджет за сайта Ви', icon: Palette },
+        { text: 'Виждате всеки разговор и резултата от него', icon: BarChart3 },
+        { text: 'Учи се от Вашия сайт автоматично', icon: Brain },
       ],
-      cta: t('pricing.ctaStarter'), featured: false,
+      cta: 'Изберете Основен', featured: false,
       priceId: yearly ? PRICE_IDS.starter.yearly : PRICE_IDS.starter.monthly,
     },
     {
-      id: 'growth', name: t('pricing.growth'), price: yearly ? '23' : '33', yearlyTotal: '276',
-      minutes: '2500', callsPerDay: `~125 ${t('pricing.callsPerDay')}`, savings: '96%',
+      id: 'growth', name: 'Растеж', price: yearly ? '23' : '33', yearlyTotal: '276',
+      minutes: '2500', callsPerDay: '~125 обаждания/ден',
       description: 'За растящи бизнеси с повече клиенти и нужда от автоматизация.',
-      anchor: '2 000 EUR/мес за екип',
-      upgradeHook: 'Нужда от собствен брандинг и персонална поддръжка?',
       features: [
-        { text: `2 500 ${t('pricing.minutes')} / ${t('pricing.perMonthShort')}`, icon: Phone },
-        { text: 'Всичко от Старт +', icon: Check },
-        { text: 'Автоматични резервации', icon: Calendar },
-        { text: t('pricing.feature_email_automation'), icon: Mail },
-        { text: 'Детайлна статистика и графики', icon: TrendingUp },
-        { text: 'Улавяне на потенциални клиенти', icon: Users },
-        { text: t('pricing.feature_priority'), icon: Headphones },
+        { text: '2 500 минути / месец', icon: Phone },
+        { text: 'Всичко от Основен +', icon: Check },
+        { text: 'Записва часове автоматично в Google Calendar', icon: Calendar },
+        { text: 'Отговаря на имейли, които не може да затвори по телефон', icon: Mail },
+        { text: 'Детайлни графики и анализ на разговори', icon: TrendingUp },
+        { text: 'Улавя и записва всеки потенциален клиент', icon: Users },
+        { text: 'Приоритетна поддръжка', icon: Headphones },
       ],
-      cta: t('pricing.ctaPopular'), featured: true,
+      cta: 'Изберете Растеж', featured: true,
       priceId: yearly ? PRICE_IDS.growth.yearly : PRICE_IDS.growth.monthly,
     },
     {
-      id: 'empire', name: t('pricing.business'), price: yearly ? '50' : '60', yearlyTotal: '600',
-      minutes: '10000', callsPerDay: `500+ ${t('pricing.callsPerDay')}`, savings: '93%',
+      id: 'empire', name: 'Мащаб', price: yearly ? '50' : '60', yearlyTotal: '600',
+      minutes: '10000', callsPerDay: '500+ обаждания/ден',
       description: 'За бизнеси с голям обем обаждания и нужда от пълен контрол.',
-      anchor: '5 000+ EUR/мес за цял екип',
-      upgradeHook: null,
       features: [
-        { text: `10 000 ${t('pricing.minutes')} / ${t('pricing.perMonthShort')}`, icon: Phone },
+        { text: '10 000 минути / месец', icon: Phone },
         { text: 'Всичко от Растеж +', icon: Check },
-        { text: 'Без NEO брандиране', icon: Palette },
+        { text: 'Без NEO брандиране — изглежда изцяло Ваш', icon: Palette },
         { text: 'Персонален мениджър', icon: Users },
-        { text: 'Мулти-езикова поддръжка', icon: Globe },
+        { text: 'Поддръжка на български, английски и руски', icon: Globe },
         { text: 'Приоритетна поддръжка 24/7', icon: Headphones },
       ],
-      cta: t('pricing.ctaBusiness'), featured: false,
+      cta: 'Изберете Мащаб', featured: false,
       priceId: yearly ? PRICE_IDS.empire.yearly : PRICE_IDS.empire.monthly,
     },
   ];
@@ -114,7 +86,7 @@ const Pricing = () => {
       window.location.href = '/dashboard';
     } catch (error) {
       console.error('Checkout error:', error);
-      toast({ title: t('pricing.error'), description: t('pricing.paymentError'), variant: "destructive" });
+      toast({ title: 'Грешка', description: 'Нещо се обърка. Опитайте пак.', variant: "destructive" });
     } finally { setLoadingPlan(null); }
   };
 
@@ -138,10 +110,10 @@ const Pricing = () => {
             Ценови планове
           </span>
           <h2 className="neo-heading-section font-black text-foreground mb-5 max-w-3xl mx-auto font-mono">
-            {t('pricing.title1')} <span className="text-primary">{t('pricing.title2')}</span>
+            Изберете план. <span className="text-primary">Променете по всяко време.</span>
           </h2>
           <p className="neo-subheading text-muted-foreground mb-8">
-            {t('pricing.subtitle')}
+            Всички планове включват 14 дни безплатен период. Без карта. Без автоматично таксуване.
           </p>
 
           {/* Billing Toggle */}
@@ -153,7 +125,7 @@ const Pricing = () => {
                   !isYearly ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {t('pricing.monthly')}
+                Месечно
               </button>
               <button
                 onClick={() => setIsYearly(true)}
@@ -161,7 +133,7 @@ const Pricing = () => {
                   isYearly ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {t('pricing.yearly')}
+                Годишно
               </button>
             </div>
             {isYearly && (
@@ -204,7 +176,7 @@ const Pricing = () => {
                     style={{ background: 'linear-gradient(135deg, hsl(142 71% 45%), hsl(160 64% 40%))', boxShadow: '0 4px 20px hsla(142, 71%, 45%, 0.35)' }}
                   >
                     <Crown className="w-3.5 h-3.5" />
-                    {t('pricing.mostPopular')}
+                    Най-популярен
                   </div>
                 )}
 
@@ -217,43 +189,25 @@ const Pricing = () => {
                 <h3 className="text-lg lg:text-xl font-bold text-foreground mb-1">{plan.name}</h3>
                 <p className="text-xs lg:text-sm text-muted-foreground mb-4">{plan.description}</p>
 
-                {/* Price anchoring — red strikethrough with savings animation */}
-                <div className="relative mb-1">
-                  <p className="text-[11px] font-medium line-through" style={{ color: 'hsl(0 72% 51%)' }}>{plan.anchor}</p>
-                  <motion.span
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={isVisible ? { opacity: 1, x: 0 } : {}}
-                    transition={{ delay: 0.6 + i * 0.15 }}
-                    className="absolute -right-1 top-1/2 -translate-y-1/2 text-[9px] font-bold px-2 py-0.5 rounded-full"
-                    style={{ color: 'hsl(142 71% 45%)', backgroundColor: 'hsla(142, 71%, 45%, 0.1)' }}
-                  >
-                    Спестявате {plan.savings}
-                  </motion.span>
-                </div>
                 <div className="flex items-baseline gap-1.5 mb-1">
                   <span className={`text-4xl lg:text-5xl font-black tracking-tight ${plan.featured ? '' : 'text-foreground'}`}
                     style={plan.featured ? { color: 'hsl(142 71% 45%)' } : undefined}
                   >
                     {plan.price} EUR
                   </span>
-                  <span className="text-sm lg:text-lg text-muted-foreground font-medium">/{t('pricing.perMonthShort')}</span>
+                  <span className="text-sm lg:text-lg text-muted-foreground font-medium">/мес</span>
                 </div>
 
                 {isYearly && (
                   <p className="text-xs text-muted-foreground/60 mb-3">
-                    {t('pricing.billedYearly')}: {plan.yearlyTotal} EUR
+                    Годишно: {plan.yearlyTotal} EUR
                   </p>
                 )}
 
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-5">
                   <Phone className="w-4 h-4 text-primary" />
-                  <span className="text-sm text-foreground font-medium">{plan.minutes} {t('pricing.minutes')}</span>
+                  <span className="text-sm text-foreground font-medium">{plan.minutes} минути</span>
                   <span className="text-xs text-muted-foreground">({plan.callsPerDay})</span>
-                </div>
-
-                <div className="text-sm font-semibold mb-6 flex items-center gap-2" style={{ color: 'hsl(142 71% 45%)' }}>
-                  <PiggyBank className="w-4 h-4" />
-                  Спестявате {plan.savings} спрямо служител
                 </div>
 
                 <div className="h-px bg-border/20 mb-5" />
@@ -279,15 +233,12 @@ const Pricing = () => {
                   onClick={() => handleCheckout(plan)}
                   disabled={loadingPlan === plan.id}
                 >
-                  {loadingPlan === plan.id ? t('pricing.loading') : plan.cta}
+                  {loadingPlan === plan.id ? 'Зареждане...' : plan.cta}
                 </Button>
-
               </motion.div>
             );
           })}
         </div>
-
-        <SpotsCounter />
       </div>
 
       {checkoutModal && (

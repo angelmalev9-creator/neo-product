@@ -108,7 +108,7 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
         console.error("[DemoSection] Poll failure:", err);
         if (consecutiveErrors >= MAX_POLL_ERRORS) {
           stopAllTimers(); setStatus("idle"); setProgress(0);
-          toast({ title: t("demo.error"), description: "Връзката със сървъра е прекъсната. Опитайте отново.", variant: "destructive" });
+          toast({ title: t("demo.error"), description: "Не можем да се свържем. Опитайте отново.", variant: "destructive" });
         }
       }
     }, POLL_INTERVAL_MS);
@@ -121,7 +121,7 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
     } catch (err) {
       console.error("[DemoSection] scrape-website failed:", err);
       stopAllTimers(); setStatus("idle"); setProgress(0);
-      toast({ title: t("demo.error"), description: "Сканирането не можа да започне.", variant: "destructive" });
+      toast({ title: t("demo.error"), description: "Не можем да намерим този сайт — проверете адреса.", variant: "destructive" });
     }
   };
 
@@ -158,13 +158,12 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="neo-heading-section font-black text-foreground mb-3 font-mono">
-            {t("demo.title1")} <span className="text-primary">{t("demo.title2")}</span>
+            Чуйте как ще звучи <span className="text-primary">NEO за Вашия бизнес.</span>
           </h2>
           <p className="neo-subheading text-muted-foreground mb-6 max-w-lg mx-auto">
-            {t("demo.description")}
+            Въведете адреса на сайта си. NEO ще го прочете и след 10 секунди ще говори с Вас като Ваш рецепционист.
           </p>
 
-          {/* Input / Loading / Ready */}
           <div className="neo-glass-premium rounded-2xl p-1 shadow-[0_8px_40px_hsl(0_0%_0%/0.4)] max-w-xl mx-auto">
             {status === "idle" && (
               <form onSubmit={handleSubmit} className="flex items-center gap-2 p-1">
@@ -174,7 +173,7 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
                     type="text"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
-                    placeholder={t("demo.placeholder")}
+                    placeholder="https://вашия-сайт.bg"
                     className="w-full bg-background/60 border-0 rounded-xl py-3.5 pl-11 pr-4 text-[16px] sm:text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all font-medium"
                   />
                 </div>
@@ -183,7 +182,7 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
                   className="bg-primary hover:bg-primary/90 rounded-xl h-12 px-5 shrink-0 shadow-lg shadow-primary/25 font-bold text-sm gap-2"
                 >
                   <Zap className="w-4 h-4" />
-                  <span className="hidden sm:inline">Обучи NEO</span>
+                  <span className="hidden sm:inline">Обучи NEO сега</span>
                   <ArrowRight className="w-4 h-4 sm:hidden" />
                 </Button>
               </form>
@@ -214,15 +213,9 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
             )}
           </div>
 
-          {/* Trust pills */}
-          <div className="flex flex-wrap items-center justify-center gap-4 mt-5 text-xs text-muted-foreground/50">
-            <span className="flex items-center gap-1.5">
-              <Zap className="w-3 h-3 text-primary/50" /> {t("demo.noRegistration")}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Shield className="w-3 h-3 text-primary/50" /> {t("demo.free")}
-            </span>
-          </div>
+          <p className="text-xs text-muted-foreground/40 mt-4">
+            Отнема 10 секунди. Нужен е само URL.
+          </p>
         </div>
       </div>
     </section>

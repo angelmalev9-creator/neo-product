@@ -8,18 +8,18 @@ const BusinessResults = () => {
 
   const outcomes = [
     {
-      icon: PhoneCall, metric: '24/7', label: 'Непрекъснато обслужване',
-      description: 'Отговаря мигновено — дори в 3 сутринта.',
+      icon: PhoneCall, metric: '24/7', label: 'Винаги на линия',
+      description: 'Отговаря за 2 секунди — дори в 3 сутринта.',
       color: 'text-primary', bg: 'bg-primary/10', border: 'border-primary/20',
     },
     {
       icon: UserPlus, metric: '+68%', label: 'Повече контакти',
-      description: 'Събира имена, телефони и имейли автоматично.',
+      description: 'Събира име, телефон и имейл от всеки разговор.',
       color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20',
     },
     {
-      icon: DollarSign, metric: '40x', label: 'По-евтино',
-      description: '€25/мес вместо €1000/мес за служител.',
+      icon: DollarSign, metric: '€25', label: 'Месечна цена',
+      description: 'Вместо €1,000+ за рецепционист на заплата.',
       color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20',
     },
     {
@@ -49,7 +49,6 @@ const BusinessResults = () => {
           </p>
         </div>
 
-        {/* Outcome Cards — clean, scannable */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 max-w-5xl mx-auto mb-10">
           {outcomes.map((item, i) => (
             <motion.div
@@ -69,14 +68,13 @@ const BusinessResults = () => {
           ))}
         </div>
 
-        {/* CTA */}
         <div className="text-center">
           <Button
             size="lg"
             className="neo-btn-primary text-sm px-8 py-5 rounded-full gap-2 font-bold w-full sm:w-auto"
             onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
           >
-            Опитайте безплатно <ArrowRight className="w-4 h-4" />
+            Пробвайте безплатно <ArrowRight className="w-4 h-4" />
           </Button>
           <p className="text-xs text-muted-foreground/40 mt-3">
             Без регистрация · Без кредитна карта · Готово за 30 секунди
