@@ -133,7 +133,7 @@ const Footer = () => {
             </p>
             <p className="text-[10px] sm:text-xs text-muted-foreground/80 flex items-center gap-2">
               Създадено в България
-              <span className="text-border/30">|</span>
+              <span className="text-foreground/70">|</span>
               <a href="https://webvision-bg.com" target="_blank" rel="noopener noreferrer" className="text-primary/60 hover:text-primary transition-colors">
                 webvision-bg.com
               </a>
