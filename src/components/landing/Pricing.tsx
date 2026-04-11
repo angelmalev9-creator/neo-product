@@ -105,12 +105,12 @@ const Pricing = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header */}
         <div className="text-center mb-10 sm:mb-14">
-          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-primary text-xs font-medium mb-5">
+          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-secondary border border-secondary text-accent text-xs font-medium mb-5">
             <Sparkles className="w-3.5 h-3.5" />
             Ценови планове
           </span>
-          <h2 className="neo-heading-section font-black text-foreground mb-5 max-w-3xl mx-auto font-mono">
-            Изберете план. <span className="text-primary">Променете по всяко време.</span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-primary-foreground mb-5 max-w-3xl mx-auto font-mono">
+            Изберете план. <span className="text-secondary">Променете по всяко време.</span>
           </h2>
           <p className="neo-subheading text-muted-foreground mb-8">
             Всички планове включват 14 дни безплатен период. Без карта. Без автоматично таксуване.

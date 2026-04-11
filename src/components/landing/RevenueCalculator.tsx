@@ -22,11 +22,11 @@ const RevenueCalculator = () => {
     <section ref={ref as React.RefObject<HTMLElement>} id="calculator" className="neo-section-spacing">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-10">
-          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-primary text-xs font-semibold mb-5 uppercase tracking-[0.15em]">
+          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-secondary border border-secondary text-accent text-xs font-semibold mb-5 uppercase tracking-[0.15em]">
             <Calculator className="w-3.5 h-3.5" /> Калкулатор
           </span>
-          <h2 className="neo-heading-section font-black text-foreground mb-3 font-mono">
-            Колко губите от <span className="text-primary">пропуснати обаждания?</span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-primary-foreground mb-3 font-mono">
+            Колко губите от <span className="text-secondary">пропуснати обаждания?</span>
           </h2>
           <p className="text-sm text-muted-foreground">
             Преместете плъзгачите. Вижте колко струва мълчанието Ви.
@@ -52,7 +52,7 @@ const RevenueCalculator = () => {
             transition={{ delay: 0.1 }}
             className="space-y-4"
           >
-            <div className="rounded-2xl border border-border/15 bg-card/30 overflow-hidden">
+            <div className="rounded-2xl border border-secondary bg-card/30 overflow-hidden">
               <div className="px-5 py-3 border-b border-border/10 bg-card/40 flex items-center gap-2">
                 <TrendingDown className="w-4 h-4 text-primary" />
                 <span className="text-[10px] font-bold text-foreground/80 uppercase tracking-wider">Губите в момента</span>

@@ -35,8 +35,8 @@ const Testimonials = () => {
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-10">
-          <h2 className="neo-heading-section font-black text-foreground mb-3 font-mono">
-            Реални <span className="text-primary">хора, реални резултати.</span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-primary-foreground mb-3 font-mono">
+            Реални <span className="text-secondary">хора, реални резултати.</span>
           </h2>
           <p className="neo-subheading text-muted-foreground max-w-md mx-auto">
             Бизнеси, които вече работят с NEO.
@@ -50,13 +50,13 @@ const Testimonials = () => {
               initial={{ opacity: 0, y: 16 }}
               animate={isVisible ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.4, delay: i * 0.12 }}
-              className="relative rounded-2xl border border-border/15 bg-card/30 p-6"
+              className="relative rounded-2xl border border-secondary bg-card/30 p-6"
             >
               <Quote className="absolute top-5 right-5 w-7 h-7 text-primary/6" />
 
               <div className="flex items-center gap-3 mb-4">
-                <div className="px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20">
-                  <span className="text-xl font-black text-primary">{t.metric}</span>
+                <div className="px-3 py-1.5 rounded-xl bg-secondary border border-secondary">
+                  <span className="text-xl font-black text-accent">{t.metric}</span>
                 </div>
                 <span className="text-xs text-muted-foreground font-medium">{t.metricLabel}</span>
               </div>
