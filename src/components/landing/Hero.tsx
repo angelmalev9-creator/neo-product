@@ -149,23 +149,23 @@ const WidgetContent = () => (
         </div>
       </motion.div>
     </div>
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5, duration: 0.5 }} className="px-2.5 py-2 border-t border-border/10 bg-gradient-to-r from-primary/5 to-transparent">
-      <div className="flex items-center gap-2 text-primary-foreground">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5, duration: 0.5 }} className="px-2.5 py-2 border-t border-border/10 bg-secondary">
+      <div className="flex items-center gap-2">
         <div className="relative">
-          <div className="w-5 h-5 rounded-full flex items-center justify-center bg-secondary-foreground border-secondary">
-            <Mic className="w-2.5 h-2.5 text-secondary-foreground" />
+          <div className="w-5 h-5 rounded-full flex items-center justify-center bg-primary/20 border border-primary/30">
+            <Mic className="w-2.5 h-2.5 text-primary" />
           </div>
         </div>
-        <div className="flex items-center gap-[2px] flex-1 h-4 bg-secondary-foreground text-primary-foreground">
+        <div className="flex items-center gap-[2px] flex-1 h-4">
           {[3, 8, 5, 12, 7, 14, 6, 10, 4, 11, 8, 5, 9, 6].map((h, i) => (
             <div
               key={i}
-              className="w-[1.5px] rounded-full bg-primary/35"
+              className="w-[1.5px] rounded-full bg-primary/50"
               style={{ height: `${h}px` }}
             />
           ))}
         </div>
-        <span className="text-[8px] font-medium text-primary-foreground">NEO говори...</span>
+        <span className="text-[8px] font-medium text-foreground/70">NEO говори...</span>
       </div>
     </motion.div>
   </div>
