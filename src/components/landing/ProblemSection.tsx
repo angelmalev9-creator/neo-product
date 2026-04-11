@@ -7,7 +7,7 @@ const stats = [
     icon: PhoneOff,
     number: '62%',
     text: 'от клиентите, които не се свържат от първия път, звънят на конкурент.',
-    color: 'text-primary',
+    color: 'text-accent',
     bg: 'bg-secondary',
     border: 'border-primary/20',
   },
@@ -17,7 +17,7 @@ const stats = [
     text: 'средна месечна загуба от пропуснати обаждания в малък бизнес.',
     color: 'text-accent',
     bg: 'bg-accent/10',
-    border: 'border-accent/20',
+    border: 'border-secondary',
   },
   {
     icon: Clock,
