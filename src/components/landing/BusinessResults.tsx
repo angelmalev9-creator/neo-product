@@ -42,7 +42,7 @@ const BusinessResults = () => {
             Резултати
           </span>
           <h2 className="text-3xl sm:text-4xl font-black mb-4 font-mono text-primary-foreground lg:text-5xl">
-            Какво постигат <span className="text-secondary">клиентите ни</span>
+            Какво постигат <span className="text-accent">клиентите ни</span>
           </h2>
           <p className="neo-subheading text-muted-foreground max-w-lg mx-auto">
             Реални числа от бизнеси, които използват NEO.

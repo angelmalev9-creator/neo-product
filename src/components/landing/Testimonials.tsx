@@ -36,7 +36,7 @@ const Testimonials = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-10">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-primary-foreground mb-3 font-mono">
-            Реални <span className="text-secondary">хора, реални резултати.</span>
+            Реални <span className="text-accent">хора, реални резултати.</span>
           </h2>
           <p className="neo-subheading text-muted-foreground max-w-md mx-auto">
             Бизнеси, които вече работят с NEO.

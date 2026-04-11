@@ -26,7 +26,7 @@ const RevenueCalculator = () => {
             <Calculator className="w-3.5 h-3.5" /> Калкулатор
           </span>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-primary-foreground mb-3 font-mono">
-            Колко губите от <span className="text-secondary">пропуснати обаждания?</span>
+            Колко губите от <span className="text-accent">пропуснати обаждания?</span>
           </h2>
           <p className="text-sm text-muted-foreground">
             Преместете плъзгачите. Вижте колко струва мълчанието Ви.

@@ -81,7 +81,7 @@ const UseCases = () => {
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-10">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-primary-foreground mb-3 font-mono">
-            Работи за бизнеси, <span className="text-secondary">които живеят от обаждания.</span>
+            Работи за бизнеси, <span className="text-accent">които живеят от обаждания.</span>
           </h2>
           <p className="neo-subheading text-muted-foreground max-w-lg mx-auto">
             Настройва се за Вашата индустрия за минути — без технически познания.

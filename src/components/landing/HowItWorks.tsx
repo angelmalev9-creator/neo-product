@@ -52,7 +52,7 @@ const HowItWorks = () => {
           </span>
           <h2 className="text-3xl sm:text-4xl font-black mb-4 font-mono text-primary-foreground lg:text-5xl">
             Готов за 5 минути.{' '}
-            <span className="text-secondary">Наистина.</span>
+            <span className="text-accent">Наистина.</span>
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
             Без код, без интеграции, без обаждания с продажбен отдел.

@@ -110,7 +110,7 @@ const Pricing = () => {
             Ценови планове
           </span>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-primary-foreground mb-5 max-w-3xl mx-auto font-mono">
-            Изберете план. <span className="text-secondary">Променете по всяко време.</span>
+            Изберете план. <span className="text-accent">Променете по всяко време.</span>
           </h2>
           <p className="neo-subheading text-muted-foreground mb-8">
             Всички планове включват 14 дни безплатен период. Без карта. Без автоматично таксуване.
