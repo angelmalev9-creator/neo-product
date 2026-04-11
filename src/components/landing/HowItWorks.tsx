@@ -50,9 +50,9 @@ const HowItWorks = () => {
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-foreground/15 text-foreground/70 text-[11px] font-semibold uppercase tracking-[0.2em] mb-6">
             Как работи
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-foreground mb-4 font-mono">
+          <h2 className="text-3xl sm:text-4xl font-black mb-4 font-mono text-secondary lg:text-5xl">
             Готов за 5 минути.{' '}
-            <span className="text-primary">Наистина.</span>
+            <span className="text-secondary">Наистина.</span>
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
             Без код, без интеграции, без обаждания с продажбен отдел.
