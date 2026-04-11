@@ -157,7 +157,7 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="neo-heading-section font-black text-foreground mb-3 font-mono">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-primary-foreground mb-3 font-mono">
             Чуйте как ще звучи <span className="text-secondary">NEO за Вашия бизнес.</span>
           </h2>
           <p className="neo-subheading text-muted-foreground mb-6 max-w-lg mx-auto">
