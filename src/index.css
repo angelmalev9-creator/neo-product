@@ -239,11 +239,11 @@
   /* ── Dashboard Glass Card ── */
   .glass-card {
     @apply rounded-2xl border overflow-hidden;
-    background: hsl(240 30% 11% / 0.6);
-    border-color: hsl(0 0% 100% / 0.06);
+    background: linear-gradient(180deg, hsl(205 55% 22% / 0.85) 0%, hsl(200 50% 18% / 0.9) 100%);
+    border-color: hsl(200 50% 45% / 0.25);
   }
   .glass-card:hover {
-    border-color: hsl(0 0% 100% / 0.09);
+    border-color: hsl(200 50% 50% / 0.35);
   }
 
   /* ── Performance: GPU-accelerated layers ── */
@@ -262,49 +262,49 @@
     mask-image: radial-gradient(ellipse 70% 50% at 50% 50%, black 20%, transparent 75%);
   }
 
-  /* ── Glass effects — simplified, no backdrop-blur for performance ── */
+  /* ── Glass effects — blue-teal gradient cards ── */
   .neo-glass {
     @apply border rounded-xl relative overflow-hidden;
-    background: linear-gradient(145deg, hsl(230 29% 12% / 0.96) 0%, hsl(230 40% 6% / 0.94) 100%);
-    border-color: hsl(230 10% 31% / 0.5);
-    box-shadow: 0 8px 32px hsl(230 40% 2% / 0.5), inset 0 1px 0 0 hsl(0 0% 100% / 0.04);
+    background: linear-gradient(180deg, hsl(205 55% 24% / 0.9) 0%, hsl(200 50% 18% / 0.85) 100%);
+    border-color: hsl(200 50% 45% / 0.3);
+    box-shadow: 0 8px 32px hsl(210 60% 8% / 0.4), inset 0 1px 0 0 hsl(200 60% 60% / 0.1);
   }
   .neo-glass::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, hsl(var(--neo-blue) / 0.25), hsl(var(--neo-cyan) / 0.15), transparent);
+    background: linear-gradient(90deg, transparent, hsl(var(--neo-cyan) / 0.3), hsl(var(--neo-blue) / 0.2), transparent);
     pointer-events: none;
   }
 
   .neo-glass-subtle {
     @apply border rounded-lg;
-    background: linear-gradient(145deg, hsl(230 27% 13% / 0.85) 0%, hsl(230 40% 6% / 0.7) 100%);
-    border-color: hsl(230 10% 31% / 0.4);
-    box-shadow: 0 4px 16px hsl(230 40% 2% / 0.3);
+    background: linear-gradient(180deg, hsl(205 50% 22% / 0.8) 0%, hsl(200 45% 17% / 0.75) 100%);
+    border-color: hsl(200 45% 42% / 0.25);
+    box-shadow: 0 4px 16px hsl(210 60% 8% / 0.3);
   }
 
   .neo-glass-premium {
     @apply border rounded-2xl relative overflow-hidden;
-    background: linear-gradient(145deg, hsl(230 29% 12% / 0.8) 0%, hsl(230 29% 10% / 0.7) 100%);
-    border-color: hsl(0 0% 100% / 0.07);
-    box-shadow: 0 1px 0 0 hsl(0 0% 100% / 0.05) inset, 0 16px 40px hsl(230 40% 2% / 0.4);
+    background: linear-gradient(180deg, hsl(205 55% 26% / 0.9) 0%, hsl(200 50% 20% / 0.85) 100%);
+    border-color: hsl(200 60% 50% / 0.3);
+    box-shadow: 0 1px 0 0 hsl(200 60% 60% / 0.08) inset, 0 16px 40px hsl(210 60% 8% / 0.35);
   }
   .neo-glass-premium::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.12), transparent);
+    background: linear-gradient(90deg, transparent, hsl(var(--neo-cyan) / 0.2), transparent);
     pointer-events: none;
   }
 
   .nav-glass-scrolled {
-    background: hsl(240 29% 10% / 0.97);
-    border-color: hsl(0 0% 100% / 0.06);
+    background: hsl(205 55% 18% / 0.95);
+    border-color: hsl(200 50% 45% / 0.2);
     border-radius: 9999px;
-    box-shadow: 0 4px 24px hsl(0 0% 0% / 0.4);
+    box-shadow: 0 4px 24px hsl(210 60% 8% / 0.4);
   }
 
   /* ── Glow effects — using box-shadow only ── */
