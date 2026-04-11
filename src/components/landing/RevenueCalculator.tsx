@@ -89,7 +89,7 @@ const RevenueCalculator = () => {
 const SliderRow = ({ icon: Icon, color, label, value, min, max, step, onChange, suffix }: {
   icon: React.ElementType; color: string; accent?: string; label: string; value: number; min: number; max: number; step: number; onChange: (v: number) => void; suffix?: string;
 }) => (
-  <div className="space-y-2">
+  <div className="space-y-2 border-secondary">
     <div className="flex items-center justify-between">
       <label className="flex items-center gap-2 text-xs font-semibold text-foreground">
         <Icon className={`w-3.5 h-3.5 ${color}`} /> {label}

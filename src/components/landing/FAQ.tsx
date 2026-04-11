@@ -60,7 +60,7 @@ const FAQ = () => {
         >
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-primary-foreground mb-3 font-mono">
             Често задавани{' '}
-            <span className="text-secondary">въпроси</span>
+            <span className="text-accent">въпроси</span>
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground">
             Всичко, което трябва да знаете за NEO.
@@ -77,7 +77,7 @@ const FAQ = () => {
               <AccordionItem
                 key={i}
                 value={`faq-${i}`}
-                className="border border-foreground/8 rounded-xl px-5 py-1 bg-foreground/[0.02] hover:bg-foreground/[0.04] transition-colors data-[state=open]:bg-foreground/[0.04]"
+                className="border rounded-xl px-5 py-1 bg-foreground/[0.02] hover:bg-foreground/[0.04] transition-colors data-[state=open]:bg-foreground/[0.04] border-secondary"
               >
                 <AccordionTrigger className="text-sm sm:text-base font-semibold text-foreground hover:no-underline py-4">
                   {faq.q}

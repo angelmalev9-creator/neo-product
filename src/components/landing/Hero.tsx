@@ -29,7 +29,7 @@ const RatingBadge = () => (
 const MacBookFrame = ({ children }: { children: React.ReactNode }) => (
   <div className="relative">
     <div className="rounded-t-xl border-[3px] border-foreground/15 bg-background overflow-hidden">
-      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-foreground/5 border-b border-border/10">
+      <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-border/10 bg-secondary">
         <span className="w-2 h-2 rounded-full bg-[hsl(0,70%,55%)]" />
         <span className="w-2 h-2 rounded-full bg-[hsl(45,80%,55%)]" />
         <span className="w-2 h-2 rounded-full bg-[hsl(120,50%,50%)]" />
@@ -38,21 +38,21 @@ const MacBookFrame = ({ children }: { children: React.ReactNode }) => (
       {children}
     </div>
     <div className="relative mx-auto">
-      <div className="h-[14px] bg-gradient-to-b from-foreground/12 to-foreground/8 rounded-b-md border-x-[3px] border-b-[3px] border-foreground/15" />
-      <div className="h-[4px] bg-foreground/10 rounded-b-lg mx-[10%]" />
+      <div className="h-[14px] bg-gradient-to-b from-foreground/12 to-foreground/8 rounded-b-md border-x-[3px] border-b-[3px] border-foreground/15 bg-secondary" />
+      <div className="h-[4px] rounded-b-lg mx-[10%] bg-secondary" />
     </div>
   </div>
 );
 
 /* ───── iPhone Frame ───── */
 const IPhoneFrame = ({ children }: { children: React.ReactNode }) => (
-  <div className="relative">
+  <div className="relative border-secondary bg-secondary-foreground">
     <div className="rounded-[20px] border-[3px] border-foreground/15 bg-background overflow-hidden">
-      <div className="flex justify-center py-1.5 bg-foreground/5">
-        <div className="w-16 h-[5px] rounded-full bg-foreground/15" />
+      <div className="flex justify-center py-1.5 bg-secondary">
+        <div className="w-16 h-[5px] rounded-full bg-[#3f526e]" />
       </div>
       {children}
-      <div className="flex justify-center py-2 bg-foreground/3">
+      <div className="flex justify-center py-2 bg-secondary">
         <div className="w-10 h-[3px] rounded-full bg-foreground/15" />
       </div>
     </div>
@@ -150,13 +150,13 @@ const WidgetContent = () => (
       </motion.div>
     </div>
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5, duration: 0.5 }} className="px-2.5 py-2 border-t border-border/10 bg-gradient-to-r from-primary/5 to-transparent">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 text-primary-foreground">
         <div className="relative">
-          <div className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center">
-            <Mic className="w-2.5 h-2.5 text-primary" />
+          <div className="w-5 h-5 rounded-full flex items-center justify-center bg-secondary-foreground border-secondary">
+            <Mic className="w-2.5 h-2.5 text-secondary-foreground" />
           </div>
         </div>
-        <div className="flex items-center gap-[2px] flex-1 h-4">
+        <div className="flex items-center gap-[2px] flex-1 h-4 bg-secondary-foreground text-primary-foreground">
           {[3, 8, 5, 12, 7, 14, 6, 10, 4, 11, 8, 5, 9, 6].map((h, i) => (
             <div
               key={i}
@@ -165,7 +165,7 @@ const WidgetContent = () => (
             />
           ))}
         </div>
-        <span className="text-[8px] text-primary font-medium">NEO говори...</span>
+        <span className="text-[8px] font-medium text-primary-foreground">NEO говори...</span>
       </div>
     </motion.div>
   </div>

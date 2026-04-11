@@ -329,12 +329,12 @@ const FeaturesGrid = () => {
                 onClick={() => setActive(i)}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-all duration-200 ${
                   active === i
-                    ? `${f.bg} ${f.border} border shadow-lg`
+                    ? `${f.bg} border shadow-lg border-secondary`
                     : 'border border-transparent hover:bg-card/40'
                 }`}
               >
-                <div className={`w-8 h-8 rounded-lg ${active === i ? f.bg : 'bg-card/60'} border ${active === i ? f.border : 'border-border/10'} flex items-center justify-center shrink-0 transition-all`}>
-                  <f.icon className={`w-3.5 h-3.5 ${active === i ? f.color : 'text-foreground/75'} transition-colors`} strokeWidth={1.5} />
+                <div className={`w-8 h-8 rounded-lg ${active === i ? f.bg : 'bg-card/60'} border flex items-center justify-center shrink-0 transition-all border-secondary`}>
+                  <f.icon className={`w-3.5 h-3.5 ${active === i ? 'text-accent' : 'text-foreground/75'} transition-colors`} strokeWidth={1.5} />
                 </div>
                 <div>
                   <p className={`text-xs font-bold ${active === i ? 'text-foreground' : 'text-foreground/60'} transition-colors`}>{f.title}</p>
@@ -371,7 +371,7 @@ const FeaturesGrid = () => {
                 </AnimatePresence>
               </div>
 
-              <div className="p-4 sm:p-5">
+              <div className="p-4 sm:p-5 bg-sidebar">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={active}

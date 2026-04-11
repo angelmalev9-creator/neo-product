@@ -158,7 +158,7 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="neo-heading-section font-black text-foreground mb-3 font-mono">
-            Чуйте как ще звучи <span className="text-primary">NEO за Вашия бизнес.</span>
+            Чуйте как ще звучи <span className="text-secondary">NEO за Вашия бизнес.</span>
           </h2>
           <p className="neo-subheading text-muted-foreground mb-6 max-w-lg mx-auto">
             Въведете адреса на сайта си. NEO ще го прочете и след 10 секунди ще говори с Вас като Ваш рецепционист.
@@ -182,7 +182,7 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
                   className="bg-primary hover:bg-primary/90 rounded-xl h-12 px-5 shrink-0 shadow-lg shadow-primary/25 font-bold text-sm gap-2"
                 >
                   <Zap className="w-4 h-4" />
-                  <span className="hidden sm:inline">Обучи NEO сега</span>
+                  <span className="hidden sm:inline">Обучете NEO сега</span>
                   <ArrowRight className="w-4 h-4 sm:hidden" />
                 </Button>
               </form>
