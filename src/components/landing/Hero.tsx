@@ -64,9 +64,9 @@ const MacBookFrame = ({ children }: { children: React.ReactNode }) => (
     <div className="rounded-t-xl border-[2px] border-foreground/10 bg-card overflow-hidden shadow-lg shadow-foreground/5">
       {/* Menu bar */}
       <div className="flex items-center gap-1.5 px-3 py-1.5 bg-foreground/5 border-b border-border/10">
-        <span className="w-2 h-2 rounded-full bg-[hsl(0,70%,55%)]" />
-        <span className="w-2 h-2 rounded-full bg-[hsl(45,80%,55%)]" />
-        <span className="w-2 h-2 rounded-full bg-[hsl(120,50%,50%)]" />
+        <span className="w-2 h-2 rounded-full bg-destructive/60" />
+        <span className="w-2 h-2 rounded-full bg-neo-warning/60" />
+        <span className="w-2 h-2 rounded-full bg-neo-success/60" />
         <span className="text-[8px] text-foreground/25 ml-2 font-medium">neo-assistant.com/dashboard</span>
       </div>
       {children}
