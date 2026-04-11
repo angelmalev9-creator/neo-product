@@ -11,24 +11,24 @@
     --background: 220 70% 32%;
     --foreground: 210 20% 98%;
 
-    /* Card: elevated surface */
-    --card: 232 32% 14%;
-    --card-foreground: 220 15% 96%;
+    /* Card: white-blue translucent for gradient bg */
+    --card: 210 40% 98%;
+    --card-foreground: 220 60% 18%;
 
-    --popover: 232 32% 14%;
-    --popover-foreground: 220 15% 96%;
+    --popover: 210 40% 98%;
+    --popover-foreground: 220 60% 18%;
 
     /* PRIMARY: electric blue */
     --primary: 220 70% 55%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: deeper surface */
-    --secondary: 232 28% 18%;
-    --secondary-foreground: 220 15% 96%;
+    /* Secondary */
+    --secondary: 215 30% 92%;
+    --secondary-foreground: 220 50% 20%;
 
-    /* Muted: cool mid-tone */
-    --muted: 232 20% 20%;
-    --muted-foreground: 225 10% 55%;
+    /* Muted */
+    --muted: 215 20% 88%;
+    --muted-foreground: 220 15% 45%;
 
     /* ACCENT: vivid cyan */
     --accent: 192 80% 50%;
@@ -38,8 +38,8 @@
     --destructive-foreground: 0 0% 100%;
 
     /* Borders */
-    --border: 230 16% 30%;
-    --input: 232 28% 18%;
+    --border: 215 25% 80%;
+    --input: 215 20% 92%;
     --ring: 220 70% 55%;
 
     --radius: 0.75rem;

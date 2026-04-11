@@ -260,7 +260,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen h-screen bg-[hsl(230_40%_6%)] flex overflow-hidden">
+    <div className="dark min-h-screen h-screen bg-[hsl(230_40%_6%)] flex overflow-hidden">
       <div className="hidden lg:block">
         <DashboardSidebar
           activeTab={activeTab}
