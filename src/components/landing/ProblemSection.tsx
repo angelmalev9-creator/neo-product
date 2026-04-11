@@ -8,7 +8,7 @@ const stats = [
     number: '62%',
     text: 'от клиентите, които не се свържат от първия път, звънят на конкурент.',
     color: 'text-accent',
-    bg: 'bg-secondary',
+    bg: 'bg-muted',
     border: 'border-primary/20',
   },
   {
@@ -42,7 +42,7 @@ const ProblemSection = () => {
         <div className="text-center mb-10">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-primary-foreground mb-3 font-mono">
             Всяко пропуснато обаждане е{' '}
-            <span className="text-secondary">изгубен клиент.</span>
+            <span className="text-accent">изгубен клиент.</span>
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
             Проучване на NEO сред 200 малки бизнеса в България показа:
