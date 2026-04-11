@@ -71,7 +71,7 @@ const ProblemSection = () => {
           ))}
         </div>
 
-        <p className="text-center text-[10px] text-muted-foreground/30 mt-6">
+        <p className="text-center text-[10px] text-muted-foreground/70 mt-6">
           * Средна оценка на база анонимни данни от потребители на NEO.
         </p>
       </div>

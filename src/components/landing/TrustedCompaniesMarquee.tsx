@@ -22,7 +22,7 @@ const TrustedCompaniesMarquee = () => {
           >
             <stat.icon className="w-3.5 h-3.5 text-primary/50 mx-auto mb-1.5" />
             <p className="text-lg sm:text-xl font-black text-primary mb-0.5">{stat.value}</p>
-            <p className="text-[10px] text-foreground/35 font-medium">{stat.label}</p>
+            <p className="text-[10px] text-foreground/75 font-medium">{stat.label}</p>
           </motion.div>
         ))}
       </div>

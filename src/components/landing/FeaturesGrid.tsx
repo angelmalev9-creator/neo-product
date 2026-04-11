@@ -63,11 +63,11 @@ const CalendarPreview = () => (
     </div>
     <div className="grid grid-cols-7 gap-1 px-1">
       {['П', 'В', 'С', 'Ч', 'П', 'С', 'Н'].map((d) => (
-        <div key={d} className="text-center text-[8px] text-foreground/30 font-medium">{d}</div>
+        <div key={d} className="text-center text-[8px] text-foreground/70 font-medium">{d}</div>
       ))}
       {[14, 15, 16, 17, 18, 19, 20].map((d) => (
         <motion.div key={d} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: d * 0.04 }}
-          className={`text-center text-[9px] py-1 rounded-md ${d === 17 ? 'bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/20' : d === 19 ? 'bg-primary/10 text-primary' : 'text-foreground/50'}`}>
+          className={`text-center text-[9px] py-1 rounded-md ${d === 17 ? 'bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/20' : d === 19 ? 'bg-primary/10 text-primary' : 'text-foreground/80'}`}>
           {d}
         </motion.div>
       ))}
@@ -95,7 +95,7 @@ const ContactsPreview = () => (
           className="rounded-lg bg-amber-500/5 border border-amber-500/10 p-2 text-center">
           <s.icon className="w-3 h-3 text-amber-400 mx-auto mb-1" />
           <p className="text-sm font-bold text-foreground/85">{s.value}</p>
-          <p className="text-[7px] text-foreground/35">{s.label}</p>
+          <p className="text-[7px] text-foreground/75">{s.label}</p>
         </motion.div>
       ))}
     </div>
@@ -112,9 +112,9 @@ const ContactsPreview = () => (
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-semibold text-foreground/80 truncate">{c.name}</p>
-            <p className="text-[8px] text-foreground/35">{c.email} · {c.phone}</p>
+            <p className="text-[8px] text-foreground/75">{c.email} · {c.phone}</p>
           </div>
-          <span className="text-[7px] text-foreground/25 shrink-0">{c.time}</span>
+          <span className="text-[7px] text-foreground/70 shrink-0">{c.time}</span>
         </motion.div>
       ))}
     </div>
@@ -137,7 +137,7 @@ const AIPreview = () => (
           <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 + i * 0.3 }}
             className="px-2.5 py-1.5 rounded-md bg-card/50 border border-border/8">
             <p className="text-[9px] text-cyan-400 font-medium">{item.q}</p>
-            <p className="text-[8px] text-foreground/40 mt-0.5">→ {item.a}</p>
+            <p className="text-[8px] text-foreground/75 mt-0.5">→ {item.a}</p>
           </motion.div>
         ))}
       </div>
@@ -145,7 +145,7 @@ const AIPreview = () => (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }}
       className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-cyan-500/5 border border-cyan-500/10">
       <Zap className="w-3 h-3 text-cyan-400" />
-      <span className="text-[8px] text-foreground/40">Обучен на Вашия бизнес контекст</span>
+      <span className="text-[8px] text-foreground/75">Обучен на Вашия бизнес контекст</span>
     </motion.div>
   </div>
 );
@@ -164,7 +164,7 @@ const AlwaysOnPreview = () => (
     </div>
     <div className="px-3 py-2 rounded-lg bg-card/50 border border-border/10">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[9px] text-foreground/40 font-medium">Последни 24 часа</span>
+        <span className="text-[9px] text-foreground/75 font-medium">Последни 24 часа</span>
         <span className="text-[9px] text-cyan-400 font-medium">100% uptime</span>
       </div>
       <div className="flex items-end gap-[3px] h-8">
@@ -177,9 +177,9 @@ const AlwaysOnPreview = () => (
         })}
       </div>
       <div className="flex justify-between mt-1">
-        <span className="text-[7px] text-foreground/20">00:00</span>
-        <span className="text-[7px] text-foreground/20">12:00</span>
-        <span className="text-[7px] text-foreground/20">23:59</span>
+        <span className="text-[7px] text-foreground/60">00:00</span>
+        <span className="text-[7px] text-foreground/60">12:00</span>
+        <span className="text-[7px] text-foreground/60">23:59</span>
       </div>
     </div>
   </div>
@@ -198,7 +198,7 @@ const DashboardPreviewContent = () => (
           <s.icon className={`w-3 h-3 ${s.color} mb-0.5`} />
           <p className="text-sm font-bold text-foreground/85">{s.value}</p>
           <div className="flex items-center gap-1">
-            <p className="text-[7px] text-foreground/35">{s.label}</p>
+            <p className="text-[7px] text-foreground/75">{s.label}</p>
             <span className="text-[7px] text-emerald-400">{s.change}</span>
           </div>
         </motion.div>
@@ -206,7 +206,7 @@ const DashboardPreviewContent = () => (
     </div>
     <div className="rounded-lg bg-card/50 border border-border/10 p-2.5">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[8px] text-foreground/35 font-medium">Ефективност</span>
+        <span className="text-[8px] text-foreground/75 font-medium">Ефективност</span>
         <span className="text-[8px] text-emerald-400 flex items-center gap-0.5"><TrendingUp className="w-2.5 h-2.5" /> +23%</span>
       </div>
       <div className="flex items-end gap-[3px] h-10">
@@ -222,9 +222,9 @@ const DashboardPreviewContent = () => (
           className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-card/40 border border-border/8">
           <div className="flex items-center gap-2">
             <a.icon className="w-2.5 h-2.5 text-pink-400" />
-            <span className="text-[8px] text-foreground/50">{a.text}</span>
+            <span className="text-[8px] text-foreground/80">{a.text}</span>
           </div>
-          <span className="text-[7px] text-foreground/25">{a.time}</span>
+          <span className="text-[7px] text-foreground/70">{a.time}</span>
         </motion.div>
       ))}
     </div>
@@ -334,11 +334,11 @@ const FeaturesGrid = () => {
                 }`}
               >
                 <div className={`w-8 h-8 rounded-lg ${active === i ? f.bg : 'bg-card/60'} border ${active === i ? f.border : 'border-border/10'} flex items-center justify-center shrink-0 transition-all`}>
-                  <f.icon className={`w-3.5 h-3.5 ${active === i ? f.color : 'text-foreground/40'} transition-colors`} strokeWidth={1.5} />
+                  <f.icon className={`w-3.5 h-3.5 ${active === i ? f.color : 'text-foreground/75'} transition-colors`} strokeWidth={1.5} />
                 </div>
                 <div>
                   <p className={`text-xs font-bold ${active === i ? 'text-foreground' : 'text-foreground/60'} transition-colors`}>{f.title}</p>
-                  <p className={`text-[10px] ${active === i ? 'text-foreground/50' : 'text-foreground/30'} transition-colors leading-snug`}>{f.desc}</p>
+                  <p className={`text-[10px] ${active === i ? 'text-foreground/80' : 'text-foreground/70'} transition-colors leading-snug`}>{f.desc}</p>
                 </div>
               </motion.button>
             ))}
@@ -391,7 +391,7 @@ const FeaturesGrid = () => {
               <div className="px-4 py-2 border-t border-border/8 bg-card/20">
                 <div className="flex items-center gap-2">
                   <div className={`w-1.5 h-1.5 rounded-full ${features[active].color.replace('text-', 'bg-')} animate-pulse`} />
-                  <span className="text-[9px] text-foreground/30 font-medium">{features[active].liveLabel}</span>
+                  <span className="text-[9px] text-foreground/70 font-medium">{features[active].liveLabel}</span>
                 </div>
               </div>
             </div>

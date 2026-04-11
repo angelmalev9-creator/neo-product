@@ -76,7 +76,7 @@ const BusinessResults = () => {
           >
             Пробвайте безплатно <ArrowRight className="w-4 h-4" />
           </Button>
-          <p className="text-xs text-muted-foreground/40 mt-3">
+          <p className="text-xs text-muted-foreground/70 mt-3">
             Без регистрация · Без кредитна карта · Готово за 30 секунди
           </p>
         </div>

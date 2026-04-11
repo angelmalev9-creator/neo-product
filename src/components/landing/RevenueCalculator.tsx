@@ -55,7 +55,7 @@ const RevenueCalculator = () => {
             <div className="rounded-2xl border border-border/15 bg-card/30 overflow-hidden">
               <div className="px-5 py-3 border-b border-border/10 bg-card/40 flex items-center gap-2">
                 <TrendingDown className="w-4 h-4 text-primary" />
-                <span className="text-[10px] font-bold text-foreground/50 uppercase tracking-wider">Губите в момента</span>
+                <span className="text-[10px] font-bold text-foreground/80 uppercase tracking-wider">Губите в момента</span>
               </div>
               <div className="p-5 space-y-3">
                 <ResultRow label="Дневно" value={`-${results.dailyLost.toFixed(0)} EUR`} size="sm" />
@@ -68,9 +68,9 @@ const RevenueCalculator = () => {
             </div>
 
             <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-5 py-4">
-              <p className="text-xs text-foreground/50 mb-1">С NEO това става:</p>
+              <p className="text-xs text-foreground/80 mb-1">С NEO това става:</p>
               <p className="text-xl font-black text-emerald-400">Спасявате {results.monthlyLost.toFixed(0)} EUR всеки месец</p>
-              <p className="text-[10px] text-foreground/30 mt-1">NEO се изплаща {results.roi.toFixed(0)} пъти.</p>
+              <p className="text-[10px] text-foreground/70 mt-1">NEO се изплаща {results.roi.toFixed(0)} пъти.</p>
             </div>
 
             <Button
@@ -106,7 +106,7 @@ const SliderRow = ({ icon: Icon, color, label, value, min, max, step, onChange, 
 
 const ResultRow = ({ label, value, size }: { label: string; value: string; size: 'sm' | 'md' }) => (
   <div className="flex items-center justify-between py-2 border-b border-border/8">
-    <span className="text-sm text-foreground/50">{label}</span>
+    <span className="text-sm text-foreground/80">{label}</span>
     <span className={`font-black text-red-400 tabular-nums ${size === 'md' ? 'text-lg' : 'text-base'}`}>{value}</span>
   </div>
 );
