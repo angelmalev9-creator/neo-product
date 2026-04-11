@@ -277,7 +277,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 pt-8 pb-12">
+    <div className="dark min-h-screen bg-[hsl(230_40%_8%)] flex items-center justify-center p-4 pt-8 pb-12">
       {/* Background effects */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl" />
