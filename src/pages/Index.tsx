@@ -34,9 +34,9 @@ const Index = () => {
       <AnimatedBackground />
 
       <div className="fixed inset-0 -z-10">
-        <div className="absolute inset-0 bg-background" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-[60vh] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,hsl(220_70%_55%/0.06),transparent_70%)]" />
-        <div className="absolute bottom-0 left-0 w-[60%] h-[40vh] bg-[radial-gradient(ellipse_80%_60%_at_0%_100%,hsl(192_80%_50%/0.04),transparent_60%)]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(220_70%_28%)] via-[hsl(210_75%_38%)] to-[hsl(192_80%_45%)]" />
+        <div className="absolute top-0 right-0 w-[60%] h-[50vh] bg-[radial-gradient(ellipse_70%_60%_at_80%_10%,hsl(192_85%_55%/0.3),transparent_70%)]" />
+        <div className="absolute bottom-0 left-0 w-[50%] h-[40vh] bg-[radial-gradient(ellipse_80%_60%_at_10%_90%,hsl(220_70%_22%/0.4),transparent_60%)]" />
       </div>
 
       <div className="neo-scaled-content pt-14 sm:pt-16 lg:pt-20 pb-16 sm:pb-12 w-full">
