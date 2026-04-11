@@ -61,7 +61,7 @@ const Navigation = () => {
                   if ((link as any).isRoute) navigate(link.href);
                   else document.querySelector(link.href)?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="text-xs lg:text-sm font-medium text-foreground/40 hover:text-foreground px-3 lg:px-4 py-2 rounded-full hover:bg-foreground/5 transition-all duration-300"
+                className="text-xs lg:text-sm font-medium text-foreground/75 hover:text-foreground px-3 lg:px-4 py-2 rounded-full hover:bg-foreground/5 transition-all duration-300"
               >
                 {link.label}
               </button>
@@ -73,7 +73,7 @@ const Navigation = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-xs lg:text-sm h-8 lg:h-9 px-3 lg:px-4 text-foreground/50 hover:text-foreground hover:bg-foreground/5 transition-all duration-300 rounded-full" 
+              className="text-xs lg:text-sm h-8 lg:h-9 px-3 lg:px-4 text-foreground/80 hover:text-foreground hover:bg-foreground/5 transition-all duration-300 rounded-full" 
               onClick={() => navigate('/auth')}
             >
               {t('nav.login')}
@@ -116,7 +116,7 @@ const Navigation = () => {
                   if ((link as any).isRoute) navigate(link.href);
                   else document.querySelector(link.href)?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="block text-[14px] py-3.5 text-foreground/45 hover:text-foreground active:text-foreground transition-colors text-left w-full font-medium" 
+                className="block text-[14px] py-3.5 text-foreground/80 hover:text-foreground active:text-foreground transition-colors text-left w-full font-medium" 
               >
                 {link.label}
               </button>
@@ -125,7 +125,7 @@ const Navigation = () => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="text-[14px] flex-1 h-12 text-foreground/45 rounded-xl font-medium" 
+                className="text-[14px] flex-1 h-12 text-foreground/80 rounded-xl font-medium" 
                 onClick={() => { setIsOpen(false); navigate('/auth'); }}
               >
                 {t('nav.login')}

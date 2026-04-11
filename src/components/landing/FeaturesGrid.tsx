@@ -177,9 +177,9 @@ const AlwaysOnPreview = () => (
         })}
       </div>
       <div className="flex justify-between mt-1">
-        <span className="text-[7px] text-foreground/20">00:00</span>
-        <span className="text-[7px] text-foreground/20">12:00</span>
-        <span className="text-[7px] text-foreground/20">23:59</span>
+        <span className="text-[7px] text-foreground/60">00:00</span>
+        <span className="text-[7px] text-foreground/60">12:00</span>
+        <span className="text-[7px] text-foreground/60">23:59</span>
       </div>
     </div>
   </div>
