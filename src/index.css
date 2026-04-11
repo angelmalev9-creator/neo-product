@@ -8,27 +8,27 @@
 @layer base {
   :root {
     /* Base: vibrant blue gradient background */
-    --background: 220 70% 32%;
+    --background: 210 65% 28%;
     --foreground: 0 0% 100%;
 
-    /* Card: semi-transparent white for glass effect on blue bg */
-    --card: 210 60% 95%;
-    --card-foreground: 220 70% 15%;
+    /* Card: dark blue-teal gradient for landing cards */
+    --card: 205 55% 22%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 210 60% 95%;
-    --popover-foreground: 220 70% 15%;
+    --popover: 205 55% 22%;
+    --popover-foreground: 0 0% 100%;
 
     /* PRIMARY: electric blue */
     --primary: 220 80% 50%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary */
-    --secondary: 210 50% 85%;
-    --secondary-foreground: 220 60% 15%;
+    --secondary: 210 50% 30%;
+    --secondary-foreground: 0 0% 100%;
 
     /* Muted */
-    --muted: 215 30% 80%;
-    --muted-foreground: 210 30% 95%;
+    --muted: 215 40% 25%;
+    --muted-foreground: 200 20% 75%;
 
     /* ACCENT: vivid cyan */
     --accent: 192 85% 50%;
@@ -38,8 +38,8 @@
     --destructive-foreground: 0 0% 100%;
 
     /* Borders */
-    --border: 210 40% 70%;
-    --input: 210 30% 88%;
+    --border: 200 40% 40%;
+    --input: 210 30% 30%;
     --ring: 220 80% 50%;
 
     --radius: 0.75rem;
@@ -53,10 +53,10 @@
     --neo-indigo: 210 65% 42%;
     --neo-teal: 185 75% 42%;
     --neo-dark: 220 60% 15%;
-    --neo-dark-lighter: 210 40% 90%;
-    --neo-glass: 210 50% 92%;
-    --neo-glass-border: 210 40% 70%;
-    --neo-text-muted: 210 30% 90%;
+    --neo-dark-lighter: 210 45% 25%;
+    --neo-glass: 205 50% 20%;
+    --neo-glass-border: 200 40% 38%;
+    --neo-text-muted: 200 20% 75%;
     --neo-text-bright: 0 0% 100%;
     --neo-success: 142 85% 52%;
     --neo-success-glow: 142 92% 60%;
@@ -239,11 +239,11 @@
   /* ── Dashboard Glass Card ── */
   .glass-card {
     @apply rounded-2xl border overflow-hidden;
-    background: hsl(240 30% 11% / 0.6);
-    border-color: hsl(0 0% 100% / 0.06);
+    background: linear-gradient(180deg, hsl(205 55% 22% / 0.85) 0%, hsl(200 50% 18% / 0.9) 100%);
+    border-color: hsl(200 50% 45% / 0.25);
   }
   .glass-card:hover {
-    border-color: hsl(0 0% 100% / 0.09);
+    border-color: hsl(200 50% 50% / 0.35);
   }
 
   /* ── Performance: GPU-accelerated layers ── */
@@ -262,49 +262,49 @@
     mask-image: radial-gradient(ellipse 70% 50% at 50% 50%, black 20%, transparent 75%);
   }
 
-  /* ── Glass effects — simplified, no backdrop-blur for performance ── */
+  /* ── Glass effects — blue-teal gradient cards ── */
   .neo-glass {
     @apply border rounded-xl relative overflow-hidden;
-    background: linear-gradient(145deg, hsl(230 29% 12% / 0.96) 0%, hsl(230 40% 6% / 0.94) 100%);
-    border-color: hsl(230 10% 31% / 0.5);
-    box-shadow: 0 8px 32px hsl(230 40% 2% / 0.5), inset 0 1px 0 0 hsl(0 0% 100% / 0.04);
+    background: linear-gradient(180deg, hsl(205 55% 24% / 0.9) 0%, hsl(200 50% 18% / 0.85) 100%);
+    border-color: hsl(200 50% 45% / 0.3);
+    box-shadow: 0 8px 32px hsl(210 60% 8% / 0.4), inset 0 1px 0 0 hsl(200 60% 60% / 0.1);
   }
   .neo-glass::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, hsl(var(--neo-blue) / 0.25), hsl(var(--neo-cyan) / 0.15), transparent);
+    background: linear-gradient(90deg, transparent, hsl(var(--neo-cyan) / 0.3), hsl(var(--neo-blue) / 0.2), transparent);
     pointer-events: none;
   }
 
   .neo-glass-subtle {
     @apply border rounded-lg;
-    background: linear-gradient(145deg, hsl(230 27% 13% / 0.85) 0%, hsl(230 40% 6% / 0.7) 100%);
-    border-color: hsl(230 10% 31% / 0.4);
-    box-shadow: 0 4px 16px hsl(230 40% 2% / 0.3);
+    background: linear-gradient(180deg, hsl(205 50% 22% / 0.8) 0%, hsl(200 45% 17% / 0.75) 100%);
+    border-color: hsl(200 45% 42% / 0.25);
+    box-shadow: 0 4px 16px hsl(210 60% 8% / 0.3);
   }
 
   .neo-glass-premium {
     @apply border rounded-2xl relative overflow-hidden;
-    background: linear-gradient(145deg, hsl(230 29% 12% / 0.8) 0%, hsl(230 29% 10% / 0.7) 100%);
-    border-color: hsl(0 0% 100% / 0.07);
-    box-shadow: 0 1px 0 0 hsl(0 0% 100% / 0.05) inset, 0 16px 40px hsl(230 40% 2% / 0.4);
+    background: linear-gradient(180deg, hsl(205 55% 26% / 0.9) 0%, hsl(200 50% 20% / 0.85) 100%);
+    border-color: hsl(200 60% 50% / 0.3);
+    box-shadow: 0 1px 0 0 hsl(200 60% 60% / 0.08) inset, 0 16px 40px hsl(210 60% 8% / 0.35);
   }
   .neo-glass-premium::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.12), transparent);
+    background: linear-gradient(90deg, transparent, hsl(var(--neo-cyan) / 0.2), transparent);
     pointer-events: none;
   }
 
   .nav-glass-scrolled {
-    background: hsl(240 29% 10% / 0.97);
-    border-color: hsl(0 0% 100% / 0.06);
+    background: hsl(205 55% 18% / 0.95);
+    border-color: hsl(200 50% 45% / 0.2);
     border-radius: 9999px;
-    box-shadow: 0 4px 24px hsl(0 0% 0% / 0.4);
+    box-shadow: 0 4px 24px hsl(210 60% 8% / 0.4);
   }
 
   /* ── Glow effects — using box-shadow only ── */
@@ -389,9 +389,9 @@
   /* ── Cards ── */
   .neo-badge {
     @apply inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest;
-    background: linear-gradient(145deg, hsl(228 10% 12% / 0.98) 0%, hsl(230 12% 8% / 0.95) 100%);
-    border: 1px solid hsl(var(--border) / 0.4);
-    box-shadow: 0 4px 16px hsl(230 20% 2% / 0.4), inset 0 1px 0 0 hsl(0 0% 100% / 0.06);
+    background: linear-gradient(145deg, hsl(205 50% 20% / 0.95) 0%, hsl(200 45% 16% / 0.9) 100%);
+    border: 1px solid hsl(200 50% 45% / 0.3);
+    box-shadow: 0 4px 16px hsl(210 60% 8% / 0.3), inset 0 1px 0 0 hsl(200 60% 60% / 0.08);
   }
 
   .neo-feature-card {
@@ -423,15 +423,15 @@
   /* ── Input ── */
   .neo-input {
     @apply w-full px-5 py-4 rounded-xl text-foreground placeholder:text-muted-foreground/50 transition-colors duration-200;
-    background: hsl(230 20% 5%);
-    border: 1.5px solid hsl(var(--border) / 0.5);
+    background: hsl(205 50% 16%);
+    border: 1.5px solid hsl(200 40% 40% / 0.4);
     font-family: 'Montserrat', system-ui, sans-serif;
     font-weight: 500;
   }
   .neo-input:focus {
     @apply outline-none;
-    border-color: hsl(var(--primary) / 0.6);
-    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+    border-color: hsl(var(--neo-cyan) / 0.6);
+    box-shadow: 0 0 0 3px hsl(var(--neo-cyan) / 0.15);
   }
 
   /* ── Primary button — electric blue ── */
@@ -484,19 +484,19 @@
   /* ── Mobile overrides — simplified glass ── */
   @media (max-width: 768px) {
     .neo-glass {
-      background: linear-gradient(145deg, hsl(228 14% 10% / 0.97) 0%, hsl(230 16% 5% / 0.95) 100%);
-      border-color: hsl(225 10% 20% / 0.5);
-      box-shadow: 0 4px 16px hsl(230 20% 2% / 0.4);
+      background: linear-gradient(180deg, hsl(205 52% 22% / 0.95) 0%, hsl(200 48% 16% / 0.92) 100%);
+      border-color: hsl(200 45% 40% / 0.3);
+      box-shadow: 0 4px 16px hsl(210 60% 8% / 0.3);
     }
     .neo-glass-subtle {
-      background: linear-gradient(145deg, hsl(228 12% 10% / 0.92) 0%, hsl(230 14% 6% / 0.8) 100%);
-      border-color: hsl(225 10% 18% / 0.4);
-      box-shadow: 0 2px 8px hsl(230 20% 2% / 0.3);
+      background: linear-gradient(180deg, hsl(205 48% 20% / 0.92) 0%, hsl(200 42% 15% / 0.88) 100%);
+      border-color: hsl(200 42% 38% / 0.25);
+      box-shadow: 0 2px 8px hsl(210 60% 8% / 0.25);
     }
     .neo-glass-premium {
-      background: linear-gradient(145deg, hsl(228 12% 12% / 0.85) 0%, hsl(230 14% 7% / 0.75) 100%);
-      border-color: hsl(0 0% 100% / 0.08);
-      box-shadow: 0 8px 24px hsl(230 20% 2% / 0.4);
+      background: linear-gradient(180deg, hsl(205 52% 24% / 0.93) 0%, hsl(200 48% 18% / 0.88) 100%);
+      border-color: hsl(200 55% 48% / 0.3);
+      box-shadow: 0 8px 24px hsl(210 60% 8% / 0.3);
     }
     .neo-gradient-text {
       background-image: linear-gradient(135deg, hsl(var(--neo-blue)) 0%, hsl(var(--neo-cyan)) 60%, hsl(var(--neo-blue-glow)) 100%);
