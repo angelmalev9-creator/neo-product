@@ -16,7 +16,7 @@ const stats = [
     number: '€3,300',
     text: 'средна месечна загуба от пропуснати обаждания в малък бизнес.',
     color: 'text-accent',
-    bg: 'bg-accent/10',
+    bg: 'bg-secondary',
     border: 'border-secondary',
   },
   {
