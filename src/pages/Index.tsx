@@ -46,27 +46,27 @@ const Index = () => {
           <Suspense fallback={<div className="min-h-[40vh]" />}>
             <SectionGlow variant="blue" />
             <ProblemSection />
-            <SectionGlow variant="violet" />
+            <SectionGlow variant="cyan" />
             <HowItWorks />
             <SectionGlow variant="mixed" />
             <DemoSection onTrainingComplete={handleTrainingComplete} />
             <VoiceInterview key={sessionId || 'no-session'} sessionId={sessionId} />
             <SectionGlow variant="blue" />
             <FeaturesGrid />
-            <SectionGlow variant="violet" />
+            <SectionGlow variant="cyan" />
             <BusinessResults />
             <UseCases />
             <SectionGlow variant="mixed" />
             <RevenueCalculator />
             <SectionGlow variant="blue" />
             <Comparison />
-            <SectionGlow variant="violet" />
+            <SectionGlow variant="cyan" />
             <Testimonials />
             <SectionGlow variant="mixed" />
             <Pricing />
             <SectionGlow variant="blue" />
             <FAQ />
-            <SectionGlow variant="violet" />
+            <SectionGlow variant="cyan" />
             <Founder />
             <EnterpriseContact />
             <SectionGlow variant="mixed" />
