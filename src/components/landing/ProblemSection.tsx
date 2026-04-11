@@ -9,7 +9,39 @@ const stats = [
     text: 'от клиентите, които не се свържат от първия път, звънят на конкурент.',
     color: 'text-accent',
     bg: 'bg-muted',
-...
+    border: 'border-primary/20',
+  },
+  {
+    icon: DollarSign,
+    number: '€3,300',
+    text: 'средна месечна загуба от пропуснати обаждания в малък бизнес.',
+    color: 'text-accent',
+    bg: 'bg-accent/10',
+    border: 'border-secondary',
+  },
+  {
+    icon: Clock,
+    number: '8 от 10',
+    text: 'собственици на бизнес изпускат обаждания извън работно време.',
+    color: 'text-cyan-400',
+    bg: 'bg-cyan-500/10',
+    border: 'border-cyan-500/20',
+  },
+];
+
+const ProblemSection = () => {
+  const { ref, isVisible } = useScrollAnimation();
+
+  return (
+    <section
+      ref={ref as React.RefObject<HTMLElement>}
+      id="problem"
+      className="neo-section-spacing"
+    >
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-primary-foreground mb-3 font-mono">
+            Всяко пропуснато обаждане е{' '}
             <span className="text-accent">изгубен клиент.</span>
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
