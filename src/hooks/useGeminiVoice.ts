@@ -5095,8 +5095,7 @@ export const useGeminiVoice = ({
               `Попитай клиента САМО за: ${first}.`,
               "След като клиентът отговори, върни отново JSON action_request (submit_form) със същите form_id/fingerprint, като добавиш новото поле към fields.",
               "НЕ казвай, че е подадено. Чакаш success=true от worker/proxy.",
-            ].join("
-"),
+            ].join("\n"),
           );
 
           return true;
