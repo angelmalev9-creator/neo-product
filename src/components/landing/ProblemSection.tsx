@@ -40,7 +40,7 @@ const ProblemSection = () => {
     >
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-10">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-foreground mb-3 font-mono">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-primary-foreground mb-3 font-mono">
             Всяко пропуснато обаждане е{' '}
             <span className="text-secondary">изгубен клиент.</span>
           </h2>
