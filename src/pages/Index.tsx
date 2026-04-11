@@ -2,6 +2,7 @@ import { useState, lazy, Suspense } from 'react';
 import Navigation from '@/components/landing/Navigation';
 import Hero from '@/components/landing/Hero';
 import AnimatedBackground from '@/components/landing/AnimatedBackground';
+import SectionGlow from '@/components/landing/SectionGlow';
 
 // Lazy load below-fold sections
 const ProblemSection = lazy(() => import('@/components/landing/ProblemSection'));
@@ -34,8 +35,8 @@ const Index = () => {
 
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-background" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-[60vh] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,hsl(355_65%_52%/0.06),transparent_70%)]" />
-        <div className="absolute bottom-0 left-0 w-[60%] h-[40vh] bg-[radial-gradient(ellipse_80%_60%_at_0%_100%,hsl(350_55%_48%/0.03),transparent_60%)]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-[60vh] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,hsl(220_70%_55%/0.06),transparent_70%)]" />
+        <div className="absolute bottom-0 left-0 w-[60%] h-[40vh] bg-[radial-gradient(ellipse_80%_60%_at_0%_100%,hsl(260_55%_55%/0.04),transparent_60%)]" />
       </div>
 
       <div className="neo-scaled-content pt-14 sm:pt-16 lg:pt-20 pb-16 sm:pb-12 w-full">
@@ -43,20 +44,32 @@ const Index = () => {
         <main className="relative z-10">
           <Hero />
           <Suspense fallback={<div className="min-h-[40vh]" />}>
+            <SectionGlow variant="blue" />
             <ProblemSection />
+            <SectionGlow variant="violet" />
             <HowItWorks />
+            <SectionGlow variant="mixed" />
             <DemoSection onTrainingComplete={handleTrainingComplete} />
             <VoiceInterview key={sessionId || 'no-session'} sessionId={sessionId} />
+            <SectionGlow variant="blue" />
             <FeaturesGrid />
+            <SectionGlow variant="violet" />
             <BusinessResults />
             <UseCases />
+            <SectionGlow variant="mixed" />
             <RevenueCalculator />
+            <SectionGlow variant="blue" />
             <Comparison />
+            <SectionGlow variant="violet" />
             <Testimonials />
+            <SectionGlow variant="mixed" />
             <Pricing />
+            <SectionGlow variant="blue" />
             <FAQ />
+            <SectionGlow variant="violet" />
             <Founder />
             <EnterpriseContact />
+            <SectionGlow variant="mixed" />
             <FinalCTA />
           </Suspense>
         </main>
