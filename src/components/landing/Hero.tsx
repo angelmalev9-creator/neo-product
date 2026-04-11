@@ -199,7 +199,7 @@ const Hero = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="neo-subheading text-foreground/50 mb-5 max-w-md opacity-75"
             >
-              NEO отговаря на обажданията Ви 24/7, записва часове в календара и събира запитвания — за бизнеси, които губят клиенти извън работно време.
+              NEO говори с клиентите Ви и записва часове дори докато Вие спите.
             </motion.p>
 
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="flex flex-col sm:flex-row gap-2.5 mb-4">
