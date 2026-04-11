@@ -57,7 +57,7 @@ const Footer = () => {
       </div>
 
       {/* Main Footer */}
-      <div className="border-t border-border/10 py-10 lg:py-16">
+      <div className="border-t border-border/10 py-10 lg:py-16 bg-secondary">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-6 lg:gap-8">
             {/* Brand */}
@@ -125,7 +125,7 @@ const Footer = () => {
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-border/10 py-5">
+      <div className="border-t border-border/10 py-5 bg-secondary">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-[10px] sm:text-xs text-muted-foreground/80">

@@ -1323,7 +1323,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
             <div className="neo-glass-subtle border border-border/20 rounded-lg lg:rounded-xl p-6 lg:p-8">
               <Phone className="w-8 h-8 lg:w-10 lg:h-10 text-primary/40 mx-auto mb-3 lg:mb-4" />
               <h3 className="text-sm lg:text-base font-bold text-foreground/70 mb-1 lg:mb-2">
-                {t("interview.trainFirst")} <span className="neo-gradient-text text-accent">NEO</span>{" "}
+                {t("interview.trainFirst")} <span className="neo-gradient-text text-primary-foreground">NEO</span>{" "}
                 {t("interview.trainFirstSuffix")}
               </h3>
               <p className="text-[10px] lg:text-xs text-muted-foreground">{t("interview.enterUrl")}</p>

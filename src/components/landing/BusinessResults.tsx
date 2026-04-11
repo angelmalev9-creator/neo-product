@@ -18,7 +18,7 @@ const BusinessResults = () => {
       color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20',
     },
     {
-      icon: DollarSign, metric: '€25', label: 'Месечна цена',
+      icon: DollarSign, metric: '€15', label: 'Месечна цена',
       description: 'Вместо €1,000+ за рецепционист на заплата.',
       color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20',
     },
