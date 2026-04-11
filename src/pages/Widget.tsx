@@ -462,7 +462,9 @@ const Widget = () => {
               {companyName}
             </h2>
             <p className="text-xs text-muted-foreground max-w-[220px] mb-6">
-              Здравейте! Имате въпрос? Натиснете бутона и ще Ви помогна.
+              {config?.autoGreet && (config as any)?.autoGreetMessage
+                ? (config as any).autoGreetMessage
+                : 'Здравейте! Имате въпрос? Натиснете бутона и ще Ви помогна.'}
             </p>
             <div className="flex items-center gap-2 text-[10px] text-muted-foreground/60">
               <Sparkles className="w-3 h-3" />

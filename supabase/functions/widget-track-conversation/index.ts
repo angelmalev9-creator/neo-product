@@ -89,9 +89,6 @@ serve(async (req) => {
         });
       }
 
-      // Use client-provided seq number for reliable chronological ordering.
-      // Base timestamp = conversation start or now, then offset by seq * 100ms
-      // to guarantee strict monotonic order regardless of network timing.
       const seqNum = typeof seq === "number" && seq > 0 ? seq : 0;
 
       const { data: recentMessages } = await supabase
@@ -104,46 +101,22 @@ serve(async (req) => {
       const latestUserMessage = recentMessages?.find((message) => message.role === "user")?.content || "";
       const latestAssistantMessage = recentMessages?.find((message) => message.role === "assistant")?.content || "";
 
-      // Compute a base timestamp: use the conversation's started_at for consistency
-      // Also find the latest existing message timestamp to guarantee monotonic ordering
+      // Simple approach: always use now() + guarantee ordering via seq-based offsets
+      // Find the latest existing message timestamp to ensure we never go backwards
       const latestExistingTs = recentMessages?.[0]?.created_at
         ? new Date(recentMessages[0].created_at).getTime()
         : 0;
 
-      let baseTimestamp: number;
-      if (seqNum > 0) {
-        const { data: convoData } = await supabase
-          .from("conversations")
-          .select("started_at")
-          .eq("id", conversationId)
-          .maybeSingle();
-        const startedAt = convoData?.started_at
-          ? new Date(convoData.started_at).getTime()
-          : Date.now() - 60000;
-        // Use started_at as base, but ensure we never go before the latest existing message
-        const seqTs = startedAt + seqNum * 200;
-        if (seqTs <= latestExistingTs) {
-          // If seq-based timestamp would be before existing messages, use latest + offset
-          baseTimestamp = latestExistingTs - seqNum * 200 + 200;
-        } else {
-          baseTimestamp = startedAt;
-        }
-      } else {
-        // Fallback: always after existing messages
-        baseTimestamp = latestExistingTs
-          ? latestExistingTs
-          : Date.now() - 100;
-      }
+      // Base: max of now and latest existing + 1 second gap
+      const baseTimestamp = Math.max(Date.now(), latestExistingTs + 1000);
 
       const inserts: { conversation_id: string; role: string; content: string; created_at: string }[] = [];
 
       if (userMessage) {
         const nextUserMessage = extractIncrementalMessage(latestUserMessage, userMessage);
         if (nextUserMessage) {
-          // User messages get seq * 200ms offset from base
-          const ts = seqNum > 0
-            ? new Date(baseTimestamp + seqNum * 200).toISOString()
-            : new Date(Math.max(Date.now(), baseTimestamp + 40)).toISOString();
+          // Each seq gets a 2-second window. User message first.
+          const ts = new Date(baseTimestamp + (seqNum * 2000)).toISOString();
           inserts.push({
             conversation_id: conversationId,
             role: "user",
@@ -156,10 +129,8 @@ serve(async (req) => {
       if (assistantMessage) {
         const nextAssistantMessage = extractIncrementalMessage(latestAssistantMessage, assistantMessage);
         if (nextAssistantMessage) {
-          // Assistant messages get seq * 200ms + 100ms to always come AFTER the user message
-          const ts = seqNum > 0
-            ? new Date(baseTimestamp + seqNum * 200 + 100).toISOString()
-            : new Date(Math.max(Date.now(), baseTimestamp + 80)).toISOString();
+          // Assistant response comes 1 second after user in same seq window
+          const ts = new Date(baseTimestamp + (seqNum * 2000) + 1000).toISOString();
           inserts.push({
             conversation_id: conversationId,
             role: "assistant",
@@ -212,7 +183,6 @@ serve(async (req) => {
           .eq("id", conversationId);
       }
 
-      // Also update profiles.used_minutes for real-time dashboard tracking
       if (addedSeconds > 0) {
         const addedMinutes = addedSeconds / 60;
         const { data: profile } = await supabase
@@ -248,13 +218,11 @@ serve(async (req) => {
 
       const now = new Date().toISOString();
 
-      // Get messages count
       const { count } = await supabase
         .from("conversation_messages")
         .select("*", { count: "exact", head: true })
         .eq("conversation_id", conversationId);
 
-      // Get conversation start time for duration
       const { data: convo } = await supabase
         .from("conversations")
         .select("started_at, duration_seconds")
@@ -279,7 +247,6 @@ serve(async (req) => {
         })
         .eq("id", conversationId);
 
-      // Update profiles.used_minutes only with any untracked remainder
       const untrackedDurationSeconds = Math.max(0, finalDurationSeconds - existingDurationSeconds);
       if (untrackedDurationSeconds > 0) {
         const addedMinutes = untrackedDurationSeconds / 60;
@@ -298,17 +265,14 @@ serve(async (req) => {
               updated_at: now,
             })
             .eq("user_id", userId);
-          console.log(`[TRACK] Updated used_minutes: ${currentUsed} + ${addedMinutes.toFixed(2)} = ${(currentUsed + addedMinutes).toFixed(2)}`);
         }
       }
 
-      // Auto-summarize if there are messages
       if (count && count > 0) {
         try {
           const baseUrl = Deno.env.get("SUPABASE_URL")!;
           const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-          // Fire-and-forget summarize
           fetch(`${baseUrl}/functions/v1/summarize-conversation`, {
             method: "POST",
             headers: {
