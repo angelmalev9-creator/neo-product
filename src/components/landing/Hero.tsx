@@ -46,7 +46,7 @@ const MacBookFrame = ({ children }: { children: React.ReactNode }) => (
 
 /* ───── iPhone Frame ───── */
 const IPhoneFrame = ({ children }: { children: React.ReactNode }) => (
-  <div className="relative border-secondary bg-secondary-foreground">
+  <div className="relative rounded-[20px] border-secondary bg-secondary-foreground overflow-hidden">
     <div className="rounded-[20px] border-[3px] border-foreground/15 bg-background overflow-hidden">
       <div className="flex justify-center py-1.5 bg-secondary">
         <div className="w-16 h-[5px] rounded-full bg-[#3f526e]" />
@@ -187,7 +187,7 @@ const Hero = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="lg:text-5xl font-black text-foreground tracking-tight mb-4 sm:mb-5 leading-[1.08] sm:text-2xl text-2xl shadow-none font-mono"
+              className="text-3xl sm:text-4xl lg:text-6xl font-black text-foreground tracking-tight mb-4 sm:mb-5 leading-[1.08] font-mono"
             >
               AI рецепционист, който{' '}
               <span className="neo-gradient-text shadow-inner">вдига вместо Вас.</span>

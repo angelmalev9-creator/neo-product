@@ -48,7 +48,7 @@ const EnterpriseContact = () => {
               <MessageSquare className="w-3.5 h-3.5" />
               Контакт
             </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-primary-foreground mb-2 font-mono">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-primary-foreground mb-2 font-mono">
               {t('contact.title1')}
             </h2>
             <p className="text-sm text-muted-foreground">
