@@ -9,7 +9,7 @@
   :root {
     /* Base: light blue-white gradient background */
     --background: 205 60% 85%;
-    --foreground: 220 60% 15%;
+    --foreground: 0 0% 100%;
 
     /* Card: deep blue for contrast on light bg */
     --card: 210 60% 20%;
