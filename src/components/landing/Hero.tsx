@@ -61,12 +61,12 @@ const LiveActivityTicker = () => {
 const MacBookFrame = ({ children }: { children: React.ReactNode }) => (
   <div className="relative">
     {/* Screen */}
-    <div className="rounded-t-xl border-[2px] border-foreground/10 bg-card overflow-hidden shadow-lg shadow-foreground/5">
+    <div className="rounded-t-xl border-[3px] border-foreground/15 bg-background overflow-hidden">
       {/* Menu bar */}
       <div className="flex items-center gap-1.5 px-3 py-1.5 bg-foreground/5 border-b border-border/10">
-        <span className="w-2 h-2 rounded-full bg-destructive/60" />
-        <span className="w-2 h-2 rounded-full bg-neo-warning/60" />
-        <span className="w-2 h-2 rounded-full bg-neo-success/60" />
+        <span className="w-2 h-2 rounded-full bg-[hsl(0,70%,55%)]" />
+        <span className="w-2 h-2 rounded-full bg-[hsl(45,80%,55%)]" />
+        <span className="w-2 h-2 rounded-full bg-[hsl(120,50%,50%)]" />
         <span className="text-[8px] text-foreground/25 ml-2 font-medium">neo-assistant.com/dashboard</span>
       </div>
       {children}
@@ -82,7 +82,7 @@ const MacBookFrame = ({ children }: { children: React.ReactNode }) => (
 /* ───── iPhone Frame ───── */
 const IPhoneFrame = ({ children }: { children: React.ReactNode }) => (
   <div className="relative">
-    <div className="rounded-[20px] border-[2px] border-foreground/10 bg-card overflow-hidden shadow-lg shadow-foreground/5">
+    <div className="rounded-[20px] border-[3px] border-foreground/15 bg-background overflow-hidden">
       {/* Notch / Dynamic Island */}
       <div className="flex justify-center py-1.5 bg-foreground/5">
         <div className="w-16 h-[5px] rounded-full bg-foreground/15" />

@@ -4,10 +4,10 @@ type Theme = 'light' | 'dark';
 
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'light';
+    if (typeof window === 'undefined') return 'dark';
     const stored = localStorage.getItem('neo-theme');
     if (stored === 'light' || stored === 'dark') return stored;
-    return 'light';
+    return 'dark';
   });
 
   useEffect(() => {

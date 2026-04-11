@@ -40,10 +40,10 @@ const Navigation = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-4 lg:px-6 py-2 sm:py-2 lg:py-3">
       <div 
-        className={`mx-auto max-w-6xl border transition-all duration-500 rounded-full bg-background/90 backdrop-blur-sm border-border/40 ${
+        className={`mx-auto max-w-6xl border transition-all duration-500 rounded-full bg-background/85 -2xl border-foreground/8 ${
           isScrolled 
-            ? 'shadow-[0_4px_30px_hsl(0_0%_0%/0.4)]' 
-            : 'shadow-[0_2px_20px_hsl(0_0%_0%/0.2)]'
+            ? 'shadow-[0_4px_30px_hsl(0_0%_0%/0.5),0_0_60px_hsl(0_90%_58%/0.05)]' 
+            : 'shadow-[0_2px_20px_hsl(0_0%_0%/0.3)]'
         }`}
       >
         <div className="flex items-center justify-between h-12 sm:h-12 lg:h-14 px-4 sm:px-4 lg:px-6">
@@ -106,7 +106,7 @@ const Navigation = () => {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden mx-auto max-w-6xl mt-2 rounded-2xl bg-background/95 backdrop-blur-sm border border-border/40 shadow-[0_8px_40px_hsl(0_0%_0%/0.4)] overflow-hidden">
+        <div className="md:hidden mx-auto max-w-6xl mt-2 rounded-2xl bg-background/95 -2xl border border-foreground/8 shadow-[0_8px_40px_hsl(0_0%_0%/0.6)] overflow-hidden">
           <div className="py-3 px-5">
             {navLinks.map((link) => (
               <button 
@@ -121,7 +121,7 @@ const Navigation = () => {
                 {link.label}
               </button>
             ))}
-            <div className="flex gap-3 pt-3 mt-2 border-t border-border/30">
+            <div className="flex gap-3 pt-3 mt-2 border-t border-foreground/6">
               <Button 
                 variant="ghost" 
                 size="sm" 
