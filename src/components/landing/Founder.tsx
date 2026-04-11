@@ -38,7 +38,7 @@ const Founder = () => {
                 </p>
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-primary-foreground mb-5 font-mono">
                   Здравейте, казвам се{' '}
-                  <span className="text-secondary">Ангел Малев.</span>
+                  <span className="text-accent">Ангел Малев.</span>
                 </h2>
                 
                 <div className="space-y-3 mb-8">
