@@ -35,7 +35,7 @@ export default {
           dark: "hsl(var(--neo-dark))", "dark-lighter": "hsl(var(--neo-dark-lighter))",
           glass: "hsl(var(--neo-glass))", "glass-border": "hsl(var(--neo-glass-border))",
           "text-muted": "hsl(var(--neo-text-muted))", success: "hsl(var(--neo-success))",
-          warning: "hsl(var(--neo-warning))", purple: "hsl(var(--neo-purple))", cyan: "hsl(var(--neo-cyan))",
+          warning: "hsl(var(--neo-warning))", teal: "hsl(var(--neo-teal))", cyan: "hsl(var(--neo-cyan))",
         },
         "brand-blue": {
           50: "hsl(220 80% 96%)", 100: "hsl(220 75% 88%)", 200: "hsl(220 72% 78%)",

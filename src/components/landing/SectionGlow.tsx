@@ -2,11 +2,11 @@
  * Subtle glow divider between landing page sections.
  * Adds a radial gradient band that visually separates "подложки".
  */
-const SectionGlow = ({ variant = 'blue' }: { variant?: 'blue' | 'violet' | 'mixed' }) => {
+const SectionGlow = ({ variant = 'blue' }: { variant?: 'blue' | 'cyan' | 'mixed' }) => {
   const gradients: Record<string, string> = {
     blue: 'radial-gradient(ellipse 70% 50% at 50% 50%, hsl(220 70% 55% / 0.07), transparent 70%)',
-    violet: 'radial-gradient(ellipse 70% 50% at 50% 50%, hsl(260 55% 55% / 0.06), transparent 70%)',
-    mixed: 'radial-gradient(ellipse 80% 50% at 40% 50%, hsl(220 70% 55% / 0.05), hsl(260 55% 55% / 0.04) 50%, transparent 80%)',
+    cyan: 'radial-gradient(ellipse 70% 50% at 50% 50%, hsl(192 80% 50% / 0.06), transparent 70%)',
+    mixed: 'radial-gradient(ellipse 80% 50% at 40% 50%, hsl(220 70% 55% / 0.05), hsl(192 80% 50% / 0.04) 50%, transparent 80%)',
   };
 
   return (
