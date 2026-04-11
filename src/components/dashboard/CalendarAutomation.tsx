@@ -96,7 +96,7 @@ const DAY_HEADERS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
 const BOOKING_COLORS = [
   'from-primary/80 to-primary/40',
   'from-emerald-500/80 to-emerald-500/30',
-  'from-violet-500/80 to-violet-500/30',
+  'from-cyan-500/80 to-cyan-500/30',
   'from-amber-500/80 to-amber-500/30',
   'from-cyan-500/80 to-cyan-500/30',
   'from-rose-500/80 to-rose-500/30',
@@ -707,7 +707,7 @@ const CalendarAutomation = () => {
                         <span key={idx} className={`w-1 h-1 rounded-full ${
                           isSelected(day) ? 'bg-primary-foreground' : 
                           idx === 0 ? 'bg-primary' : 
-                          idx === 1 ? 'bg-emerald-400' : 'bg-violet-400'
+                          idx === 1 ? 'bg-emerald-400' : 'bg-cyan-400'
                         }`} />
                       ))}
                     </span>
@@ -768,7 +768,7 @@ const CalendarAutomation = () => {
                           )}
                           {b.attendee_phone && (
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Phone className="w-3 h-3 text-violet-400" /> {b.attendee_phone}
+                              <Phone className="w-3 h-3 text-cyan-400" /> {b.attendee_phone}
                             </span>
                           )}
                           {b.attendee_email && (
@@ -835,7 +835,7 @@ const CalendarAutomation = () => {
                     )}
                     {b.attendee_phone && (
                       <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Phone className="w-3 h-3 text-violet-400" /> {b.attendee_phone}
+                        <Phone className="w-3 h-3 text-cyan-400" /> {b.attendee_phone}
                       </span>
                     )}
                   </div>
