@@ -7,15 +7,15 @@
 
 @layer base {
   :root {
-    /* Base: light blue-white gradient background */
-    --background: 205 60% 85%;
+    /* Base: vibrant blue gradient background */
+    --background: 210 65% 28%;
     --foreground: 0 0% 100%;
 
-    /* Card: deep blue for contrast on light bg */
-    --card: 210 60% 20%;
+    /* Card: dark blue-teal gradient for landing cards */
+    --card: 205 55% 22%;
     --card-foreground: 0 0% 100%;
 
-    --popover: 210 60% 20%;
+    --popover: 205 55% 22%;
     --popover-foreground: 0 0% 100%;
 
     /* PRIMARY: electric blue */
@@ -27,8 +27,8 @@
     --secondary-foreground: 0 0% 100%;
 
     /* Muted */
-    --muted: 210 40% 30%;
-    --muted-foreground: 210 20% 85%;
+    --muted: 215 40% 25%;
+    --muted-foreground: 200 20% 75%;
 
     /* ACCENT: vivid cyan */
     --accent: 192 85% 50%;
@@ -56,7 +56,7 @@
     --neo-dark-lighter: 210 45% 25%;
     --neo-glass: 205 50% 20%;
     --neo-glass-border: 200 40% 38%;
-    --neo-text-muted: 210 20% 85%;
+    --neo-text-muted: 200 20% 75%;
     --neo-text-bright: 0 0% 100%;
     --neo-success: 142 85% 52%;
     --neo-success-glow: 142 92% 60%;
@@ -301,9 +301,8 @@
   }
 
   .nav-glass-scrolled {
-    background: hsl(210 60% 18% / 0.92);
-    backdrop-filter: blur(12px);
-    border-color: hsl(200 50% 45% / 0.25);
+    background: hsl(205 55% 18% / 0.95);
+    border-color: hsl(200 50% 45% / 0.2);
     border-radius: 9999px;
     box-shadow: 0 4px 24px hsl(210 60% 8% / 0.4);
   }
