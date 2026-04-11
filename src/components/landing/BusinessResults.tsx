@@ -37,12 +37,12 @@ const BusinessResults = () => {
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center mb-8 sm:mb-10">
-          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-primary text-xs font-medium mb-5">
+          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-secondary border border-secondary text-accent text-xs font-medium mb-5">
             <Sparkles className="w-3.5 h-3.5" />
             Резултати
           </span>
-          <h2 className="neo-heading-section font-black text-foreground mb-4 font-mono">
-            Какво постигат <span className="text-primary">клиентите ни</span>
+          <h2 className="text-3xl sm:text-4xl font-black mb-4 font-mono text-primary-foreground lg:text-5xl">
+            Какво постигат <span className="text-secondary">клиентите ни</span>
           </h2>
           <p className="neo-subheading text-muted-foreground max-w-lg mx-auto">
             Реални числа от бизнеси, които използват NEO.
@@ -56,7 +56,7 @@ const BusinessResults = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={isVisible ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.4, delay: i * 0.1 }}
-              className="group relative neo-glass-premium p-5 sm:p-6 rounded-2xl text-center hover:scale-[1.03] transition-transform duration-300"
+              className="group relative neo-glass-premium p-5 sm:p-6 rounded-2xl text-center hover:scale-[1.03] transition-transform duration-300 border border-secondary"
             >
               <div className={`w-12 h-12 rounded-xl ${item.bg} border ${item.border} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}>
                 <item.icon className={`w-5 h-5 ${item.color}`} />
