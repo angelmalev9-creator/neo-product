@@ -1515,6 +1515,111 @@ function pickPreferredSubmitFormTarget(targets: SubmitFormTarget[]): SubmitFormT
   return anyTarget || null;
 }
 
+type ActiveSubmitFormFlow = {
+  session_id: string;
+  form_id?: string;
+  fingerprint?: string;
+  kind?: string;
+  missing_required: string[];
+  fields: Record<string, string>;
+  updated_at: number;
+};
+
+const ACTIVE_SUBMIT_FORM_FLOW_TTL_MS = 120_000;
+
+function cleanupSubmitFlowMissingLabel(label: string): string {
+  return String(label || "")
+    .replace(/\s*\((?:избор|choice)\s*:[^)]+\)\s*$/i, "")
+    .trim();
+}
+
+function buildSubmitFormContinuationFields(args: {
+  reply: string;
+  missingRequired: string[];
+  flowFields?: Record<string, string>;
+  contact?: SensitiveContactFields | null;
+}): Record<string, string> {
+  const trimmedReply = String(args.reply || "").trim();
+  const out: Record<string, string> = { ...(args.flowFields || {}) };
+  const parsedContact = extractContactIntentFields(trimmedReply);
+  const mergedContact = {
+    name: parsedContact.name || args.contact?.name || "",
+    email: parsedContact.email || args.contact?.email || "",
+    phone: parsedContact.phone || args.contact?.phone || "",
+  };
+
+  if (mergedContact.name) out.name = mergedContact.name;
+  if (mergedContact.email && looksLikeCompleteEmail(mergedContact.email)) out.email = mergedContact.email;
+  if (mergedContact.phone && looksLikeCompletePhone(mergedContact.phone)) out.phone = mergedContact.phone;
+  if (!trimmedReply) return out;
+
+  const firstMissingRaw = Array.isArray(args.missingRequired)
+    ? args.missingRequired.find((value) => String(value || "").trim()) || ""
+    : "";
+  const firstMissing = cleanupSubmitFlowMissingLabel(firstMissingRaw);
+  if (!firstMissing) return { ...out, message: out.message || trimmedReply };
+
+  const normalizedMissing = transliterateBulgarianToLatin(firstMissing.toLowerCase());
+  const answerName = normalizeSensitiveName(trimmedReply);
+  const answerEmail = normalizeSpokenEmail(trimmedReply);
+  const answerPhone = normalizeSpokenPhone(trimmedReply);
+
+  if ((normalizedMissing.includes("ime") || normalizedMissing.includes("name")) && looksLikeSensitiveName(answerName)) {
+    out.name = answerName;
+    out[firstMissing] = answerName;
+    return out;
+  }
+
+  if ((normalizedMissing.includes("email") || normalizedMissing.includes("mail")) && looksLikeCompleteEmail(answerEmail)) {
+    out.email = answerEmail;
+    out[firstMissing] = answerEmail;
+    return out;
+  }
+
+  if (
+    (normalizedMissing.includes("telefon") ||
+      normalizedMissing.includes("phone") ||
+      normalizedMissing.includes("gsm") ||
+      normalizedMissing.includes("nomer")) &&
+    looksLikeCompletePhone(answerPhone)
+  ) {
+    out.phone = answerPhone;
+    out[firstMissing] = answerPhone;
+    return out;
+  }
+
+  out[firstMissing] = trimmedReply;
+
+  if (
+    normalizedMissing.includes("plan") ||
+    normalizedMissing.includes("paket") ||
+    normalizedMissing.includes("package") ||
+    normalizedMissing.includes("abonament") ||
+    normalizedMissing.includes("tarif")
+  ) {
+    out.plan ??= trimmedReply;
+  }
+
+  if (
+    normalizedMissing.includes("message") ||
+    normalizedMissing.includes("opisanie") ||
+    normalizedMissing.includes("zapit") ||
+    normalizedMissing.includes("komentar") ||
+    normalizedMissing.includes("comment") ||
+    normalizedMissing.includes("detail") ||
+    normalizedMissing.includes("description") ||
+    normalizedMissing.includes("note")
+  ) {
+    out.message ??= trimmedReply;
+  }
+
+  if (normalizedMissing.includes("service") || normalizedMissing.includes("usluga")) {
+    out.service ??= trimmedReply;
+  }
+
+  return out;
+}
+
 type ConversationFocusState = {
   lastTopic: string;
   lastEntityType: string;
@@ -1693,6 +1798,8 @@ export const useGeminiVoice = ({
   // ★ NEW: track what context we prepared for (sessionId/companyName/systemPrompt)
   const preparedKeyRef = useRef<string>("");
   const lastSubmitFormTargetRef = useRef<SubmitFormTarget | null>(null);
+  const activeSubmitFormFlowRef = useRef<ActiveSubmitFormFlow | null>(null);
+  const executeActionFromGeminiRef = useRef<(responseText: string) => Promise<boolean>>(async () => false);
   // ★ NEW: timestamp of last successful submit_form — used by the "Gemini lies
   // about having sent the form" guard to avoid double-submits.
   const lastSubmitFormFiredAtRef = useRef<number>(0);
@@ -2965,6 +3072,47 @@ export const useGeminiVoice = ({
       // ★ New user input → NEO must respond — clear any lingering barge-in cancel flag
       assistantTurnCanceledRef.current = false;
 
+      const activeSubmitFlow = activeSubmitFormFlowRef.current;
+      if (activeSubmitFlow) {
+        const isExpired = Date.now() - activeSubmitFlow.updated_at > ACTIVE_SUBMIT_FORM_FLOW_TTL_MS;
+        const hasTarget = !!activeSubmitFlow.session_id && (!!activeSubmitFlow.form_id || !!activeSubmitFlow.fingerprint);
+
+        if (isExpired || !hasTarget) {
+          activeSubmitFormFlowRef.current = null;
+        } else {
+          const continuationFields = buildSubmitFormContinuationFields({
+            reply: visibleUserText || aggregatedUserTranscript,
+            missingRequired: activeSubmitFlow.missing_required,
+            flowFields: activeSubmitFlow.fields,
+            contact: mergedContact,
+          });
+
+          activeSubmitFormFlowRef.current = {
+            ...activeSubmitFlow,
+            fields: continuationFields,
+            updated_at: Date.now(),
+          };
+
+          console.log("[SUBMIT_FLOW] direct continuation → neo-worker-proxy", {
+            missing_required: activeSubmitFlow.missing_required,
+            fields: continuationFields,
+          });
+
+          void executeActionFromGeminiRef.current(
+            JSON.stringify({
+              type: "action_request",
+              action: "submit_form",
+              session_id: activeSubmitFlow.session_id,
+              ...(activeSubmitFlow.form_id ? { form_id: activeSubmitFlow.form_id } : {}),
+              ...(activeSubmitFlow.fingerprint ? { fingerprint: activeSubmitFlow.fingerprint } : {}),
+              ...(activeSubmitFlow.kind ? { kind: activeSubmitFlow.kind } : {}),
+              fields: continuationFields,
+            }),
+          );
+          return;
+        }
+      }
+
       // Hint Gemini to fix garbled STT for emails/phones/names — 0 extra latency, same WS
       const lc = geminiPayloadText.toLowerCase();
 
@@ -3796,6 +3944,7 @@ export const useGeminiVoice = ({
     isPreparedRef.current = false;
     setIsPrepared(false);
     lastSubmitFormTargetRef.current = null;
+    activeSubmitFormFlowRef.current = null;
     greetingSentRef.current = false;
     currentResponseTextRef.current = "";
   }, []);
@@ -4918,8 +5067,26 @@ export const useGeminiVoice = ({
         if (needsInput) {
           const missing = extractMissingRequired(result);
           const first = missing[0] || "следващото задължително поле";
+          const preservedFields = Object.fromEntries(
+            Object.entries(
+              enrichedParsed?.fields && typeof enrichedParsed.fields === "object"
+                ? (enrichedParsed.fields as Record<string, unknown>)
+                : {},
+            )
+              .map(([key, value]) => [key, String(value ?? "").trim()])
+              .filter(([, value]) => Boolean(value)),
+          ) as Record<string, string>;
 
-          // Key point: keep loop tight & deterministic: ask for ONE field only.
+          activeSubmitFormFlowRef.current = {
+            session_id: String(enrichedParsed?.session_id || ""),
+            form_id: enrichedParsed?.form_id ? String(enrichedParsed.form_id) : undefined,
+            fingerprint: enrichedParsed?.fingerprint ? String(enrichedParsed.fingerprint) : undefined,
+            kind: String(enrichedParsed?.kind || inferredTarget?.kind || "form"),
+            missing_required: missing,
+            fields: preservedFields,
+            updated_at: Date.now(),
+          };
+
           sendToGemini(
             [
               "WORKER_NEEDS_INPUT:",
@@ -4928,11 +5095,14 @@ export const useGeminiVoice = ({
               `Попитай клиента САМО за: ${first}.`,
               "След като клиентът отговори, върни отново JSON action_request (submit_form) със същите form_id/fingerprint, като добавиш новото поле към fields.",
               "НЕ казвай, че е подадено. Чакаш success=true от worker/proxy.",
-            ].join("\n"),
+            ].join("
+"),
           );
 
           return true;
         }
+
+        activeSubmitFormFlowRef.current = null;
 
         if (result?.success) {
           lastSubmitFormFiredAtRef.current = Date.now();
@@ -4967,11 +5137,16 @@ export const useGeminiVoice = ({
 
         return true;
       } catch {
+        activeSubmitFormFlowRef.current = null;
         return false;
       }
     },
     [onError, onMessage, sendToGemini],
   );
+
+  useEffect(() => {
+    executeActionFromGeminiRef.current = maybeExecuteActionFromGemini;
+  }, [maybeExecuteActionFromGemini]);
 
   const textOnlyRef = useRef(false);
 
