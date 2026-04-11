@@ -168,13 +168,13 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
             {status === "idle" && (
               <form onSubmit={handleSubmit} className="flex items-center gap-2 p-1">
                 <div className="relative flex-1">
-                  <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/30" />
+                  <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
                   <input
                     type="text"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     placeholder="https://вашия-сайт.bg"
-                    className="w-full bg-background/60 border-0 rounded-xl py-3.5 pl-11 pr-4 text-[16px] sm:text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all font-medium"
+                    className="w-full bg-background/60 border-0 rounded-xl py-3.5 pl-11 pr-4 text-[16px] sm:text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all font-medium"
                   />
                 </div>
                 <Button
@@ -213,7 +213,7 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
             )}
           </div>
 
-          <p className="text-xs text-muted-foreground/40 mt-4">
+          <p className="text-xs text-muted-foreground/70 mt-4">
             Отнема 10 секунди. Нужен е само URL.
           </p>
         </div>

@@ -199,7 +199,7 @@ const Pricing = () => {
                 </div>
 
                 {isYearly && (
-                  <p className="text-xs text-muted-foreground/60 mb-3">
+                  <p className="text-xs text-muted-foreground/80 mb-3">
                     Годишно: {plan.yearlyTotal} EUR
                   </p>
                 )}

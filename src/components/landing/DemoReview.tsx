@@ -97,7 +97,7 @@ const DemoReview = ({ onSubmitted }: DemoReviewProps) => {
               className={`w-8 h-8 transition-colors ${
                 star <= (hoveredRating || rating)
                   ? 'fill-yellow-400 text-yellow-400'
-                  : 'text-muted-foreground/30'
+                  : 'text-muted-foreground/70'
               }`}
             />
           </button>

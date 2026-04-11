@@ -128,10 +128,10 @@ const Footer = () => {
       <div className="border-t border-border/10 py-5">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-[10px] sm:text-xs text-muted-foreground/50">
+            <p className="text-[10px] sm:text-xs text-muted-foreground/80">
               {t('footer.copyright', { year: currentYear })}
             </p>
-            <p className="text-[10px] sm:text-xs text-muted-foreground/50 flex items-center gap-2">
+            <p className="text-[10px] sm:text-xs text-muted-foreground/80 flex items-center gap-2">
               Създадено в България
               <span className="text-border/30">|</span>
               <a href="https://webvision-bg.com" target="_blank" rel="noopener noreferrer" className="text-primary/60 hover:text-primary transition-colors">

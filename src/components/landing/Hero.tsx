@@ -19,7 +19,7 @@ const RatingBadge = () => (
       ))}
       <Star className="w-3 h-3 text-primary/40" />
     </div>
-    <span className="text-foreground/50 text-[10px] sm:text-xs font-semibold tracking-[0.08em] uppercase">
+    <span className="text-foreground/80 text-[10px] sm:text-xs font-semibold tracking-[0.08em] uppercase">
       ★ 4.9/5 — използва се от 200+ български бизнеса
     </span>
   </motion.div>
@@ -33,7 +33,7 @@ const MacBookFrame = ({ children }: { children: React.ReactNode }) => (
         <span className="w-2 h-2 rounded-full bg-[hsl(0,70%,55%)]" />
         <span className="w-2 h-2 rounded-full bg-[hsl(45,80%,55%)]" />
         <span className="w-2 h-2 rounded-full bg-[hsl(120,50%,50%)]" />
-        <span className="text-[8px] text-foreground/25 ml-2 font-medium">neo-assistant.com/dashboard</span>
+        <span className="text-[8px] text-foreground/70 ml-2 font-medium">neo-assistant.com/dashboard</span>
       </div>
       {children}
     </div>
@@ -71,13 +71,13 @@ const DashboardContent = () => (
         <div key={s.label} className="rounded-lg bg-card/60 border border-border/10 p-1.5">
           <s.icon className={`w-2.5 h-2.5 ${s.color} mb-0.5`} />
           <p className="text-sm font-bold text-foreground/85">{s.value}</p>
-          <p className="text-[7px] text-foreground/35">{s.label}</p>
+          <p className="text-[7px] text-foreground/75">{s.label}</p>
         </div>
       ))}
     </div>
     <div className="rounded-lg bg-card/60 border border-border/10 p-2">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-[7px] text-foreground/35 font-medium">Анализи</span>
+        <span className="text-[7px] text-foreground/75 font-medium">Анализи</span>
         <span className="text-[7px] text-emerald-400 flex items-center gap-0.5">
           <TrendingUp className="w-2 h-2" /> +23%
         </span>
@@ -100,8 +100,8 @@ const DashboardContent = () => (
         { text: 'Час записан: 14:30', time: '5 мин' },
       ].map((a) => (
         <div key={a.text} className="flex items-center justify-between px-2 py-1 rounded-md bg-card/50 border border-border/8">
-          <span className="text-[7px] text-foreground/45">{a.text}</span>
-          <span className="text-[6px] text-foreground/25">{a.time}</span>
+          <span className="text-[7px] text-foreground/80">{a.text}</span>
+          <span className="text-[6px] text-foreground/70">{a.time}</span>
         </div>
       ))}
     </div>
@@ -141,7 +141,7 @@ const WidgetContent = () => (
           </div>
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 3.4, duration: 0.25 }} className="flex gap-1 flex-wrap">
             {['09:00', '10:30', '14:00'].map((time, i) => (
-              <div key={time} className={`px-2 py-0.5 rounded-md text-[9px] font-medium border ${i === 1 ? 'bg-primary/15 border-primary/30 text-primary' : 'bg-card/60 border-border/15 text-foreground/50'}`}>
+              <div key={time} className={`px-2 py-0.5 rounded-md text-[9px] font-medium border ${i === 1 ? 'bg-primary/15 border-primary/30 text-primary' : 'bg-card/60 border-border/15 text-foreground/80'}`}>
                 {time}
               </div>
             ))}
@@ -197,7 +197,7 @@ const Hero = () => {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="neo-subheading text-foreground/50 mb-5 max-w-md opacity-75"
+              className="neo-subheading text-foreground/80 mb-5 max-w-md opacity-75"
             >
               NEO говори с клиентите Ви и записва часове дори докато Вие спите.
             </motion.p>
@@ -212,7 +212,7 @@ const Hero = () => {
               </Button>
               <Button
                 variant="outline"
-                className="neo-glass-premium border-0 text-foreground/50 hover:text-foreground text-[13px] sm:text-xs px-5 py-3 sm:py-2.5 h-auto rounded-full font-bold gap-1.5 w-full sm:w-auto"
+                className="neo-glass-premium border-0 text-foreground/80 hover:text-foreground text-[13px] sm:text-xs px-5 py-3 sm:py-2.5 h-auto rounded-full font-bold gap-1.5 w-full sm:w-auto"
                 onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 Вижте как работи
@@ -221,7 +221,7 @@ const Hero = () => {
             </motion.div>
 
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.5 }} className="space-y-3">
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-foreground/25 text-[10px] font-medium">
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-foreground/70 text-[10px] font-medium">
                 {['Готов за 5 минути', 'Без кредитна карта', 'Отказ по всяко време'].map((text) => (
                   <span key={text} className="flex items-center gap-1">
                     <Check className="w-3 h-3 text-primary/60" />

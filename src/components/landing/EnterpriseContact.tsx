@@ -62,13 +62,13 @@ const EnterpriseContact = () => {
                 <div>
                   <label className="block text-xs font-semibold text-foreground/70 mb-1.5">Вашето име</label>
                   <div className="relative">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder={t('contact.namePlaceholder')}
-                      className="w-full bg-card/40 border border-border/30 rounded-xl py-3 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all"
+                      className="w-full bg-card/40 border border-border/30 rounded-xl py-3 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground/80 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all"
                       required
                     />
                   </div>
@@ -76,13 +76,13 @@ const EnterpriseContact = () => {
                 <div>
                   <label className="block text-xs font-semibold text-foreground/70 mb-1.5">Имейл адрес</label>
                   <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
                     <input
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder={t('contact.emailPlaceholder')}
-                      className="w-full bg-card/40 border border-border/30 rounded-xl py-3 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all"
+                      className="w-full bg-card/40 border border-border/30 rounded-xl py-3 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground/80 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all"
                       required
                     />
                   </div>
@@ -96,7 +96,7 @@ const EnterpriseContact = () => {
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   placeholder={t('contact.messagePlaceholder')}
                   rows={4}
-                  className="w-full bg-card/40 border border-border/30 rounded-xl py-3 px-4 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all resize-none"
+                  className="w-full bg-card/40 border border-border/30 rounded-xl py-3 px-4 text-sm text-foreground placeholder:text-muted-foreground/80 focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all resize-none"
                 />
               </div>
 
