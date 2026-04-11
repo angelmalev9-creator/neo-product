@@ -7,57 +7,57 @@
 
 @layer base {
   :root {
-    /* Base: vibrant blue gradient (applied via Index bg) */
+    /* Base: vibrant blue gradient background */
     --background: 220 70% 32%;
-    --foreground: 210 20% 98%;
+    --foreground: 0 0% 100%;
 
-    /* Card: white-blue translucent for gradient bg */
-    --card: 210 40% 98%;
-    --card-foreground: 220 60% 18%;
+    /* Card: semi-transparent white for glass effect on blue bg */
+    --card: 210 60% 95%;
+    --card-foreground: 220 70% 15%;
 
-    --popover: 210 40% 98%;
-    --popover-foreground: 220 60% 18%;
+    --popover: 210 60% 95%;
+    --popover-foreground: 220 70% 15%;
 
     /* PRIMARY: electric blue */
-    --primary: 220 70% 55%;
+    --primary: 220 80% 50%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary */
-    --secondary: 215 30% 92%;
-    --secondary-foreground: 220 50% 20%;
+    --secondary: 210 50% 85%;
+    --secondary-foreground: 220 60% 15%;
 
     /* Muted */
-    --muted: 215 20% 88%;
-    --muted-foreground: 220 15% 45%;
+    --muted: 215 30% 80%;
+    --muted-foreground: 210 30% 95%;
 
     /* ACCENT: vivid cyan */
-    --accent: 192 80% 50%;
+    --accent: 192 85% 50%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
     /* Borders */
-    --border: 215 25% 80%;
-    --input: 215 20% 92%;
-    --ring: 220 70% 55%;
+    --border: 210 40% 70%;
+    --input: 210 30% 88%;
+    --ring: 220 80% 50%;
 
     --radius: 0.75rem;
 
     /* NEO Brand Palette — AI blue/cyan */
-    --neo-blue: 220 70% 55%;
-    --neo-blue-glow: 220 75% 68%;
-    --neo-blue-dark: 220 65% 42%;
-    --neo-cyan: 192 80% 50%;
-    --neo-cyan-glow: 192 85% 62%;
-    --neo-indigo: 210 60% 45%;
-    --neo-teal: 185 70% 45%;
-    --neo-dark: 220 50% 18%;
-    --neo-dark-lighter: 215 30% 92%;
-    --neo-glass: 210 40% 98%;
-    --neo-glass-border: 215 25% 80%;
-    --neo-text-muted: 220 15% 45%;
-    --neo-text-bright: 220 60% 18%;
+    --neo-blue: 220 80% 50%;
+    --neo-blue-glow: 220 75% 65%;
+    --neo-blue-dark: 220 70% 35%;
+    --neo-cyan: 192 85% 50%;
+    --neo-cyan-glow: 192 90% 62%;
+    --neo-indigo: 210 65% 42%;
+    --neo-teal: 185 75% 42%;
+    --neo-dark: 220 60% 15%;
+    --neo-dark-lighter: 210 40% 90%;
+    --neo-glass: 210 50% 92%;
+    --neo-glass-border: 210 40% 70%;
+    --neo-text-muted: 210 30% 90%;
+    --neo-text-bright: 0 0% 100%;
     --neo-success: 142 85% 52%;
     --neo-success-glow: 142 92% 60%;
     --neo-warning: 45 100% 60%;
