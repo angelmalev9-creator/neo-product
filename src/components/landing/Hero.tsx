@@ -190,7 +190,7 @@ const Hero = () => {
               className="text-3xl sm:text-4xl lg:text-6xl font-black text-foreground tracking-tight mb-4 sm:mb-5 leading-[1.08] font-mono"
             >
               AI рецепционист, който{' '}
-              <span className="neo-gradient-text shadow-inner opacity-100 text-secondary">вдига вместо Вас.</span>
+              <span className="text-accent font-black">вдига вместо Вас.</span>
             </motion.h1>
 
             <motion.p
