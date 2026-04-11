@@ -86,7 +86,7 @@ const NeuralLoader = () => {
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(q.x, q.y);
-            ctx.strokeStyle = `hsla(355, 85%, 55%, ${alpha})`;
+            ctx.strokeStyle = `hsla(220, 70%, 55%, ${alpha})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
           }
@@ -100,7 +100,7 @@ const NeuralLoader = () => {
 
         // Outer glow
         const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 4);
-        grad.addColorStop(0, `hsla(355, 85%, 55%, ${glow * 0.3})`);
+        grad.addColorStop(0, `hsla(220, 70%, 55%, ${glow * 0.3})`);
         grad.addColorStop(1, 'transparent');
         ctx.beginPath();
         ctx.arc(p.x, p.y, r * 4, 0, Math.PI * 2);
@@ -110,7 +110,7 @@ const NeuralLoader = () => {
         // Core
         ctx.beginPath();
         ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-        ctx.fillStyle = `hsla(355, 85%, 60%, ${glow})`;
+        ctx.fillStyle = `hsla(220, 70%, 60%, ${glow})`;
         ctx.fill();
       }
 

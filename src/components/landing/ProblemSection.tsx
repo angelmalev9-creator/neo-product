@@ -15,9 +15,9 @@ const stats = [
     icon: DollarSign,
     number: '€3,300',
     text: 'средна месечна загуба от пропуснати обаждания в малък бизнес.',
-    color: 'text-amber-400',
-    bg: 'bg-amber-500/10',
-    border: 'border-amber-500/20',
+    color: 'text-accent',
+    bg: 'bg-accent/10',
+    border: 'border-accent/20',
   },
   {
     icon: Clock,
