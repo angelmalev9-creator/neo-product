@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Phone, PhoneOff, X, Send, Mic, MicOff, MessageSquare, Bot, User, UserPlus, Sparkles } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { Phone, PhoneOff, X, Send, Mic, MicOff, MessageSquare, Bot, User, UserPlus, Sparkles, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useGeminiVoice } from '@/hooks/useGeminiVoice';
@@ -19,7 +19,19 @@ interface WidgetConfig {
   color: string;
   buttonText: string;
   autoGreet: boolean;
+  autoGreetMessage?: string;
   buttonSize: string;
+}
+
+interface CatalogItem {
+  name: string;
+  description: string | null;
+  price: number | null;
+  priceUnit: string | null;
+  capacity: number | null;
+  amenities: string[] | null;
+  images: string[] | null;
+  category: string | null;
 }
 
 const normalizeTranscriptChunk = (value: string) => value.replace(/\s+/g, ' ').trim();
@@ -48,6 +60,32 @@ const extractIncrementalTranscript = (previous: string, incoming: string) => {
   return next;
 };
 
+// Detect if a message mentions a catalog item by name
+const findMentionedCatalogItems = (text: string, catalog: CatalogItem[]): CatalogItem[] => {
+  if (!catalog.length) return [];
+  const lower = text.toLowerCase();
+  return catalog.filter(item => {
+    const name = item.name.toLowerCase();
+    // Check if the item name appears in the message
+    return lower.includes(name) || name.split(/\s+/).every(word => word.length > 2 && lower.includes(word));
+  });
+};
+
+// Detect action processing phrases
+const isActionProcessingMessage = (text: string): boolean => {
+  const actionPhrases = [
+    /един момент/i,
+    /момент.*изпращ/i,
+    /подавам.*запитван/i,
+    /изпращам.*запитван/i,
+    /записвам.*данни/i,
+    /обработвам/i,
+    /проверявам.*наличност/i,
+    /резервирам/i,
+  ];
+  return actionPhrases.some(p => p.test(text));
+};
+
 const Widget = () => {
   const [searchParams] = useSearchParams();
   const userId = searchParams.get('userId');
@@ -67,6 +105,8 @@ const Widget = () => {
   const [leadSubmitted, setLeadSubmitted] = useState<boolean>(false);
   const [liveTranscript, setLiveTranscript] = useState<string>('');
   const [liveAssistantTranscript, setLiveAssistantTranscript] = useState<string>('');
+  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
+  const [isProcessingAction, setIsProcessingAction] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<Message[]>([]);
   
@@ -79,6 +119,7 @@ const Widget = () => {
   const typedMessageAddedRef = useRef<string | null>(null);
   const persistQueueRef = useRef<Promise<void>>(Promise.resolve());
   const messageSeqRef = useRef<number>(0);
+  const actionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const { playConnectSound, playDisconnectSound, startAmbient, stopAmbient, initAudioContext } = useAudioEffects({ ambientVolume: 0.04, effectsVolume: 0.2 });
 
@@ -88,6 +129,12 @@ const Widget = () => {
     }
     if (message.role === 'assistant') {
       setLiveAssistantTranscript('');
+      // If assistant sends a new message, action processing is done
+      setIsProcessingAction(false);
+      if (actionTimeoutRef.current) {
+        clearTimeout(actionTimeoutRef.current);
+        actionTimeoutRef.current = null;
+      }
     }
     // Skip duplicate typed user messages (already added in handleSendText)
     if (message.role === 'user' && typedMessageAddedRef.current === message.content) {
@@ -101,6 +148,15 @@ const Widget = () => {
     )) {
       return;
     }
+
+    // Detect if assistant is announcing an action (sending form, booking, etc.)
+    if (message.role === 'assistant' && isActionProcessingMessage(message.content)) {
+      setIsProcessingAction(true);
+      // Auto-clear after 15s in case no follow-up arrives
+      if (actionTimeoutRef.current) clearTimeout(actionTimeoutRef.current);
+      actionTimeoutRef.current = setTimeout(() => setIsProcessingAction(false), 15000);
+    }
+
     setMessages(prev => {
       const next = [...prev, message];
       messagesRef.current = next;
@@ -193,8 +249,6 @@ const Widget = () => {
     });
   }, [trackConversation]);
 
-  // Lead modal only shows on disconnect (endCall), not during conversation
-
   useEffect(() => {
     if (!isConnected || !conversationIdRef.current || !callStartTimeRef.current) return;
     const interval = setInterval(() => {
@@ -239,6 +293,7 @@ const Widget = () => {
       setConfig(data.widgetConfig);
       setLogoUrl(data.logoUrl || null);
       if (data.sessionId) setSessionId(data.sessionId);
+      if (data.bookingCatalog) setCatalog(data.bookingCatalog);
       setIsReady(true);
       if (!isReady) {
         prepareSession(data.systemPrompt, data.companyName || 'компанията', data.sessionId || undefined).catch(console.error);
@@ -267,6 +322,7 @@ const Widget = () => {
     setMessages([]);
     setLiveTranscript('');
     setLiveAssistantTranscript('');
+    setIsProcessingAction(false);
     persistedTranscriptKeysRef.current.clear();
     lastPersistedTranscriptRef.current = { user: '', assistant: '' };
     setError(null);
@@ -299,7 +355,6 @@ const Widget = () => {
   }, [systemPrompt, companyName, sessionId, connect, userId, trackConversation, initAudioContext, playConnectSound, startAmbient, preWarmMicrophone]);
 
   const endCall = useCallback(async () => {
-    // FIRST: Capture pending transcript BEFORE disconnect clears state
     const pendingUser = liveTranscript.trim();
     if (pendingUser) {
       setMessages(prev => {
@@ -321,14 +376,13 @@ const Widget = () => {
     }
     setLiveAssistantTranscript('');
     setLiveTranscript('');
-    // THEN: Disconnect audio/voice
+    setIsProcessingAction(false);
     stopAmbient();
     playDisconnectSound();
     disconnect();
     if (!leadSubmitted) setShowLeadModal(true);
     const cid = conversationIdRef.current;
     if (cid) {
-      // Persist any unsaved messages from state before ending
       const currentMessages = messagesRef.current;
       for (const msg of currentMessages) {
         const key = `${cid}:${msg.role}:${msg.content.replace(/\s+/g, ' ').trim()}`;
@@ -347,7 +401,6 @@ const Widget = () => {
       lastTrackedTimeRef.current = 0;
       lastPersistedTranscriptRef.current = { user: '', assistant: '' };
     }
-    // DON'T clear messages - keep them visible after disconnect
   }, [disconnect, trackConversation, leadSubmitted, stopAmbient, playDisconnectSound, liveAssistantTranscript, liveTranscript, persistTranscriptMessage]);
 
   const handleLeadSubmit = useCallback(async (data: LeadData) => {
@@ -391,6 +444,47 @@ const Widget = () => {
     );
   };
 
+  // Catalog image card for mentioned items
+  const CatalogCard = ({ item }: { item: CatalogItem }) => {
+    const img = item.images?.[0];
+    if (!img) return null;
+    return (
+      <div className="rounded-xl overflow-hidden border border-border/20 bg-card/60 max-w-[240px] mt-1.5 mb-1">
+        <img src={img} alt={item.name} className="w-full h-28 object-cover" />
+        <div className="px-2.5 py-2">
+          <p className="text-xs font-semibold text-foreground">{item.name}</p>
+          {item.price && (
+            <p className="text-[10px] text-primary font-medium mt-0.5">
+              {item.price} лв.{item.priceUnit ? ` / ${item.priceUnit}` : ''}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Action processing loader
+  const ActionLoader = () => (
+    <div className="flex gap-2 justify-start">
+      <AvatarIcon size="sm" />
+      <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl rounded-tl-md bg-card/80 border border-border/20">
+        <div className="flex gap-1">
+          {[0, 1, 2].map(i => (
+            <div
+              key={i}
+              className="w-1.5 h-1.5 rounded-full bg-primary"
+              style={{
+                animation: 'bounce 1.4s ease-in-out infinite',
+                animationDelay: `${i * 0.16}s`,
+              }}
+            />
+          ))}
+        </div>
+        <span className="text-[10px] text-muted-foreground">NEO обработва...</span>
+      </div>
+    </div>
+  );
+
   if (error) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -419,6 +513,12 @@ const Widget = () => {
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
+      <style>{`
+        @keyframes bounce {
+          0%, 80%, 100% { transform: scale(0); }
+          40% { transform: scale(1); }
+        }
+      `}</style>
       {/* Lead Capture Modal */}
       <LeadCaptureModal
         isOpen={showLeadModal}
@@ -427,7 +527,7 @@ const Widget = () => {
         companyName={companyName}
       />
       
-      {/* Header - clean & modern */}
+      {/* Header */}
       <header className="border-b border-border/20 bg-card/50 backdrop-blur-xl px-4 py-3 flex items-center gap-3">
         <AvatarIcon size="md" />
         <div className="flex-1 min-w-0">
@@ -462,7 +562,9 @@ const Widget = () => {
               {companyName}
             </h2>
             <p className="text-xs text-muted-foreground max-w-[220px] mb-6">
-              Здравейте! Имате въпрос? Натиснете бутона и ще Ви помогна.
+              {config?.autoGreet && config?.autoGreetMessage
+                ? config.autoGreetMessage
+                : 'Здравейте! Имате въпрос? Натиснете бутона и ще Ви помогна.'}
             </p>
             <div className="flex items-center gap-2 text-[10px] text-muted-foreground/60">
               <Sparkles className="w-3 h-3" />
@@ -471,26 +573,41 @@ const Widget = () => {
           </div>
         )}
         
-        {messages.map((msg, i) => (
-          <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            {msg.role === 'assistant' && <AvatarIcon size="sm" />}
-            <div
-              className={`
-                max-w-[80%] px-3.5 py-2.5 text-xs leading-relaxed animate-fade-in break-words whitespace-pre-wrap
-                ${msg.role === 'assistant'
-                  ? 'bg-card/80 border border-border/20 rounded-2xl rounded-tl-md text-foreground'
-                  : 'rounded-2xl rounded-tr-md text-white'
-                }
-              `}
-              style={msg.role === 'user' ? { 
-                backgroundColor: widgetColor,
-                boxShadow: `0 2px 12px ${widgetColor}30`
-              } : undefined}
-            >
-              {msg.content.replace(/\[CURRENT_DATE_CONTEXT:[^\]]*\]\s*/g, '').replace(/\[SYSTEM:[^\]]*\]\s*/g, '').trim()}
+        {messages.map((msg, i) => {
+          const cleanContent = msg.content.replace(/\[CURRENT_DATE_CONTEXT:[^\]]*\]\s*/g, '').replace(/\[SYSTEM:[^\]]*\]\s*/g, '').trim();
+          const mentionedItems = msg.role === 'assistant' ? findMentionedCatalogItems(cleanContent, catalog) : [];
+
+          return (
+            <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              {msg.role === 'assistant' && <AvatarIcon size="sm" />}
+              <div className="flex flex-col max-w-[80%]">
+                <div
+                  className={`
+                    px-3.5 py-2.5 text-xs leading-relaxed animate-fade-in break-words whitespace-pre-wrap
+                    ${msg.role === 'assistant'
+                      ? 'bg-card/80 border border-border/20 rounded-2xl rounded-tl-md text-foreground'
+                      : 'rounded-2xl rounded-tr-md text-white'
+                    }
+                  `}
+                  style={msg.role === 'user' ? { 
+                    backgroundColor: widgetColor,
+                    boxShadow: `0 2px 12px ${widgetColor}30`
+                  } : undefined}
+                >
+                  {cleanContent}
+                </div>
+                {/* Show catalog item images if mentioned */}
+                {mentionedItems.map((item, idx) => (
+                  <CatalogCard key={idx} item={item} />
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
+
+        {/* Action processing indicator */}
+        {isProcessingAction && !isSpeaking && <ActionLoader />}
+
         {liveTranscript && isListening && (
           <div className="flex justify-end">
             <div className="max-w-[80%] px-3.5 py-2.5 text-xs leading-relaxed rounded-2xl rounded-tr-md bg-muted/50 border border-border/20 text-muted-foreground italic break-words">
