@@ -46,7 +46,7 @@ const Navigation = () => {
             : 'shadow-[0_2px_20px_hsl(0_0%_0%/0.3)]'
         }`}
       >
-        <div className="flex items-center justify-between h-12 sm:h-12 lg:h-14 px-4 sm:px-4 lg:px-6 bg-secondary">
+        <div className="flex items-center justify-between h-12 sm:h-12 lg:h-14 px-4 sm:px-4 lg:px-6 bg-secondary rounded-full">
           {/* Logo */}
           <a href="/" className="flex items-center group">
             <NeoLogo size="sm" />
