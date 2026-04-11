@@ -15,6 +15,73 @@ const AnimatedBackground = () => {
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
 
+      {/* Glowing AI circles — top right & bottom left */}
+      <motion.div
+        className="absolute"
+        style={{
+          top: '-5%', right: '-8%',
+          width: '500px', height: '500px',
+          background: 'radial-gradient(circle, hsl(220 70% 65% / 0.12) 0%, hsl(220 70% 55% / 0.06) 30%, hsl(260 55% 55% / 0.03) 55%, transparent 70%)',
+          borderRadius: '50%',
+          filter: 'blur(30px)',
+        }}
+        animate={{
+          scale: [1, 1.08, 0.96, 1],
+          rotate: [0, 15, -10, 0],
+          opacity: [0.7, 1, 0.8, 0.7],
+        }}
+        transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <motion.div
+        className="absolute"
+        style={{
+          top: '-5%', right: '-8%',
+          width: '380px', height: '380px',
+          background: 'radial-gradient(circle, hsl(220 80% 70% / 0.08) 0%, transparent 60%)',
+          borderRadius: '50%',
+          filter: 'blur(15px)',
+          border: '1px solid hsl(220 70% 65% / 0.06)',
+        }}
+        animate={{
+          scale: [1, 0.92, 1.06, 1],
+          rotate: [0, -20, 12, 0],
+        }}
+        transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+      />
+
+      <motion.div
+        className="absolute"
+        style={{
+          bottom: '-8%', left: '-6%',
+          width: '450px', height: '450px',
+          background: 'radial-gradient(circle, hsl(260 55% 60% / 0.10) 0%, hsl(260 55% 55% / 0.05) 30%, hsl(220 70% 55% / 0.02) 55%, transparent 70%)',
+          borderRadius: '50%',
+          filter: 'blur(30px)',
+        }}
+        animate={{
+          scale: [1, 1.06, 0.94, 1],
+          rotate: [0, -12, 18, 0],
+          opacity: [0.6, 0.9, 0.7, 0.6],
+        }}
+        transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut', delay: 3 }}
+      />
+      <motion.div
+        className="absolute"
+        style={{
+          bottom: '-8%', left: '-6%',
+          width: '320px', height: '320px',
+          background: 'radial-gradient(circle, hsl(260 60% 65% / 0.07) 0%, transparent 55%)',
+          borderRadius: '50%',
+          filter: 'blur(12px)',
+          border: '1px solid hsl(260 55% 60% / 0.05)',
+        }}
+        animate={{
+          scale: [1, 1.08, 0.93, 1],
+          rotate: [0, 15, -8, 0],
+        }}
+        transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut', delay: 4 }}
+      />
+
       {/* Large glow blobs — branding spots */}
       <motion.div
         className="absolute w-[900px] h-[700px] rounded-full"
