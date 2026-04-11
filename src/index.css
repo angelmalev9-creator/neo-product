@@ -52,12 +52,12 @@
     --neo-cyan-glow: 192 85% 62%;
     --neo-indigo: 210 60% 45%;
     --neo-teal: 185 70% 45%;
-    --neo-dark: 230 40% 8%;
-    --neo-dark-lighter: 232 32% 14%;
-    --neo-glass: 232 28% 18%;
-    --neo-glass-border: 230 16% 30%;
-    --neo-text-muted: 225 10% 55%;
-    --neo-text-bright: 220 15% 96%;
+    --neo-dark: 220 50% 18%;
+    --neo-dark-lighter: 215 30% 92%;
+    --neo-glass: 210 40% 98%;
+    --neo-glass-border: 215 25% 80%;
+    --neo-text-muted: 220 15% 45%;
+    --neo-text-bright: 220 60% 18%;
     --neo-success: 142 85% 52%;
     --neo-success-glow: 142 92% 60%;
     --neo-warning: 45 100% 60%;
