@@ -20,7 +20,7 @@ const RatingBadge = () => (
       <Star className="w-3 h-3 text-primary/40" />
     </div>
     <span className="text-foreground/80 text-[10px] sm:text-xs font-semibold tracking-[0.08em] uppercase">
-      ★ 4.9/5 — използва се от 200+ български бизнеса
+      4.9/5 — ИЗПОЛЗВА СЕ ОТ 200+ БЪЛГАРСКИ БИЗНЕСА
     </span>
   </motion.div>
 );
@@ -174,7 +174,7 @@ const WidgetContent = () => (
 /* ───── Hero ───── */
 const Hero = () => {
   return (
-    <section className="relative min-h-[calc(100svh-5rem)] flex items-center neo-section-spacing overflow-hidden px-4 sm:px-0">
+    <section className="relative min-h-[calc(100svh-5rem)] flex items-center neo-section-spacing overflow-hidden px-4 sm:px-0 border-primary-foreground">
       <div className="absolute inset-0 neo-grid-bg opacity-5 pointer-events-none" />
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 relative z-10 w-full">
@@ -190,7 +190,7 @@ const Hero = () => {
               className="text-3xl sm:text-4xl lg:text-6xl font-black text-foreground tracking-tight mb-4 sm:mb-5 leading-[1.08] font-mono"
             >
               AI рецепционист, който{' '}
-              <span className="neo-gradient-text shadow-inner">вдига вместо Вас.</span>
+              <span className="neo-gradient-text shadow-inner opacity-100 text-secondary">вдига вместо Вас.</span>
             </motion.h1>
 
             <motion.p

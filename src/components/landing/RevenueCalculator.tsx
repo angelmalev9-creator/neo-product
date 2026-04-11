@@ -33,7 +33,7 @@ const RevenueCalculator = () => {
           </p>
         </div>
 
-        <div className="max-w-3xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 items-start border-sidebar">
+        <div className="max-w-3xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 items-start border-sidebar opacity-100">
           {/* Sliders */}
           <motion.div
             initial={{ opacity: 0, x: -16 }}
