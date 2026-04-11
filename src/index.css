@@ -265,9 +265,9 @@
   /* ── Glass effects — simplified, no backdrop-blur for performance ── */
   .neo-glass {
     @apply border rounded-xl relative overflow-hidden;
-    background: linear-gradient(145deg, hsl(240 29% 12% / 0.96) 0%, hsl(252 100% 6% / 0.94) 100%);
-    border-color: hsl(240 10% 31% / 0.5);
-    box-shadow: 0 8px 32px hsl(252 100% 2% / 0.5), inset 0 1px 0 0 hsl(0 0% 100% / 0.04);
+    background: linear-gradient(145deg, hsl(230 29% 12% / 0.96) 0%, hsl(230 40% 6% / 0.94) 100%);
+    border-color: hsl(230 10% 31% / 0.5);
+    box-shadow: 0 8px 32px hsl(230 40% 2% / 0.5), inset 0 1px 0 0 hsl(0 0% 100% / 0.04);
   }
   .neo-glass::before {
     content: '';
@@ -280,16 +280,16 @@
 
   .neo-glass-subtle {
     @apply border rounded-lg;
-    background: linear-gradient(145deg, hsl(240 27% 13% / 0.85) 0%, hsl(252 100% 6% / 0.7) 100%);
-    border-color: hsl(240 10% 31% / 0.4);
-    box-shadow: 0 4px 16px hsl(252 100% 2% / 0.3);
+    background: linear-gradient(145deg, hsl(230 27% 13% / 0.85) 0%, hsl(230 40% 6% / 0.7) 100%);
+    border-color: hsl(230 10% 31% / 0.4);
+    box-shadow: 0 4px 16px hsl(230 40% 2% / 0.3);
   }
 
   .neo-glass-premium {
     @apply border rounded-2xl relative overflow-hidden;
-    background: linear-gradient(145deg, hsl(240 29% 12% / 0.8) 0%, hsl(240 29% 10% / 0.7) 100%);
+    background: linear-gradient(145deg, hsl(230 29% 12% / 0.8) 0%, hsl(230 29% 10% / 0.7) 100%);
     border-color: hsl(0 0% 100% / 0.07);
-    box-shadow: 0 1px 0 0 hsl(0 0% 100% / 0.05) inset, 0 16px 40px hsl(252 100% 2% / 0.4);
+    box-shadow: 0 1px 0 0 hsl(0 0% 100% / 0.05) inset, 0 16px 40px hsl(230 40% 2% / 0.4);
   }
   .neo-glass-premium::before {
     content: '';
@@ -309,11 +309,11 @@
 
   /* ── Glow effects — using box-shadow only ── */
   .neo-glow {
-    box-shadow: 0 0 20px hsl(var(--neo-blue) / 0.3), 0 0 40px hsl(var(--neo-blue) / 0.15), 0 16px 32px hsl(252 100% 2% / 0.5);
+    box-shadow: 0 0 20px hsl(var(--neo-blue) / 0.3), 0 0 40px hsl(var(--neo-blue) / 0.15), 0 16px 32px hsl(230 40% 2% / 0.5);
     transition: box-shadow 0.3s ease, transform 0.3s ease;
   }
   .neo-glow:hover {
-    box-shadow: 0 0 30px hsl(var(--neo-blue) / 0.4), 0 0 60px hsl(var(--neo-blue) / 0.2), 0 24px 48px hsl(252 100% 2% / 0.6);
+    box-shadow: 0 0 30px hsl(var(--neo-blue) / 0.4), 0 0 60px hsl(var(--neo-blue) / 0.2), 0 24px 48px hsl(230 40% 2% / 0.6);
     transform: translateY(-2px);
   }
 
