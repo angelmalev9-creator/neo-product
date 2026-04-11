@@ -7,9 +7,9 @@
 
 @layer base {
   :root {
-    /* Base: deep night */
-    --background: 230 40% 8%;
-    --foreground: 220 15% 96%;
+    /* Base: vibrant blue gradient (applied via Index bg) */
+    --background: 220 70% 32%;
+    --foreground: 210 20% 98%;
 
     /* Card: elevated surface */
     --card: 232 32% 14%;
