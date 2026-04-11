@@ -42,8 +42,8 @@ const Navigation = () => {
       <div 
         className={`mx-auto max-w-6xl border transition-all duration-500 rounded-full bg-background/90 backdrop-blur-sm border-border/40 ${
           isScrolled 
-            ? 'shadow-[0_4px_30px_hsl(220_15%_70%/0.15)]' 
-            : 'shadow-[0_2px_20px_hsl(220_15%_70%/0.08)]'
+            ? 'shadow-[0_4px_30px_hsl(0_0%_0%/0.4)]' 
+            : 'shadow-[0_2px_20px_hsl(0_0%_0%/0.2)]'
         }`}
       >
         <div className="flex items-center justify-between h-12 sm:h-12 lg:h-14 px-4 sm:px-4 lg:px-6">
@@ -106,7 +106,7 @@ const Navigation = () => {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden mx-auto max-w-6xl mt-2 rounded-2xl bg-background/95 backdrop-blur-sm border border-border/40 shadow-[0_8px_40px_hsl(220_15%_70%/0.15)] overflow-hidden">
+        <div className="md:hidden mx-auto max-w-6xl mt-2 rounded-2xl bg-background/95 backdrop-blur-sm border border-border/40 shadow-[0_8px_40px_hsl(0_0%_0%/0.4)] overflow-hidden">
           <div className="py-3 px-5">
             {navLinks.map((link) => (
               <button 

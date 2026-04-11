@@ -3,14 +3,14 @@ import { motion } from 'framer-motion';
 const AnimatedBackground = () => {
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {/* Soft pastel aurora blobs */}
+      {/* Warm orange aurora blob */}
       <motion.div
-        className="absolute w-[800px] h-[600px] rounded-full opacity-[0.12]"
+        className="absolute w-[800px] h-[600px] rounded-full opacity-[0.08]"
         style={{
-          background: 'radial-gradient(ellipse at center, hsl(172 42% 60%), transparent 70%)',
+          background: 'radial-gradient(ellipse at center, hsl(19 55% 50%), transparent 70%)',
           top: '-10%',
           left: '10%',
-          filter: 'blur(100px)',
+          filter: 'blur(120px)',
         }}
         animate={{
           x: [0, 80, -40, 0],
@@ -19,13 +19,14 @@ const AnimatedBackground = () => {
         }}
         transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
       />
+      {/* Warm chestnut blob */}
       <motion.div
-        className="absolute w-[600px] h-[500px] rounded-full opacity-[0.08]"
+        className="absolute w-[600px] h-[500px] rounded-full opacity-[0.06]"
         style={{
-          background: 'radial-gradient(ellipse at center, hsl(350 45% 72%), transparent 70%)',
+          background: 'radial-gradient(ellipse at center, hsl(16 14% 56%), transparent 70%)',
           bottom: '5%',
           right: '5%',
-          filter: 'blur(100px)',
+          filter: 'blur(120px)',
         }}
         animate={{
           x: [0, -60, 40, 0],
@@ -34,13 +35,14 @@ const AnimatedBackground = () => {
         }}
         transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
       />
+      {/* Subtle brown blob */}
       <motion.div
-        className="absolute w-[500px] h-[400px] rounded-full opacity-[0.06]"
+        className="absolute w-[500px] h-[400px] rounded-full opacity-[0.04]"
         style={{
-          background: 'radial-gradient(ellipse at center, hsl(260 35% 70%), transparent 70%)',
+          background: 'radial-gradient(ellipse at center, hsl(18 9% 40%), transparent 70%)',
           top: '40%',
           left: '50%',
-          filter: 'blur(110px)',
+          filter: 'blur(130px)',
         }}
         animate={{
           x: [0, 50, -70, 0],
@@ -54,14 +56,14 @@ const AnimatedBackground = () => {
       <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="line1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="hsl(172 42% 50%)" stopOpacity="0" />
-            <stop offset="50%" stopColor="hsl(172 42% 50%)" stopOpacity="0.08" />
-            <stop offset="100%" stopColor="hsl(172 42% 50%)" stopOpacity="0" />
+            <stop offset="0%" stopColor="hsl(19 55% 46%)" stopOpacity="0" />
+            <stop offset="50%" stopColor="hsl(19 55% 46%)" stopOpacity="0.08" />
+            <stop offset="100%" stopColor="hsl(19 55% 46%)" stopOpacity="0" />
           </linearGradient>
           <linearGradient id="line2" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="hsl(350 45% 65%)" stopOpacity="0" />
-            <stop offset="50%" stopColor="hsl(350 45% 65%)" stopOpacity="0.06" />
-            <stop offset="100%" stopColor="hsl(350 45% 65%)" stopOpacity="0" />
+            <stop offset="0%" stopColor="hsl(16 14% 56%)" stopOpacity="0" />
+            <stop offset="50%" stopColor="hsl(16 14% 56%)" stopOpacity="0.06" />
+            <stop offset="100%" stopColor="hsl(16 14% 56%)" stopOpacity="0" />
           </linearGradient>
         </defs>
         <motion.line
@@ -83,7 +85,7 @@ const AnimatedBackground = () => {
         <motion.circle
           cx="75%" cy="25%" r="120"
           fill="none"
-          stroke="hsl(172 42% 50%)"
+          stroke="hsl(19 55% 46%)"
           strokeWidth="0.5"
           strokeOpacity="0.06"
           initial={{ scale: 0, opacity: 0 }}
@@ -93,7 +95,7 @@ const AnimatedBackground = () => {
         <motion.circle
           cx="25%" cy="70%" r="80"
           fill="none"
-          stroke="hsl(260 35% 65%)"
+          stroke="hsl(16 14% 56%)"
           strokeWidth="0.5"
           strokeOpacity="0.05"
           initial={{ scale: 0, opacity: 0 }}
@@ -106,7 +108,7 @@ const AnimatedBackground = () => {
       {[...Array(6)].map((_, i) => (
         <motion.div
           key={i}
-          className="absolute w-1 h-1 rounded-full bg-primary/15"
+          className="absolute w-1 h-1 rounded-full bg-primary/20"
           style={{
             top: `${15 + i * 14}%`,
             left: `${10 + i * 15}%`,
@@ -114,7 +116,7 @@ const AnimatedBackground = () => {
           animate={{
             y: [0, -30, 10, 0],
             x: [0, 15, -10, 0],
-            opacity: [0.1, 0.25, 0.1],
+            opacity: [0.1, 0.3, 0.1],
             scale: [1, 1.5, 1],
           }}
           transition={{
@@ -128,11 +130,11 @@ const AnimatedBackground = () => {
 
       {/* Subtle grid overlay */}
       <div
-        className="absolute inset-0 opacity-[0.02]"
+        className="absolute inset-0 opacity-[0.015]"
         style={{
           backgroundImage: `
-            linear-gradient(hsl(172 42% 40% / 0.25) 1px, transparent 1px),
-            linear-gradient(90deg, hsl(172 42% 40% / 0.25) 1px, transparent 1px)
+            linear-gradient(hsl(19 55% 46% / 0.3) 1px, transparent 1px),
+            linear-gradient(90deg, hsl(19 55% 46% / 0.3) 1px, transparent 1px)
           `,
           backgroundSize: '60px 60px',
         }}
