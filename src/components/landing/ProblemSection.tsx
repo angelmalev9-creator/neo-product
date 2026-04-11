@@ -8,7 +8,7 @@ const stats = [
     number: '62%',
     text: 'от клиентите, които не се свържат от първия път, звънят на конкурент.',
     color: 'text-primary',
-    bg: 'bg-primary/10',
+    bg: 'bg-secondary',
     border: 'border-primary/20',
   },
   {
@@ -42,7 +42,7 @@ const ProblemSection = () => {
         <div className="text-center mb-10">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-foreground mb-3 font-mono">
             Всяко пропуснато обаждане е{' '}
-            <span className="text-primary">изгубен клиент.</span>
+            <span className="text-secondary">изгубен клиент.</span>
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
             Проучване на NEO сред 200 малки бизнеса в България показа:
@@ -56,7 +56,7 @@ const ProblemSection = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={isVisible ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.4, delay: i * 0.12 }}
-              className="relative rounded-2xl border border-border/15 bg-card/30 p-6 text-center"
+              className="relative rounded-2xl border bg-card/30 p-6 text-center border-secondary"
             >
               <div className={`w-12 h-12 rounded-xl ${stat.bg} border ${stat.border} flex items-center justify-center mx-auto mb-4`}>
                 <stat.icon className={`w-5 h-5 ${stat.color}`} />

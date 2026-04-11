@@ -20,8 +20,8 @@ const TrustedCompaniesMarquee = () => {
             transition={{ delay: 0.8 + i * 0.1, duration: 0.5 }}
             className="text-center py-3 px-2 rounded-xl border border-border/8 bg-card/20"
           >
-            <stat.icon className="w-3.5 h-3.5 text-primary/50 mx-auto mb-1.5" />
-            <p className="text-lg sm:text-xl font-black text-primary mb-0.5">{stat.value}</p>
+            <stat.icon className="w-3.5 h-3.5 mx-auto mb-1.5 border-primary-foreground text-primary-foreground" />
+            <p className="text-lg sm:text-xl font-black mb-0.5 text-primary-foreground">{stat.value}</p>
             <p className="text-[10px] text-foreground/75 font-medium">{stat.label}</p>
           </motion.div>
         ))}
