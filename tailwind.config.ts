@@ -35,7 +35,7 @@ export default {
           dark: "hsl(var(--neo-dark))", "dark-lighter": "hsl(var(--neo-dark-lighter))",
           glass: "hsl(var(--neo-glass))", "glass-border": "hsl(var(--neo-glass-border))",
           "text-muted": "hsl(var(--neo-text-muted))", success: "hsl(var(--neo-success))",
-          warning: "hsl(var(--neo-warning))", purple: "hsl(var(--neo-purple))", cyan: "hsl(var(--neo-cyan))",
+          warning: "hsl(var(--neo-warning))", teal: "hsl(var(--neo-teal))", cyan: "hsl(var(--neo-cyan))",
         },
         "brand-blue": {
           50: "hsl(220 80% 96%)", 100: "hsl(220 75% 88%)", 200: "hsl(220 72% 78%)",
@@ -43,11 +43,11 @@ export default {
           600: "hsl(220 65% 48%)", 700: "hsl(220 60% 38%)", 800: "hsl(220 65% 28%)",
           900: "hsl(220 60% 20%)",
         },
-        "deep-purple": {
-          50: "hsl(260 60% 95%)", 100: "hsl(260 50% 85%)", 200: "hsl(260 48% 75%)",
-          300: "hsl(260 50% 65%)", 400: "hsl(260 52% 58%)", 500: "hsl(260 55% 55%)",
-          600: "hsl(260 55% 48%)", 700: "hsl(260 50% 38%)", 800: "hsl(260 55% 28%)",
-          900: "hsl(260 50% 20%)",
+        "deep-cyan": {
+          50: "hsl(192 60% 95%)", 100: "hsl(192 50% 85%)", 200: "hsl(192 48% 75%)",
+          300: "hsl(192 50% 65%)", 400: "hsl(192 52% 58%)", 500: "hsl(192 55% 50%)",
+          600: "hsl(192 55% 42%)", 700: "hsl(192 50% 35%)", 800: "hsl(192 55% 28%)",
+          900: "hsl(192 50% 20%)",
         },
         "surface": {
           50: "hsl(225 10% 91%)", 100: "hsl(225 10% 73%)", 200: "hsl(225 10% 61%)",
@@ -81,7 +81,7 @@ export default {
         "neo-gradient": "linear-gradient(145deg, hsl(230 40% 8%) 0%, hsl(232 32% 12%) 100%)",
         "neo-card-gradient": "linear-gradient(145deg, hsl(232 32% 12% / 0.95) 0%, hsl(230 40% 8% / 0.9) 100%)",
         "neo-blue-gradient": "linear-gradient(135deg, hsl(var(--neo-blue)) 0%, hsl(var(--neo-blue-glow)) 100%)",
-        "neo-warmth": "linear-gradient(135deg, hsl(220 70% 55%) 0%, hsl(260 55% 55%) 100%)",
+        "neo-warmth": "linear-gradient(135deg, hsl(220 70% 55%) 0%, hsl(192 80% 50%) 100%)",
         "neo-premium": "linear-gradient(135deg, hsl(var(--neo-blue)) 0%, hsl(var(--neo-cyan)) 50%, hsl(var(--neo-blue)) 100%)",
         "neo-radial": "radial-gradient(ellipse at center, hsl(var(--primary) / 0.15) 0%, transparent 70%)",
       },

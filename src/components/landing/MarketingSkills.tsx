@@ -18,7 +18,7 @@ const MarketingSkills = () => {
 
   const skills = [
     { icon: Target, title: t('marketingSkills.skill1Title'), description: t('marketingSkills.skill1Desc'), color: 'from-rose-500 to-red-600', bg: 'bg-rose-500/10', text: 'text-rose-400' },
-    { icon: MessageSquareText, title: t('marketingSkills.skill2Title'), description: t('marketingSkills.skill2Desc'), color: 'from-violet-500 to-purple-600', bg: 'bg-violet-500/10', text: 'text-violet-400' },
+    { icon: MessageSquareText, title: t('marketingSkills.skill2Title'), description: t('marketingSkills.skill2Desc'), color: 'from-cyan-500 to-teal-600', bg: 'bg-cyan-500/10', text: 'text-cyan-400' },
     { icon: UserCheck, title: t('marketingSkills.skill3Title'), description: t('marketingSkills.skill3Desc'), color: 'from-emerald-500 to-green-600', bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
     { icon: TrendingUp, title: t('marketingSkills.skill4Title'), description: t('marketingSkills.skill4Desc'), color: 'from-amber-500 to-orange-600', bg: 'bg-amber-500/10', text: 'text-amber-400' },
     { icon: Sparkles, title: t('marketingSkills.skill5Title'), description: t('marketingSkills.skill5Desc'), color: 'from-pink-500 to-rose-600', bg: 'bg-pink-500/10', text: 'text-pink-400' },

@@ -123,9 +123,9 @@ const ContactsPreview = () => (
 
 const AIPreview = () => (
   <div className="space-y-3">
-    <div className="px-3 py-2.5 rounded-lg bg-violet-500/5 border border-violet-500/10">
+    <div className="px-3 py-2.5 rounded-lg bg-cyan-500/5 border border-cyan-500/10">
       <div className="flex items-center gap-2 mb-2">
-        <Brain className="w-3.5 h-3.5 text-violet-400" />
+        <Brain className="w-3.5 h-3.5 text-cyan-400" />
         <span className="text-[10px] font-semibold text-foreground">Контекстно разбиране</span>
       </div>
       <div className="space-y-1.5">
@@ -136,15 +136,15 @@ const AIPreview = () => (
         ].map((item, i) => (
           <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 + i * 0.3 }}
             className="px-2.5 py-1.5 rounded-md bg-card/50 border border-border/8">
-            <p className="text-[9px] text-violet-400 font-medium">{item.q}</p>
+            <p className="text-[9px] text-cyan-400 font-medium">{item.q}</p>
             <p className="text-[8px] text-foreground/40 mt-0.5">→ {item.a}</p>
           </motion.div>
         ))}
       </div>
     </div>
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }}
-      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-violet-500/5 border border-violet-500/10">
-      <Zap className="w-3 h-3 text-violet-400" />
+      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-cyan-500/5 border border-cyan-500/10">
+      <Zap className="w-3 h-3 text-cyan-400" />
       <span className="text-[8px] text-foreground/40">Обучен на Вашия бизнес контекст</span>
     </motion.div>
   </div>
@@ -272,9 +272,9 @@ const features = [
     icon: Brain,
     title: 'Разбира от половин дума',
     desc: 'Клиентите говорят нормално, без да се чувстват, че говорят с робот.',
-    color: 'text-violet-400',
-    bg: 'bg-violet-500/10',
-    border: 'border-violet-500/20',
+    color: 'text-cyan-400',
+    bg: 'bg-cyan-500/10',
+    border: 'border-cyan-500/20',
     liveLabel: 'Обучен на Вашия бизнес',
   },
   {

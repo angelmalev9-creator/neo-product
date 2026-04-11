@@ -2,8 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* NEO AI — Blue/Purple AI Design System */
-/* Deep Night | Electric Blue | Violet Accent */
+/* NEO AI — Blue/Cyan AI Design System */
+/* Deep Night | Electric Blue | Cyan Accent */
 
 @layer base {
   :root {
@@ -30,8 +30,8 @@
     --muted: 232 20% 20%;
     --muted-foreground: 225 10% 55%;
 
-    /* ACCENT: vivid violet */
-    --accent: 260 55% 55%;
+    /* ACCENT: vivid cyan */
+    --accent: 192 80% 50%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 70% 55%;
@@ -44,14 +44,14 @@
 
     --radius: 0.75rem;
 
-    /* NEO Brand Palette — AI blue/purple */
+    /* NEO Brand Palette — AI blue/cyan */
     --neo-blue: 220 70% 55%;
     --neo-blue-glow: 220 75% 68%;
     --neo-blue-dark: 220 65% 42%;
-    --neo-cyan: 250 50% 55%;
-    --neo-cyan-glow: 250 55% 68%;
-    --neo-indigo: 240 50% 45%;
-    --neo-purple: 280 55% 55%;
+    --neo-cyan: 192 80% 50%;
+    --neo-cyan-glow: 192 85% 62%;
+    --neo-indigo: 210 60% 45%;
+    --neo-teal: 185 70% 45%;
     --neo-dark: 230 40% 8%;
     --neo-dark-lighter: 232 32% 14%;
     --neo-glass: 232 28% 18%;
@@ -63,7 +63,7 @@
     --neo-warning: 45 100% 60%;
     --neo-gold: 40 100% 60%;
     --neo-orange: 20 100% 62%;
-
+    
     /* Sidebar */
     --sidebar-background: 232 32% 11%;
     --sidebar-foreground: 220 15% 96%;
@@ -88,7 +88,7 @@
     --secondary-foreground: 230 30% 18%;
     --muted: 220 8% 85%;
     --muted-foreground: 225 10% 38%;
-    --accent: 260 50% 48%;
+    --accent: 192 75% 42%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 65% 48%;
     --destructive-foreground: 0 0% 100%;
@@ -98,7 +98,7 @@
     --neo-blue: 220 65% 48%;
     --neo-blue-glow: 220 70% 60%;
     --neo-blue-dark: 220 60% 38%;
-    --neo-cyan: 250 45% 48%;
+    --neo-cyan: 192 70% 42%;
     --neo-dark: 220 15% 96%;
     --neo-dark-lighter: 220 10% 92%;
     --neo-glass: 0 0% 100%;
@@ -130,7 +130,7 @@
     --secondary-foreground: 220 15% 96%;
     --muted: 232 20% 20%;
     --muted-foreground: 225 10% 55%;
-    --accent: 260 55% 55%;
+    --accent: 192 80% 50%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
@@ -171,8 +171,8 @@
     font-size: 13px;
     font-feature-settings: 'kern' 1, 'liga' 1;
     background:
-      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(355 78% 56% / 0.08) 0%, transparent 50%),
-      radial-gradient(ellipse 60% 40% at 100% 80%, hsl(356 73% 44% / 0.04) 0%, transparent 40%),
+      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(220 70% 55% / 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 40% at 100% 80%, hsl(192 80% 50% / 0.04) 0%, transparent 40%),
       hsl(var(--background));
     min-height: 100vh;
     overflow-x: hidden;
@@ -184,7 +184,7 @@
       font-size: 15px;
       line-height: 1.55;
       background:
-        radial-gradient(ellipse 120% 45% at 50% -15%, hsl(355 78% 56% / 0.10) 0%, transparent 50%),
+        radial-gradient(ellipse 120% 45% at 50% -15%, hsl(220 70% 55% / 0.08) 0%, transparent 50%),
         hsl(var(--background));
     }
   }
@@ -265,9 +265,9 @@
   /* ── Glass effects — simplified, no backdrop-blur for performance ── */
   .neo-glass {
     @apply border rounded-xl relative overflow-hidden;
-    background: linear-gradient(145deg, hsl(240 29% 12% / 0.96) 0%, hsl(252 100% 6% / 0.94) 100%);
-    border-color: hsl(240 10% 31% / 0.5);
-    box-shadow: 0 8px 32px hsl(252 100% 2% / 0.5), inset 0 1px 0 0 hsl(0 0% 100% / 0.04);
+    background: linear-gradient(145deg, hsl(230 29% 12% / 0.96) 0%, hsl(230 40% 6% / 0.94) 100%);
+    border-color: hsl(230 10% 31% / 0.5);
+    box-shadow: 0 8px 32px hsl(230 40% 2% / 0.5), inset 0 1px 0 0 hsl(0 0% 100% / 0.04);
   }
   .neo-glass::before {
     content: '';
@@ -280,16 +280,16 @@
 
   .neo-glass-subtle {
     @apply border rounded-lg;
-    background: linear-gradient(145deg, hsl(240 27% 13% / 0.85) 0%, hsl(252 100% 6% / 0.7) 100%);
-    border-color: hsl(240 10% 31% / 0.4);
-    box-shadow: 0 4px 16px hsl(252 100% 2% / 0.3);
+    background: linear-gradient(145deg, hsl(230 27% 13% / 0.85) 0%, hsl(230 40% 6% / 0.7) 100%);
+    border-color: hsl(230 10% 31% / 0.4);
+    box-shadow: 0 4px 16px hsl(230 40% 2% / 0.3);
   }
 
   .neo-glass-premium {
     @apply border rounded-2xl relative overflow-hidden;
-    background: linear-gradient(145deg, hsl(240 29% 12% / 0.8) 0%, hsl(240 29% 10% / 0.7) 100%);
+    background: linear-gradient(145deg, hsl(230 29% 12% / 0.8) 0%, hsl(230 29% 10% / 0.7) 100%);
     border-color: hsl(0 0% 100% / 0.07);
-    box-shadow: 0 1px 0 0 hsl(0 0% 100% / 0.05) inset, 0 16px 40px hsl(252 100% 2% / 0.4);
+    box-shadow: 0 1px 0 0 hsl(0 0% 100% / 0.05) inset, 0 16px 40px hsl(230 40% 2% / 0.4);
   }
   .neo-glass-premium::before {
     content: '';
@@ -309,11 +309,11 @@
 
   /* ── Glow effects — using box-shadow only ── */
   .neo-glow {
-    box-shadow: 0 0 20px hsl(var(--neo-blue) / 0.3), 0 0 40px hsl(var(--neo-blue) / 0.15), 0 16px 32px hsl(252 100% 2% / 0.5);
+    box-shadow: 0 0 20px hsl(var(--neo-blue) / 0.3), 0 0 40px hsl(var(--neo-blue) / 0.15), 0 16px 32px hsl(230 40% 2% / 0.5);
     transition: box-shadow 0.3s ease, transform 0.3s ease;
   }
   .neo-glow:hover {
-    box-shadow: 0 0 30px hsl(var(--neo-blue) / 0.4), 0 0 60px hsl(var(--neo-blue) / 0.2), 0 24px 48px hsl(252 100% 2% / 0.6);
+    box-shadow: 0 0 30px hsl(var(--neo-blue) / 0.4), 0 0 60px hsl(var(--neo-blue) / 0.2), 0 24px 48px hsl(230 40% 2% / 0.6);
     transform: translateY(-2px);
   }
 

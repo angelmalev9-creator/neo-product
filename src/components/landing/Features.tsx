@@ -8,7 +8,7 @@ const Features = () => {
   const { t } = useTranslation();
   
   const features = [
-    { icon: Brain, title: t('features.feature1Title'), desc: t('features.feature1Desc'), color: 'text-violet-400' },
+    { icon: Brain, title: t('features.feature1Title'), desc: t('features.feature1Desc'), color: 'text-cyan-400' },
     { icon: Mic, title: t('features.feature2Title'), desc: t('features.feature2Desc'), color: 'text-primary' },
     { icon: Clock, title: t('features.feature3Title'), desc: t('features.feature3Desc'), color: 'text-emerald-400' },
     { icon: Globe, title: t('features.feature4Title'), desc: t('features.feature4Desc'), color: 'text-cyan-400' },
