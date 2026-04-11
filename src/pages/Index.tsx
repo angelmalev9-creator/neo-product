@@ -28,14 +28,14 @@ const Index = () => {
 
   return (
     <div className="min-h-screen text-foreground relative flex flex-col items-center">
-      {/* Soft pastel aurora background */}
+      {/* Warm dark aurora background */}
       <AnimatedBackground />
 
-      {/* Ambient gradients — warm pastel tones */}
+      {/* Ambient gradients — warm dark tones */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-background" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-[60vh] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,hsl(172_42%_50%/0.06),transparent_70%)]" />
-        <div className="absolute bottom-0 left-0 w-[60%] h-[40vh] bg-[radial-gradient(ellipse_80%_60%_at_0%_100%,hsl(350_45%_65%/0.04),transparent_60%)]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-[60vh] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,hsl(19_55%_46%/0.08),transparent_70%)]" />
+        <div className="absolute bottom-0 left-0 w-[60%] h-[40vh] bg-[radial-gradient(ellipse_80%_60%_at_0%_100%,hsl(16_14%_56%/0.05),transparent_60%)]" />
       </div>
 
       <div className="neo-scaled-content pt-14 sm:pt-16 lg:pt-20 pb-16 sm:pb-12 w-full">
