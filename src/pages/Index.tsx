@@ -33,10 +33,15 @@ const Index = () => {
     <div className="min-h-screen text-foreground relative flex flex-col items-center">
       <AnimatedBackground />
 
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(220_70%_28%)] via-[hsl(210_75%_38%)] to-[hsl(192_80%_45%)]" />
-        <div className="absolute top-0 right-0 w-[60%] h-[50vh] bg-[radial-gradient(ellipse_70%_60%_at_80%_10%,hsl(192_85%_55%/0.3),transparent_70%)]" />
-        <div className="absolute bottom-0 left-0 w-[50%] h-[40vh] bg-[radial-gradient(ellipse_80%_60%_at_10%_90%,hsl(220_70%_22%/0.4),transparent_60%)]" />
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        {/* Deep navy base */}
+        <div className="absolute inset-0 bg-[hsl(220_55%_8%)]" />
+        {/* Glowing arc — sweeping light from top-right */}
+        <div className="absolute -top-[30%] -right-[20%] w-[120%] h-[120%] rounded-[50%] bg-[radial-gradient(ellipse_60%_50%_at_70%_30%,hsl(200_80%_45%/0.35),hsl(210_70%_30%/0.12)_40%,transparent_70%)]" />
+        {/* Secondary softer glow — bottom-left */}
+        <div className="absolute -bottom-[20%] -left-[15%] w-[80%] h-[80%] rounded-[50%] bg-[radial-gradient(ellipse_70%_60%_at_30%_70%,hsl(210_65%_35%/0.18),transparent_65%)]" />
+        {/* Subtle vignette */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,transparent_30%,hsl(220_55%_5%/0.5)_100%)]" />
       </div>
 
       <div className="neo-scaled-content pt-14 sm:pt-16 lg:pt-20 pb-16 sm:pb-12 w-full">
