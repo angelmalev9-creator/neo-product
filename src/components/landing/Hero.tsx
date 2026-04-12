@@ -111,7 +111,7 @@ const DashboardContent = () => (
 /* ───── Widget Content (inside iPhone) ───── */
 const WidgetContent = () => (
   <div className="flex flex-col">
-    <div className="flex items-center gap-2 px-3 py-2 border-b border-border/10 bg-gradient-to-r from-primary/8 to-transparent">
+    <div className="flex items-center gap-2 px-3 py-2 border-b bg-gradient-to-r from-primary/8 to-transparent border-border">
       <img src={neoLogoImg} alt="NEO" className="w-6 h-6 rounded-lg object-cover shadow-sm shadow-primary/20" />
       <div className="flex-1">
         <p className="text-[10px] font-bold text-foreground">NEO Асистент</p>
