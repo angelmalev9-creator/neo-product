@@ -66,7 +66,7 @@ const HowItWorks = () => {
               initial={{ opacity: 0, y: 24 }}
               animate={isVisible ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: i * 0.15 }}
-              className="flex-col text-center group flex items-center justify-center px-[24px] py-[24px] rounded-2xl border border-secondary bg-[sidebar-primary-foreground] bg-neo-blue"
+              className="flex-col text-center group flex items-center justify-center px-[24px] py-[24px] rounded-2xl border border-secondary bg-[sidebar-primary-foreground] bg-sidebar-accent"
             >
               <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl ${step.bg} border shadow-[0_0_30px_-5px_hsl(355_65%_52%/0.25)] flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300 border-secondary`}>
                 <step.icon className={`w-7 h-7 sm:w-8 sm:h-8 ${step.color}`} strokeWidth={1.5} />
