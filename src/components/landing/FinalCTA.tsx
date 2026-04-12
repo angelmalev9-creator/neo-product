@@ -22,10 +22,10 @@ const FinalCTA = () => {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_50%_50%,hsl(200_70%_40%/0.1),transparent_70%)] pointer-events-none" />
 
           <h2 className="relative text-3xl sm:text-4xl lg:text-5xl font-black text-primary-foreground mb-4 font-mono leading-tight">
-            Всеки ден, който чакате, е изгубени клиенти.
+            Всеки изминал ден губите несъзнателно клиенти без NEO
           </h2>
           <p className="relative text-sm sm:text-base text-muted-foreground mb-8">
-            Настройте NEO за 5 минути. Първите 14 дни са безплатни, без карта.
+            Създайте свой NEO Асистент в рамките на 5 минути, без технически знания или чужда намеса.
           </p>
           <Button
             asChild
