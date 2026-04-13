@@ -141,12 +141,15 @@ const Widget = () => {
       typedMessageAddedRef.current = null;
       return;
     }
-    // Filter out raw action_request JSON that leaks into messages
+    // Filter out raw action_request JSON that leaks into messages — show animation instead
     if (message.content && (
       message.content.startsWith('action_request:') ||
       message.content.startsWith('{"type":"action_request"') ||
       /^\s*\{[\s\S]*"action"\s*:\s*"(submit_form|make_reservation|book_slot)"/.test(message.content)
     )) {
+      setIsProcessingAction(true);
+      if (actionTimeoutRef.current) clearTimeout(actionTimeoutRef.current);
+      actionTimeoutRef.current = setTimeout(() => setIsProcessingAction(false), 20000);
       return;
     }
 
