@@ -481,7 +481,7 @@ const Widget = () => {
             />
           ))}
         </div>
-        <span className="text-[10px] text-muted-foreground">NEO обработва...</span>
+        <span className="text-[10px] text-muted-foreground">NEO попълва формата вместо Вас...</span>
       </div>
     </div>
   );
