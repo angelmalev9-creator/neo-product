@@ -1814,6 +1814,8 @@ export const useGeminiVoice = ({
   const vadBargeInFramesRef = useRef<number>(0);
   const lastCalendarCheckedDateRef = useRef("");
   const earlyActionFiredRef = useRef(false);
+  // ★ NEW: Flag to suppress audio playback when current turn is an action JSON or processing phrase
+  const actionTurnSilenceRef = useRef(false);
 
   // === VOICE NATURALNESS: Audio processing refs ===
   const reverbNodeRef = useRef<ConvolverNode | null>(null);
@@ -5648,9 +5650,12 @@ export const useGeminiVoice = ({
             } else {
               for (const part of modelTurn.parts) {
                 if (part.inlineData?.data) {
-                  cancelFillerWord(); // ← аудиото пристига → отмени filler
-                  clearSilenceWatchdog();
-                  playAudioChunk(part.inlineData.data);
+                  // ★ FIX: Skip audio playback if current turn is an action or processing phrase
+                  if (!actionTurnSilenceRef.current) {
+                    cancelFillerWord(); // ← аудиото пристига → отмени filler
+                    clearSilenceWatchdog();
+                    playAudioChunk(part.inlineData.data);
+                  }
                 }
                 if (part.text) {
                   const partText = String(part.text).trim();
@@ -5686,6 +5691,9 @@ export const useGeminiVoice = ({
                   if (looksLikeAction) {
                     // First chunk of an action JSON — replace buffer
                     currentResponseTextRef.current = partText;
+                    // ★ Silence audio for this entire turn — it's an action, not speech
+                    actionTurnSilenceRef.current = true;
+                    stopAssistantPlayback();
                     // ★ FIX 2.2: Fire book_slot САМО ако JSON-ът е пълен и валиден.
                     // При streaming partText може да е непълен → JSON.parse гърми тихо
                     // но earlyActionFiredRef вече е true → TURN_COMPLETE го пропуска → мълчание.
@@ -5706,12 +5714,23 @@ export const useGeminiVoice = ({
                     // ★ FIX: Continuation of a streaming JSON — concatenate WITHOUT space.
                     // A space inside a JSON key or value would corrupt the JSON.
                     currentResponseTextRef.current += partText;
+                    actionTurnSilenceRef.current = true;
                     console.log("[MODEL PART TEXT][JSON CONT]", currentResponseTextRef.current.slice(0, 200));
                   } else if (partText) {
+                    // ★ FIX: Check if this text matches action processing speech patterns
+                    // (e.g. "чудесно, имам всички данни", "един момент, изпращам")
+                    // If so, silence audio and suppress transcript
+                    if (ACTION_PROCESSING_SPEECH_PATTERNS.some(p => p.test(partText))) {
+                      actionTurnSilenceRef.current = true;
+                      stopAssistantPlayback();
+                      currentResponseTextRef.current = partText;
+                      console.log("[MODEL PART TEXT][ACTION SPEECH SUPPRESSED]", partText.slice(0, 200));
+                    } else {
                     if (currentResponseTextRef.current && !currentResponseTextRef.current.endsWith(" ")) {
                       currentResponseTextRef.current += " ";
                     }
                     currentResponseTextRef.current += partText;
+                    }
                   }
                 }
               }
@@ -5756,6 +5775,8 @@ export const useGeminiVoice = ({
           if (content.turnComplete || content.turn_complete) {
             const wasCanceled = assistantTurnCanceledRef.current;
             assistantTurnCanceledRef.current = false;
+            // ★ Reset action silence flag at turn boundary
+            actionTurnSilenceRef.current = false;
             const responseText = currentResponseTextRef.current.trim();
 
             if (responseText) {
