@@ -530,7 +530,8 @@ const Widget = () => {
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
-      <style>{`
+    {/* Widget uses darker background */}
+    <style>{`
         @keyframes bounce {
           0%, 80%, 100% { transform: scale(0); }
           40% { transform: scale(1); }
