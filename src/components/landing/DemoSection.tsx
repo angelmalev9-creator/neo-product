@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Globe, CheckCircle, ArrowRight, Zap, Shield } from "lucide-react";
+import { Globe, CheckCircle, ArrowRight, Zap, Shield, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useTranslation } from "react-i18next";
 import NeuralLoader from "./NeuralLoader";
+import { VOICES } from "@/components/dashboard/VoicePicker";
 
 interface DemoSectionProps {
   onTrainingComplete: (sessionId: string) => void;
@@ -203,12 +204,26 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
                     <p className="text-xs text-muted-foreground">{t("demo.ready")}</p>
                   </div>
                 </div>
-                <Button
-                  className="neo-btn-primary rounded-xl font-bold w-full sm:w-auto text-sm gap-2"
-                  onClick={() => document.getElementById("voice-interview")?.scrollIntoView({ behavior: "smooth" })}
-                >
-                  {t("demo.callNow")} <ArrowRight className="w-4 h-4" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  <select
+                    className="bg-background/60 border border-border/30 rounded-xl px-3 py-2.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 cursor-pointer"
+                    defaultValue="Enceladus"
+                    onChange={(e) => {
+                      // Store voice choice for VoiceInterview to pick up
+                      sessionStorage.setItem("neo_demo_voice", e.target.value);
+                    }}
+                  >
+                    {VOICES.map((v) => (
+                      <option key={v.id} value={v.id}>{v.name}</option>
+                    ))}
+                  </select>
+                  <Button
+                    className="neo-btn-primary rounded-xl font-bold w-full sm:w-auto text-sm gap-2"
+                    onClick={() => document.getElementById("voice-interview")?.scrollIntoView({ behavior: "smooth" })}
+                  >
+                    {t("demo.callNow")} <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             )}
           </div>
