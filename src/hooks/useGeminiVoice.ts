@@ -98,6 +98,37 @@ const TRANSIENT_CLICK_PEAK_MIN = 0.16;
 const TRANSIENT_CLICK_CREST_MIN = 14;
 const VAD_SPEECH_FRAMES_REQUIRED = 5;
 
+const ACTION_PROCESSING_SPEECH_PATTERNS = [
+  /чудесно.*имам всички данни/i,
+  /имам всички данни/i,
+  /преди да изпрат/i,
+  /един момент/i,
+  /момент.*(изпращ|подав|резервир|провер)/i,
+  /(изпращам|подавам|попълвам|обработвам).*(форм|запитван|заявк)/i,
+  /(проверявам|потвърждавам).*(наличност|резервац|заявк)/i,
+  /(резервирам|запазвам).*(час|резервац)/i,
+  /(готово|изпратено).*(запитван|заявк|форм)/i,
+];
+
+const looksLikeActionPayload = (text: string) => {
+  const clean = String(text || "").trim();
+
+  return (
+    clean.startsWith("action_request:") ||
+    (clean.startsWith("{") && clean.includes("action_request")) ||
+    /\{[\s\S]*"type"\s*:\s*"action_request"[\s\S]*\}/.test(clean) ||
+    /```\s*json[\s\S]*"action"\s*:\s*"(submit_form|make_reservation|book_slot)"/i.test(clean) ||
+    /```[\s\S]*"type"\s*:\s*"action_request"[\s\S]*```/.test(clean)
+  );
+};
+
+const isSilentActionTurnText = (text: string) => {
+  const clean = String(text || "").replace(/\s+/g, " ").trim();
+  if (!clean) return false;
+
+  return looksLikeActionPayload(clean) || ACTION_PROCESSING_SPEECH_PATTERNS.some((pattern) => pattern.test(clean));
+};
+
 const clampInstruction = (text: string, maxChars: number) => {
   const t = String(text || "").trim();
   if (t.length <= maxChars) return t;
@@ -2137,6 +2168,34 @@ export const useGeminiVoice = ({
     onTranscript?.("", false, "user");
   }, [onTranscript]);
 
+  const stopAssistantPlayback = useCallback(
+    (options?: { clearResponseText?: boolean }) => {
+      assistantTurnCanceledRef.current = true;
+      scheduledSourcesRef.current.forEach((s) => {
+        try {
+          s.stop();
+        } catch {}
+      });
+      scheduledSourcesRef.current = [];
+      if (activeSourceRef.current) {
+        try {
+          activeSourceRef.current.stop();
+        } catch {}
+        activeSourceRef.current = null;
+      }
+      audioQueueRef.current = [];
+      isProcessingQueueRef.current = false;
+      isPlayingRef.current = false;
+      nextPlayTimeRef.current = 0;
+      updateSpeaking(false);
+      clearAssistantLiveTranscript();
+      if (options?.clearResponseText) {
+        currentResponseTextRef.current = "";
+      }
+    },
+    [clearAssistantLiveTranscript, updateSpeaking],
+  );
+
   const commitAssistantMessage = useCallback(
     (text: string, options?: { force?: boolean }) => {
       const clean = String(text || "")
@@ -2152,13 +2211,8 @@ export const useGeminiVoice = ({
       // here rather than showing `{"type":"action_request",...}` to the user.
       // Also block markdown-fenced JSON blocks (```json ... ```) which Gemini sometimes
       // produces instead of raw JSON.
-      if (
-        (clean.startsWith("{") && clean.includes("action_request")) ||
-        /\{[\s\S]*"type"\s*:\s*"action_request"[\s\S]*\}/.test(clean) ||
-        /```\s*json[\s\S]*"action"\s*:\s*"(submit_form|make_reservation|book_slot)"/i.test(clean) ||
-        /```[\s\S]*"type"\s*:\s*"action_request"[\s\S]*```/.test(clean)
-      ) {
-        console.warn("[ASSISTANT][BLOCKED raw JSON leak]", clean.slice(0, 200));
+      if (isSilentActionTurnText(clean)) {
+        console.warn("[ASSISTANT][BLOCKED hidden action turn]", clean.slice(0, 200));
         clearAssistantLiveTranscript();
         return false;
       }

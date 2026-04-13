@@ -20,6 +20,37 @@ interface Message {
   content: string;
 }
 
+const isActionPayloadMessage = (text: string): boolean => {
+  const normalized = text.trim();
+
+  return (
+    normalized.startsWith('action_request:') ||
+    normalized.startsWith('{"type":"action_request"') ||
+    /^\s*\{[\s\S]*"action"\s*:\s*"(submit_form|make_reservation|book_slot)"/i.test(normalized) ||
+    /```\s*json[\s\S]*"action"\s*:\s*"(submit_form|make_reservation|book_slot)"/i.test(normalized)
+  );
+};
+
+const isActionProcessingMessage = (text: string): boolean => {
+  const patterns = [
+    /чудесно.*имам всички данни/i,
+    /имам всички данни/i,
+    /преди да изпрат/i,
+    /един момент/i,
+    /момент.*(изпращ|подав|резервир|провер)/i,
+    /(изпращам|подавам|попълвам|обработвам).*(форм|запитван|заявк)/i,
+    /(проверявам|потвърждавам).*(наличност|резервац|заявк)/i,
+    /(резервирам|запазвам).*(час|резервац)/i,
+    /(готово|изпратено).*(запитван|заявк|форм)/i,
+  ];
+
+  return patterns.some((pattern) => pattern.test(text));
+};
+
+const isHiddenAssistantUiMessage = (text: string): boolean => {
+  return isActionPayloadMessage(text) || isActionProcessingMessage(text);
+};
+
 // Note: cleanTranscript function is used in handleMessage callback
 
 /**
@@ -457,14 +488,8 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
         }
       }
 
-      // ✅ Filter out raw action_request JSON that leaks into messages
-      if (content && (
-        content.startsWith('action_request:') ||
-        content.startsWith('{"type":"action_request"') ||
-        /^\s*\{[\s\S]*"action"\s*:\s*"(submit_form|make_reservation|book_slot)"/.test(content)
-      )) {
-        console.log("[VoiceInterview] Filtering out action_request JSON from chat — showing form animation");
-        // Show action processing animation instead of raw JSON
+      if (message.role === "assistant" && isHiddenAssistantUiMessage(content || "")) {
+        console.log("[VoiceInterview] Suppressing assistant action text — showing loader only");
         setIsProcessingAction(true);
         if (actionTimeoutRef.current) clearTimeout(actionTimeoutRef.current);
         actionTimeoutRef.current = setTimeout(() => setIsProcessingAction(false), 20000);
@@ -767,6 +792,14 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     onError: handleError,
     onTranscript: (transcript, isFinal, role) => {
       if (role === 'assistant') {
+        if (isHiddenAssistantUiMessage(transcript)) {
+          setIsProcessingAction(true);
+          if (actionTimeoutRef.current) clearTimeout(actionTimeoutRef.current);
+          actionTimeoutRef.current = setTimeout(() => setIsProcessingAction(false), 20000);
+          setLiveAssistantTranscript('');
+          return;
+        }
+
         if (!isFinal) {
           setLiveAssistantTranscript(transcript);
         } else {
@@ -1519,21 +1552,23 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
                 ref={messagesContainerRef}
                 className="mt-4 lg:mt-6 max-h-[60vh] overflow-y-auto space-y-2 lg:space-y-3 text-left"
               >
-                {messages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`p-2 lg:p-3 rounded-lg text-xs lg:text-sm break-words whitespace-pre-wrap ${
-                      msg.role === "assistant"
-                        ? "bg-primary/10 border border-primary/20"
-                        : "bg-muted/30 border border-border/20"
-                    }`}
-                  >
-                    <span className="font-medium text-[10px] lg:text-xs text-muted-foreground block mb-1">
-                      {msg.role === "assistant" ? t("interview.neo") : t("interview.you")}
-                    </span>
-                    {msg.content}
-                  </div>
-                ))}
+                {messages.map((msg, i) =>
+                  !msg.content.trim() || (msg.role === "assistant" && isHiddenAssistantUiMessage(msg.content)) ? null : (
+                    <div
+                      key={i}
+                      className={`p-2 lg:p-3 rounded-lg text-xs lg:text-sm break-words whitespace-pre-wrap ${
+                        msg.role === "assistant"
+                          ? "bg-primary/10 border border-primary/20"
+                          : "bg-muted/30 border border-border/20"
+                      }`}
+                    >
+                      <span className="font-medium text-[10px] lg:text-xs text-muted-foreground block mb-1">
+                        {msg.role === "assistant" ? t("interview.neo") : t("interview.you")}
+                      </span>
+                      {msg.content}
+                    </div>
+                  )
+                )}
 
                 {/* Action processing animation - NEO is filling a form */}
                 {isProcessingAction && !isSpeaking && (
@@ -1568,7 +1603,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
                     {liveUserTranscript}
                   </div>
                 )}
-                {liveAssistantTranscript && (
+                {liveAssistantTranscript && !isHiddenAssistantUiMessage(liveAssistantTranscript) && (
                   <div className="p-2 lg:p-3 rounded-lg text-xs lg:text-sm bg-primary/10 border border-primary/20 animate-pulse break-words whitespace-pre-wrap">
                     <span className="font-medium text-[10px] lg:text-xs text-muted-foreground block mb-1">
                       {t("interview.neo")}

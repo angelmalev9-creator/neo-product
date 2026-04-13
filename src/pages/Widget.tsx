@@ -74,6 +74,9 @@ const findMentionedCatalogItems = (text: string, catalog: CatalogItem[]): Catalo
 // Detect action processing phrases
 const isActionProcessingMessage = (text: string): boolean => {
   const actionPhrases = [
+    /чудесно.*имам всички данни/i,
+    /имам всички данни/i,
+    /преди да изпрат/i,
     /един момент/i,
     /момент.*изпращ/i,
     /подавам.*запитван/i,
@@ -84,6 +87,21 @@ const isActionProcessingMessage = (text: string): boolean => {
     /резервирам/i,
   ];
   return actionPhrases.some(p => p.test(text));
+};
+
+const isActionPayloadMessage = (text: string): boolean => {
+  const normalized = text.trim();
+
+  return (
+    normalized.startsWith('action_request:') ||
+    normalized.startsWith('{"type":"action_request"') ||
+    /^\s*\{[\s\S]*"action"\s*:\s*"(submit_form|make_reservation|book_slot)"/i.test(normalized) ||
+    /```\s*json[\s\S]*"action"\s*:\s*"(submit_form|make_reservation|book_slot)"/i.test(normalized)
+  );
+};
+
+const isHiddenAssistantUiMessage = (text: string): boolean => {
+  return isActionPayloadMessage(text) || isActionProcessingMessage(text);
 };
 
 const Widget = () => {
@@ -141,24 +159,12 @@ const Widget = () => {
       typedMessageAddedRef.current = null;
       return;
     }
-    // Filter out raw action_request JSON that leaks into messages — show animation instead
-    if (message.content && (
-      message.content.startsWith('action_request:') ||
-      message.content.startsWith('{"type":"action_request"') ||
-      /^\s*\{[\s\S]*"action"\s*:\s*"(submit_form|make_reservation|book_slot)"/.test(message.content)
-    )) {
+    if (message.role === 'assistant' && isHiddenAssistantUiMessage(message.content || '')) {
+      setLiveAssistantTranscript('');
       setIsProcessingAction(true);
       if (actionTimeoutRef.current) clearTimeout(actionTimeoutRef.current);
       actionTimeoutRef.current = setTimeout(() => setIsProcessingAction(false), 20000);
       return;
-    }
-
-    // Detect if assistant is announcing an action (sending form, booking, etc.)
-    if (message.role === 'assistant' && isActionProcessingMessage(message.content)) {
-      setIsProcessingAction(true);
-      // Auto-clear after 15s in case no follow-up arrives
-      if (actionTimeoutRef.current) clearTimeout(actionTimeoutRef.current);
-      actionTimeoutRef.current = setTimeout(() => setIsProcessingAction(false), 15000);
     }
 
     setMessages(prev => {
@@ -185,6 +191,14 @@ const Widget = () => {
         if (isFinal) {
           void persistTranscriptMessage('user', normalized);
         }
+        return;
+      }
+
+      if (isHiddenAssistantUiMessage(normalized)) {
+        setIsProcessingAction(true);
+        if (actionTimeoutRef.current) clearTimeout(actionTimeoutRef.current);
+        actionTimeoutRef.current = setTimeout(() => setIsProcessingAction(false), 20000);
+        setLiveAssistantTranscript('');
         return;
       }
 
@@ -579,6 +593,7 @@ const Widget = () => {
         
         {messages.map((msg, i) => {
           const cleanContent = msg.content.replace(/\[CURRENT_DATE_CONTEXT:[^\]]*\]\s*/g, '').replace(/\[SYSTEM:[^\]]*\]\s*/g, '').trim();
+          if (!cleanContent || (msg.role === 'assistant' && isHiddenAssistantUiMessage(cleanContent))) return null;
           const mentionedItems = msg.role === 'assistant' ? findMentionedCatalogItems(cleanContent, catalog) : [];
 
           return (
@@ -619,7 +634,7 @@ const Widget = () => {
             </div>
           </div>
         )}
-        {liveAssistantTranscript && isSpeaking && (
+        {liveAssistantTranscript && isSpeaking && !isHiddenAssistantUiMessage(liveAssistantTranscript) && (
           <div className="flex gap-2 justify-start">
             <AvatarIcon size="sm" />
             <div className="max-w-[80%] px-3.5 py-2.5 text-xs leading-relaxed rounded-2xl rounded-tl-md bg-card/80 border border-border/20 text-foreground/70 italic break-words">
