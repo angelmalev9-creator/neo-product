@@ -1101,9 +1101,19 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     if (sessionId) fetchLatestEmailLog();
   }, [sessionId, fetchLatestEmailLog]);
 
+  // Pick up voice choice from DemoSection's sessionStorage
+  useEffect(() => {
+    const storedVoice = sessionStorage.getItem("neo_demo_voice");
+    if (storedVoice && storedVoice !== demoVoice) {
+      setDemoVoice(storedVoice);
+      setVoiceOverride(storedVoice);
+    }
+  }, [sessionId]);
+
   const handleDemoVoiceChange = useCallback((voiceId: string) => {
     setDemoVoice(voiceId);
     setVoiceOverride(voiceId);
+    sessionStorage.setItem("neo_demo_voice", voiceId);
     if (sessionId) {
       supabase.from('demo_sessions').update({ voice_name: voiceId } as any).eq('id', sessionId).then();
     }
