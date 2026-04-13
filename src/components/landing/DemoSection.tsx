@@ -205,18 +205,6 @@ const DemoSection = ({ onTrainingComplete }: DemoSectionProps) => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <select
-                    className="bg-background/60 border border-border/30 rounded-xl px-3 py-2.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 cursor-pointer"
-                    defaultValue="Enceladus"
-                    onChange={(e) => {
-                      // Store voice choice for VoiceInterview to pick up
-                      sessionStorage.setItem("neo_demo_voice", e.target.value);
-                    }}
-                  >
-                    {VOICES.map((v) => (
-                      <option key={v.id} value={v.id}>{v.name}</option>
-                    ))}
-                  </select>
                   <Button
                     className="neo-btn-primary rounded-xl font-bold w-full sm:w-auto text-sm gap-2"
                     onClick={() => document.getElementById("voice-interview")?.scrollIntoView({ behavior: "smooth" })}
