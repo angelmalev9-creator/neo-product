@@ -1534,6 +1534,32 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
                     {msg.content}
                   </div>
                 ))}
+
+                {/* Action processing animation - NEO is filling a form */}
+                {isProcessingAction && !isSpeaking && (
+                  <div className="p-2 lg:p-3 rounded-lg text-xs lg:text-sm bg-primary/10 border border-primary/20 animate-fade-in">
+                    <span className="font-medium text-[10px] lg:text-xs text-muted-foreground block mb-1.5">
+                      NEO
+                    </span>
+                    <div className="flex items-center gap-2.5">
+                      <style>{`@keyframes dotBounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }`}</style>
+                      <div className="flex gap-1">
+                        {[0, 1, 2].map(i => (
+                          <div
+                            key={i}
+                            className="w-1.5 h-1.5 rounded-full bg-primary"
+                            style={{
+                              animation: 'dotBounce 1.4s ease-in-out infinite',
+                              animationDelay: `${i * 0.16}s`,
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-xs text-primary/80 font-medium">NEO попълва формата вместо Вас...</span>
+                    </div>
+                  </div>
+                )}
+
                 {liveUserTranscript && (
                   <div className="p-2 lg:p-3 rounded-lg text-xs lg:text-sm bg-muted/30 border border-border/20 animate-pulse italic break-words whitespace-pre-wrap">
                     <span className="font-medium text-[10px] lg:text-xs text-muted-foreground block mb-1">
