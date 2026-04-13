@@ -86,6 +86,8 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
   const [actionsTaken, setActionsTaken] = useState<string[]>([]);
   const [latestEmailLog, setLatestEmailLog] = useState<DemoEmailLog | null>(null);
   const [emailLogOpen, setEmailLogOpen] = useState(false);
+  const [isProcessingAction, setIsProcessingAction] = useState(false);
+  const actionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Live streaming transcripts for real-time display
   const [liveAssistantTranscript, setLiveAssistantTranscript] = useState<string>("");
@@ -447,6 +449,12 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
 
       if (message.role === "assistant") {
         setLiveAssistantTranscript("");
+        // Clear action processing when assistant responds
+        setIsProcessingAction(false);
+        if (actionTimeoutRef.current) {
+          clearTimeout(actionTimeoutRef.current);
+          actionTimeoutRef.current = null;
+        }
       }
 
       // ✅ Filter out raw action_request JSON that leaks into messages
@@ -455,7 +463,11 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
         content.startsWith('{"type":"action_request"') ||
         /^\s*\{[\s\S]*"action"\s*:\s*"(submit_form|make_reservation|book_slot)"/.test(content)
       )) {
-        console.log("[VoiceInterview] Filtering out action_request JSON from chat");
+        console.log("[VoiceInterview] Filtering out action_request JSON from chat — showing form animation");
+        // Show action processing animation instead of raw JSON
+        setIsProcessingAction(true);
+        if (actionTimeoutRef.current) clearTimeout(actionTimeoutRef.current);
+        actionTimeoutRef.current = setTimeout(() => setIsProcessingAction(false), 20000);
         return;
       }
 
