@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import LeadCaptureModal, { LeadData } from '@/components/widget/LeadCaptureModal';
 import { cleanTranscriptForStorage } from '@/utils/transcriptCleanup';
+import neoLogoImg from '@/assets/neo-logo.png';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -454,9 +455,7 @@ const Widget = () => {
         {logoUrl ? (
           <img src={logoUrl} alt="" className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center">
-            <Bot className={`${iconSizes[size]} text-white`} />
-          </div>
+          <img src={neoLogoImg} alt="NEO" className="w-full h-full object-cover" />
         )}
       </div>
     );
@@ -530,7 +529,7 @@ const Widget = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    <div className="h-screen flex flex-col bg-[hsl(220_55%_10%)] overflow-hidden">
       <style>{`
         @keyframes bounce {
           0%, 80%, 100% { transform: scale(0); }
@@ -549,7 +548,7 @@ const Widget = () => {
       <header className="border-b border-border/20 bg-card/50 backdrop-blur-xl px-4 py-3 flex items-center gap-3">
         <AvatarIcon size="md" />
         <div className="flex-1 min-w-0">
-          <h1 className="text-sm font-bold text-foreground leading-tight">{companyName}</h1>
+          <h1 className="text-sm font-bold text-foreground leading-tight">{companyName || 'NEO'}</h1>
           <div className="flex items-center gap-1.5 mt-0.5">
             <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
             <span className="text-[10px] text-muted-foreground">AI Асистент</span>
@@ -577,7 +576,7 @@ const Widget = () => {
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
             <AvatarIcon size="lg" />
             <h2 className="text-base font-bold text-foreground mt-4 mb-1">
-              {companyName}
+              {companyName || 'NEO'}
             </h2>
             <p className="text-xs text-muted-foreground max-w-[220px] mb-6">
               {config?.autoGreet && config?.autoGreetMessage

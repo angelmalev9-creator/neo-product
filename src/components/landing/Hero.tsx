@@ -27,9 +27,9 @@ const RatingBadge = () => (
 
 /* ───── MacBook Frame ───── */
 const MacBookFrame = ({ children }: { children: React.ReactNode }) => (
-  <div className="relative">
-    <div className="rounded-t-xl border-[3px] border-foreground/15 bg-background overflow-hidden">
-      <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-border/10 bg-secondary">
+  <div className="relative" style={{ filter: 'drop-shadow(0 20px 40px hsl(220 60% 6% / 0.6)) drop-shadow(0 8px 16px hsl(220 70% 10% / 0.4))' }}>
+    <div className="rounded-t-xl border-[3px] border-foreground/15 bg-[hsl(220_55%_10%)] overflow-hidden">
+      <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-border/10 bg-[hsl(220_50%_12%)]">
         <span className="w-2 h-2 rounded-full bg-[hsl(0,70%,55%)]" />
         <span className="w-2 h-2 rounded-full bg-[hsl(45,80%,55%)]" />
         <span className="w-2 h-2 rounded-full bg-[hsl(120,50%,50%)]" />
@@ -38,21 +38,21 @@ const MacBookFrame = ({ children }: { children: React.ReactNode }) => (
       {children}
     </div>
     <div className="relative mx-auto">
-      <div className="h-[14px] bg-gradient-to-b from-foreground/12 to-foreground/8 rounded-b-md border-x-[3px] border-b-[3px] border-foreground/15 bg-secondary" />
-      <div className="h-[4px] rounded-b-lg mx-[10%] bg-secondary" />
+      <div className="h-[14px] bg-gradient-to-b from-foreground/12 to-foreground/8 rounded-b-md border-x-[3px] border-b-[3px] border-foreground/15 bg-[hsl(220_50%_12%)]" />
+      <div className="h-[4px] rounded-b-lg mx-[10%] bg-[hsl(220_50%_12%)]" />
     </div>
   </div>
 );
 
 /* ───── iPhone Frame ───── */
 const IPhoneFrame = ({ children }: { children: React.ReactNode }) => (
-  <div className="relative rounded-[20px] border-secondary bg-secondary-foreground overflow-hidden">
-    <div className="rounded-[20px] border-[3px] border-foreground/15 bg-background overflow-hidden">
-      <div className="flex justify-center py-1.5 bg-secondary">
+  <div className="relative rounded-[20px] border-[hsl(220_50%_12%)] bg-[hsl(220_55%_8%)] overflow-hidden" style={{ filter: 'drop-shadow(0 16px 32px hsl(220 60% 6% / 0.5)) drop-shadow(0 6px 12px hsl(220 70% 10% / 0.35))' }}>
+    <div className="rounded-[20px] border-[3px] border-foreground/15 bg-[hsl(220_55%_10%)] overflow-hidden">
+      <div className="flex justify-center py-1.5 bg-[hsl(220_50%_12%)]">
         <div className="w-16 h-[5px] rounded-full bg-[#3f526e]" />
       </div>
       {children}
-      <div className="flex justify-center py-2 bg-secondary">
+      <div className="flex justify-center py-2 bg-[hsl(220_50%_12%)]">
         <div className="w-10 h-[3px] rounded-full bg-foreground/15" />
       </div>
     </div>
@@ -61,7 +61,7 @@ const IPhoneFrame = ({ children }: { children: React.ReactNode }) => (
 
 /* ───── Dashboard Content (inside MacBook) ───── */
 const DashboardContent = () => (
-  <div className="p-2.5 space-y-2">
+  <div className="p-2.5 space-y-2 bg-[hsl(220_55%_10%)]">
     <div className="grid grid-cols-3 gap-1.5">
       {[
         { icon: MessageSquare, label: 'Разговори', value: '47', color: 'text-primary' },
@@ -110,7 +110,7 @@ const DashboardContent = () => (
 
 /* ───── Widget Content (inside iPhone) ───── */
 const WidgetContent = () => (
-  <div className="flex flex-col">
+  <div className="flex flex-col bg-[hsl(220_55%_10%)]">
     <div className="flex items-center gap-2 px-3 py-2 border-b bg-gradient-to-r from-primary/8 to-transparent border-border">
       <img src={neoLogoImg} alt="NEO" className="w-6 h-6 rounded-lg object-cover shadow-sm shadow-primary/20" />
       <div className="flex-1">
@@ -149,7 +149,7 @@ const WidgetContent = () => (
         </div>
       </motion.div>
     </div>
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5, duration: 0.5 }} className="px-2.5 py-2 border-t border-border/10 bg-secondary">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5, duration: 0.5 }} className="px-2.5 py-2 border-t border-border/10 bg-[hsl(220_50%_12%)]">
       <div className="flex items-center gap-2">
         <div className="relative">
           <div className="w-5 h-5 rounded-full flex items-center justify-center bg-primary/20 border border-primary/30">
