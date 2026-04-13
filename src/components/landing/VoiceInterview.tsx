@@ -449,29 +449,32 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
         setLiveAssistantTranscript("");
       }
 
+      // ✅ Filter out raw action_request JSON that leaks into messages
+      if (content && (
+        content.startsWith('action_request:') ||
+        content.startsWith('{"type":"action_request"') ||
+        /^\s*\{[\s\S]*"action"\s*:\s*"(submit_form|make_reservation|book_slot)"/.test(content)
+      )) {
+        console.log("[VoiceInterview] Filtering out action_request JSON from chat");
+        return;
+      }
+
       // ✅ SPEED FIX: Assistant transcripts are already clean from Gemini - NEVER clean them
-      // cleanTranscript was adding ~1-2s latency on EVERY turn (edge function + Gemini REST)
       if (message.role === "assistant") {
         // Skip cleanTranscript entirely for assistant messages
       } else {
-        // User messages: typed = skip clean, voice = clean in BACKGROUND (non-blocking)
         const isTypedInput = skipCleanForTypedRef.current === content;
-
         if (isTypedInput) {
           skipCleanForTypedRef.current = null;
           console.log("[VoiceInterview] Typed input - skipping cleanTranscript");
         }
-        // For voice user messages: show RAW immediately, clean in background
-        // This removes 1-2s blocking latency from the critical path
       }
 
-      // ✅ If clean returned empty or very short garbage, skip adding to chat
       if (!content || content.trim().length < 2) {
         console.log("[VoiceInterview] Skipping empty/garbage cleaned message");
         return;
       }
 
-      // ✅ FIX: Skip user messages that were already added to chat from typed input
       if (message.role === "user" && typedMessageAddedRef.current === content) {
         console.log("[VoiceInterview] Skipping duplicate typed user message in handleMessage");
         typedMessageAddedRef.current = null;
@@ -487,9 +490,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
         
         if (isGreeting) {
           setMessages((prev) => {
-            // If no messages yet, just add it
             if (prev.length === 0) return [{ role: "assistant", content }];
-            // If first message is also a greeting, replace it
             const firstIsGreeting = prev[0]?.role === "assistant" && 
               (prev[0].content.toLowerCase().includes("здравейте") || prev[0].content.toLowerCase().includes("нео от"));
             if (firstIsGreeting) {

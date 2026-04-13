@@ -144,7 +144,8 @@ const Widget = () => {
     // Filter out raw action_request JSON that leaks into messages
     if (message.content && (
       message.content.startsWith('action_request:') ||
-      message.content.startsWith('{"type":"action_request"')
+      message.content.startsWith('{"type":"action_request"') ||
+      /^\s*\{[\s\S]*"action"\s*:\s*"(submit_form|make_reservation|book_slot)"/.test(message.content)
     )) {
       return;
     }
