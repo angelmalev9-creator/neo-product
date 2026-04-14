@@ -5149,6 +5149,7 @@ export const useGeminiVoice = ({
             ].join("\n"),
           );
 
+          submitFormInFlightRef.current = false;
           updateActionProcessing(false, "submit_form");
           return true;
         }
