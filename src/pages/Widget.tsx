@@ -185,6 +185,17 @@ const Widget = () => {
     onError: handleError,
     onTranscript: (transcript, isFinal, role) => {
       const normalized = transcript.replace(/\s+/g, ' ').trim();
+
+      if (role === 'assistant' && !normalized) {
+        setLiveAssistantTranscript('');
+        return;
+      }
+
+      if (role === 'user' && !normalized) {
+        setLiveTranscript('');
+        return;
+      }
+
       if (!normalized) return;
 
       if (role === 'user') {
@@ -209,6 +220,16 @@ const Widget = () => {
       if (isFinal) {
         setLiveAssistantTranscript('');
         void persistTranscriptMessage('assistant', normalized);
+      }
+    },
+    onActionProcessingChange: (processing) => {
+      setIsProcessingAction(processing);
+      if (actionTimeoutRef.current) {
+        clearTimeout(actionTimeoutRef.current);
+        actionTimeoutRef.current = null;
+      }
+      if (processing) {
+        setLiveAssistantTranscript('');
       }
     },
   });

@@ -792,6 +792,11 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     onError: handleError,
     onTranscript: (transcript, isFinal, role) => {
       if (role === 'assistant') {
+        if (!transcript.trim()) {
+          setLiveAssistantTranscript('');
+          return;
+        }
+
         if (isHiddenAssistantUiMessage(transcript)) {
           setIsProcessingAction(true);
           if (actionTimeoutRef.current) clearTimeout(actionTimeoutRef.current);
@@ -807,6 +812,16 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
         }
       } else if (role === 'user') {
         setLiveUserTranscript(transcript);
+      }
+    },
+    onActionProcessingChange: (processing) => {
+      setIsProcessingAction(processing);
+      if (actionTimeoutRef.current) {
+        clearTimeout(actionTimeoutRef.current);
+        actionTimeoutRef.current = null;
+      }
+      if (processing) {
+        setLiveAssistantTranscript('');
       }
     },
   });
