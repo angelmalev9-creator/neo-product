@@ -5200,6 +5200,22 @@ export const useGeminiVoice = ({
         }
         console.log("[SUBMIT_FORM] POST →", submitTargetUrl);
 
+        // ★ INSTANT VISUAL FEEDBACK: show a "Подавам запитването..." bubble in chat
+        // BEFORE the fetch starts. This way the user always sees that something is
+        // happening during the ~500-2000ms it takes for neo-worker-proxy to respond.
+        // Without this, there's dead silence in the UI between Gemini's last sentence
+        // and the "Готово" success message — which feels like a freeze.
+        //
+        // We push this via onMessage as a transient assistant bubble. It will be
+        // replaced by the real success / error message once the fetch resolves.
+        try {
+          const inflightPhrase = "Един момент, подавам запитването…";
+          onTranscript?.(inflightPhrase, false, "assistant");
+          console.log("[SUBMIT_FORM] showing inflight indicator:", inflightPhrase);
+        } catch (fbErr) {
+          console.warn("[SUBMIT_FORM] inflight indicator failed:", fbErr);
+        }
+
         const res = await fetch(submitTargetUrl, {
           method: "POST",
           headers: {
@@ -5851,14 +5867,37 @@ export const useGeminiVoice = ({
                     actionTurnSilenceRef.current = true;
                     console.log("[MODEL PART TEXT][JSON CONT]", currentResponseTextRef.current.slice(0, 200));
                   } else if (partText) {
-                    // ★ FIX: Check if this text matches action processing speech patterns
-                    // (e.g. "чудесно, имам всички данни", "един момент, изпращам")
-                    // If so, silence audio and suppress transcript
+                    // ★ FIX: Action-processing speech visibility
+                    // ─────────────────────────────────────────
+                    // Previously: when Gemini emitted filler text like "чудесно, имам всички
+                    // данни" or "един момент, изпращам", we OVERWROTE currentResponseTextRef
+                    // (destroying any previously accumulated text) AND suppressed the UI
+                    // transcript entirely. Result: the user saw NOTHING in the chat bubble
+                    // for ~1-2 seconds while the submit was in flight — exactly the "not
+                    // always shows up in UI chat transcript" complaint.
+                    //
+                    // New behavior: we still silence the AUDIO playback (so Gemini doesn't
+                    // literally say "готово" before submit completes), but we PRESERVE the
+                    // text and PUSH it to the live transcript so the user sees "Един момент,
+                    // подавам запитването..." in the chat. This gives clear feedback that
+                    // something is happening.
                     if (ACTION_PROCESSING_SPEECH_PATTERNS.some((p) => p.test(partText))) {
                       actionTurnSilenceRef.current = true;
                       stopAssistantPlayback();
-                      currentResponseTextRef.current = partText;
-                      console.log("[MODEL PART TEXT][ACTION SPEECH SUPPRESSED]", partText.slice(0, 200));
+                      // Keep the text visible — append, do NOT overwrite
+                      if (currentResponseTextRef.current && !currentResponseTextRef.current.endsWith(" ")) {
+                        currentResponseTextRef.current += " ";
+                      }
+                      currentResponseTextRef.current += partText;
+                      // Push to live transcript immediately so UI reflects what's happening
+                      liveAssistantTranscriptRef.current = currentResponseTextRef.current;
+                      if (!assistantTurnCanceledRef.current) {
+                        onTranscript?.(liveAssistantTranscriptRef.current, false, "assistant");
+                      }
+                      console.log(
+                        "[MODEL PART TEXT][ACTION SPEECH — audio silenced, text visible]",
+                        partText.slice(0, 200),
+                      );
                     } else {
                       if (currentResponseTextRef.current && !currentResponseTextRef.current.endsWith(" ")) {
                         currentResponseTextRef.current += " ";
