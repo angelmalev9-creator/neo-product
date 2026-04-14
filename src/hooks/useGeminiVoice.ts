@@ -1766,6 +1766,7 @@ export const useGeminiVoice = ({
   onSpeakingChange,
   onListeningChange,
   onTranscript,
+  onActionProcessingChange,
 }: UseGeminiVoiceProps = {}) => {
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -2196,6 +2197,13 @@ export const useGeminiVoice = ({
     onTranscript?.("", false, "assistant");
   }, [onTranscript]);
 
+  const updateActionProcessing = useCallback(
+    (processing: boolean, action?: string | null) => {
+      onActionProcessingChange?.(processing, action || null);
+    },
+    [onActionProcessingChange],
+  );
+
   const clearUserLiveTranscript = useCallback(() => {
     onTranscript?.("", false, "user");
   }, [onTranscript]);
@@ -2249,18 +2257,20 @@ export const useGeminiVoice = ({
         return false;
       }
 
+      const visibleText = stripActionProcessingText(clean) || clean;
+
       const now = Date.now();
       const last = lastCommittedAssistantRef.current;
-      const isDuplicate = !options?.force && last.text === clean && now - last.ts < 2500;
+      const isDuplicate = !options?.force && last.text === visibleText && now - last.ts < 2500;
       if (isDuplicate) {
         console.log("[ASSISTANT][DEDUPED]", clean.slice(0, 120));
         clearAssistantLiveTranscript();
         return false;
       }
 
-      updateConversationFocusFromAssistant(clean);
-      onMessage?.({ role: "assistant", content: clean });
-      lastCommittedAssistantRef.current = { text: clean, ts: now };
+      updateConversationFocusFromAssistant(visibleText);
+      onMessage?.({ role: "assistant", content: visibleText });
+      lastCommittedAssistantRef.current = { text: visibleText, ts: now };
       clearAssistantLiveTranscript();
       return true;
     },
@@ -4392,8 +4402,6 @@ export const useGeminiVoice = ({
     async (text: string) => {
       const trimmed = text.trim();
 
-      console.log("[ACTION PARSER] raw preview:", trimmed.slice(0, 1200));
-
       let directJson = trimmed.startsWith("{")
         ? trimmed
         : trimmed.match(/\{[\s\S]*"type"\s*:\s*"action_request"[\s\S]*\}/)?.[0] || "";
@@ -4414,7 +4422,6 @@ export const useGeminiVoice = ({
               candidate.includes("book_slot"))
           ) {
             directJson = candidate;
-            console.log("[ACTION PARSER] extracted JSON from mixed text via brace scan");
           }
         }
       }
@@ -4472,8 +4479,6 @@ export const useGeminiVoice = ({
         }
       }
 
-      console.log("[ACTION PARSER] directJson preview:", directJson ? directJson.slice(0, 1200) : "<none>");
-
       if (!directJson) {
         return false;
       }
@@ -4510,8 +4515,6 @@ export const useGeminiVoice = ({
 
       try {
         const parsed = JSON.parse(directJson);
-
-        console.log("[ACTION PARSER] parsed:", parsed?.type, parsed?.action, parsed?.phase, parsed?.session_id);
 
         if (parsed?.type !== "action_request") return false;
 
@@ -5065,6 +5068,7 @@ export const useGeminiVoice = ({
         // ── СТАНДАРТНА ФОРМА (submit_form) ───────────────────────────
         // Both calendar and forms coexist — no redirect
         if (parsed?.action !== "submit_form") return false;
+        updateActionProcessing(true, "submit_form");
 
         // Inject live session + deterministic form target so proxy always has a target.
         // ★ FIX: Gemini sometimes hallucinates "default_session_id" / placeholder values
@@ -5132,6 +5136,7 @@ export const useGeminiVoice = ({
             ].join("\n"),
           );
 
+          updateActionProcessing(false, "submit_form");
           return true;
         }
 
@@ -5185,6 +5190,7 @@ export const useGeminiVoice = ({
             ].join("\n"),
           );
 
+          updateActionProcessing(false, "submit_form");
           return true;
         }
 
@@ -5220,13 +5226,15 @@ export const useGeminiVoice = ({
           );
         }
 
+        updateActionProcessing(false, "submit_form");
         return true;
       } catch {
         activeSubmitFormFlowRef.current = null;
+        updateActionProcessing(false, "submit_form");
         return false;
       }
     },
-    [onError, onMessage, sendToGemini],
+    [onError, onMessage, sendToGemini, updateActionProcessing],
   );
 
   useEffect(() => {
@@ -5414,8 +5422,6 @@ export const useGeminiVoice = ({
                 (import.meta as any)?.env?.VITE_SUPABASE_PUBLISHABLE_KEY ||
                 "";
 
-              console.log("[SEARCH WORKER] functionCall query:", query);
-
               // ★★★ FIX: Client-side guard against Gemini calling search_site_content
               // when it should be returning a submit_form / make_reservation action_request JSON.
               // Even after prompt hardening, Gemini Live sometimes prefers function calling over
@@ -5529,6 +5535,45 @@ export const useGeminiVoice = ({
                       },
                     }),
                   );
+
+                  const submitTarget =
+                    activeSubmitFormFlowRef.current ||
+                    lastSubmitFormTargetRef.current ||
+                    pickPreferredSubmitFormTarget(
+                      extractSubmitFormTargetsFromInstruction(
+                        (sessionDataRef.current as any)?.systemInstruction || "",
+                      ),
+                    );
+
+                  if (
+                    sid &&
+                    (submitTarget?.form_id || submitTarget?.fingerprint) &&
+                    (hasAllContact ||
+                      (!!activeSubmitFormFlowRef.current && activeSubmitFormFlowRef.current.missing_required.length === 0))
+                  ) {
+                    const capturedFields: Record<string, string> = {
+                      ...(activeSubmitFormFlowRef.current?.fields || {}),
+                    };
+
+                    if (captured?.name) capturedFields.name = captured.name;
+                    if (captured?.email && looksLikeCompleteEmail(captured.email)) capturedFields.email = captured.email;
+                    if (captured?.phone && looksLikeCompletePhone(captured.phone)) capturedFields.phone = captured.phone;
+
+                    void maybeExecuteActionFromGemini(
+                      JSON.stringify({
+                        type: "action_request",
+                        action: "submit_form",
+                        session_id: sid,
+                        ...(submitTarget?.form_id ? { form_id: submitTarget.form_id } : {}),
+                        ...(submitTarget?.fingerprint ? { fingerprint: submitTarget.fingerprint } : {}),
+                        ...(activeSubmitFormFlowRef.current?.kind || submitTarget?.kind
+                          ? { kind: activeSubmitFormFlowRef.current?.kind || submitTarget?.kind }
+                          : {}),
+                        fields: capturedFields,
+                      }),
+                    );
+                    continue;
+                  }
 
                   // Nudge Gemini with an explicit instruction telling it what to do next
                   const nudge = hasReservationData
@@ -5751,16 +5796,22 @@ export const useGeminiVoice = ({
                     // ★ FIX: Check if this text matches action processing speech patterns
                     // (e.g. "чудесно, имам всички данни", "един момент, изпращам")
                     // If so, silence audio and suppress transcript
-                    if (ACTION_PROCESSING_SPEECH_PATTERNS.some((p) => p.test(partText))) {
+                    const visiblePartText = stripActionProcessingText(partText);
+                    const isPureActionProcessingText =
+                      !visiblePartText && ACTION_PROCESSING_SPEECH_PATTERNS.some((p) => p.test(partText));
+
+                    if (isPureActionProcessingText) {
                       actionTurnSilenceRef.current = true;
                       stopAssistantPlayback();
-                      currentResponseTextRef.current = partText;
-                      console.log("[MODEL PART TEXT][ACTION SPEECH SUPPRESSED]", partText.slice(0, 200));
+                      if (!currentResponseTextRef.current) {
+                        currentResponseTextRef.current = partText;
+                      }
                     } else {
+                      const nextPartText = visiblePartText || partText;
                       if (currentResponseTextRef.current && !currentResponseTextRef.current.endsWith(" ")) {
                         currentResponseTextRef.current += " ";
                       }
-                      currentResponseTextRef.current += partText;
+                      currentResponseTextRef.current += nextPartText;
                     }
                   }
                 }
@@ -5790,10 +5841,14 @@ export const useGeminiVoice = ({
                 !txt.includes("<<<") &&
                 !currentLooksLikeAction
               ) {
+                const visibleTranscriptText = stripActionProcessingText(txt);
+                if (!visibleTranscriptText) {
+                  continue;
+                }
                 if (currentResponseTextRef.current && !currentResponseTextRef.current.endsWith(" ")) {
                   currentResponseTextRef.current += " ";
                 }
-                currentResponseTextRef.current += txt;
+                currentResponseTextRef.current += visibleTranscriptText;
                 // Only stream live transcript if not interrupted — but always accumulate
                 if (!assistantTurnCanceledRef.current) {
                   liveAssistantTranscriptRef.current = currentResponseTextRef.current;
