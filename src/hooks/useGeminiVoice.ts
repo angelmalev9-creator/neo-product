@@ -5964,7 +5964,9 @@ export const useGeminiVoice = ({
                     const hasName = !!captured?.name && captured.name.trim().length >= 2;
                     const hasEmail = !!captured?.email && looksLikeCompleteEmail(captured.email);
                     const hasPhone = !!captured?.phone && looksLikeCompletePhone(captured.phone);
-                    const hasAllContact = hasName && hasEmail && hasPhone;
+                    // ★ FIX: Relaxed — name + at least one of email/phone is enough
+                    // Gemini often claims "подадено" even with partial data
+                    const hasEnoughContact = hasName && (hasEmail || hasPhone);
 
                     const lastUserText = String(lastCommittedUserRef.current?.text || "")
                       .toLowerCase()
@@ -5991,7 +5993,7 @@ export const useGeminiVoice = ({
 
                     const recentlyFired = Date.now() - lastSubmitFormFiredAtRef.current < 60_000;
 
-                    if (hasAllContact && claimsFormSent && !recentlyFired) {
+                    if (hasEnoughContact && claimsFormSent && !recentlyFired) {
                       console.warn(
                         "[FAKE_SUBMIT_GUARD] Gemini claimed form was sent without returning JSON. Synthesizing submit_form from captured data.",
                         {
