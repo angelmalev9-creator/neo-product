@@ -1866,6 +1866,7 @@ export const useGeminiVoice = ({
   // ★ NEW: timestamp of last successful submit_form — used by the "Gemini lies
   // about having sent the form" guard to avoid double-submits.
   const lastSubmitFormFiredAtRef = useRef<number>(0);
+  const submitFormInFlightRef = useRef<boolean>(false);
   const conversationFocusRef = useRef<ConversationFocusState>({
     lastTopic: "",
     lastEntityType: "",
