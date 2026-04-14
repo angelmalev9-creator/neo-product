@@ -5204,6 +5204,7 @@ export const useGeminiVoice = ({
             ].join("\n"),
           );
 
+          submitFormInFlightRef.current = false;
           updateActionProcessing(false, "submit_form");
           return true;
         }
@@ -5240,9 +5241,11 @@ export const useGeminiVoice = ({
           );
         }
 
+        submitFormInFlightRef.current = false;
         updateActionProcessing(false, "submit_form");
         return true;
       } catch {
+        submitFormInFlightRef.current = false;
         activeSubmitFormFlowRef.current = null;
         updateActionProcessing(false, "submit_form");
         return false;
