@@ -5329,8 +5329,8 @@ export const useGeminiVoice = ({
                   : { thinking_budget: 0 },
               },
               system_instruction: { parts: [{ text: session.systemInstruction }] },
-              // ★ SEARCH WORKER — подай tools ако са налични
-              ...(session.tools?.length ? { tools: session.tools } : {}),
+              // ★ SEARCH WORKER — подай tools САМО ако search е включен
+              ...((session as any).hasSearchWorker && session.tools?.length ? { tools: session.tools } : {}),
             },
           };
 
@@ -5407,7 +5407,8 @@ export const useGeminiVoice = ({
 
           // ★ SEARCH WORKER — handle Gemini function calling via HTTPS edge proxy
           const toolCall = data?.toolCall || data?.tool_call;
-          if (toolCall?.functionCalls?.length) {
+          const searchEnabled = !!(sessionDataRef.current as any)?.hasSearchWorker;
+          if (searchEnabled && toolCall?.functionCalls?.length) {
             for (const fc of toolCall.functionCalls) {
               if (fc.name !== "search_site_content") continue;
 
