@@ -5069,6 +5069,18 @@ export const useGeminiVoice = ({
         // ── СТАНДАРТНА ФОРМА (submit_form) ───────────────────────────
         // Both calendar and forms coexist — no redirect
         if (parsed?.action !== "submit_form") return false;
+
+        // ★ DEDUP GUARD: prevent double-submit when Gemini fires two consecutive TURN_COMPLETE with same JSON
+        if (submitFormInFlightRef.current) {
+          console.warn("[SUBMIT_FORM] already in-flight — skipping duplicate");
+          return true;
+        }
+        // Also skip if we just successfully submitted < 15s ago
+        if (Date.now() - lastSubmitFormFiredAtRef.current < 15_000) {
+          console.warn("[SUBMIT_FORM] recently submitted (<15s ago) — skipping duplicate");
+          return true;
+        }
+        submitFormInFlightRef.current = true;
         updateActionProcessing(true, "submit_form");
 
         // Inject live session + deterministic form target so proxy always has a target.
