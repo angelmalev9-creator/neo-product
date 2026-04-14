@@ -5329,8 +5329,8 @@ export const useGeminiVoice = ({
                   : { thinking_budget: 0 },
               },
               system_instruction: { parts: [{ text: session.systemInstruction }] },
-              // ★ SEARCH WORKER — подай tools САМО ако search е включен
-              ...((session as any).hasSearchWorker && session.tools?.length ? { tools: session.tools } : {}),
+              // ★ SEARCH WORKER — подай tools ако са налични
+              ...(session.tools?.length ? { tools: session.tools } : {}),
             },
           };
 
@@ -5407,8 +5407,7 @@ export const useGeminiVoice = ({
 
           // ★ SEARCH WORKER — handle Gemini function calling via HTTPS edge proxy
           const toolCall = data?.toolCall || data?.tool_call;
-          const searchEnabled = !!(sessionDataRef.current as any)?.hasSearchWorker;
-          if (searchEnabled && toolCall?.functionCalls?.length) {
+          if (toolCall?.functionCalls?.length) {
             for (const fc of toolCall.functionCalls) {
               if (fc.name !== "search_site_content") continue;
 
@@ -5488,20 +5487,32 @@ export const useGeminiVoice = ({
                 const queryLooksLikeProductFact =
                   /цена|price|размер|size|модел|model|наличност|stock|специфика|характеристик/i.test(query);
 
+                // ★ Case G: activeSubmitFormFlowRef is set → we are mid-form, never search
+                const isInActiveFormFlow = !!activeSubmitFormFlowRef.current;
+
+                // ★ Case H: NEO just confirmed/summarized collected data → next step is submit, not search
+                const assistantJustConfirmedData =
+                  /потвърд.*данни|потвърд.*поръчка|само да потвърд|записах.*данни|записахме|да потвърдя/i.test(
+                    lastAssistantText,
+                  );
+
                 const shouldBlock =
-                  // Case A: all contact data captured AND user is confirming → must return submit_form JSON
+                  // Case A: all contact data captured AND user is confirming
                   (hasAllContact && isConfirmationWord) ||
-                  // Case B: reservation data complete AND user is confirming → must return make_reservation JSON
+                  // Case B: reservation data complete AND user is confirming
                   (hasReservationData && isConfirmationWord) ||
-                  // Case C: the query itself references form/contact data — this is almost never a legit search
+                  // Case C: the query itself references form/contact data
                   queryIsFormRelated ||
                   // Case D: NEO is actively collecting form data in its last message
                   assistantIsCollectingFormData ||
-                  // Case E: query is just echoing plan names that are already in business context
+                  // Case E: query is just echoing plan names
                   queryIsPlanEnumeration ||
-                  // Case F: we already have some contact data captured AND the query
-                  // is NOT about a concrete product fact → we're mid-flow, not researching
-                  (hasAnyCapturedContact && !queryLooksLikeProductFact);
+                  // Case F: partial contact data captured AND not a product fact query
+                  (hasAnyCapturedContact && !queryLooksLikeProductFact) ||
+                  // Case G: active form flow ref is set — we are mid-form submission
+                  isInActiveFormFlow ||
+                  // Case H: NEO just confirmed/summarized data and user is confirming
+                  (assistantJustConfirmedData && isConfirmationWord);
 
                 if (shouldBlock) {
                   console.warn("[SEARCH WORKER][BLOCKED] Gemini tried to call search during form flow. query=", query, {
