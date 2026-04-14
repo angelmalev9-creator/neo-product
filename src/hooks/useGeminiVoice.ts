@@ -154,6 +154,8 @@ async function callSearchWorkerProxy(params: {
       Authorization: `Bearer ${params.anonKey}`,
     },
     body: JSON.stringify({
+      type: "action_request",
+      action: "search_site_content",
       session_id: params.session_id,
       query: params.query,
       site_url: params.site_url || "",
