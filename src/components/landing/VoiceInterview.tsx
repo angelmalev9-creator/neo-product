@@ -41,7 +41,6 @@ const isActionProcessingMessage = (text: string): boolean => {
     /(изпращам|подавам|попълвам|обработвам).*(форм|запитван|заявк)/i,
     /(проверявам|потвърждавам).*(наличност|резервац|заявк)/i,
     /(резервирам|запазвам).*(час|резервац)/i,
-    /(готово|изпратено).*(запитван|заявк|форм)/i,
   ];
 
   return patterns.some((pattern) => pattern.test(text));
@@ -791,13 +790,12 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     onMessage: handleMessage,
     onError: handleError,
     onTranscript: (transcript, isFinal, role) => {
-      if (role === 'assistant') {
-        if (!transcript.trim()) {
-          setLiveAssistantTranscript('');
-          return;
-        }
+      const normalized = transcript.replace(/\s+/g, " ").trim();
 
-        if (isHiddenAssistantUiMessage(transcript)) {
+      if (role === 'assistant') {
+        if (!normalized) return;
+
+        if (isHiddenAssistantUiMessage(normalized)) {
           setIsProcessingAction(true);
           if (actionTimeoutRef.current) clearTimeout(actionTimeoutRef.current);
           actionTimeoutRef.current = setTimeout(() => setIsProcessingAction(false), 20000);
@@ -806,12 +804,13 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
         }
 
         if (!isFinal) {
-          setLiveAssistantTranscript(transcript);
+          setLiveAssistantTranscript(normalized);
         } else {
           setLiveAssistantTranscript('');
         }
       } else if (role === 'user') {
-        setLiveUserTranscript(transcript);
+        if (!normalized) return;
+        setLiveUserTranscript(normalized);
       }
     },
     onActionProcessingChange: (processing) => {

@@ -1293,10 +1293,12 @@ serve(async (req) => {
 
     const SEARCH_WORKER_URL = Deno.env.get("SEARCH_WORKER_URL")?.trim() ?? "";
     const SEARCH_WORKER_SECRET = Deno.env.get("SEARCH_WORKER_SECRET")?.trim() ?? "";
-    const hasSearchWorker = Boolean(SEARCH_WORKER_URL && SEARCH_WORKER_SECRET);
-    const searchProxyUrl = hasSearchWorker ? resolveSearchProxyUrl(req) : null;
+    const searchWorkerConfigured = Boolean(SEARCH_WORKER_URL && SEARCH_WORKER_SECRET);
 
     const body = await req.json().catch(() => ({}));
+    const enableSearch = body?.enableSearch === true;
+    const hasSearchWorker = searchWorkerConfigured && enableSearch;
+    const searchProxyUrl = hasSearchWorker ? resolveSearchProxyUrl(req) : null;
     const sessionId = safeStr(body.sessionId).trim();
     const reqCompanyName = safeStr(body.companyName).trim();
     const externalContext = safeStr(body.systemPrompt).trim();
