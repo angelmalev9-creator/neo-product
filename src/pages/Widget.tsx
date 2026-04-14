@@ -186,16 +186,6 @@ const Widget = () => {
     onTranscript: (transcript, isFinal, role) => {
       const normalized = transcript.replace(/\s+/g, ' ').trim();
 
-      if (role === 'assistant' && !normalized) {
-        setLiveAssistantTranscript('');
-        return;
-      }
-
-      if (role === 'user' && !normalized) {
-        setLiveTranscript('');
-        return;
-      }
-
       if (!normalized) return;
 
       if (role === 'user') {

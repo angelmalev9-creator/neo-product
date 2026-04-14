@@ -108,7 +108,6 @@ const ACTION_PROCESSING_SPEECH_PATTERNS = [
   /(изпращам|подавам|попълвам|обработвам).*(форм|запитван|заявк)/i,
   /(проверявам|потвърждавам).*(наличност|резервац|заявк)/i,
   /(резервирам|запазвам).*(час|резервац)/i,
-  /(готово|изпратено).*(запитван|заявк|форм)/i,
 ];
 
 const looksLikeActionPayload = (text: string) => {
@@ -4075,6 +4074,7 @@ export const useGeminiVoice = ({
             systemPrompt,
             companyName,
             sessionId,
+            enableSearch: false,
           }),
         });
 
