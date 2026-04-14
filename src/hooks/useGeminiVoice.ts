@@ -154,8 +154,6 @@ async function callSearchWorkerProxy(params: {
       Authorization: `Bearer ${params.anonKey}`,
     },
     body: JSON.stringify({
-      type: "action_request",
-      action: "search_site_content",
       session_id: params.session_id,
       query: params.query,
       site_url: params.site_url || "",
@@ -387,24 +385,7 @@ function normalizeSpokenEmail(text: string): string {
       "",
     )
     .trim();
-
-  // ★ Cyrillic @-word normalization (runs BEFORE transliteration).
-  // Handles all the ways a user can spell "@" out loud in Bulgarian:
-  //   • "маймунка", "маймунско а", "маймуна", "маймунче"
-  //   • "кльомба", "клумба", "кломба", "клиомба", "кльонба"
-  //   • "ат", "ет" (English "at" read aloud by a Bulgarian)
-  //   • "at", "et" (already Latin)
-  // Replace them with a standalone " @ " token so the rest of the pipeline
-  // can rely on a single canonical form.
-  const cyrAtNormalized = preStripped
-    .replace(/\b(?:маймунк[аоуи]|маймунско\s*а|маймунс?ка|маймун[аое]|маймунче)\b/giu, " @ ")
-    .replace(/\b(?:кл[ьео][оу]?мба|кл[оу]мба|кл[ьи]омба|кльонба)\b/giu, " @ ")
-    .replace(/\b(?:ат|ет)\b(?=\s*[a-zA-Zа-яА-Я0-9])/giu, " @ ") // only if followed by something (avoid matching "ат" in other contexts)
-    .replace(/\s*@\s*/g, " @ ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  let raw = normalizeDomainWords(cyrAtNormalized || String(text || ""));
+  let raw = normalizeDomainWords(preStripped || String(text || ""));
   raw = normalizeEmailProvider(normalizeEmailTld(raw))
     .replace(/\b(?:dolna\s+cherta|underscore)\b/giu, " _ ")
     .replace(/\b(?:tire|dash|minus)\b/giu, " - ")
@@ -1474,63 +1455,6 @@ function overlapsAsRollingCorrection(older: string, newer: string): boolean {
     if (halfNew.includes(phrase)) return true;
   }
   return false;
-}
-
-/**
- * ★ Removes internal repeated phrases within a single transcript chunk.
- *
- * Problem: Soniox sometimes emits "казвам се Александър, 088 77 00 811, казвам се
- * Александър, 088 77 00 811" in one chunk — either because VAD flushed mid-utterance
- * and then re-emitted, or because the user actually repeated themselves while dictating
- * sensitive data. Either way, Gemini sees duplicated PII and gets confused, sometimes
- * merging them into "Александър, 088 77 0 кет веднага, казвам се Александър...".
- *
- * Strategy: scan for any window of 3+ words that appears 2+ times in the chunk
- * and collapse consecutive duplicates into one occurrence. Preserves the FIRST
- * occurrence so natural speech like "да, да" still works (only 1 word, not collapsed).
- *
- * Conservative: only collapses IMMEDIATE repeats (the duplicate must start within
- * ~10 words of the original), not distant ones — otherwise we'd break legitimate
- * restatements like "казах ви телефона. повтарям, телефона е ...".
- */
-function dedupeRepeatedPhrases(text: string): string {
-  if (!text) return text;
-  const words = text.split(/(\s+)/); // keep whitespace tokens for clean rejoining
-  const wordTokens: { idx: number; w: string }[] = [];
-  for (let i = 0; i < words.length; i++) {
-    if (words[i].trim()) wordTokens.push({ idx: i, w: words[i].toLowerCase() });
-  }
-  if (wordTokens.length < 6) return text;
-
-  // Try window sizes from large to small so we match longest repeats first
-  for (let winSize = Math.min(12, Math.floor(wordTokens.length / 2)); winSize >= 3; winSize--) {
-    for (let start = 0; start + winSize * 2 <= wordTokens.length; start++) {
-      const a = wordTokens
-        .slice(start, start + winSize)
-        .map((t) => t.w)
-        .join(" ");
-      // look for the same window within the next `winSize + 4` words (immediate repeat)
-      const maxGap = winSize + 4;
-      for (let gap = 0; gap <= maxGap && start + winSize + gap + winSize <= wordTokens.length; gap++) {
-        const b = wordTokens
-          .slice(start + winSize + gap, start + winSize * 2 + gap)
-          .map((t) => t.w)
-          .join(" ");
-        if (a === b && a.length >= 8) {
-          // Remove the second occurrence (and the gap-bridging punctuation if any)
-          const removeFrom = wordTokens[start + winSize + gap].idx;
-          const removeTo = wordTokens[start + winSize * 2 + gap - 1].idx + 1;
-          // Also eat a trailing comma/space after the removed region
-          let eatEnd = removeTo;
-          while (eatEnd < words.length && /^[\s,.;:]+$/.test(words[eatEnd])) eatEnd++;
-          const out = [...words.slice(0, removeFrom), " ", ...words.slice(eatEnd)].join("");
-          // Recurse once — in case there are 3+ repetitions
-          return dedupeRepeatedPhrases(out.replace(/\s+/g, " ").trim());
-        }
-      }
-    }
-  }
-  return text;
 }
 
 function resolveRoomTypeFromState(rawRoomType: string, reservationState: any): string {
@@ -2897,7 +2821,7 @@ export const useGeminiVoice = ({
           utteranceBufferRef.current.push(taggedTranscript);
         }
 
-        const cleanFinalTranscript = dedupeRepeatedPhrases(sanitizeUserTranscriptForUi(transcript));
+        const cleanFinalTranscript = sanitizeUserTranscriptForUi(transcript);
         if (cleanFinalTranscript) {
           const nowTs = Date.now();
           if (finalChunksRef.current.length === 0) {
@@ -5186,39 +5110,7 @@ export const useGeminiVoice = ({
           return true;
         }
 
-        // ★ HARD GUARD: submit_form MUST always go to neo-worker-proxy.
-        // If any code path ever overrides PROXY_BASE (refactor accident, env var,
-        // feature flag, whatever) — catch it here and force-correct it. We also
-        // log loudly so it's obvious in the console that something tried to
-        // route a form submission elsewhere.
-        const NEO_WORKER_PROXY_URL = "https://onufuxczpqlxxkgyltlz.supabase.co/functions/v1/neo-worker-proxy";
-        let submitTargetUrl = PROXY_BASE;
-        if (!submitTargetUrl || !submitTargetUrl.includes("neo-worker-proxy")) {
-          console.warn("[SUBMIT_FORM] 🛡️ guard tripped — PROXY_BASE was not neo-worker-proxy, forcing correct URL", {
-            was: submitTargetUrl,
-            forcedTo: NEO_WORKER_PROXY_URL,
-          });
-          submitTargetUrl = NEO_WORKER_PROXY_URL;
-        }
-        console.log("[SUBMIT_FORM] POST →", submitTargetUrl);
-
-        // ★ INSTANT VISUAL FEEDBACK: show a "Подавам запитването..." bubble in chat
-        // BEFORE the fetch starts. This way the user always sees that something is
-        // happening during the ~500-2000ms it takes for neo-worker-proxy to respond.
-        // Without this, there's dead silence in the UI between Gemini's last sentence
-        // and the "Готово" success message — which feels like a freeze.
-        //
-        // We push this via onMessage as a transient assistant bubble. It will be
-        // replaced by the real success / error message once the fetch resolves.
-        try {
-          const inflightPhrase = "Един момент, подавам запитването…";
-          onTranscript?.(inflightPhrase, false, "assistant");
-          console.log("[SUBMIT_FORM] showing inflight indicator:", inflightPhrase);
-        } catch (fbErr) {
-          console.warn("[SUBMIT_FORM] inflight indicator failed:", fbErr);
-        }
-
-        const res = await fetch(submitTargetUrl, {
+        const res = await fetch(PROXY_BASE, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -5376,56 +5268,18 @@ export const useGeminiVoice = ({
           const isNativeAudio = session.model.includes("native-audio");
 
           // ── Voice selection ───────────────────────────────────────────────
-          // Aoede = топъл, жив, емоционален глас — звучи най-близо до реален рецепционист
-          // за български. Enceladus е ясен но "чете", Aoede/Leda имат естествена просодия.
-          // (може да се override-не през session.voiceName от сървъра)
-          const voiceName = (session as any).voiceName || "Aoede";
-
-          // ── Voice persona prefix ──────────────────────────────────────────
-          // Подаваме към Gemini кратка инструкция ЗА НАЧИНА НА ГОВОРЕНЕ.
-          // Това не сменя съдържанието на отговора, само стила и темпото.
-          // Освен това инструктираме модела как да произнася @ и . в имейли,
-          // защото моделът по default може да ги "изговаря буквално" или да
-          // звучи неестествено когато диктува имейл адрес.
-          const VOICE_PERSONA_PREFIX = [
-            "=== СТИЛ НА ГОВОРЕНЕ (ЗАДЪЛЖИТЕЛНО) ===",
-            "Говориш като опитен, топъл рецепционист на рецепция — НЕ като четец на новини.",
-            "Темпо: естествено, живо, леко забързано (като разговор на живо), НЕ бавно и разтегнато.",
-            "Интонация: разнообразна, с микропаузи между изреченията, не монотонна.",
-            "Използвай естествени филъри РЯДКО: 'така', 'ами', 'добре', 'разбрах'. Без преиграване.",
-            "НЕ рецитирай. НЕ звучи като робот. Звучи като човек който работи на телефон.",
-            "Изречения: къси, ясни, с ритъм. Избягвай дълги бюрократични конструкции.",
-            "",
-            "=== ПРОИЗНОШЕНИЕ НА ИМЕЙЛИ И ТЕЛЕФОНИ (ЗАДЪЛЖИТЕЛНО) ===",
-            "Когато ПРОИЗНАСЯШ имейл адрес на глас:",
-            "  • символа @ произнасяй като 'маймунка' (напр. 'angel маймунка gmail точка com')",
-            "  • символа . произнасяй като 'точка'",
-            "  • НИКОГА не казвай 'ет' или 'at' — винаги 'маймунка'",
-            "Когато ПРОИЗНАСЯШ телефон: на групи по 2-3 цифри, с леки паузи.",
-            "  • напр. '0887 70 08 11' → 'нула осемстотин осемдесет и седем, седемдесет, нула осем, единайсет'",
-            "  • или по-просто: 'нула осем осем седем, седем нула, нула осем, едно едно'",
-            "  • НИКОГА не изреждай всички цифри подред без паузи.",
-            "",
-            "=== ПОТВЪРЖДАВАНЕ НА ДАННИ ===",
-            "Когато потвърждаваш данни на клиента, казвай ВСЕКИ елемент САМО ВЕДНЪЖ.",
-            "НИКОГА не повтаряй 'казвам се X, казвам се X' или '088..., 088...'.",
-            "Прочети името веднъж, телефона веднъж, имейла веднъж. След това питай: 'Вярно ли е?'",
-            "",
-            "========================================",
-            "",
-          ].join("\n");
-
-          const enrichedSystemInstruction = VOICE_PERSONA_PREFIX + (session.systemInstruction || "");
+          // Enceladus = ясен, неутрален мъжки глас — по-добро произношение на български
+          // (Charon е добър за английски, но Enceladus/Sadachbia са по-чисти за славянски езици)
+          const voiceName = (session as any).voiceName || "Enceladus";
 
           const setupPayload: any = {
             setup: {
               model: `models/${session.model}`,
               generation_config: {
                 response_modalities: ["AUDIO"],
-                // temperature 0.85 — намалено от 0.95; 0.95 беше твърде "артистично" и
-                // създаваше прекалено дълги, разтегнати реплики. 0.85 дава естествена
-                // вариация без прекаляване — по-близо до темпо на жив рецепционист.
-                temperature: 0.85,
+                // temperature 0.95 — по-топъл, по-емоционален глас; звучи като жив човек
+                // Високата температура добавя естествена вариация в интонацията
+                temperature: 0.95,
                 max_output_tokens: 1500,
                 speech_config: {
                   voice_config: {
@@ -5441,7 +5295,7 @@ export const useGeminiVoice = ({
                   ? { thinking_level: "minimal" }
                   : { thinking_budget: 0 },
               },
-              system_instruction: { parts: [{ text: enrichedSystemInstruction }] },
+              system_instruction: { parts: [{ text: session.systemInstruction }] },
               // ★ SEARCH WORKER — подай tools ако са налични
               ...(session.tools?.length ? { tools: session.tools } : {}),
             },
@@ -5869,37 +5723,14 @@ export const useGeminiVoice = ({
                     actionTurnSilenceRef.current = true;
                     console.log("[MODEL PART TEXT][JSON CONT]", currentResponseTextRef.current.slice(0, 200));
                   } else if (partText) {
-                    // ★ FIX: Action-processing speech visibility
-                    // ─────────────────────────────────────────
-                    // Previously: when Gemini emitted filler text like "чудесно, имам всички
-                    // данни" or "един момент, изпращам", we OVERWROTE currentResponseTextRef
-                    // (destroying any previously accumulated text) AND suppressed the UI
-                    // transcript entirely. Result: the user saw NOTHING in the chat bubble
-                    // for ~1-2 seconds while the submit was in flight — exactly the "not
-                    // always shows up in UI chat transcript" complaint.
-                    //
-                    // New behavior: we still silence the AUDIO playback (so Gemini doesn't
-                    // literally say "готово" before submit completes), but we PRESERVE the
-                    // text and PUSH it to the live transcript so the user sees "Един момент,
-                    // подавам запитването..." in the chat. This gives clear feedback that
-                    // something is happening.
+                    // ★ FIX: Check if this text matches action processing speech patterns
+                    // (e.g. "чудесно, имам всички данни", "един момент, изпращам")
+                    // If so, silence audio and suppress transcript
                     if (ACTION_PROCESSING_SPEECH_PATTERNS.some((p) => p.test(partText))) {
                       actionTurnSilenceRef.current = true;
                       stopAssistantPlayback();
-                      // Keep the text visible — append, do NOT overwrite
-                      if (currentResponseTextRef.current && !currentResponseTextRef.current.endsWith(" ")) {
-                        currentResponseTextRef.current += " ";
-                      }
-                      currentResponseTextRef.current += partText;
-                      // Push to live transcript immediately so UI reflects what's happening
-                      liveAssistantTranscriptRef.current = currentResponseTextRef.current;
-                      if (!assistantTurnCanceledRef.current) {
-                        onTranscript?.(liveAssistantTranscriptRef.current, false, "assistant");
-                      }
-                      console.log(
-                        "[MODEL PART TEXT][ACTION SPEECH — audio silenced, text visible]",
-                        partText.slice(0, 200),
-                      );
+                      currentResponseTextRef.current = partText;
+                      console.log("[MODEL PART TEXT][ACTION SPEECH SUPPRESSED]", partText.slice(0, 200));
                     } else {
                       if (currentResponseTextRef.current && !currentResponseTextRef.current.endsWith(" ")) {
                         currentResponseTextRef.current += " ";
@@ -5913,20 +5744,6 @@ export const useGeminiVoice = ({
           }
 
           // ★ Always accumulate transcription text (even during barge-in) so we don't lose context
-          //
-          // ★ FIX: Transcription de-sync with audio
-          // ──────────────────────────────────────
-          // Problem: Gemini sends audio chunks and outputTranscription chunks on SEPARATE
-          // streams. The transcription stream often arrives FASTER than the audio plays,
-          // so the text races ahead of the voice — user sees a word ~1-2s before hearing it,
-          // or the other way around on slow connections. Previously we flushed the transcript
-          // to the UI on EVERY partial, which amplified the jitter.
-          //
-          // Fix: throttle the live transcript updates. We still accumulate every partial into
-          // currentResponseTextRef (so turnComplete has the full text), but we only push to
-          // the UI at most every 180ms, AND we hold the very last partial until either the
-          // next 180ms tick or turnComplete — whichever comes first. This gives the audio
-          // buffer time to catch up so the visible text tracks the spoken voice more closely.
           {
             const transcription =
               content.outputTranscription ||
@@ -5952,35 +5769,10 @@ export const useGeminiVoice = ({
                   currentResponseTextRef.current += " ";
                 }
                 currentResponseTextRef.current += txt;
-
                 // Only stream live transcript if not interrupted — but always accumulate
                 if (!assistantTurnCanceledRef.current) {
                   liveAssistantTranscriptRef.current = currentResponseTextRef.current;
-
-                  // ★ Throttle UI updates to ~180ms to keep them in step with audio playback.
-                  // We use a ref-level timestamp so we don't need a separate state.
-                  const w = window as any;
-                  const nowTs = Date.now();
-                  const lastPush = w.__neoLastAssistantTranscriptPush || 0;
-                  const THROTTLE_MS = 180;
-
-                  if (nowTs - lastPush >= THROTTLE_MS) {
-                    w.__neoLastAssistantTranscriptPush = nowTs;
-                    onTranscript?.(liveAssistantTranscriptRef.current, false, "assistant");
-                  } else {
-                    // Schedule a trailing flush so the LAST partial isn't lost when a burst
-                    // of partials stops coming for ≥180ms but before turnComplete.
-                    if (w.__neoAssistantTranscriptTrailing) {
-                      clearTimeout(w.__neoAssistantTranscriptTrailing);
-                    }
-                    w.__neoAssistantTranscriptTrailing = setTimeout(() => {
-                      w.__neoLastAssistantTranscriptPush = Date.now();
-                      w.__neoAssistantTranscriptTrailing = null;
-                      if (!assistantTurnCanceledRef.current) {
-                        onTranscript?.(liveAssistantTranscriptRef.current, false, "assistant");
-                      }
-                    }, THROTTLE_MS);
-                  }
+                  onTranscript?.(liveAssistantTranscriptRef.current, false, "assistant");
                 }
               }
             }
@@ -5991,18 +5783,6 @@ export const useGeminiVoice = ({
             assistantTurnCanceledRef.current = false;
             // ★ Reset action silence flag at turn boundary
             actionTurnSilenceRef.current = false;
-
-            // ★ Cancel any pending throttled transcript flush — we'll push the final
-            // version now so the UI is guaranteed to show the complete text.
-            {
-              const w = window as any;
-              if (w.__neoAssistantTranscriptTrailing) {
-                clearTimeout(w.__neoAssistantTranscriptTrailing);
-                w.__neoAssistantTranscriptTrailing = null;
-              }
-              w.__neoLastAssistantTranscriptPush = 0;
-            }
-
             const responseText = currentResponseTextRef.current.trim();
 
             if (responseText) {
