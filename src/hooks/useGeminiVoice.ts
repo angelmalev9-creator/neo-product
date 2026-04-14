@@ -11,6 +11,7 @@ interface UseGeminiVoiceProps {
   onSpeakingChange?: (speaking: boolean) => void;
   onListeningChange?: (listening: boolean) => void;
   onTranscript?: (transcript: string, isFinal: boolean, role: "user" | "assistant") => void;
+  onActionProcessingChange?: (processing: boolean, action?: string | null) => void;
 }
 
 type SessionData = {
@@ -128,7 +129,31 @@ const isSilentActionTurnText = (text: string) => {
     .trim();
   if (!clean) return false;
 
-  return looksLikeActionPayload(clean) || ACTION_PROCESSING_SPEECH_PATTERNS.some((pattern) => pattern.test(clean));
+  if (looksLikeActionPayload(clean)) return true;
+
+  const visibleText = stripActionProcessingText(clean);
+  return !visibleText && ACTION_PROCESSING_SPEECH_PATTERNS.some((pattern) => pattern.test(clean));
+};
+
+const splitTextIntoSegments = (value: string) =>
+  String(value || "")
+    .replace(/([.!?])\s+/g, "$1\n")
+    .split(/\n+/)
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+
+const stripActionProcessingText = (value: string) => {
+  const clean = String(value || "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!clean || looksLikeActionPayload(clean)) return clean;
+
+  const filtered = splitTextIntoSegments(clean).filter(
+    (segment) => !ACTION_PROCESSING_SPEECH_PATTERNS.some((pattern) => pattern.test(segment)),
+  );
+
+  return filtered.join(" ").replace(/\s+/g, " ").trim();
 };
 
 const clampInstruction = (text: string, maxChars: number) => {
