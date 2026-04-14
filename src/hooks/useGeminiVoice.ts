@@ -5842,17 +5842,16 @@ export const useGeminiVoice = ({
                 !currentLooksLikeAction
               ) {
                 const visibleTranscriptText = stripActionProcessingText(txt);
-                if (!visibleTranscriptText) {
-                  continue;
-                }
-                if (currentResponseTextRef.current && !currentResponseTextRef.current.endsWith(" ")) {
-                  currentResponseTextRef.current += " ";
-                }
-                currentResponseTextRef.current += visibleTranscriptText;
-                // Only stream live transcript if not interrupted — but always accumulate
-                if (!assistantTurnCanceledRef.current) {
-                  liveAssistantTranscriptRef.current = currentResponseTextRef.current;
-                  onTranscript?.(liveAssistantTranscriptRef.current, false, "assistant");
+                if (visibleTranscriptText) {
+                  if (currentResponseTextRef.current && !currentResponseTextRef.current.endsWith(" ")) {
+                    currentResponseTextRef.current += " ";
+                  }
+                  currentResponseTextRef.current += visibleTranscriptText;
+                  // Only stream live transcript if not interrupted — but always accumulate
+                  if (!assistantTurnCanceledRef.current) {
+                    liveAssistantTranscriptRef.current = currentResponseTextRef.current;
+                    onTranscript?.(liveAssistantTranscriptRef.current, false, "assistant");
+                  }
                 }
               }
             }
