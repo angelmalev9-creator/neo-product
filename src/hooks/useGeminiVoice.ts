@@ -3260,6 +3260,79 @@ export const useGeminiVoice = ({
         }
       }
 
+      // ★★★ EARLY CONFIRMATION SUBMIT ★★★
+      // When user sends a short confirmation AND we have captured contact data
+      // AND there's a known form target → fire submit_form IMMEDIATELY, bypass Gemini.
+      // This eliminates the slow round-trip where Gemini lies "Записах запитването"
+      // and only then the FAKE_SUBMIT_GUARD fires seconds later.
+      const userTextLower = (visibleUserText || aggregatedUserTranscript).toLowerCase().trim();
+      const isShortConfirmation =
+        userTextLower.length < 60 &&
+        /^(да|точно|това е|не искам|нищо друго|нямам|не, благодаря|потвърждавам|да, точно|точно така|правилно|вярно|ок|окей|добре|да,? това е|не,? нямам|не,? не искам|нищо повече|няма нужда|готово)[\s.,!]*$/i.test(
+          userTextLower,
+        );
+      const captured = capturedSensitiveContactRef.current;
+      const hasEnoughForEarlySubmit =
+        !!captured?.name &&
+        captured.name.trim().length >= 2 &&
+        (
+          (!!captured.email && looksLikeCompleteEmail(captured.email)) ||
+          (!!captured.phone && looksLikeCompletePhone(captured.phone))
+        );
+      const recentlyFiredEarly = Date.now() - lastSubmitFormFiredAtRef.current < 30_000;
+
+      if (isShortConfirmation && hasEnoughForEarlySubmit && !recentlyFiredEarly) {
+        const sid =
+          (sessionDataRef.current as any)?.sessionId || (sessionDataRef.current as any)?.session_id || "";
+        const target =
+          lastSubmitFormTargetRef.current ||
+          pickPreferredSubmitFormTarget(
+            extractSubmitFormTargetsFromInstruction(
+              (sessionDataRef.current as any)?.systemInstruction || "",
+            ),
+          );
+
+        if (sid && (target?.form_id || target?.fingerprint)) {
+          console.log("[EARLY_CONFIRM_SUBMIT] User confirmed with short answer + captured contact. Firing immediately.", {
+            name: captured!.name,
+            email: captured!.email || "",
+            phone: captured!.phone || "",
+            userText: userTextLower,
+          });
+
+          // Show "Добре, един момент." in chat immediately
+          commitAssistantMessage("Добре, един момент.");
+          updateActionProcessing(true, "submit_form");
+
+          const extraFields: Record<string, string> = {};
+          if ((captured as any)?.plan) extraFields.plan = String((captured as any).plan);
+          if ((captured as any)?.message) extraFields.message = String((captured as any).message);
+
+          const synthesized = JSON.stringify({
+            type: "action_request",
+            action: "submit_form",
+            session_id: sid,
+            ...(target?.form_id ? { form_id: target.form_id } : {}),
+            ...(target?.fingerprint ? { fingerprint: target.fingerprint } : {}),
+            fields: {
+              name: captured!.name,
+              ...(captured!.email ? { email: captured!.email } : {}),
+              ...(captured!.phone ? { phone: captured!.phone } : {}),
+              ...extraFields,
+            },
+          });
+
+          void executeActionFromGeminiRef.current(synthesized);
+
+          // Still send to Gemini so it knows what happened, but mark that we already submitted
+          sendToGemini(
+            `[SYSTEM] Клиентът потвърди. Системата ВЕЧЕ изпрати submit_form автоматично. НЕ връщай action_request JSON. Просто изчакай резултата.`,
+          );
+          return;
+        }
+      }
+      // ★★★ END EARLY CONFIRMATION SUBMIT ★★★
+
       // Hint Gemini to fix garbled STT for emails/phones/names — 0 extra latency, same WS
       const lc = geminiPayloadText.toLowerCase();
 
