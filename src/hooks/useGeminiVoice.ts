@@ -716,6 +716,10 @@ function extractContactFields(text: string, mode: SensitiveInputMode = "contact"
 function extractContactIntentFields(text: string): SensitiveContactFields {
   const raw = stripLowConfidenceTag(text).trim();
   const fields: SensitiveContactFields = {};
+  const words = raw.split(/\s+/).filter(Boolean);
+  const rawLooksLikeEmail = looksLikePossibleEmail(raw);
+  const rawLooksLikePhone = looksLikePossiblePhone(raw);
+  const rawLooksMixedContact = rawLooksLikeEmail && rawLooksLikePhone;
 
   const nameMatch = raw.match(/(?:казвам\s+се|името\s+ми\s+е|име\s*:?\s*)([\p{L}][\p{L}\s'-]{2,60})/iu);
   if (nameMatch?.[1]) {
@@ -731,7 +735,6 @@ function extractContactIntentFields(text: string): SensitiveContactFields {
         .split(/(?:,|\s+и\s+номер(?:ът)?|\s+телефон(?:ът)?|\s+а\s+номер(?:ът)?|\s+и\s+телефон(?:ът)?)/i)[0]
         ?.trim() || ""
     : "";
-  // Remove Soniox glitch: "user@gmail.com, @gmail.com" → "user@gmail.com"
   const emailSegmentClean = emailSegment.replace(
     /([a-z0-9._+-]+@[a-z0-9.-]+\.[a-z]{2,})\s*,?\s*@[a-z0-9.-]+(?:\.[a-z]{2,})?/gi,
     "$1",
@@ -739,7 +742,7 @@ function extractContactIntentFields(text: string): SensitiveContactFields {
   const emailCandidate = normalizeSpokenEmail(emailSegmentClean || raw);
   if (looksLikeCompleteEmail(emailCandidate)) fields.email = emailCandidate;
 
-  if (!fields.email && raw.length < 120) {
+  if (!fields.email && raw.length < 90 && words.length <= 8 && !rawLooksMixedContact && !rawLooksLikePhone) {
     const fallbackEmail = normalizeSpokenEmail(raw);
     if (looksLikeCompleteEmail(fallbackEmail)) {
       fields.email = fallbackEmail;
@@ -752,10 +755,12 @@ function extractContactIntentFields(text: string): SensitiveContactFields {
     : "";
   if (phoneSegment) {
     const phoneCandidate = normalizeSpokenPhone(phoneSegment);
-    if (phoneCandidate.replace(/\D/g, "").length >= 8 && phoneCandidate.replace(/\D/g, "").length <= 15) fields.phone = phoneCandidate;
+    if (phoneCandidate.replace(/\D/g, "").length >= 8 && phoneCandidate.replace(/\D/g, "").length <= 15) {
+      fields.phone = phoneCandidate;
+    }
   }
 
-  if (!fields.phone && raw.length < 120) {
+  if (!fields.phone && raw.length < 90 && words.length <= 8 && !rawLooksMixedContact && !rawLooksLikeEmail) {
     const fallbackPhone = normalizeSpokenPhone(raw);
     const digits = fallbackPhone.replace(/\D/g, "");
     if (digits.length >= 8 && digits.length <= 15) {
@@ -802,11 +807,13 @@ function cleanupSensitiveTranscript(text: string): string {
   if (!raw) return raw;
 
   const parsed = extractContactIntentFields(raw);
+  const parsedCount = [parsed.name, parsed.email, parsed.phone].filter(Boolean).length;
   const explicitContactLead =
     /(?:казвам\s+се|името\s+ми\s+е|имейл(?:ът)?\s+ми\s+е|email|имейл|майл|поща|номер(?:ът)?\s+ми\s+е|телефон(?:ът)?\s+ми\s+е|телефон|номер)/iu.test(
       raw,
     );
-  if (!explicitContactLead) return raw;
+  const contactLike = detectContactLikeMode(raw) !== "general";
+  if (!explicitContactLead && !(contactLike && parsedCount >= 2)) return raw;
 
   if (parsed.name && parsed.email && parsed.phone) {
     return `Казвам се ${parsed.name}, имейлът ми е ${parsed.email}, телефонът ми е ${parsed.phone}`;
@@ -2216,6 +2223,10 @@ export const useGeminiVoice = ({
 
   const updateActionProcessing = useCallback(
     (processing: boolean, action?: string | null) => {
+      if (action === "submit_form") {
+        onActionProcessingChange?.(false, null);
+        return;
+      }
       onActionProcessingChange?.(processing, action || null);
     },
     [onActionProcessingChange],
@@ -2389,6 +2400,11 @@ export const useGeminiVoice = ({
         }
       }
 
+      const cleanedSensitive = cleanupSensitiveTranscript(clean);
+      if (cleanedSensitive) {
+        clean = cleanedSensitive;
+      }
+
       if (!clean) {
         clearUserLiveTranscript();
         return false;
@@ -2444,6 +2460,40 @@ export const useGeminiVoice = ({
       .filter(Boolean);
 
     if (cleaned.length === 0) return "";
+
+    if (cleaned.some((candidate) => detectContactLikeMode(candidate) !== "general")) {
+      const scoreCandidate = (candidate: string) => {
+        const fields = extractContactIntentFields(candidate);
+        const score =
+          (fields.name ? 1 : 0) +
+          (fields.email && looksLikeCompleteEmail(fields.email) ? 3 : 0) +
+          (fields.phone && looksLikeCompletePhone(fields.phone) ? 3 : 0);
+        return { candidate, score };
+      };
+
+      let best = scoreCandidate(cleaned[0]);
+
+      for (let i = 1; i < cleaned.length; i++) {
+        const current = scoreCandidate(cleaned[i]);
+        const bestNorm = best.candidate.toLowerCase();
+        const currentNorm = current.candidate.toLowerCase();
+
+        if (currentNorm === bestNorm || bestNorm.includes(currentNorm)) continue;
+        if (currentNorm.includes(bestNorm) && current.candidate.length >= best.candidate.length) {
+          best = current;
+          continue;
+        }
+        if (current.score > best.score) {
+          best = current;
+          continue;
+        }
+        if (current.score === best.score && current.candidate.length > best.candidate.length) {
+          best = current;
+        }
+      }
+
+      return cleanupSensitiveTranscript(best.candidate) || best.candidate;
+    }
 
     let best = cleaned[0];
 
@@ -3302,7 +3352,6 @@ export const useGeminiVoice = ({
 
           // Show "Добре, един момент." in chat immediately
           commitAssistantMessage("Добре, един момент.");
-          updateActionProcessing(true, "submit_form");
 
           const extraFields: Record<string, string> = {};
           if ((captured as any)?.plan) extraFields.plan = String((captured as any).plan);
