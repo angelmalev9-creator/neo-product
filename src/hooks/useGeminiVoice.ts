@@ -746,7 +746,7 @@ function extractContactIntentFields(text: string): SensitiveContactFields {
     }
   }
 
-  const phoneMatch = raw.match(/(?:номер(?:ът)?\s+ми\s+є|телефон(?:ът)?\s+ми\s+е|телефон|номер|gsm|phone)\s+(.+)$/iu);
+  const phoneMatch = raw.match(/(?:номер(?:ът)?\s+ми\s+е|телефон(?:ът)?\s+ми\s+е|телефон|номер|gsm|phone)\s+(.+)$/iu);
   const phoneSegment = phoneMatch?.[1]
     ? phoneMatch[1].split(/(?:,|\s+и\s+имейл|\s+а\s+имейл|\s+и\s+казвам\s+се)/i)[0]?.trim() || ""
     : "";
