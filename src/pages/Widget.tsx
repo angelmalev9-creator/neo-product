@@ -127,6 +127,7 @@ const Widget = () => {
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [isProcessingAction, setIsProcessingAction] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<Message[]>([]);
   
   const [conversationId, setConversationId] = useState<string | null>(null);
