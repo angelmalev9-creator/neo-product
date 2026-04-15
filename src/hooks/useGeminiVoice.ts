@@ -2346,21 +2346,34 @@ export const useGeminiVoice = ({
             .trim();
         }
 
-        // c) Immediate adjacent duplicate clauses: split ONLY on commas (not
-        //    periods — those are inside emails). If two adjacent clauses are
-        //    identical after normalization, keep only one.
-        const parts = clean.split(",").map((s) => s.trim());
+        // c) Immediate adjacent duplicate clauses: split on commas AND ". "
+        //    (period+space won't break emails like "name@gmail.com").
+        const parts = clean.split(/,|\.\s+/).map((s) => s.trim());
         const dedupedParts: string[] = [];
         for (const p of parts) {
           if (!p) continue;
           const norm = p.toLowerCase().replace(/\s+/g, "");
-          const lastNorm = dedupedParts.length
-            ? dedupedParts[dedupedParts.length - 1].toLowerCase().replace(/\s+/g, "")
-            : "";
-          if (norm && norm === lastNorm) continue; // exact adjacent dup
-          dedupedParts.push(p);
+          // Check against ALL previous parts (not just last) for fuzzy match
+          let isDup = false;
+          for (const prev of dedupedParts) {
+            const prevNorm = prev.toLowerCase().replace(/\s+/g, "");
+            if (!norm || !prevNorm) continue;
+            // Exact match
+            if (norm === prevNorm) { isDup = true; break; }
+            // One is a substring of the other (catches partial repeats)
+            if (norm.length > 10 && prevNorm.length > 10) {
+              if (norm.includes(prevNorm) || prevNorm.includes(norm)) { isDup = true; break; }
+            }
+          }
+          if (!isDup) dedupedParts.push(p);
         }
         clean = dedupedParts.join(", ").replace(/\s+/g, " ").trim();
+
+        // d2) Repeated "X ми е Y" pattern dedup — catches "088... ми е номерът. 088... ми е номерът"
+        clean = clean
+          .replace(/(\b(?:ми е номер(?:ът)?|ми е имейл(?:ът)?|ми е телефон(?:ът)?)\b[^.]*?)(?:[,.]\s*(?:\S+\s+)*?\1)/gi, "$1")
+          .replace(/\s+/g, " ")
+          .trim();
 
         // d) Connector-word cleanup: strip dangling "а тов" / "а те" fragments
         //    that appear when STT cuts off mid-word. These are always followed
