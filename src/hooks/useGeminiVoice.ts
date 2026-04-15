@@ -3105,10 +3105,21 @@ export const useGeminiVoice = ({
       // Contact data is extracted only as Gemini payload hints below; never replaces what the user said.
       const autoDetectedContactMode = detectContactLikeMode(visibleUserText);
 
+      // ★ FIX: Always store captured contact data — even in "general" mode.
+      // Previously only stored when sensitiveMode !== "general", which meant
+      // typed input with name+email+phone in one message was never captured,
+      // causing FAKE_SUBMIT_GUARD to find null and skip.
+      if (mergedContact && (mergedContact.name || mergedContact.email || mergedContact.phone)) {
+        capturedSensitiveContactRef.current = mergedContact;
+        console.log("[CONTACT CAPTURE] stored:", {
+          name: mergedContact.name || "",
+          email: mergedContact.email || "",
+          phone: mergedContact.phone || "",
+          mode: sensitiveMode,
+        });
+      }
+
       if (sensitiveMode !== "general") {
-        if (mergedContact) {
-          capturedSensitiveContactRef.current = mergedContact;
-        }
 
         // ★ Build Gemini payload with contact hints — raw transcript stays intact for UI
         if (sensitiveMode === "phone") {
