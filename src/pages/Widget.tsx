@@ -585,7 +585,7 @@ const Widget = () => {
       </header>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
         {messages.length === 0 && !isConnected && (
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
             <AvatarIcon size="lg" />
