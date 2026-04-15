@@ -2346,21 +2346,34 @@ export const useGeminiVoice = ({
             .trim();
         }
 
-        // c) Immediate adjacent duplicate clauses: split ONLY on commas (not
-        //    periods — those are inside emails). If two adjacent clauses are
-        //    identical after normalization, keep only one.
-        const parts = clean.split(",").map((s) => s.trim());
+        // c) Immediate adjacent duplicate clauses: split on commas AND ". "
+        //    (period+space won't break emails like "name@gmail.com").
+        const parts = clean.split(/,|\.\s+/).map((s) => s.trim());
         const dedupedParts: string[] = [];
         for (const p of parts) {
           if (!p) continue;
           const norm = p.toLowerCase().replace(/\s+/g, "");
-          const lastNorm = dedupedParts.length
-            ? dedupedParts[dedupedParts.length - 1].toLowerCase().replace(/\s+/g, "")
-            : "";
-          if (norm && norm === lastNorm) continue; // exact adjacent dup
-          dedupedParts.push(p);
+          // Check against ALL previous parts (not just last) for fuzzy match
+          let isDup = false;
+          for (const prev of dedupedParts) {
+            const prevNorm = prev.toLowerCase().replace(/\s+/g, "");
+            if (!norm || !prevNorm) continue;
+            // Exact match
+            if (norm === prevNorm) { isDup = true; break; }
+            // One is a substring of the other (catches partial repeats)
+            if (norm.length > 10 && prevNorm.length > 10) {
+              if (norm.includes(prevNorm) || prevNorm.includes(norm)) { isDup = true; break; }
+            }
+          }
+          if (!isDup) dedupedParts.push(p);
         }
         clean = dedupedParts.join(", ").replace(/\s+/g, " ").trim();
+
+        // d2) Repeated "X ми е Y" pattern dedup — catches "088... ми е номерът. 088... ми е номерът"
+        clean = clean
+          .replace(/(\b(?:ми е номер(?:ът)?|ми е имейл(?:ът)?|ми е телефон(?:ът)?)\b[^.]*?)(?:[,.]\s*(?:\S+\s+)*?\1)/gi, "$1")
+          .replace(/\s+/g, " ")
+          .trim();
 
         // d) Connector-word cleanup: strip dangling "а тов" / "а те" fragments
         //    that appear when STT cuts off mid-word. These are always followed
@@ -3246,6 +3259,79 @@ export const useGeminiVoice = ({
           return;
         }
       }
+
+      // ★★★ EARLY CONFIRMATION SUBMIT ★★★
+      // When user sends a short confirmation AND we have captured contact data
+      // AND there's a known form target → fire submit_form IMMEDIATELY, bypass Gemini.
+      // This eliminates the slow round-trip where Gemini lies "Записах запитването"
+      // and only then the FAKE_SUBMIT_GUARD fires seconds later.
+      const userTextLower = (visibleUserText || aggregatedUserTranscript).toLowerCase().trim();
+      const isShortConfirmation =
+        userTextLower.length < 60 &&
+        /^(да|точно|това е|не искам|нищо друго|нямам|не, благодаря|потвърждавам|да, точно|точно така|правилно|вярно|ок|окей|добре|да,? това е|не,? нямам|не,? не искам|нищо повече|няма нужда|готово)[\s.,!]*$/i.test(
+          userTextLower,
+        );
+      const captured = capturedSensitiveContactRef.current;
+      const hasEnoughForEarlySubmit =
+        !!captured?.name &&
+        captured.name.trim().length >= 2 &&
+        (
+          (!!captured.email && looksLikeCompleteEmail(captured.email)) ||
+          (!!captured.phone && looksLikeCompletePhone(captured.phone))
+        );
+      const recentlyFiredEarly = Date.now() - lastSubmitFormFiredAtRef.current < 30_000;
+
+      if (isShortConfirmation && hasEnoughForEarlySubmit && !recentlyFiredEarly) {
+        const sid =
+          (sessionDataRef.current as any)?.sessionId || (sessionDataRef.current as any)?.session_id || "";
+        const target =
+          lastSubmitFormTargetRef.current ||
+          pickPreferredSubmitFormTarget(
+            extractSubmitFormTargetsFromInstruction(
+              (sessionDataRef.current as any)?.systemInstruction || "",
+            ),
+          );
+
+        if (sid && (target?.form_id || target?.fingerprint)) {
+          console.log("[EARLY_CONFIRM_SUBMIT] User confirmed with short answer + captured contact. Firing immediately.", {
+            name: captured!.name,
+            email: captured!.email || "",
+            phone: captured!.phone || "",
+            userText: userTextLower,
+          });
+
+          // Show "Добре, един момент." in chat immediately
+          commitAssistantMessage("Добре, един момент.");
+          updateActionProcessing(true, "submit_form");
+
+          const extraFields: Record<string, string> = {};
+          if ((captured as any)?.plan) extraFields.plan = String((captured as any).plan);
+          if ((captured as any)?.message) extraFields.message = String((captured as any).message);
+
+          const synthesized = JSON.stringify({
+            type: "action_request",
+            action: "submit_form",
+            session_id: sid,
+            ...(target?.form_id ? { form_id: target.form_id } : {}),
+            ...(target?.fingerprint ? { fingerprint: target.fingerprint } : {}),
+            fields: {
+              name: captured!.name,
+              ...(captured!.email ? { email: captured!.email } : {}),
+              ...(captured!.phone ? { phone: captured!.phone } : {}),
+              ...extraFields,
+            },
+          });
+
+          void executeActionFromGeminiRef.current(synthesized);
+
+          // Still send to Gemini so it knows what happened, but mark that we already submitted
+          sendToGemini(
+            `[SYSTEM] Клиентът потвърди. Системата ВЕЧЕ изпрати submit_form автоматично. НЕ връщай action_request JSON. Просто изчакай резултата.`,
+          );
+          return;
+        }
+      }
+      // ★★★ END EARLY CONFIRMATION SUBMIT ★★★
 
       // Hint Gemini to fix garbled STT for emails/phones/names — 0 extra latency, same WS
       const lc = geminiPayloadText.toLowerCase();
