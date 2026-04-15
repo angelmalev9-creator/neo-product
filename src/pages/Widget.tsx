@@ -127,6 +127,7 @@ const Widget = () => {
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [isProcessingAction, setIsProcessingAction] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<Message[]>([]);
   
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -304,8 +305,10 @@ const Widget = () => {
   }, [conversationId, isConnected]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, liveTranscript, liveAssistantTranscript]);
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  }, [messages, liveTranscript, liveAssistantTranscript, isProcessingAction]);
 
   useEffect(() => {
     if (!isListening) {
@@ -582,7 +585,7 @@ const Widget = () => {
       </header>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
         {messages.length === 0 && !isConnected && (
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
             <AvatarIcon size="lg" />
