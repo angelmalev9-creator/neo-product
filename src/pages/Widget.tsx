@@ -305,8 +305,10 @@ const Widget = () => {
   }, [conversationId, isConnected]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, liveTranscript, liveAssistantTranscript]);
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  }, [messages, liveTranscript, liveAssistantTranscript, isProcessingAction]);
 
   useEffect(() => {
     if (!isListening) {
