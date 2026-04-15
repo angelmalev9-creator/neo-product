@@ -739,23 +739,26 @@ function extractContactIntentFields(text: string): SensitiveContactFields {
   const emailCandidate = normalizeSpokenEmail(emailSegmentClean || raw);
   if (looksLikeCompleteEmail(emailCandidate)) fields.email = emailCandidate;
 
-  if (!fields.email) {
+  if (!fields.email && raw.length < 120) {
     const fallbackEmail = normalizeSpokenEmail(raw);
     if (looksLikeCompleteEmail(fallbackEmail)) {
       fields.email = fallbackEmail;
     }
   }
 
-  const phoneMatch = raw.match(/(?:номер(?:ът)?\s+ми\s+е|телефон(?:ът)?\s+ми\s+е|телефон|номер|gsm|phone)\s+(.+)$/iu);
+  const phoneMatch = raw.match(/(?:номер(?:ът)?\s+ми\s+є|телефон(?:ът)?\s+ми\s+е|телефон|номер|gsm|phone)\s+(.+)$/iu);
   const phoneSegment = phoneMatch?.[1]
     ? phoneMatch[1].split(/(?:,|\s+и\s+имейл|\s+а\s+имейл|\s+и\s+казвам\s+се)/i)[0]?.trim() || ""
     : "";
-  const phoneCandidate = normalizeSpokenPhone(phoneSegment || raw);
-  if (phoneCandidate.replace(/\D/g, "").length >= 8) fields.phone = phoneCandidate;
+  if (phoneSegment) {
+    const phoneCandidate = normalizeSpokenPhone(phoneSegment);
+    if (phoneCandidate.replace(/\D/g, "").length >= 8 && phoneCandidate.replace(/\D/g, "").length <= 15) fields.phone = phoneCandidate;
+  }
 
-  if (!fields.phone) {
+  if (!fields.phone && raw.length < 120) {
     const fallbackPhone = normalizeSpokenPhone(raw);
-    if (fallbackPhone.replace(/\D/g, "").length >= 8) {
+    const digits = fallbackPhone.replace(/\D/g, "");
+    if (digits.length >= 8 && digits.length <= 15) {
       fields.phone = fallbackPhone;
     }
   }
@@ -785,7 +788,7 @@ function mergeSensitiveContact(
       if (!next) return base;
       if (next.startsWith(base)) return next;
       if (base.startsWith(next)) return base;
-      if (base.length < 10 && next.length < 10) return `${base}${next}`;
+      // Never concatenate — pick the longer/newer one
       return next.length >= base.length ? next : base;
     })(),
     ts: Date.now(),
