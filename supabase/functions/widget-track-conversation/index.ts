@@ -89,8 +89,6 @@ serve(async (req) => {
         });
       }
 
-      const seqNum = typeof seq === "number" && seq > 0 ? seq : 0;
-
       const { data: recentMessages } = await supabase
         .from("conversation_messages")
         .select("role, content, created_at")
@@ -101,41 +99,35 @@ serve(async (req) => {
       const latestUserMessage = recentMessages?.find((message) => message.role === "user")?.content || "";
       const latestAssistantMessage = recentMessages?.find((message) => message.role === "assistant")?.content || "";
 
-      // Simple approach: always use now() + guarantee ordering via seq-based offsets
-      // Find the latest existing message timestamp to ensure we never go backwards
+      // Monotonic: each new message is at least 1ms after the latest existing one
       const latestExistingTs = recentMessages?.[0]?.created_at
         ? new Date(recentMessages[0].created_at).getTime()
         : 0;
-
-      // Base: max of now and latest existing + 1 second gap
-      const baseTimestamp = Math.max(Date.now(), latestExistingTs + 1000);
+      let nextTs = Math.max(Date.now(), latestExistingTs + 1);
 
       const inserts: { conversation_id: string; role: string; content: string; created_at: string }[] = [];
 
       if (userMessage) {
         const nextUserMessage = extractIncrementalMessage(latestUserMessage, userMessage);
         if (nextUserMessage) {
-          // Each seq gets a 2-second window. User message first.
-          const ts = new Date(baseTimestamp + (seqNum * 2000)).toISOString();
           inserts.push({
             conversation_id: conversationId,
             role: "user",
             content: nextUserMessage,
-            created_at: ts,
+            created_at: new Date(nextTs).toISOString(),
           });
+          nextTs += 1; // ensure next insert is strictly after
         }
       }
 
       if (assistantMessage) {
         const nextAssistantMessage = extractIncrementalMessage(latestAssistantMessage, assistantMessage);
         if (nextAssistantMessage) {
-          // Assistant response comes 1 second after user in same seq window
-          const ts = new Date(baseTimestamp + (seqNum * 2000) + 1000).toISOString();
           inserts.push({
             conversation_id: conversationId,
             role: "assistant",
             content: nextAssistantMessage,
-            created_at: ts,
+            created_at: new Date(nextTs).toISOString(),
           });
         }
       }
