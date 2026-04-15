@@ -739,12 +739,26 @@ function extractContactIntentFields(text: string): SensitiveContactFields {
   const emailCandidate = normalizeSpokenEmail(emailSegmentClean || raw);
   if (looksLikeCompleteEmail(emailCandidate)) fields.email = emailCandidate;
 
+  if (!fields.email) {
+    const fallbackEmail = normalizeSpokenEmail(raw);
+    if (looksLikeCompleteEmail(fallbackEmail)) {
+      fields.email = fallbackEmail;
+    }
+  }
+
   const phoneMatch = raw.match(/(?:номер(?:ът)?\s+ми\s+е|телефон(?:ът)?\s+ми\s+е|телефон|номер|gsm|phone)\s+(.+)$/iu);
   const phoneSegment = phoneMatch?.[1]
     ? phoneMatch[1].split(/(?:,|\s+и\s+имейл|\s+а\s+имейл|\s+и\s+казвам\s+се)/i)[0]?.trim() || ""
     : "";
   const phoneCandidate = normalizeSpokenPhone(phoneSegment || raw);
   if (phoneCandidate.replace(/\D/g, "").length >= 8) fields.phone = phoneCandidate;
+
+  if (!fields.phone) {
+    const fallbackPhone = normalizeSpokenPhone(raw);
+    if (fallbackPhone.replace(/\D/g, "").length >= 8) {
+      fields.phone = fallbackPhone;
+    }
+  }
 
   return fields;
 }
@@ -3080,8 +3094,17 @@ export const useGeminiVoice = ({
         : mergeTranscriptCandidates(buildStableTranscriptFromBuffers(), text);
       const rawVisibleUserText = sanitizeUserTranscriptForUi(aggregatedUserTranscript);
       const autoDetectedIncomingMode = detectContactLikeMode(rawVisibleUserText || text);
-      if (sensitiveMode !== "general" && autoDetectedIncomingMode === "general") {
-        // User answered something non-contact (e.g. package choice) while assistant had asked for contact fields too.
+      const explicitContactCueInReply =
+        /(?:казвам\s+се|името\s+ми\s+е|имейл(?:ът)?\s+ми\s+е|email|имейл|майл|поща|телефон(?:ът)?\s+ми\s+е|номер(?:ът)?\s+ми\s+е|телефон|номер|gmail|abv|outlook|hotmail|yahoo)/iu.test(
+          aggregatedUserTranscript,
+        ) || /\d{6,}/.test(normalizeSpokenPhone(aggregatedUserTranscript));
+      if (
+        sensitiveMode !== "general" &&
+        autoDetectedIncomingMode === "general" &&
+        isVeryShortClearAnswer(rawVisibleUserText || text) &&
+        !explicitContactCueInReply
+      ) {
+        // Only downgrade for genuinely short non-contact confirmations.
         sensitiveMode = "general";
       }
       let visibleUserText = rawVisibleUserText || aggregatedUserTranscript;
