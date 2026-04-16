@@ -6115,6 +6115,23 @@ export const useGeminiVoice = ({
                 if (!handled && responseText && !responseText.includes("{")) {
                   try {
                     const captured = capturedSensitiveContactRef.current;
+
+                    // ★ FIX: If name wasn't captured from user input, try extracting it
+                    // from Gemini's response where it addresses the user by name
+                    // e.g. "Добре, Ангел, само да потвърдим..."
+                    if (captured && !captured.name && responseText) {
+                      const geminiNameMatch = responseText.match(
+                        /(?:Добре|Здравей(?:те)?|Благодар[яи]|Чудесно|Разбрах)[,\s]+(\p{Lu}\p{Ll}{1,20}(?:\s+\p{Lu}\p{Ll}{1,20})?)/u,
+                      );
+                      if (geminiNameMatch?.[1]) {
+                        const extractedName = geminiNameMatch[1].trim();
+                        if (extractedName.length >= 2 && extractedName.split(/\s+/).length <= 3) {
+                          captured.name = extractedName;
+                          console.log("[FAKE_SUBMIT_GUARD] Extracted name from Gemini response:", extractedName);
+                        }
+                      }
+                    }
+
                     const hasName = !!captured?.name && captured.name.trim().length >= 2;
                     const hasEmail = !!captured?.email && looksLikeCompleteEmail(captured.email);
                     const hasPhone = !!captured?.phone && looksLikeCompletePhone(captured.phone);
