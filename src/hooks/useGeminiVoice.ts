@@ -766,7 +766,8 @@ function extractContactIntentFields(text: string): SensitiveContactFields {
     : "";
   if (phoneSegment) {
     const phoneCandidate = normalizeSpokenPhone(phoneSegment);
-    if (phoneCandidate.replace(/\D/g, "").length >= 8 && phoneCandidate.replace(/\D/g, "").length <= 15) fields.phone = phoneCandidate;
+    if (phoneCandidate.replace(/\D/g, "").length >= 8 && phoneCandidate.replace(/\D/g, "").length <= 15)
+      fields.phone = phoneCandidate;
   }
 
   if (!fields.phone && raw.length < 120) {
@@ -843,7 +844,8 @@ function cleanupSensitiveTranscript(text: string): string {
 
 function stripLowConfidenceTag(text: string): string {
   return String(text || "")
-    .replace(/^\[LOW_CONFIDENCE:\d+%\]\s*/, "")
+    .replace(/\s*\[LOW_CONFIDENCE:\d+%\]\s*/gi, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -2373,10 +2375,16 @@ export const useGeminiVoice = ({
             const prevNorm = prev.toLowerCase().replace(/\s+/g, "");
             if (!norm || !prevNorm) continue;
             // Exact match
-            if (norm === prevNorm) { isDup = true; break; }
+            if (norm === prevNorm) {
+              isDup = true;
+              break;
+            }
             // One is a substring of the other (catches partial repeats)
             if (norm.length > 10 && prevNorm.length > 10) {
-              if (norm.includes(prevNorm) || prevNorm.includes(norm)) { isDup = true; break; }
+              if (norm.includes(prevNorm) || prevNorm.includes(norm)) {
+                isDup = true;
+                break;
+              }
             }
           }
           if (!isDup) dedupedParts.push(p);
@@ -2385,7 +2393,10 @@ export const useGeminiVoice = ({
 
         // d2) Repeated "X ми е Y" pattern dedup — catches "088... ми е номерът. 088... ми е номерът"
         clean = clean
-          .replace(/(\b(?:ми е номер(?:ът)?|ми е имейл(?:ът)?|ми е телефон(?:ът)?)\b[^.]*?)(?:[,.]\s*(?:\S+\s+)*?\1)/gi, "$1")
+          .replace(
+            /(\b(?:ми е номер(?:ът)?|ми е имейл(?:ът)?|ми е телефон(?:ът)?)\b[^.]*?)(?:[,.]\s*(?:\S+\s+)*?\1)/gi,
+            "$1",
+          )
           .replace(/\s+/g, " ")
           .trim();
 
@@ -3173,7 +3184,6 @@ export const useGeminiVoice = ({
       }
 
       if (sensitiveMode !== "general") {
-
         // ★ Build Gemini payload with contact hints — raw transcript stays intact for UI
         if (sensitiveMode === "phone") {
           const phoneCandidate = mergedContact?.phone || normalizeSpokenPhone(aggregatedUserTranscript);
@@ -3302,30 +3312,28 @@ export const useGeminiVoice = ({
       const hasEnoughForEarlySubmit =
         !!captured?.name &&
         captured.name.trim().length >= 2 &&
-        (
-          (!!captured.email && looksLikeCompleteEmail(captured.email)) ||
-          (!!captured.phone && looksLikeCompletePhone(captured.phone))
-        );
+        ((!!captured.email && looksLikeCompleteEmail(captured.email)) ||
+          (!!captured.phone && looksLikeCompletePhone(captured.phone)));
       const recentlyFiredEarly = Date.now() - lastSubmitFormFiredAtRef.current < 30_000;
 
       if (isShortConfirmation && hasEnoughForEarlySubmit && !recentlyFiredEarly) {
-        const sid =
-          (sessionDataRef.current as any)?.sessionId || (sessionDataRef.current as any)?.session_id || "";
+        const sid = (sessionDataRef.current as any)?.sessionId || (sessionDataRef.current as any)?.session_id || "";
         const target =
           lastSubmitFormTargetRef.current ||
           pickPreferredSubmitFormTarget(
-            extractSubmitFormTargetsFromInstruction(
-              (sessionDataRef.current as any)?.systemInstruction || "",
-            ),
+            extractSubmitFormTargetsFromInstruction((sessionDataRef.current as any)?.systemInstruction || ""),
           );
 
         if (sid && (target?.form_id || target?.fingerprint)) {
-          console.log("[EARLY_CONFIRM_SUBMIT] User confirmed with short answer + captured contact. Firing immediately.", {
-            name: captured!.name,
-            email: captured!.email || "",
-            phone: captured!.phone || "",
-            userText: userTextLower,
-          });
+          console.log(
+            "[EARLY_CONFIRM_SUBMIT] User confirmed with short answer + captured contact. Firing immediately.",
+            {
+              name: captured!.name,
+              email: captured!.email || "",
+              phone: captured!.phone || "",
+              userText: userTextLower,
+            },
+          );
 
           // Show "Добре, един момент." in chat immediately
           commitAssistantMessage("Добре, един момент.");
@@ -5719,24 +5727,25 @@ export const useGeminiVoice = ({
                     activeSubmitFormFlowRef.current ||
                     lastSubmitFormTargetRef.current ||
                     pickPreferredSubmitFormTarget(
-                      extractSubmitFormTargetsFromInstruction(
-                        (sessionDataRef.current as any)?.systemInstruction || "",
-                      ),
+                      extractSubmitFormTargetsFromInstruction((sessionDataRef.current as any)?.systemInstruction || ""),
                     );
 
                   if (
                     sid &&
                     (submitTarget?.form_id || submitTarget?.fingerprint) &&
                     (hasAllContact ||
-                      (!!activeSubmitFormFlowRef.current && activeSubmitFormFlowRef.current.missing_required.length === 0))
+                      (!!activeSubmitFormFlowRef.current &&
+                        activeSubmitFormFlowRef.current.missing_required.length === 0))
                   ) {
                     const capturedFields: Record<string, string> = {
                       ...(activeSubmitFormFlowRef.current?.fields || {}),
                     };
 
                     if (captured?.name) capturedFields.name = captured.name;
-                    if (captured?.email && looksLikeCompleteEmail(captured.email)) capturedFields.email = captured.email;
-                    if (captured?.phone && looksLikeCompletePhone(captured.phone)) capturedFields.phone = captured.phone;
+                    if (captured?.email && looksLikeCompleteEmail(captured.email))
+                      capturedFields.email = captured.email;
+                    if (captured?.phone && looksLikeCompletePhone(captured.phone))
+                      capturedFields.phone = captured.phone;
 
                     void maybeExecuteActionFromGemini(
                       JSON.stringify({
