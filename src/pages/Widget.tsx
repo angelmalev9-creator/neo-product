@@ -444,14 +444,18 @@ const Widget = () => {
     setLeadSubmitted(true);
   }, [userId]);
 
+  const sendingRef = useRef(false);
   const handleSendText = useCallback(async () => {
-    if (!textInput.trim() || !isConnected) return;
+    if (!textInput.trim() || !isConnected || sendingRef.current) return;
+    sendingRef.current = true;
     const msg = textInput.trim();
     setTextInput('');
     typedMessageAddedRef.current = msg;
     setMessages(prev => [...prev, { role: 'user', content: msg }]);
     void persistTranscriptMessage('user', msg);
     sendText(msg);
+    // Debounce guard - prevent double sends within 500ms
+    setTimeout(() => { sendingRef.current = false; }, 500);
   }, [textInput, isConnected, sendText, persistTranscriptMessage]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
