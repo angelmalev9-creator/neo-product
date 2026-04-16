@@ -3286,6 +3286,19 @@ export const useGeminiVoice = ({
           userTextLower,
         );
       const captured = capturedSensitiveContactRef.current;
+
+      // ★ FIX: If name wasn't captured, try extracting from last assistant message
+      if (captured && !captured.name) {
+        const lastAssistant = String(lastCommittedAssistantRef.current?.text || "");
+        const nameFromAssistant = lastAssistant.match(
+          /(?:Добре|Здравей(?:те)?|Благодар[яи]|Чудесно|Разбрах)[,\s]+(\p{Lu}\p{Ll}{1,20}(?:\s+\p{Lu}\p{Ll}{1,20})?)/u,
+        );
+        if (nameFromAssistant?.[1] && nameFromAssistant[1].trim().length >= 2) {
+          captured.name = nameFromAssistant[1].trim();
+          console.log("[EARLY_CONFIRM] Extracted name from assistant:", captured.name);
+        }
+      }
+
       const hasEnoughForEarlySubmit =
         !!captured?.name &&
         captured.name.trim().length >= 2 &&
