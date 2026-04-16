@@ -451,7 +451,7 @@ const Widget = () => {
     setLeadSubmitted(true);
   }, [userId]);
 
-  const sendingRef = useRef(false);
+  
   const handleSendText = useCallback(async () => {
     if (!textInput.trim() || !isConnected || sendingRef.current) return;
     sendingRef.current = true;
