@@ -2328,139 +2328,6 @@ export const useGeminiVoice = ({
         .replace(/\s+/g, " ")
         .trim();
 
-      // 2) STT agglutination dedupe — conservative, targeted patterns only.
-      //    We deliberately do NOT split on '.' (breaks emails) or try generic
-      //    fuzzy matching. Instead we target the exact failure modes observed:
-      //      - Same phone number repeated back-to-back with connector words
-      //      - Same email repeated back-to-back
-      //      - Immediate adjacent duplicate clauses ("X, Y, X, Y")
-      if (clean.length > 25) {
-        const beforeDedupe = clean;
-
-        // a) Phone repeats: "088 77 00 811 номерът ми е 088 77 00 811"
-        //    Pattern: same normalized digit sequence appearing twice, optionally
-        //    with up to ~30 chars of connector text between them. Replace with
-        //    the first occurrence only.
-        const phoneRe = /(\b[\d\s]{8,}\b)([^\d]{0,40}?)\1/g;
-        let prev = "";
-        while (prev !== clean) {
-          prev = clean;
-          clean = clean
-            .replace(phoneRe, (_m, p1) => p1)
-            .replace(/\s+/g, " ")
-            .trim();
-        }
-
-        // b) Email repeats: same address twice in a row
-        const emailRe = /([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,})([^@]{0,40}?)\1/gi;
-        prev = "";
-        while (prev !== clean) {
-          prev = clean;
-          clean = clean
-            .replace(emailRe, (_m, p1) => p1)
-            .replace(/\s+/g, " ")
-            .trim();
-        }
-
-        // c) Immediate adjacent duplicate clauses: split on commas AND ". "
-        //    (period+space won't break emails like "name@gmail.com").
-        const parts = clean.split(/,|\.\s+/).map((s) => s.trim());
-        const dedupedParts: string[] = [];
-        for (const p of parts) {
-          if (!p) continue;
-          const norm = p.toLowerCase().replace(/\s+/g, "");
-          // Check against ALL previous parts (not just last) for fuzzy match
-          let isDup = false;
-          for (const prev of dedupedParts) {
-            const prevNorm = prev.toLowerCase().replace(/\s+/g, "");
-            if (!norm || !prevNorm) continue;
-            // Exact match
-            if (norm === prevNorm) {
-              isDup = true;
-              break;
-            }
-            // One is a substring of the other (catches partial repeats)
-            if (norm.length > 10 && prevNorm.length > 10) {
-              if (norm.includes(prevNorm) || prevNorm.includes(norm)) {
-                isDup = true;
-                break;
-              }
-            }
-          }
-          if (!isDup) dedupedParts.push(p);
-        }
-        clean = dedupedParts.join(", ").replace(/\s+/g, " ").trim();
-
-        // d2) Repeated "X ми е Y" pattern dedup — catches "088... ми е номерът. 088... ми е номерът"
-        clean = clean
-          .replace(
-            /(\b(?:ми е номер(?:ът)?|ми е имейл(?:ът)?|ми е телефон(?:ът)?)\b[^.]*?)(?:[,.]\s*(?:\S+\s+)*?\1)/gi,
-            "$1",
-          )
-          .replace(/\s+/g, " ")
-          .trim();
-
-        // d3) Sentence-level dedup for repeated introductions.
-        //     Soniox often re-emits the same sentence with corrections, resulting in
-        //     "Казвам се X. Казвам се X" or "Имейлът ми е A. Имейлът ми е B".
-        //     Split into sentences on ". " boundaries (safe — doesn't break emails)
-        //     and keep only the LAST occurrence of sentences sharing the same prefix pattern.
-        const sentencePrefixes = [
-          /^казвам\s+се\b/i,
-          /^имейл[ъа]?т?\s+(ми\s+)?е\b/i,
-          /^номер[ъа]?т?\s+(ми\s+)?е\b/i,
-          /^телефон[ъа]?т?\s+(ми\s+)?е\b/i,
-          /^искам\s+да\s+купя\b/i,
-          /^искам\s+да\s+запиша\b/i,
-          /^искам\s+да\s+резервирам\b/i,
-        ];
-        const sentences = clean
-          .split(/\.\s+/)
-          .map((s) => s.trim())
-          .filter(Boolean);
-        if (sentences.length > 1) {
-          const tagged = sentences.map((s) => {
-            const matchedIdx = sentencePrefixes.findIndex((re) => re.test(s));
-            return { text: s, patternIdx: matchedIdx };
-          });
-          const dedupedSentences: typeof tagged = [];
-          for (let i = 0; i < tagged.length; i++) {
-            const t = tagged[i];
-            if (t.patternIdx === -1) {
-              dedupedSentences.push(t);
-            } else {
-              const laterDup = tagged.slice(i + 1).some((t2) => t2.patternIdx === t.patternIdx);
-              if (!laterDup) {
-                dedupedSentences.push(t);
-              }
-            }
-          }
-          if (dedupedSentences.length < sentences.length) {
-            clean = dedupedSentences
-              .map((t) => t.text)
-              .join(". ")
-              .replace(/\s+/g, " ")
-              .trim();
-            if (!clean.endsWith(".") && !clean.endsWith("!") && !clean.endsWith("?")) {
-              clean += ".";
-            }
-          }
-        }
-
-        // d) Connector-word cleanup: strip dangling "а тов" / "а те" fragments
-        //    that appear when STT cuts off mid-word. These are always followed
-        //    by a comma or period, so we target precisely that.
-        clean = clean
-          .replace(/,\s*а\s+(тов|те|но)\s*,/gi, ",")
-          .replace(/\s+/g, " ")
-          .trim();
-
-        if (clean !== beforeDedupe) {
-          console.log("[STT][DEDUPE] before:", beforeDedupe.slice(0, 200));
-          console.log("[STT][DEDUPE] after :", clean.slice(0, 200));
-        }
-      }
-
       if (!clean) {
         clearUserLiveTranscript();
         return false;
@@ -5357,6 +5224,20 @@ export const useGeminiVoice = ({
           submitFormInFlightRef.current = false;
           updateActionProcessing(false, "submit_form");
           return true;
+        }
+
+        // ★ Clean filler sounds / hesitation artifacts from field values before submitting
+        if (enrichedParsed?.fields && typeof enrichedParsed.fields === "object") {
+          const fillerRe =
+            /\b(?:ъъ+м*|ъм+|мм+|ммх+м*|мхм+|ахъ+м?|хм+|ъ+х+|ааа+|ехм|ммм+|uhm+|mhm+|hmm+|uh+|um+|ah+)\b[,.\s]*/gi;
+          for (const [key, val] of Object.entries(enrichedParsed.fields as Record<string, unknown>)) {
+            if (typeof val === "string") {
+              (enrichedParsed.fields as Record<string, string>)[key] = val
+                .replace(fillerRe, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+            }
+          }
         }
 
         const res = await fetch(PROXY_BASE, {
