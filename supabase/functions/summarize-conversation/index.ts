@@ -318,12 +318,12 @@ serve(async (req) => {
                   parameters: {
                     type: "object",
                     properties: {
-                      summary: { type: "string", description: "Кратко конкретно резюме с име на клиент и какво иска" },
-                      client_intent: { type: "string", description: "Точно намерение: какъв пакет/услуга/час" },
-                      outcome: { type: "string", description: "Конкретен резултат с детайли" },
+                      summary: { type: "string", description: "1-2 изречения: какво направи NEO и какъв е резултатът" },
+                      client_intent: { type: "string", description: "Едно изречение: конкретно намерение на клиента" },
+                      outcome: { type: "string", description: "Едно изречение: краен резултат с ключови данни" },
                       sentiment: { type: "string", enum: ["positive", "neutral", "negative"] },
                       tags: { type: "array", items: { type: "string" } },
-                      action_items: { type: "array", items: { type: "string" }, description: "Конкретни действия с имена и контакти" },
+                      action_items: { type: "array", items: { type: "string" }, description: "Макс 1-2 конкретни следващи стъпки" },
                       client_name: { type: ["string", "null"] },
                       client_email: { type: ["string", "null"], description: "Чист имейл без речеви префикси" },
                       client_phone: { type: ["string", "null"] },
