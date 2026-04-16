@@ -2419,20 +2419,16 @@ export const useGeminiVoice = ({
           .map((s) => s.trim())
           .filter(Boolean);
         if (sentences.length > 1) {
-          // For each sentence, find which prefix pattern it matches (if any)
           const tagged = sentences.map((s) => {
             const matchedIdx = sentencePrefixes.findIndex((re) => re.test(s));
             return { text: s, patternIdx: matchedIdx };
           });
-          // Keep only the last sentence for each prefix pattern
           const dedupedSentences: typeof tagged = [];
           for (let i = 0; i < tagged.length; i++) {
             const t = tagged[i];
             if (t.patternIdx === -1) {
-              // No pattern match — always keep
               dedupedSentences.push(t);
             } else {
-              // Check if a LATER sentence has the same pattern — if so, skip this one
               const laterDup = tagged.slice(i + 1).some((t2) => t2.patternIdx === t.patternIdx);
               if (!laterDup) {
                 dedupedSentences.push(t);
@@ -2445,7 +2441,6 @@ export const useGeminiVoice = ({
               .join(". ")
               .replace(/\s+/g, " ")
               .trim();
-            // Re-add trailing period if original had one
             if (!clean.endsWith(".") && !clean.endsWith("!") && !clean.endsWith("?")) {
               clean += ".";
             }
@@ -2973,16 +2968,11 @@ export const useGeminiVoice = ({
           lastInterimTranscriptRef.current = cleanFinalTranscript;
           longestInterimTranscriptRef.current = cleanFinalTranscript;
           const prevFinalChunk = finalChunksRef.current[finalChunksRef.current.length - 1] || "";
-          const allJoined = finalChunksRef.current.join(" ").toLowerCase().trim();
-          const nextNorm = cleanFinalTranscript.toLowerCase().trim();
-
-          // ★ Global dedup: if the new chunk is fully contained in what we already have, skip
-          if (allJoined && allJoined.includes(nextNorm)) {
-            // noop — already present in accumulated text
-          } else if (!prevFinalChunk) {
+          if (!prevFinalChunk) {
             finalChunksRef.current.push(cleanFinalTranscript);
           } else {
             const prevNorm = prevFinalChunk.toLowerCase().trim();
+            const nextNorm = cleanFinalTranscript.toLowerCase().trim();
             if (nextNorm === prevNorm) {
               // exact dup — noop
             } else if (nextNorm.startsWith(prevNorm) && nextNorm.length > prevNorm.length) {
@@ -2992,20 +2982,6 @@ export const useGeminiVoice = ({
             } else if (overlapsAsRollingCorrection(prevNorm, nextNorm)) {
               // Soniox re-emitted the same sentence with a correction — replace, don't append
               finalChunksRef.current[finalChunksRef.current.length - 1] = cleanFinalTranscript;
-            } else if (overlapsAsRollingCorrection(allJoined, nextNorm)) {
-              // ★ Rolling correction against the FULL accumulated text, not just last chunk.
-              // The new chunk re-states content from earlier chunks — replace the last chunk
-              // with only the genuinely new tail portion.
-              const overlapFull = getSuffixPrefixOverlap(allJoined, nextNorm);
-              if (overlapFull >= 4) {
-                const uniqueSuffix = cleanFinalTranscript.slice(overlapFull).trim();
-                if (uniqueSuffix) {
-                  finalChunksRef.current.push(uniqueSuffix);
-                }
-              } else {
-                // The overlap is non-contiguous — just replace last chunk
-                finalChunksRef.current[finalChunksRef.current.length - 1] = cleanFinalTranscript;
-              }
             } else {
               // Check for suffix→prefix overlap (e.g. chunk1 ends with "@gmail.com",
               // chunk2 starts with "@gmail.com, а номерът е…"). Stitch instead of appending.
