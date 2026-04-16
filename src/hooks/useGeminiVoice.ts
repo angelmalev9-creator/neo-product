@@ -717,10 +717,24 @@ function extractContactIntentFields(text: string): SensitiveContactFields {
   const raw = stripLowConfidenceTag(text).trim();
   const fields: SensitiveContactFields = {};
 
-  const nameMatch = raw.match(/(?:казвам\s+се|името\s+ми\s+е|име\s*:?\s*)([\p{L}][\p{L}\s'-]{2,60})/iu);
+  // ★ FIX: Stop name capture at Bulgarian stop words to avoid grabbing entire sentence
+  const nameMatch = raw.match(
+    /(?:казвам\s+се|името\s+ми\s+е|име\s*:?\s*)([\p{L}][\p{L}\s'-]{1,40}?)(?:\s*[,.]|\s+(?:и\s|а\s|искам|номер|телефон|имейл|email|майл|поща|пакет|план|от\s|за\s|на\s|в\s|с\s|да\s|ще\s|може|моля|нужда|нямам|нищо|добре|мога|бих|ми\s+е|от\s+|от$)|\s*$)/iu,
+  );
   if (nameMatch?.[1]) {
     const name = normalizeSensitiveName(nameMatch[1]);
     if (looksLikeSensitiveName(name)) fields.name = name;
+  }
+
+  // Fallback: try extracting name from "Ангел се казвам" / "Ангел Малев, имейлът ми е..."
+  if (!fields.name) {
+    const reversedMatch = raw.match(
+      /^([\p{L}]{2,20}(?:\s+[\p{L}]{2,20}){0,2})\s*[,.]?\s*(?:се\s+казвам|имейл|email|номер|телефон)/iu,
+    );
+    if (reversedMatch?.[1]) {
+      const name = normalizeSensitiveName(reversedMatch[1]);
+      if (looksLikeSensitiveName(name)) fields.name = name;
+    }
   }
 
   const emailMatch = raw.match(
