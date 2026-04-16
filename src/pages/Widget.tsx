@@ -416,17 +416,23 @@ const Widget = () => {
     if (!leadSubmitted) setShowLeadModal(true);
     const cid = conversationIdRef.current;
     if (cid) {
+      // Persist any messages that weren't persisted yet, using the sequential queue
       const currentMessages = messagesRef.current;
       for (const msg of currentMessages) {
         const key = `${cid}:${msg.role}:${msg.content.replace(/\s+/g, ' ').trim()}`;
         if (!persistedTranscriptKeysRef.current.has(key) && msg.content.trim()) {
           persistedTranscriptKeysRef.current.add(key);
-          trackConversation('message', msg.role === 'user'
-            ? { userMessage: msg.content.trim(), conversationId: cid }
-            : { assistantMessage: msg.content.trim(), conversationId: cid }
+          const seq = ++messageSeqRef.current;
+          persistQueueRef.current = persistQueueRef.current.then(() =>
+            trackConversation('message', msg.role === 'user'
+              ? { userMessage: msg.content.trim(), conversationId: cid, seq }
+              : { assistantMessage: msg.content.trim(), conversationId: cid, seq }
+            ).then(() => {})
           ).catch(() => {});
         }
       }
+      // Wait for all pending persists to finish, then end
+      await persistQueueRef.current;
       await trackConversation('end', { conversationId: cid });
       conversationIdRef.current = null;
       setConversationId(null);
