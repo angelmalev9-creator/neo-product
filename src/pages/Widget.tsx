@@ -140,6 +140,7 @@ const Widget = () => {
   const persistQueueRef = useRef<Promise<void>>(Promise.resolve());
   const messageSeqRef = useRef<number>(0);
   const actionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sendingRef = useRef(false);
   
   const { playConnectSound, playDisconnectSound, startAmbient, stopAmbient, initAudioContext } = useAudioEffects({ ambientVolume: 0.04, effectsVolume: 0.2 });
 
