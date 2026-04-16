@@ -1505,13 +1505,17 @@ function overlapsAsRollingCorrection(older: string, newer: string): boolean {
   if (!older || !newer) return false;
   const oldWords = older.split(/\s+/).filter(Boolean);
   const newWords = newer.split(/\s+/).filter(Boolean);
-  if (oldWords.length < 4 || newWords.length < 4) return false;
-  const halfNew = newWords.slice(0, Math.max(8, Math.ceil(newWords.length * 0.6))).join(" ");
-  for (let start = 0; start <= oldWords.length - 4; start++) {
-    const phrase = oldWords.slice(start, start + 4).join(" ");
-    if (halfNew.includes(phrase)) return true;
+  if (oldWords.length < 3 || newWords.length < 3) return false;
+  // Check if any 3-word phrase from older appears anywhere in newer
+  const newerJoined = newWords.join(" ");
+  let matchCount = 0;
+  const totalPhrases = Math.max(1, oldWords.length - 2);
+  for (let start = 0; start <= oldWords.length - 3; start++) {
+    const phrase = oldWords.slice(start, start + 3).join(" ");
+    if (newerJoined.includes(phrase)) matchCount++;
   }
-  return false;
+  // If ≥40% of 3-word phrases from older appear in newer, it's a rolling correction
+  return matchCount / totalPhrases >= 0.4;
 }
 
 function resolveRoomTypeFromState(rawRoomType: string, reservationState: any): string {
@@ -2328,6 +2332,92 @@ export const useGeminiVoice = ({
         .replace(/\s+/g, " ")
         .trim();
 
+      // 2) STT agglutination dedupe — conservative, targeted patterns only.
+      //    We deliberately do NOT split on '.' (breaks emails) or try generic
+      //    fuzzy matching. Instead we target the exact failure modes observed:
+      //      - Same phone number repeated back-to-back with connector words
+      //      - Same email repeated back-to-back
+      //      - Immediate adjacent duplicate clauses ("X, Y, X, Y")
+      if (clean.length > 25) {
+        const beforeDedupe = clean;
+
+        // a) Phone repeats: "088 77 00 811 номерът ми е 088 77 00 811"
+        //    Pattern: same normalized digit sequence appearing twice, optionally
+        //    with up to ~30 chars of connector text between them. Replace with
+        //    the first occurrence only.
+        const phoneRe = /(\b[\d\s]{8,}\b)([^\d]{0,40}?)\1/g;
+        let prev = "";
+        while (prev !== clean) {
+          prev = clean;
+          clean = clean
+            .replace(phoneRe, (_m, p1) => p1)
+            .replace(/\s+/g, " ")
+            .trim();
+        }
+
+        // b) Email repeats: same address twice in a row
+        const emailRe = /([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,})([^@]{0,40}?)\1/gi;
+        prev = "";
+        while (prev !== clean) {
+          prev = clean;
+          clean = clean
+            .replace(emailRe, (_m, p1) => p1)
+            .replace(/\s+/g, " ")
+            .trim();
+        }
+
+        // c) Immediate adjacent duplicate clauses: split on commas AND ". "
+        //    (period+space won't break emails like "name@gmail.com").
+        const parts = clean.split(/,|\.\s+/).map((s) => s.trim());
+        const dedupedParts: string[] = [];
+        for (const p of parts) {
+          if (!p) continue;
+          const norm = p.toLowerCase().replace(/\s+/g, "");
+          // Check against ALL previous parts (not just last) for fuzzy match
+          let isDup = false;
+          for (const prev of dedupedParts) {
+            const prevNorm = prev.toLowerCase().replace(/\s+/g, "");
+            if (!norm || !prevNorm) continue;
+            // Exact match
+            if (norm === prevNorm) {
+              isDup = true;
+              break;
+            }
+            // One is a substring of the other (catches partial repeats)
+            if (norm.length > 10 && prevNorm.length > 10) {
+              if (norm.includes(prevNorm) || prevNorm.includes(norm)) {
+                isDup = true;
+                break;
+              }
+            }
+          }
+          if (!isDup) dedupedParts.push(p);
+        }
+        clean = dedupedParts.join(", ").replace(/\s+/g, " ").trim();
+
+        // d2) Repeated "X ми е Y" pattern dedup — catches "088... ми е номерът. 088... ми е номерът"
+        clean = clean
+          .replace(
+            /(\b(?:ми е номер(?:ът)?|ми е имейл(?:ът)?|ми е телефон(?:ът)?)\b[^.]*?)(?:[,.]\s*(?:\S+\s+)*?\1)/gi,
+            "$1",
+          )
+          .replace(/\s+/g, " ")
+          .trim();
+
+        // d) Connector-word cleanup: strip dangling "а тов" / "а те" fragments
+        //    that appear when STT cuts off mid-word. These are always followed
+        //    by a comma or period, so we target precisely that.
+        clean = clean
+          .replace(/,\s*а\s+(тов|те|но)\s*,/gi, ",")
+          .replace(/\s+/g, " ")
+          .trim();
+
+        if (clean !== beforeDedupe) {
+          console.log("[STT][DEDUPE] before:", beforeDedupe.slice(0, 200));
+          console.log("[STT][DEDUPE] after :", clean.slice(0, 200));
+        }
+      }
+
       if (!clean) {
         clearUserLiveTranscript();
         return false;
@@ -2835,6 +2925,7 @@ export const useGeminiVoice = ({
           lastInterimTranscriptRef.current = cleanFinalTranscript;
           longestInterimTranscriptRef.current = cleanFinalTranscript;
           const prevFinalChunk = finalChunksRef.current[finalChunksRef.current.length - 1] || "";
+          const allJoinedNorm = finalChunksRef.current.join(" ").toLowerCase().trim();
           if (!prevFinalChunk) {
             finalChunksRef.current.push(cleanFinalTranscript);
           } else {
@@ -2849,6 +2940,11 @@ export const useGeminiVoice = ({
             } else if (overlapsAsRollingCorrection(prevNorm, nextNorm)) {
               // Soniox re-emitted the same sentence with a correction — replace, don't append
               finalChunksRef.current[finalChunksRef.current.length - 1] = cleanFinalTranscript;
+            } else if (finalChunksRef.current.length > 1 && overlapsAsRollingCorrection(allJoinedNorm, nextNorm)) {
+              // ★ Rolling correction against ALL accumulated chunks (not just the last one).
+              // Soniox re-emitted the full utterance. Replace all chunks with the new version
+              // since it's the most up-to-date complete transcript.
+              finalChunksRef.current.splice(0, finalChunksRef.current.length, cleanFinalTranscript);
             } else {
               // Check for suffix→prefix overlap (e.g. chunk1 ends with "@gmail.com",
               // chunk2 starts with "@gmail.com, а номерът е…"). Stitch instead of appending.
@@ -2861,6 +2957,18 @@ export const useGeminiVoice = ({
                     .trim();
                 }
                 // else nextNorm is fully contained in prevNorm's tail — noop
+              } else if (finalChunksRef.current.length > 1) {
+                // ★ Last resort: check suffix→prefix overlap against full accumulated text
+                const overlapFull = getSuffixPrefixOverlap(allJoinedNorm, nextNorm);
+                if (overlapFull >= 4) {
+                  const uniqueSuffix = cleanFinalTranscript.slice(overlapFull).trim();
+                  if (uniqueSuffix) {
+                    finalChunksRef.current.push(uniqueSuffix);
+                  }
+                  // else fully contained — noop
+                } else {
+                  finalChunksRef.current.push(cleanFinalTranscript);
+                }
               } else {
                 finalChunksRef.current.push(cleanFinalTranscript);
               }
