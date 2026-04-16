@@ -140,6 +140,7 @@ const Widget = () => {
   const persistQueueRef = useRef<Promise<void>>(Promise.resolve());
   const messageSeqRef = useRef<number>(0);
   const actionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sendingRef = useRef(false);
   
   const { playConnectSound, playDisconnectSound, startAmbient, stopAmbient, initAudioContext } = useAudioEffects({ ambientVolume: 0.04, effectsVolume: 0.2 });
 
@@ -416,17 +417,23 @@ const Widget = () => {
     if (!leadSubmitted) setShowLeadModal(true);
     const cid = conversationIdRef.current;
     if (cid) {
+      // Persist any messages that weren't persisted yet, using the sequential queue
       const currentMessages = messagesRef.current;
       for (const msg of currentMessages) {
         const key = `${cid}:${msg.role}:${msg.content.replace(/\s+/g, ' ').trim()}`;
         if (!persistedTranscriptKeysRef.current.has(key) && msg.content.trim()) {
           persistedTranscriptKeysRef.current.add(key);
-          trackConversation('message', msg.role === 'user'
-            ? { userMessage: msg.content.trim(), conversationId: cid }
-            : { assistantMessage: msg.content.trim(), conversationId: cid }
+          const seq = ++messageSeqRef.current;
+          persistQueueRef.current = persistQueueRef.current.then(() =>
+            trackConversation('message', msg.role === 'user'
+              ? { userMessage: msg.content.trim(), conversationId: cid, seq }
+              : { assistantMessage: msg.content.trim(), conversationId: cid, seq }
+            ).then(() => {})
           ).catch(() => {});
         }
       }
+      // Wait for all pending persists to finish, then end
+      await persistQueueRef.current;
       await trackConversation('end', { conversationId: cid });
       conversationIdRef.current = null;
       setConversationId(null);
@@ -444,14 +451,18 @@ const Widget = () => {
     setLeadSubmitted(true);
   }, [userId]);
 
+  
   const handleSendText = useCallback(async () => {
-    if (!textInput.trim() || !isConnected) return;
+    if (!textInput.trim() || !isConnected || sendingRef.current) return;
+    sendingRef.current = true;
     const msg = textInput.trim();
     setTextInput('');
     typedMessageAddedRef.current = msg;
     setMessages(prev => [...prev, { role: 'user', content: msg }]);
     void persistTranscriptMessage('user', msg);
     sendText(msg);
+    // Debounce guard - prevent double sends within 500ms
+    setTimeout(() => { sendingRef.current = false; }, 500);
   }, [textInput, isConnected, sendText, persistTranscriptMessage]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
