@@ -717,10 +717,24 @@ function extractContactIntentFields(text: string): SensitiveContactFields {
   const raw = stripLowConfidenceTag(text).trim();
   const fields: SensitiveContactFields = {};
 
-  const nameMatch = raw.match(/(?:казвам\s+се|името\s+ми\s+е|име\s*:?\s*)([\p{L}][\p{L}\s'-]{2,60})/iu);
+  // ★ FIX: Stop name capture at Bulgarian stop words to avoid grabbing entire sentence
+  const nameMatch = raw.match(
+    /(?:казвам\s+се|името\s+ми\s+е|име\s*:?\s*)([\p{L}][\p{L}\s'-]{1,40}?)(?:\s*[,.]|\s+(?:и\s|а\s|искам|номер|телефон|имейл|email|майл|поща|пакет|план|от\s|за\s|на\s|в\s|с\s|да\s|ще\s|може|моля|нужда|нямам|нищо|добре|мога|бих|ми\s+е|от\s+|от$)|\s*$)/iu,
+  );
   if (nameMatch?.[1]) {
     const name = normalizeSensitiveName(nameMatch[1]);
     if (looksLikeSensitiveName(name)) fields.name = name;
+  }
+
+  // Fallback: try extracting name from "Ангел се казвам" / "Ангел Малев, имейлът ми е..."
+  if (!fields.name) {
+    const reversedMatch = raw.match(
+      /^([\p{L}]{2,20}(?:\s+[\p{L}]{2,20}){0,2})\s*[,.]?\s*(?:се\s+казвам|имейл|email|номер|телефон)/iu,
+    );
+    if (reversedMatch?.[1]) {
+      const name = normalizeSensitiveName(reversedMatch[1]);
+      if (looksLikeSensitiveName(name)) fields.name = name;
+    }
   }
 
   const emailMatch = raw.match(
@@ -3272,6 +3286,19 @@ export const useGeminiVoice = ({
           userTextLower,
         );
       const captured = capturedSensitiveContactRef.current;
+
+      // ★ FIX: If name wasn't captured, try extracting from last assistant message
+      if (captured && !captured.name) {
+        const lastAssistant = String(lastCommittedAssistantRef.current?.text || "");
+        const nameFromAssistant = lastAssistant.match(
+          /(?:Добре|Здравей(?:те)?|Благодар[яи]|Чудесно|Разбрах)[,\s]+(\p{Lu}\p{Ll}{1,20}(?:\s+\p{Lu}\p{Ll}{1,20})?)/u,
+        );
+        if (nameFromAssistant?.[1] && nameFromAssistant[1].trim().length >= 2) {
+          captured.name = nameFromAssistant[1].trim();
+          console.log("[EARLY_CONFIRM] Extracted name from assistant:", captured.name);
+        }
+      }
+
       const hasEnoughForEarlySubmit =
         !!captured?.name &&
         captured.name.trim().length >= 2 &&
@@ -6101,6 +6128,23 @@ export const useGeminiVoice = ({
                 if (!handled && responseText && !responseText.includes("{")) {
                   try {
                     const captured = capturedSensitiveContactRef.current;
+
+                    // ★ FIX: If name wasn't captured from user input, try extracting it
+                    // from Gemini's response where it addresses the user by name
+                    // e.g. "Добре, Ангел, само да потвърдим..."
+                    if (captured && !captured.name && responseText) {
+                      const geminiNameMatch = responseText.match(
+                        /(?:Добре|Здравей(?:те)?|Благодар[яи]|Чудесно|Разбрах)[,\s]+(\p{Lu}\p{Ll}{1,20}(?:\s+\p{Lu}\p{Ll}{1,20})?)/u,
+                      );
+                      if (geminiNameMatch?.[1]) {
+                        const extractedName = geminiNameMatch[1].trim();
+                        if (extractedName.length >= 2 && extractedName.split(/\s+/).length <= 3) {
+                          captured.name = extractedName;
+                          console.log("[FAKE_SUBMIT_GUARD] Extracted name from Gemini response:", extractedName);
+                        }
+                      }
+                    }
+
                     const hasName = !!captured?.name && captured.name.trim().length >= 2;
                     const hasEmail = !!captured?.email && looksLikeCompleteEmail(captured.email);
                     const hasPhone = !!captured?.phone && looksLikeCompletePhone(captured.phone);
