@@ -294,13 +294,14 @@ serve(async (req) => {
                   role: "system",
                   content: `Ти си бизнес анализатор. Анализирай разговор между AI асистент (NEO) и клиент.
 
-ВАЖНО:
-- summary трябва да е КОНКРЕТНО за бизнеса: включи име на клиента, какво точно иска (пакет, услуга, час), дали е оставил данни.
-- client_intent трябва да описва ТОЧНОТО намерение: "Иска да закупи пакет Essential" е добре, "Проявява интерес" е лошо.
-- outcome трябва да описва КОНКРЕТНИЯ резултат: "Поръчка за пакет Essential изпратена, данни: Ангел, angelmalev7@gmail.com" е добре.
-- action_items трябва да са ДЕЙСТВИЯ: "Обадете се на 0887700811 за финализиране на покупката" е добре.
-- При имейли внимавай за грешни префикси: "imeilamieangelmalev7@gmail.com" всъщност е "angelmalev7@gmail.com" (имейла ми е = речеви префикс).
-- Разпознавай транслитериран български: "iskam da kupq" = "искам да купя", "kazvam sa" = "казвам се".
+ВАЖНО — бъди КРАТЪК и КОНКРЕТЕН:
+- summary: 1-2 изречения. Какво направи NEO? (напр. "NEO прие запитване за пакет Essential от Ангел и подаде формата с данните му.")
+- client_intent: Едно изречение. (напр. "Покупка на пакет Essential")
+- outcome: Едно изречение. (напр. "Запитване подадено с данни: angelmalev9@gmail.com, 0887700811")
+- action_items: Максимум 1-2 конкретни стъпки. (напр. "Свържете се с Ангел за финализиране")
+- НЕ повтаряй едно и също в различни полета. Бъди стегнат.
+- При имейли внимавай за грешни префикси: "imeilamieangelmalev7@gmail.com" всъщност е "angelmalev7@gmail.com".
+- Разпознавай транслитериран български: "iskam da kupq" = "искам да купя".
 
 Отговори САМО с валиден JSON обект (без markdown, без \`\`\`), съдържащ summary, client_intent, outcome, sentiment, tags, action_items, client_name, client_email, client_phone.`,
                 },
@@ -317,12 +318,12 @@ serve(async (req) => {
                   parameters: {
                     type: "object",
                     properties: {
-                      summary: { type: "string", description: "Кратко конкретно резюме с име на клиент и какво иска" },
-                      client_intent: { type: "string", description: "Точно намерение: какъв пакет/услуга/час" },
-                      outcome: { type: "string", description: "Конкретен резултат с детайли" },
+                      summary: { type: "string", description: "1-2 изречения: какво направи NEO и какъв е резултатът" },
+                      client_intent: { type: "string", description: "Едно изречение: конкретно намерение на клиента" },
+                      outcome: { type: "string", description: "Едно изречение: краен резултат с ключови данни" },
                       sentiment: { type: "string", enum: ["positive", "neutral", "negative"] },
                       tags: { type: "array", items: { type: "string" } },
-                      action_items: { type: "array", items: { type: "string" }, description: "Конкретни действия с имена и контакти" },
+                      action_items: { type: "array", items: { type: "string" }, description: "Макс 1-2 конкретни следващи стъпки" },
                       client_name: { type: ["string", "null"] },
                       client_email: { type: ["string", "null"], description: "Чист имейл без речеви префикси" },
                       client_phone: { type: ["string", "null"] },
