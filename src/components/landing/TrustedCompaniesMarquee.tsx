@@ -17,10 +17,10 @@ const TrustedCompaniesMarquee = () => {
   const loop = [...stats, ...stats];
 
   return (
-    <div className="mt-6 sm:mt-8 relative max-w-3xl mx-auto">
+    <div className="mt-8 sm:mt-10 relative w-full">
       {/* Edge fades */}
-      <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-[hsl(220_55%_8%)] to-transparent z-10 pointer-events-none" />
-      <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[hsl(220_55%_8%)] to-transparent z-10 pointer-events-none" />
+      <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-[hsl(220_55%_8%)] to-transparent z-10 pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-[hsl(220_55%_8%)] to-transparent z-10 pointer-events-none" />
 
       <div className="overflow-hidden py-1">
         <motion.div
