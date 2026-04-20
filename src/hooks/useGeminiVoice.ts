@@ -11,7 +11,6 @@ interface UseGeminiVoiceProps {
   onSpeakingChange?: (speaking: boolean) => void;
   onListeningChange?: (listening: boolean) => void;
   onTranscript?: (transcript: string, isFinal: boolean, role: "user" | "assistant") => void;
-  onActionProcessingChange?: (processing: boolean) => void;
 }
 
 type SessionData = {
@@ -1694,6 +1693,9 @@ export const useGeminiVoice = ({
   // ★ NEW: track what context we prepared for (sessionId/companyName/systemPrompt)
   const preparedKeyRef = useRef<string>("");
   const lastSubmitFormTargetRef = useRef<SubmitFormTarget | null>(null);
+  // ★ NEW: timestamp of last successful submit_form — used by the "Gemini lies
+  // about having sent the form" guard to avoid double-submits.
+  const lastSubmitFormFiredAtRef = useRef<number>(0);
   const conversationFocusRef = useRef<ConversationFocusState>({
     lastTopic: "",
     lastEntityType: "",
@@ -2038,6 +2040,22 @@ export const useGeminiVoice = ({
         return false;
       }
 
+      // ★ FIX: Never let a raw action_request JSON leak into the visible chat as an
+      // assistant bubble. If parsing/execution failed upstream, we suppress the message
+      // here rather than showing `{"type":"action_request",...}` to the user.
+      // Also block markdown-fenced JSON blocks (```json ... ```) which Gemini sometimes
+      // produces instead of raw JSON.
+      if (
+        (clean.startsWith("{") && clean.includes("action_request")) ||
+        /\{[\s\S]*"type"\s*:\s*"action_request"[\s\S]*\}/.test(clean) ||
+        /```\s*json[\s\S]*"action"\s*:\s*"(submit_form|make_reservation|book_slot)"/i.test(clean) ||
+        /```[\s\S]*"type"\s*:\s*"action_request"[\s\S]*```/.test(clean)
+      ) {
+        console.warn("[ASSISTANT][BLOCKED raw JSON leak]", clean.slice(0, 200));
+        clearAssistantLiveTranscript();
+        return false;
+      }
+
       const now = Date.now();
       const last = lastCommittedAssistantRef.current;
       const isDuplicate = !options?.force && last.text === clean && now - last.ts < 2500;
@@ -2058,13 +2076,92 @@ export const useGeminiVoice = ({
 
   const commitUserMessage = useCallback(
     (text: string) => {
-      const clean = String(text || "")
+      let clean = String(text || "")
         .replace(/\s+/g, " ")
         .trim();
       if (!clean) {
         clearUserLiveTranscript();
         return false;
       }
+
+      // ★ STT SANITIZER ★
+      // 1) Strip [LOW_CONFIDENCE:NN%] markers that leaked in from partial-buffer
+      //    concatenation. They're a debug artifact and must never reach the UI.
+      clean = clean
+        .replace(/\s*\[LOW_CONFIDENCE:\d+%\]\s*/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      // 2) STT agglutination dedupe — conservative, targeted patterns only.
+      //    We deliberately do NOT split on '.' (breaks emails) or try generic
+      //    fuzzy matching. Instead we target the exact failure modes observed:
+      //      - Same phone number repeated back-to-back with connector words
+      //      - Same email repeated back-to-back
+      //      - Immediate adjacent duplicate clauses ("X, Y, X, Y")
+      if (clean.length > 25) {
+        const beforeDedupe = clean;
+
+        // a) Phone repeats: "088 77 00 811 номерът ми е 088 77 00 811"
+        //    Pattern: same normalized digit sequence appearing twice, optionally
+        //    with up to ~30 chars of connector text between them. Replace with
+        //    the first occurrence only.
+        const phoneRe = /(\b[\d\s]{8,}\b)([^\d]{0,40}?)\1/g;
+        let prev = "";
+        while (prev !== clean) {
+          prev = clean;
+          clean = clean
+            .replace(phoneRe, (_m, p1) => p1)
+            .replace(/\s+/g, " ")
+            .trim();
+        }
+
+        // b) Email repeats: same address twice in a row
+        const emailRe = /([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,})([^@]{0,40}?)\1/gi;
+        prev = "";
+        while (prev !== clean) {
+          prev = clean;
+          clean = clean
+            .replace(emailRe, (_m, p1) => p1)
+            .replace(/\s+/g, " ")
+            .trim();
+        }
+
+        // c) Immediate adjacent duplicate clauses: split ONLY on commas (not
+        //    periods — those are inside emails). If two adjacent clauses are
+        //    identical after normalization, keep only one.
+        const parts = clean.split(",").map((s) => s.trim());
+        const dedupedParts: string[] = [];
+        for (const p of parts) {
+          if (!p) continue;
+          const norm = p.toLowerCase().replace(/\s+/g, "");
+          const lastNorm = dedupedParts.length
+            ? dedupedParts[dedupedParts.length - 1].toLowerCase().replace(/\s+/g, "")
+            : "";
+          if (norm && norm === lastNorm) continue; // exact adjacent dup
+          dedupedParts.push(p);
+        }
+        clean = dedupedParts.join(", ").replace(/\s+/g, " ").trim();
+
+        // d) Connector-word cleanup: strip dangling "а тов" / "а те" fragments
+        //    that appear when STT cuts off mid-word. These are always followed
+        //    by a comma or period, so we target precisely that.
+        clean = clean
+          .replace(/,\s*а\s+(тов|те|но)\s*,/gi, ",")
+          .replace(/\s+/g, " ")
+          .trim();
+
+        if (clean !== beforeDedupe) {
+          console.log("[STT][DEDUPE] before:", beforeDedupe.slice(0, 200));
+          console.log("[STT][DEDUPE] after :", clean.slice(0, 200));
+        }
+      }
+
+      if (!clean) {
+        clearUserLiveTranscript();
+        return false;
+      }
+      // ★ END STT SANITIZER ★
+
       // Filter out [SYSTEM] trigger messages — they should never appear in chat
       if (clean.startsWith("[SYSTEM]")) {
         console.log("[USER] Filtered system trigger from chat");
@@ -2701,12 +2798,18 @@ export const useGeminiVoice = ({
   ]);
 
   const handleUserUtterance = useCallback(
-    (text: string) => {
+    (text: string, opts?: { typed?: boolean }) => {
       if (!text.trim()) return;
 
-      if (Date.now() - speakEndRef.current < ECHO_GUARD_MS) return;
-      if (isPlayingRef.current && Date.now() - speakStartRef.current < ANTI_BARGE_IN_MS) return;
-      if (isPlayingRef.current && !shouldAllowBargeIn(text) && !looksLikeGeneralContactInput(text)) return;
+      const isTyped = !!opts?.typed;
+
+      // ── Echo / barge-in guards apply ONLY to voice STT input ──
+      // Typed text is clean & intentional — it must never be dropped by these guards.
+      if (!isTyped) {
+        if (Date.now() - speakEndRef.current < ECHO_GUARD_MS) return;
+        if (isPlayingRef.current && Date.now() - speakStartRef.current < ANTI_BARGE_IN_MS) return;
+        if (isPlayingRef.current && !shouldAllowBargeIn(text) && !looksLikeGeneralContactInput(text)) return;
+      }
 
       const now = Date.now();
       const isContactDictation =
@@ -2714,8 +2817,17 @@ export const useGeminiVoice = ({
       const recent = recentUtterancesRef.current.filter((u) => now - u.ts < 2000);
       recentUtterancesRef.current = recent;
       const normalized = text.trim().toLowerCase();
-      if (!isContactDictation && recent.some((u) => u.text === normalized)) return;
-      if (!isContactDictation) {
+
+      // ★ FIX: Dedupe ALWAYS runs for typed input (even contact-like).
+      // Previously contact dictation skipped dedupe entirely, which caused typed
+      // emails/phones/names to appear twice in the chat when sendText was fired
+      // twice (or when STT buffer merge produced near-duplicate strings).
+      const allowDedupe = isTyped || !isContactDictation;
+      if (allowDedupe && recent.some((u) => u.text === normalized)) {
+        console.log("[USER][DEDUPED handleUserUtterance]", normalized.slice(0, 80));
+        return;
+      }
+      if (allowDedupe) {
         recentUtterancesRef.current.push({ text: normalized, ts: now });
       }
 
@@ -2754,7 +2866,15 @@ export const useGeminiVoice = ({
       }
 
       let sensitiveMode = expectedSensitiveInputModeRef.current;
-      const aggregatedUserTranscript = mergeTranscriptCandidates(buildStableTranscriptFromBuffers(), text);
+      // ★ FIX: Typed input is already final & clean — never merge it with STT
+      // buffers. Previously we called mergeTranscriptCandidates(buildStableTranscriptFromBuffers(), text)
+      // for BOTH voice and typed input. For typed input this caused:
+      //   (1) leftover Soniox buffers getting glued onto the typed string,
+      //   (2) two near-duplicate commits that escaped the 1500ms text-equality dedupe,
+      //   (3) duplicate chat bubbles for emails/phones/names.
+      const aggregatedUserTranscript = isTyped
+        ? text.trim()
+        : mergeTranscriptCandidates(buildStableTranscriptFromBuffers(), text);
       const rawVisibleUserText = sanitizeUserTranscriptForUi(aggregatedUserTranscript);
       const autoDetectedIncomingMode = detectContactLikeMode(rawVisibleUserText || text);
       if (sensitiveMode !== "general" && autoDetectedIncomingMode === "general") {
@@ -4038,9 +4158,83 @@ export const useGeminiVoice = ({
 
       console.log("[ACTION PARSER] raw preview:", trimmed.slice(0, 1200));
 
-      const directJson = trimmed.startsWith("{")
+      let directJson = trimmed.startsWith("{")
         ? trimmed
         : trimmed.match(/\{[\s\S]*"type"\s*:\s*"action_request"[\s\S]*\}/)?.[0] || "";
+
+      // ★ FIX: If the text contains a JSON-looking block but it's prefixed with transcription
+      // noise (e.g. spoken-out "отваряща скоба type две точки..." from outputTranscription),
+      // try to extract from the first "{" to the matching last "}".
+      if (!directJson) {
+        const firstBrace = trimmed.indexOf("{");
+        const lastBrace = trimmed.lastIndexOf("}");
+        if (firstBrace >= 0 && lastBrace > firstBrace) {
+          const candidate = trimmed.slice(firstBrace, lastBrace + 1);
+          if (
+            candidate.includes('"type"') &&
+            (candidate.includes("action_request") ||
+              candidate.includes("submit_form") ||
+              candidate.includes("make_reservation") ||
+              candidate.includes("book_slot"))
+          ) {
+            directJson = candidate;
+            console.log("[ACTION PARSER] extracted JSON from mixed text via brace scan");
+          }
+        }
+      }
+
+      // ★ FIX: If we see an action_request marker but direct parse would fail because
+      // streaming accumulation introduced stray whitespace (e.g. "submit _form", "action_ request"),
+      // try a sanitization pass: remove spaces that appear inside tokens like keys and known values.
+      // This is a last-resort recovery for corrupted streaming JSON.
+      const attemptJsonRecovery = (raw: string): string => {
+        if (!raw) return raw;
+        // Remove spaces inside common token corruptions produced by chunk-boundary concatenation.
+        // These are safe because none of our legitimate values contain these patterns.
+        let fixed = raw;
+        const substitutions: Array<[RegExp, string]> = [
+          [/"\s+type\s*"/g, '"type"'],
+          [/"\s+action\s*"/g, '"action"'],
+          [/"\s+session_id\s*"/g, '"session_id"'],
+          [/"\s+phase\s*"/g, '"phase"'],
+          [/"\s+fields\s*"/g, '"fields"'],
+          [/"\s+form_id\s*"/g, '"form_id"'],
+          [/"\s+fingerprint\s*"/g, '"fingerprint"'],
+          [/"\s+check_in\s*"/g, '"check_in"'],
+          [/"\s+check_out\s*"/g, '"check_out"'],
+          [/"\s+guests\s*"/g, '"guests"'],
+          [/"\s+rooms\s*"/g, '"rooms"'],
+          [/"\s+room_type\s*"/g, '"room_type"'],
+          [/action_ request/g, "action_request"],
+          [/submit_ form/g, "submit_form"],
+          [/make_ reservation/g, "make_reservation"],
+          [/book_ slot/g, "book_slot"],
+          [/session_ id/g, "session_id"],
+          [/form_ id/g, "form_id"],
+          [/check_ in/g, "check_in"],
+          [/check_ out/g, "check_out"],
+          [/room_ type/g, "room_type"],
+        ];
+        for (const [re, rep] of substitutions) fixed = fixed.replace(re, rep);
+        return fixed;
+      };
+
+      if (directJson) {
+        try {
+          JSON.parse(directJson);
+        } catch {
+          const recovered = attemptJsonRecovery(directJson);
+          if (recovered !== directJson) {
+            try {
+              JSON.parse(recovered);
+              console.warn("[ACTION PARSER] recovered corrupted JSON via sanitization");
+              directJson = recovered;
+            } catch {
+              console.warn("[ACTION PARSER] recovery attempt failed");
+            }
+          }
+        }
+      }
 
       console.log("[ACTION PARSER] directJson preview:", directJson ? directJson.slice(0, 1200) : "<none>");
 
@@ -4637,11 +4831,25 @@ export const useGeminiVoice = ({
         if (parsed?.action !== "submit_form") return false;
 
         // Inject live session + deterministic form target so proxy always has a target.
-        const _sid =
-          parsed?.session_id ||
-          (sessionDataRef.current as any)?.sessionId ||
-          (sessionDataRef.current as any)?.session_id ||
-          "";
+        // ★ FIX: Gemini sometimes hallucinates "default_session_id" / placeholder values
+        // instead of the real session id. Treat any known-bad placeholder as absent so
+        // we fall back to the real id from sessionDataRef.
+        const realSid = (sessionDataRef.current as any)?.sessionId || (sessionDataRef.current as any)?.session_id || "";
+        const parsedSid = String(parsed?.session_id || "").trim();
+        const isPlaceholderSid =
+          !parsedSid ||
+          parsedSid === "default_session_id" ||
+          parsedSid === "session_id" ||
+          parsedSid === "${sessionId}" ||
+          parsedSid === "<session_id>" ||
+          /^[<{][^>}]*[>}]$/.test(parsedSid); // e.g. "<sessionId>" / "{sessionId}"
+        const _sid = isPlaceholderSid ? realSid : parsedSid;
+        if (isPlaceholderSid && parsedSid) {
+          console.warn("[SUBMIT_FORM] Gemini sent placeholder session_id; overriding with real one", {
+            sent: parsedSid,
+            real: realSid,
+          });
+        }
 
         const inferredTarget =
           lastSubmitFormTargetRef.current ||
@@ -4655,7 +4863,7 @@ export const useGeminiVoice = ({
 
         const enrichedParsed = {
           ...parsed,
-          ...(_sid ? { session_id: _sid } : {}),
+          ...(_sid ? { session_id: _sid } : {}), // always overrides placeholder
           ...(!parsed?.form_id && inferredTarget?.form_id ? { form_id: inferredTarget.form_id } : {}),
           ...(!parsed?.fingerprint && inferredTarget?.fingerprint ? { fingerprint: inferredTarget.fingerprint } : {}),
         };
@@ -4727,14 +4935,22 @@ export const useGeminiVoice = ({
         }
 
         if (result?.success) {
+          lastSubmitFormFiredAtRef.current = Date.now();
           // Tell Gemini so it speaks the confirmation out loud
           sendToGemini(
             [
               "WORKER_SUBMIT_SUCCESS:",
               "Формата е изпратена успешно (submitted=true).",
               "",
-              "Кажи на клиента накратко, че запитването е подадено успешно през формата.",
-              "НЕ питай допълнителни въпроси. Просто потвърди, че е готово и благодари.",
+              "Кажи ЕДНА-ЕДИНСТВЕНА кратка реплика на клиента — например:",
+              '"Готово, запитването е подадено успешно. Благодарим Ви!"',
+              "",
+              "⛔ СТРОГО ЗАБРАНЕНО:",
+              "- Да повтаряш данните (име/имейл/телефон/план).",
+              "- Да благодариш втори път.",
+              "- Да казваш 'екипът ни ще се свърже до 24 часа' повече от веднъж.",
+              "- Да добавяш дълги обяснения.",
+              "След кратката реплика можеш да попиташ само 'Мога ли да помогна с нещо друго?' — нищо повече.",
             ].join("\n"),
           );
         } else {
@@ -4743,7 +4959,8 @@ export const useGeminiVoice = ({
               "WORKER_SUBMIT_FAILED:",
               `Резултат: ${JSON.stringify(result).slice(0, 300)}`,
               "",
-              "Кажи на клиента, че не успя да подаде запитването и попитай дали да опита отново.",
+              "Кажи КРАТКО на клиента, че има технически проблем и попитай дали да опита отново.",
+              "⛔ Не казвай 'запитването е изпратено'. Формата НЕ е изпратена.",
             ].join("\n"),
           );
         }
@@ -4939,6 +5156,170 @@ export const useGeminiVoice = ({
 
               console.log("[SEARCH WORKER] functionCall query:", query);
 
+              // ★★★ FIX: Client-side guard against Gemini calling search_site_content
+              // when it should be returning a submit_form / make_reservation action_request JSON.
+              // Even after prompt hardening, Gemini Live sometimes prefers function calling over
+              // text output — so we intercept and block the call here when form state is ready.
+              try {
+                const captured = capturedSensitiveContactRef.current;
+                const hasName = !!captured?.name && captured.name.trim().length >= 2;
+                const hasEmail = !!captured?.email && looksLikeCompleteEmail(captured.email);
+                const hasPhone = !!captured?.phone && looksLikeCompletePhone(captured.phone);
+                const hasAllContact = hasName && hasEmail && hasPhone;
+
+                const lastUserText = String(lastCommittedUserRef.current?.text || "")
+                  .toLowerCase()
+                  .trim();
+                const isConfirmationWord =
+                  /^(да|ok|okay|добре|става|потвърждавам|потвърждавам\.|изпрати|изпрати\.|давай|готово|аха|yes|yep|ага)[\s.!?]*$/i.test(
+                    lastUserText,
+                  );
+
+                // Reservation state check (when user is in booking flow)
+                const resState = ((window as any).__neoReservationState || {}) as any;
+                const hasReservationData = !!resState?.check_in && !!resState?.check_out && !!resState?.room_type;
+
+                // Query smells like it's about a form/order/reservation, not a product fact
+                const queryIsFormRelated =
+                  /поръчк|запитван|резерваци|потвърд|изпрат|submit|form|reservation|confirm|контакт|contact|име.*имейл|имейл.*телефон/i.test(
+                    query,
+                  ) ||
+                  /@|gmail|abv|yahoo|hotmail/i.test(query) || // contains email
+                  /\b\d{6,}\b/.test(query); // contains phone number
+
+                // ★ NEW: detect active form flow from assistant's last utterance.
+                // If NEO just asked for contacts / plan / description, we are in a
+                // form-filling flow and search is never appropriate — Gemini should
+                // be collecting data, not re-researching plan names that are already
+                // in its business context.
+                const lastAssistantText = String(lastCommittedAssistantRef.current?.text || "").toLowerCase();
+                const assistantIsCollectingFormData =
+                  /име.*имейл|имейл.*телефон|телефон.*имейл|контакт|вашите данни|вашите контакт/i.test(
+                    lastAssistantText,
+                  ) ||
+                  /какъв план|кой план|кой пакет|какъв пакет|изберете план|изберете пакет/i.test(lastAssistantText) ||
+                  /описание на проект|кратко описание|опишете/i.test(lastAssistantText) ||
+                  /стартов.*стандартен.*премиум|стандартен.*премиум|basic.*standard.*premium/i.test(
+                    lastAssistantText,
+                  ) ||
+                  /как се казвате|ваш(ето|ия|ият) имейл|ваш(ият|ия) телефон|на кой имейл|изпратим|направя.*оферт|подготв.*оферт/i.test(
+                    lastAssistantText,
+                  );
+
+                // ★ NEW: query repeats plan/package enumeration that's already in
+                // the business context. Gemini sometimes searches for its own menu
+                // options. That's never a legit search.
+                const queryIsPlanEnumeration =
+                  /стартов[^а-я]*стандартен|стандартен[^а-я]*премиум|basic[^a-z]*standard|essential[^a-z]*professional/i.test(
+                    query,
+                  );
+
+                // ★ NEW: captured contact data exists at all (even partial) → we are
+                // mid-flow and should be collecting, not searching, unless the query
+                // is clearly about a specific product fact (price/model/size).
+                const hasAnyCapturedContact = hasName || hasEmail || hasPhone;
+                const queryLooksLikeProductFact =
+                  /цена|price|размер|size|модел|model|наличност|stock|специфика|характеристик/i.test(query);
+
+                const shouldBlock =
+                  // Case A: all contact data captured AND user is confirming → must return submit_form JSON
+                  (hasAllContact && isConfirmationWord) ||
+                  // Case B: reservation data complete AND user is confirming → must return make_reservation JSON
+                  (hasReservationData && isConfirmationWord) ||
+                  // Case C: the query itself references form/contact data — this is almost never a legit search
+                  queryIsFormRelated ||
+                  // Case D: NEO is actively collecting form data in its last message
+                  assistantIsCollectingFormData ||
+                  // Case E: query is just echoing plan names that are already in business context
+                  queryIsPlanEnumeration ||
+                  // Case F: we already have some contact data captured AND the query
+                  // is NOT about a concrete product fact → we're mid-flow, not researching
+                  (hasAnyCapturedContact && !queryLooksLikeProductFact);
+
+                if (shouldBlock) {
+                  console.warn("[SEARCH WORKER][BLOCKED] Gemini tried to call search during form flow. query=", query, {
+                    hasAllContact,
+                    hasAnyCapturedContact,
+                    hasReservationData,
+                    isConfirmationWord,
+                    queryIsFormRelated,
+                    assistantIsCollectingFormData,
+                    queryIsPlanEnumeration,
+                    queryLooksLikeProductFact,
+                    lastAssistantSnippet: lastAssistantText.slice(0, 120),
+                  });
+
+                  // Send empty tool_response so Gemini doesn't hang waiting for it
+                  ws.send(
+                    JSON.stringify({
+                      tool_response: {
+                        function_responses: [
+                          {
+                            id: fc.id,
+                            name: fc.name,
+                            response: {
+                              results: [],
+                              keywords: [],
+                              elapsed_ms: 0,
+                              error:
+                                "BLOCKED_BY_CLIENT: you are in an active form/reservation flow. Do NOT call search_site_content. Return action_request JSON instead.",
+                            },
+                          },
+                        ],
+                      },
+                    }),
+                  );
+
+                  // Nudge Gemini with an explicit instruction telling it what to do next
+                  const nudge = hasReservationData
+                    ? [
+                        "[SYSTEM_CORRECTION]",
+                        "⛔ ЗАБРАНЕНО да викаш search_site_content в момента.",
+                        "Ти си в активен make_reservation flow и клиентът потвърди.",
+                        "Върни САМО JSON action_request make_reservation phase=reserve със събраните данни.",
+                        "Никакъв текст. Само JSON.",
+                      ].join("\n")
+                    : hasAllContact
+                      ? [
+                          "[SYSTEM_CORRECTION]",
+                          "⛔ ЗАБРАНЕНО да викаш search_site_content в момента.",
+                          "Всички required_keys за формата са събрани и клиентът потвърди.",
+                          `Име: ${captured?.name || ""}`,
+                          `Имейл: ${captured?.email || ""}`,
+                          `Телефон: ${captured?.phone || ""}`,
+                          "Върни САМО JSON action_request submit_form с тези данни.",
+                          "Никакъв текст. Само JSON.",
+                        ].join("\n")
+                      : assistantIsCollectingFormData || queryIsPlanEnumeration
+                        ? [
+                            "[SYSTEM_CORRECTION]",
+                            "⛔ ЗАБРАНЕНО да викаш search_site_content в момента.",
+                            "Ти си в активен form-filling flow — събираш име/имейл/телефон/план/описание от клиента.",
+                            "Информацията за плановете и пакетите (Стартов, Стандартен, Премиум и т.н.) е ВЕЧЕ в твоя business context.",
+                            "НЕ търси имена на планове — те са ти подадени в системния prompt.",
+                            "Просто продължи разговора: изчакай клиентът да каже контактите/плана си, после запомни ги и върни submit_form JSON когато всичко е събрано.",
+                            "Никакви search повиквания докато формата не е изпратена.",
+                          ].join("\n")
+                        : [
+                            "[SYSTEM_CORRECTION]",
+                            "⛔ ЗАБРАНЕНО да викаш search_site_content с контактни/форма данни в query-то.",
+                            "search_site_content е САМО за фактологични въпроси за продукти (цени, модели, размери, спецификации).",
+                            "Ако клиентът потвърждава форма/поръчка → върни action_request JSON.",
+                            "Ако клиентът дава контактна информация → запомни я и продължи flow-а, без да викаш search.",
+                          ].join("\n");
+
+                  try {
+                    sendToGemini(nudge);
+                  } catch (nudgeErr) {
+                    console.warn("[SEARCH WORKER][BLOCKED] nudge failed:", nudgeErr);
+                  }
+
+                  continue; // skip real search call
+                }
+              } catch (guardErr) {
+                console.warn("[SEARCH WORKER] guard check failed, allowing call:", guardErr);
+              }
+
               if (!searchProxyUrl || !anonKey || !query || !sid) {
                 ws.send(
                   JSON.stringify({
@@ -5053,6 +5434,8 @@ export const useGeminiVoice = ({
 
                   const looksLikeAction =
                     partText.startsWith("{") ||
+                    partText.startsWith("```json") ||
+                    partText.startsWith("```") ||
                     partText.includes('"type":"action_request"') ||
                     partText.includes('"type": "action_request"') ||
                     partText.includes('"action":"make_reservation"') ||
@@ -5062,7 +5445,19 @@ export const useGeminiVoice = ({
                     partText.includes('"action":"book_slot"') ||
                     partText.includes('"action": "book_slot"');
 
+                  // ★ FIX: Check if we're ALREADY in the middle of an action JSON being streamed.
+                  // Gemini streams JSON in chunks — the first chunk starts with "{" and looksLikeAction
+                  // catches it, but subsequent chunks (e.g. '_form","session_id":"..."') do NOT match
+                  // the action markers and previously fell into the `else` branch, which inserted a
+                  // space separator INTO THE MIDDLE OF THE JSON — corrupting it.
+                  const alreadyAccumulatingAction =
+                    currentResponseTextRef.current.startsWith("{") ||
+                    currentResponseTextRef.current.startsWith("```") ||
+                    currentResponseTextRef.current.includes('"type":"action_request"') ||
+                    currentResponseTextRef.current.includes('"type": "action_request"');
+
                   if (looksLikeAction) {
+                    // First chunk of an action JSON — replace buffer
                     currentResponseTextRef.current = partText;
                     // ★ FIX 2.2: Fire book_slot САМО ако JSON-ът е пълен и валиден.
                     // При streaming partText може да е непълен → JSON.parse гърми тихо
@@ -5080,6 +5475,11 @@ export const useGeminiVoice = ({
                         console.log("[EARLY ACTION] book_slot засечен, но JSON е непълен — чакаме TURN_COMPLETE");
                       }
                     }
+                  } else if (alreadyAccumulatingAction && partText) {
+                    // ★ FIX: Continuation of a streaming JSON — concatenate WITHOUT space.
+                    // A space inside a JSON key or value would corrupt the JSON.
+                    currentResponseTextRef.current += partText;
+                    console.log("[MODEL PART TEXT][JSON CONT]", currentResponseTextRef.current.slice(0, 200));
                   } else if (partText) {
                     if (currentResponseTextRef.current && !currentResponseTextRef.current.endsWith(" ")) {
                       currentResponseTextRef.current += " ";
@@ -5102,6 +5502,7 @@ export const useGeminiVoice = ({
               const txt = transcription.text.trim();
               const currentLooksLikeAction =
                 currentResponseTextRef.current.startsWith("{") ||
+                currentResponseTextRef.current.startsWith("```") ||
                 currentResponseTextRef.current.includes('"type":"action_request"') ||
                 currentResponseTextRef.current.includes('"type": "action_request"');
 
@@ -5199,7 +5600,188 @@ export const useGeminiVoice = ({
                   }
                 }
 
+                // ★★★ FAKE-SUBMIT GUARD ★★★
+                // Gemini Live has a strong bias to respond with text ("Thanks, your
+                // request has been submitted") when the user confirms, instead of
+                // returning the required submit_form JSON. That leaves the user with
+                // a plain lie: the form was never actually sent. Detect that here and
+                // synthesize the submit_form JSON ourselves from captured contact data.
+                //
+                // NOTE: we deliberately do NOT gate this on userConfirmedRecently.
+                // Gemini sometimes treats ANY user response (including "nothing else",
+                // "Точно е", a phone repetition) as implicit confirmation and fires
+                // the lie. If Gemini claims it's done and we have all the data, the
+                // only correct action is to actually submit — regardless of what
+                // word the user used.
+                if (!handled && responseText && !responseText.includes("{")) {
+                  try {
+                    const captured = capturedSensitiveContactRef.current;
+                    const hasName = !!captured?.name && captured.name.trim().length >= 2;
+                    const hasEmail = !!captured?.email && looksLikeCompleteEmail(captured.email);
+                    const hasPhone = !!captured?.phone && looksLikeCompletePhone(captured.phone);
+                    const hasAllContact = hasName && hasEmail && hasPhone;
+
+                    const lastUserText = String(lastCommittedUserRef.current?.text || "")
+                      .toLowerCase()
+                      .trim();
+
+                    // Detect the lie: Gemini is claiming success (past tense) OR
+                    // announcing it's about to submit (future/present tense) without
+                    // actually returning an action_request JSON in this turn.
+                    // Both are functionally broken: the user is expecting the form
+                    // to be sent, but nothing is happening.
+                    const normalizedResponse = responseText.toLowerCase();
+                    const claimsFormSent =
+                      // Past tense — Gemini lies it's already done
+                      /изпратен|изпратих|подаден|подадох|пратен|успешно подаде|успешно изпрате|готово.*запитван|запитван.*готово|благодарим.*доверие|запитването.*получ|ще се свърж/i.test(
+                        normalizedResponse,
+                      ) ||
+                      // Future/present tense — Gemini announces it but produces no JSON
+                      /един момент.*(изпращ|подав|прат)|момент.*(изпращ|подав|прат)|сега.*(изпращ|подав|прат)|(изпращам|подавам|пращам)\s*(запитван|формата|данн)?|подавам запитван/i.test(
+                        normalizedResponse,
+                      ) ||
+                      // Bare "Един момент, изпращам" without anything else
+                      /^един момент[,.\s]*изпращам[.\s]*$/i.test(normalizedResponse.trim()) ||
+                      /^момент[,.\s]*подавам[.\s]*$/i.test(normalizedResponse.trim());
+
+                    const recentlyFired = Date.now() - lastSubmitFormFiredAtRef.current < 60_000;
+
+                    if (hasAllContact && claimsFormSent && !recentlyFired) {
+                      console.warn(
+                        "[FAKE_SUBMIT_GUARD] Gemini claimed form was sent without returning JSON. Synthesizing submit_form from captured data.",
+                        {
+                          captured,
+                          lastUserText,
+                          responsePreview: responseText.slice(0, 160),
+                        },
+                      );
+
+                      const sid =
+                        (sessionDataRef.current as any)?.sessionId || (sessionDataRef.current as any)?.session_id || "";
+                      const target =
+                        lastSubmitFormTargetRef.current ||
+                        pickPreferredSubmitFormTarget(
+                          extractSubmitFormTargetsFromInstruction(
+                            (sessionDataRef.current as any)?.systemInstruction || "",
+                          ),
+                        );
+
+                      if (sid && (target?.form_id || target?.fingerprint)) {
+                        // Pull plan / message from captured data if the parser
+                        // stashed them there, otherwise let the proxy ask for them.
+                        const extraFields: Record<string, string> = {};
+                        if ((captured as any)?.plan) extraFields.plan = String((captured as any).plan);
+                        if ((captured as any)?.message) extraFields.message = String((captured as any).message);
+
+                        const synthesized = {
+                          type: "action_request",
+                          action: "submit_form",
+                          session_id: sid,
+                          ...(target?.form_id ? { form_id: target.form_id } : {}),
+                          ...(target?.fingerprint ? { fingerprint: target.fingerprint } : {}),
+                          fields: {
+                            name: captured!.name,
+                            email: captured!.email,
+                            phone: captured!.phone,
+                            ...extraFields,
+                          },
+                        };
+
+                        console.log(
+                          "[FAKE_SUBMIT_GUARD] firing synthesized action_request:",
+                          JSON.stringify(synthesized).slice(0, 400),
+                        );
+
+                        // Don't show Gemini's lie to the user. Swallow the text.
+                        clearAssistantLiveTranscript();
+                        currentResponseTextRef.current = "";
+
+                        // Fire through the existing action parser so all the normal
+                        // enrichment / proxy logic runs unchanged.
+                        const synthHandled = await maybeExecuteActionFromGemini(JSON.stringify(synthesized));
+
+                        if (synthHandled) {
+                          // Correct Gemini so it stops lying in future turns.
+                          try {
+                            sendToGemini(
+                              [
+                                "[SYSTEM_CORRECTION]",
+                                "⛔ Ти току-що каза нещо като 'Един момент, изпращам' или 'Запитването е изпратено' БЕЗ да върнеш action_request JSON в същия turn.",
+                                "Това е счупен flow — клиентът чува 'изпращам' но нищо не се случва. Системата автоматично подаде формата вместо теб този път.",
+                                "",
+                                "СТРОГО ПРАВИЛО за следващия път:",
+                                "Когато клиентът потвърди и имаш всички данни → output-ът ти за този turn трябва да започва с '{' и да завършва с '}'. НИКАКЪВ текст.",
+                                "- ❌ Не казвай 'Един момент, изпращам.'",
+                                "- ❌ Не казвай 'Подавам запитването.'",
+                                "- ❌ Не казвай 'Сега изпращам.'",
+                                "- ❌ Не казвай 'Изпратено' или 'Готово' или 'Благодарим за доверието'.",
+                                "- ✅ Просто върни action_request submit_form JSON и нищо друго.",
+                                "",
+                                "Текстът към клиента идва САМО след WORKER_SUBMIT_SUCCESS, не преди.",
+                              ].join("\n"),
+                            );
+                          } catch (nudgeErr) {
+                            console.warn("[FAKE_SUBMIT_GUARD] nudge failed:", nudgeErr);
+                          }
+                          return;
+                        } else {
+                          console.warn(
+                            "[FAKE_SUBMIT_GUARD] synthesized action was not handled by parser; falling through to normal text commit.",
+                          );
+                        }
+                      } else {
+                        console.warn("[FAKE_SUBMIT_GUARD] cannot synthesize — missing session_id or form target", {
+                          sid,
+                          target,
+                        });
+                      }
+                    }
+                  } catch (guardErr) {
+                    console.warn("[FAKE_SUBMIT_GUARD] guard threw:", guardErr);
+                  }
+                }
+                // ★★★ END FAKE-SUBMIT GUARD ★★★
+
                 if (!handled) {
+                  // ★ FINAL RAW JSON SUPPRESSOR ★
+                  // Defense-in-depth: if all execution attempts failed AND the text
+                  // still looks like action JSON (raw or markdown-fenced), NEVER
+                  // commit it as a visible assistant bubble. Swallow, log, and send
+                  // a correction nudge to Gemini so it can recover on the next turn.
+                  const trimmedResponse = responseText.trim();
+                  const looksLikeJsonLeak =
+                    trimmedResponse.startsWith("{") ||
+                    trimmedResponse.startsWith("```") ||
+                    /"type"\s*:\s*"action_request"/.test(responseText) ||
+                    /"action"\s*:\s*"(submit_form|make_reservation|book_slot)"/.test(responseText);
+
+                  if (looksLikeJsonLeak) {
+                    console.warn("[TURN_COMPLETE][SUPPRESSED raw JSON leak]", responseText.slice(0, 300));
+                    clearAssistantLiveTranscript();
+                    currentResponseTextRef.current = "";
+
+                    // Correct Gemini — tell it the previous turn failed and why
+                    try {
+                      sendToGemini(
+                        [
+                          "[SYSTEM_CORRECTION]",
+                          "⛔ Предишният ти turn съдържаше action_request JSON, който не беше изпълнен успешно.",
+                          "Възможни причини:",
+                          "- Използвал си невалиден session_id (например 'default_session_id' или placeholder)",
+                          "- Пропуснал си form_id или fingerprint",
+                          "- Обвил си JSON в markdown code fence (```json ... ```)",
+                          "- Добавил си текст преди или след JSON",
+                          "",
+                          "На следващия turn: ако клиентът все още чака submit, върни ЧИСТ JSON (без backticks, без текст) със session_id от системния prompt и точните form_id/fingerprint от ACTIONS контекста.",
+                          "Ако не си сигурен какво да направиш — попитай клиента дали да опиташ отново.",
+                        ].join("\n"),
+                      );
+                    } catch (nudgeErr) {
+                      console.warn("[TURN_COMPLETE][SUPPRESSOR] nudge failed:", nudgeErr);
+                    }
+                    return;
+                  }
+
                   commitAssistantMessage(responseText);
                   expectedSensitiveInputModeRef.current = detectExpectedSensitiveInputMode(responseText);
                   if (expectedSensitiveInputModeRef.current !== "general") {
@@ -5292,9 +5874,23 @@ export const useGeminiVoice = ({
     ],
   );
 
+  // ★ FIX: Guard against double-fire of sendText from the chat input UI.
+  // Some input components fire BOTH an onKeyDown(Enter) AND an onClick/form-submit
+  // in the same tick, producing two identical sendText calls. We collapse any
+  // repeat of the same text within 400ms into a single call.
+  const lastSendTextRef = useRef<{ text: string; ts: number }>({ text: "", ts: 0 });
+
   const sendText = useCallback(
     (text: string) => {
       const t = String(text || "").trim();
+      if (!t) return;
+
+      const now = Date.now();
+      if (lastSendTextRef.current.text === t && now - lastSendTextRef.current.ts < 400) {
+        console.log("[sendText][DEDUPED double-fire]", t.slice(0, 80));
+        return;
+      }
+      lastSendTextRef.current = { text: t, ts: now };
 
       try {
         const state = ((window as any).__neoReservationState || {}) as any;
@@ -5600,7 +6196,7 @@ export const useGeminiVoice = ({
       } catch {}
       // ─────────────────────────────────────────────────────────────
 
-      handleUserUtterance(`${text}`);
+      handleUserUtterance(`${text}`, { typed: true });
 
       window.setTimeout(() => {
         tryAutoRunReservationCheck();
@@ -5621,6 +6217,11 @@ export const useGeminiVoice = ({
   }, []);
 
   const getSessionData = useCallback(() => sessionDataRef.current, []);
+
+  const setVoiceOverride = useCallback((voiceName: string) => {
+    if (!sessionDataRef.current) return;
+    (sessionDataRef.current as any).voiceName = voiceName;
+  }, []);
 
   const toggleMicMute = useCallback(() => {
     const stream = streamRef.current;
@@ -5647,10 +6248,7 @@ export const useGeminiVoice = ({
     preWarmMicrophone,
     sendText,
     getSessionData,
-    setVoiceOverride: (_voiceId: string) => {
-      // Voice override is applied at session prepare time via demo_sessions.voice_name
-      // This is a no-op stub for compatibility with consumers that set it eagerly.
-    },
+    setVoiceOverride,
     interrupt: () => {
       assistantTurnCanceledRef.current = true;
       scheduledSourcesRef.current.forEach((s) => {
