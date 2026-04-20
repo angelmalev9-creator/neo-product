@@ -57,38 +57,42 @@ const AUDIO_SAMPLE_RATE_OUT = 24000;
 const AUDIO_SAMPLE_RATE_IN = 16000;
 
 const ECHO_GUARD_MS = 80;
-const ANTI_BARGE_IN_MS = 3500; // ↑ NEO изчаква минимум 3.5s преди да може да бъде прекъснат
-const MIN_BARGE_IN_CHARS = 20; // ↑ Изисква се повече реч преди barge-in
-const MIN_BARGE_IN_WORDS = 5; // ↑ Минимум 5 думи за да се смята за реална намеса
+// Instant barge-in (like a normal phone call) — no forced wait before client can interrupt.
+// Echo cancellation still protects against NEO's own audio being picked up (via ECHO_GUARD_MS
+// plus isPlayingRef checks in the speech detection path).
+const ANTI_BARGE_IN_MS = 0; // ↓ instant barge-in
+const MIN_BARGE_IN_CHARS = 6; // ↓ shorter utterances can interrupt
+const MIN_BARGE_IN_WORDS = 2; // ↓ 2 words is enough for real interruption
 const BARGE_IN_COMMANDS = ["стоп", "спри", "изчакай", "чакай", "момент", "секунда", "стига", "почакай"];
-const UTTERANCE_DEBOUNCE_MS = 650; // ↑ По-дълъг debounce — чака клиентът да спре
-const SPEECH_FINAL_MIN_MS = 580; // ↑ Минимум 580ms след финален токен преди изпращане
-const SPEECH_FINAL_MAX_MS = 5500; // ↑ Максимум — за по-дълги изречения
-const UTTERANCE_END_MIN_MS = 500; // ↑ По-дълъг минимален период
-const UTTERANCE_END_MAX_MS = 4200; // ↑ По-дълъг максимален период
-const CONTINUATION_EXTRA_MS = 1800; // ↑ Ако изречението е незавършено — чака повече
+const UTTERANCE_DEBOUNCE_MS = 320; // ↓ от 650 — user не чака дълго
+const SPEECH_FINAL_MIN_MS = 280; // ↓ от 580
+const SPEECH_FINAL_MAX_MS = 2600; // ↓ от 5500
+const UTTERANCE_END_MIN_MS = 240; // ↓ от 500
+const UTTERANCE_END_MAX_MS = 2000; // ↓ от 4200
+const CONTINUATION_EXTRA_MS = 850; // ↓ от 1800
 const LOW_CONF_SHORT_TEXT_MAX_CHARS = 8;
 const LOW_CONF_SHORT_TEXT_MAX_WORDS = 2;
-const LOW_CONF_HOLD_MS = 1700;
+const LOW_CONF_HOLD_MS = 850; // ↓ от 1700
 const LOW_CONF_MIN_COMMIT_CHARS = 8;
 const LOW_CONF_MIN_COMMIT_WORDS = 2;
 const SENSITIVE_CAPTURE_WINDOW_MS = 12000;
-const SENSITIVE_INCOMPLETE_HOLD_MS = 4200;
-const MIN_AGGREGATION_WINDOW_MS = 350;
+const SENSITIVE_INCOMPLETE_HOLD_MS = 2100; // ↓ от 4200
+const MIN_AGGREGATION_WINDOW_MS = 200; // ↓ от 350
 const SENSITIVE_MODE_EXTRA_WAIT_MS: Record<SensitiveInputMode, number> = {
   general: 0,
-  name: 650,
-  phone: 2200,
-  email: 2400,
-  contact: 2800,
+  name: 300, // ↓ от 650
+  phone: 1100, // ↓ от 2200
+  email: 1200, // ↓ от 2400
+  contact: 1400, // ↓ от 2800
 };
-// VAD-based barge-in: number of consecutive speech frames needed to interrupt NEO
-// Higher = less false positives from noise/echo. Raised so client must speak clearly.
-const VAD_BARGE_IN_FRAMES_REQUIRED = 35;
+// VAD-based barge-in: consecutive speech frames needed to interrupt NEO.
+// Lowered for instant barge-in behaviour. Echo cancellation (ECHO_GUARD_MS) and
+// noise-floor thresholds are the remaining protection layer.
+const VAD_BARGE_IN_FRAMES_REQUIRED = 12; // ↓ от 35
 
 // VAD (client-side) is only a fallback safety layer.
 // Server-final tokens should end the turn first.
-const VAD_SILENCE_MS = 5500; // ↑ Изчаква 5.5s тишина преди да изпрати транскрипцията
+const VAD_SILENCE_MS = 2200; // ↓ от 5500 — това беше най-големият виновник за латентност
 const VAD_NOISE_PROFILE_MS = 2500;
 const VAD_MIN_SPEECH_THRESHOLD = 0.009;
 const VAD_MAX_SPEECH_THRESHOLD = 0.036;
@@ -2271,10 +2275,11 @@ export const useGeminiVoice = ({
         const beforeDedupe = clean;
 
         // a) Phone repeats: "088 77 00 811 номерът ми е 088 77 00 811"
-        //    Pattern: same normalized digit sequence appearing twice, optionally
-        //    with up to ~30 chars of connector text between them. Replace with
-        //    the first occurrence only.
-        const phoneRe = /(\b[\d\s]{8,}\b)([^\d]{0,40}?)\1/g;
+        //    Robust approach: find ALL phone-like sequences, and if the same
+        //    normalized digits appear 2+ times in the string, keep only the first.
+        //    Window extended from 40 to 80 chars (handles longer connector phrases
+        //    like "имейлът ми е X, а номерът ми е X").
+        const phoneRe = /(\b[\d\s]{8,}\b)([^\d]{0,80}?)\1/g;
         let prev = "";
         while (prev !== clean) {
           prev = clean;
@@ -2284,16 +2289,38 @@ export const useGeminiVoice = ({
             .trim();
         }
 
-        // b) Email repeats: same address twice in a row
-        const emailRe = /([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,})([^@]{0,40}?)\1/gi;
-        prev = "";
-        while (prev !== clean) {
-          prev = clean;
-          clean = clean
-            .replace(emailRe, (_m, p1) => p1)
-            .replace(/\s+/g, " ")
-            .trim();
+        // b) Email repeats: same address twice. Case-insensitive normalization
+        //    ensures "Foo@Gmail.com" and "foo@gmail.com" are recognized as dups.
+        //    Window extended from 40 to 80 chars.
+        const emailMatch = /([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,})/gi;
+        const allEmails = [...clean.matchAll(emailMatch)].map((m) => ({
+          raw: m[0],
+          norm: m[0].toLowerCase(),
+          idx: m.index ?? 0,
+        }));
+        const emailCounts = new Map<string, number>();
+        for (const e of allEmails) emailCounts.set(e.norm, (emailCounts.get(e.norm) || 0) + 1);
+        // If any email appears 2+ times, remove all but the first occurrence.
+        for (const [norm, count] of emailCounts) {
+          if (count < 2) continue;
+          const occurrences = allEmails.filter((e) => e.norm === norm);
+          // Remove from last to first so indices remain valid as we mutate `clean`.
+          for (let i = occurrences.length - 1; i >= 1; i--) {
+            const occ = occurrences[i];
+            // Remove the email AND surrounding filler words like "имейлът ми е " / "mail-ът ми е "
+            // (anything non-alphanumeric up to ~50 chars before the dup).
+            const start = Math.max(0, occ.idx - 50);
+            const before = clean.slice(start, occ.idx);
+            const fillerMatch = before.match(/[,\s]*(?:и\s+)?(?:имейл[а-я]*|e-?mail|поща|mail)[^a-z0-9@]*$/iu);
+            const removeStart = fillerMatch ? occ.idx - fillerMatch[0].length : occ.idx;
+            clean = clean.slice(0, removeStart) + clean.slice(occ.idx + occ.raw.length);
+          }
         }
+        clean = clean
+          .replace(/\s*,\s*,/g, ",")
+          .replace(/,\s*$/, "")
+          .replace(/\s+/g, " ")
+          .trim();
 
         // c) Immediate adjacent duplicate clauses: split ONLY on commas (not
         //    periods — those are inside emails). If two adjacent clauses are
@@ -2630,7 +2657,7 @@ export const useGeminiVoice = ({
 
     const cleanFull = stripLowConfidenceTag(candidateText).toLowerCase();
     const last = lastCommittedUtteranceRef.current;
-    if (cleanFull && last.text === cleanFull && Date.now() - last.ts < 3500) {
+    if (cleanFull && last.text === cleanFull && Date.now() - last.ts < 1500) {
       console.log("[STT] skip duplicate utterance", cleanFull);
       resetSttBuffers();
       return;
@@ -2976,8 +3003,11 @@ export const useGeminiVoice = ({
       // Typed text is clean & intentional — it must never be dropped by these guards.
       if (!isTyped) {
         if (Date.now() - speakEndRef.current < ECHO_GUARD_MS) return;
-        if (isPlayingRef.current && Date.now() - speakStartRef.current < ANTI_BARGE_IN_MS) return;
-        if (isPlayingRef.current && !shouldAllowBargeIn(text) && !looksLikeGeneralContactInput(text)) return;
+        // Instant barge-in: NEO can be interrupted immediately, like a normal phone call.
+        // We only require that the utterance passes basic length/word thresholds
+        // (handled upstream via MIN_BARGE_IN_CHARS/WORDS + VAD_BARGE_IN_FRAMES_REQUIRED)
+        // so that stray noise doesn't cut NEO off mid-sentence.
+        // No ANTI_BARGE_IN_MS wait; no restrictive "is this a command?" gate.
       }
 
       const now = Date.now();
