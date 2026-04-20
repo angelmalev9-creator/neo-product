@@ -11,7 +11,7 @@ interface UseGeminiVoiceProps {
   onSpeakingChange?: (speaking: boolean) => void;
   onListeningChange?: (listening: boolean) => void;
   onTranscript?: (transcript: string, isFinal: boolean, role: "user" | "assistant") => void;
-  onActionProcessingChange?: (processing: boolean) => void;
+  onActionProcessingChange?: (processing: boolean, action?: string | null) => void;
 }
 
 type SessionData = {
@@ -57,42 +57,38 @@ const AUDIO_SAMPLE_RATE_OUT = 24000;
 const AUDIO_SAMPLE_RATE_IN = 16000;
 
 const ECHO_GUARD_MS = 80;
-// Instant barge-in (like a normal phone call) — no forced wait before client can interrupt.
-// Echo cancellation still protects against NEO's own audio being picked up (via ECHO_GUARD_MS
-// plus isPlayingRef checks in the speech detection path).
-const ANTI_BARGE_IN_MS = 0; // ↓ instant barge-in
-const MIN_BARGE_IN_CHARS = 6; // ↓ shorter utterances can interrupt
-const MIN_BARGE_IN_WORDS = 2; // ↓ 2 words is enough for real interruption
+const ANTI_BARGE_IN_MS = 3500; // ↑ NEO изчаква минимум 3.5s преди да може да бъде прекъснат
+const MIN_BARGE_IN_CHARS = 20; // ↑ Изисква се повече реч преди barge-in
+const MIN_BARGE_IN_WORDS = 5; // ↑ Минимум 5 думи за да се смята за реална намеса
 const BARGE_IN_COMMANDS = ["стоп", "спри", "изчакай", "чакай", "момент", "секунда", "стига", "почакай"];
-const UTTERANCE_DEBOUNCE_MS = 320; // ↓ от 650 — user не чака дълго
-const SPEECH_FINAL_MIN_MS = 280; // ↓ от 580
-const SPEECH_FINAL_MAX_MS = 2600; // ↓ от 5500
-const UTTERANCE_END_MIN_MS = 240; // ↓ от 500
-const UTTERANCE_END_MAX_MS = 2000; // ↓ от 4200
-const CONTINUATION_EXTRA_MS = 850; // ↓ от 1800
+const UTTERANCE_DEBOUNCE_MS = 650; // ↑ По-дълъг debounce — чака клиентът да спре
+const SPEECH_FINAL_MIN_MS = 580; // ↑ Минимум 580ms след финален токен преди изпращане
+const SPEECH_FINAL_MAX_MS = 5500; // ↑ Максимум — за по-дълги изречения
+const UTTERANCE_END_MIN_MS = 500; // ↑ По-дълъг минимален период
+const UTTERANCE_END_MAX_MS = 4200; // ↑ По-дълъг максимален период
+const CONTINUATION_EXTRA_MS = 1800; // ↑ Ако изречението е незавършено — чака повече
 const LOW_CONF_SHORT_TEXT_MAX_CHARS = 8;
 const LOW_CONF_SHORT_TEXT_MAX_WORDS = 2;
-const LOW_CONF_HOLD_MS = 850; // ↓ от 1700
+const LOW_CONF_HOLD_MS = 1700;
 const LOW_CONF_MIN_COMMIT_CHARS = 8;
 const LOW_CONF_MIN_COMMIT_WORDS = 2;
 const SENSITIVE_CAPTURE_WINDOW_MS = 12000;
-const SENSITIVE_INCOMPLETE_HOLD_MS = 2100; // ↓ от 4200
-const MIN_AGGREGATION_WINDOW_MS = 200; // ↓ от 350
+const SENSITIVE_INCOMPLETE_HOLD_MS = 4200;
+const MIN_AGGREGATION_WINDOW_MS = 350;
 const SENSITIVE_MODE_EXTRA_WAIT_MS: Record<SensitiveInputMode, number> = {
   general: 0,
-  name: 300, // ↓ от 650
-  phone: 1100, // ↓ от 2200
-  email: 1200, // ↓ от 2400
-  contact: 1400, // ↓ от 2800
+  name: 650,
+  phone: 2200,
+  email: 2400,
+  contact: 2800,
 };
-// VAD-based barge-in: consecutive speech frames needed to interrupt NEO.
-// Lowered for instant barge-in behaviour. Echo cancellation (ECHO_GUARD_MS) and
-// noise-floor thresholds are the remaining protection layer.
-const VAD_BARGE_IN_FRAMES_REQUIRED = 12; // ↓ от 35
+// VAD-based barge-in: number of consecutive speech frames needed to interrupt NEO
+// Higher = less false positives from noise/echo. Raised so client must speak clearly.
+const VAD_BARGE_IN_FRAMES_REQUIRED = 35;
 
 // VAD (client-side) is only a fallback safety layer.
 // Server-final tokens should end the turn first.
-const VAD_SILENCE_MS = 2200; // ↓ от 5500 — това беше най-големият виновник за латентност
+const VAD_SILENCE_MS = 5500; // ↑ Изчаква 5.5s тишина преди да изпрати транскрипцията
 const VAD_NOISE_PROFILE_MS = 2500;
 const VAD_MIN_SPEECH_THRESHOLD = 0.009;
 const VAD_MAX_SPEECH_THRESHOLD = 0.036;
@@ -112,7 +108,6 @@ const ACTION_PROCESSING_SPEECH_PATTERNS = [
   /(изпращам|подавам|попълвам|обработвам).*(форм|запитван|заявк)/i,
   /(проверявам|потвърждавам).*(наличност|резервац|заявк)/i,
   /(резервирам|запазвам).*(час|резервац)/i,
-  /(готово|изпратено).*(запитван|заявк|форм)/i,
 ];
 
 const looksLikeActionPayload = (text: string) => {
@@ -133,7 +128,31 @@ const isSilentActionTurnText = (text: string) => {
     .trim();
   if (!clean) return false;
 
-  return looksLikeActionPayload(clean) || ACTION_PROCESSING_SPEECH_PATTERNS.some((pattern) => pattern.test(clean));
+  if (looksLikeActionPayload(clean)) return true;
+
+  const visibleText = stripActionProcessingText(clean);
+  return !visibleText && ACTION_PROCESSING_SPEECH_PATTERNS.some((pattern) => pattern.test(clean));
+};
+
+const splitTextIntoSegments = (value: string) =>
+  String(value || "")
+    .replace(/([.!?])\s+/g, "$1\n")
+    .split(/\n+/)
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+
+const stripActionProcessingText = (value: string) => {
+  const clean = String(value || "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!clean || looksLikeActionPayload(clean)) return clean;
+
+  const filtered = splitTextIntoSegments(clean).filter(
+    (segment) => !ACTION_PROCESSING_SPEECH_PATTERNS.some((pattern) => pattern.test(segment)),
+  );
+
+  return filtered.join(" ").replace(/\s+/g, " ").trim();
 };
 
 const clampInstruction = (text: string, maxChars: number) => {
@@ -698,10 +717,24 @@ function extractContactIntentFields(text: string): SensitiveContactFields {
   const raw = stripLowConfidenceTag(text).trim();
   const fields: SensitiveContactFields = {};
 
-  const nameMatch = raw.match(/(?:казвам\s+се|името\s+ми\s+е|име\s*:?\s*)([\p{L}][\p{L}\s'-]{2,60})/iu);
+  // ★ FIX: Stop name capture at Bulgarian stop words to avoid grabbing entire sentence
+  const nameMatch = raw.match(
+    /(?:казвам\s+се|името\s+ми\s+е|име\s*:?\s*)([\p{L}][\p{L}\s'-]{1,40}?)(?:\s*[,.]|\s+(?:и\s|а\s|искам|номер|телефон|имейл|email|майл|поща|пакет|план|от\s|за\s|на\s|в\s|с\s|да\s|ще\s|може|моля|нужда|нямам|нищо|добре|мога|бих|ми\s+е|от\s+|от$)|\s*$)/iu,
+  );
   if (nameMatch?.[1]) {
     const name = normalizeSensitiveName(nameMatch[1]);
     if (looksLikeSensitiveName(name)) fields.name = name;
+  }
+
+  // Fallback: try extracting name from "Ангел се казвам" / "Ангел Малев, имейлът ми е..."
+  if (!fields.name) {
+    const reversedMatch = raw.match(
+      /^([\p{L}]{2,20}(?:\s+[\p{L}]{2,20}){0,2})\s*[,.]?\s*(?:се\s+казвам|имейл|email|номер|телефон)/iu,
+    );
+    if (reversedMatch?.[1]) {
+      const name = normalizeSensitiveName(reversedMatch[1]);
+      if (looksLikeSensitiveName(name)) fields.name = name;
+    }
   }
 
   const emailMatch = raw.match(
@@ -720,12 +753,30 @@ function extractContactIntentFields(text: string): SensitiveContactFields {
   const emailCandidate = normalizeSpokenEmail(emailSegmentClean || raw);
   if (looksLikeCompleteEmail(emailCandidate)) fields.email = emailCandidate;
 
+  if (!fields.email && raw.length < 120) {
+    const fallbackEmail = normalizeSpokenEmail(raw);
+    if (looksLikeCompleteEmail(fallbackEmail)) {
+      fields.email = fallbackEmail;
+    }
+  }
+
   const phoneMatch = raw.match(/(?:номер(?:ът)?\s+ми\s+е|телефон(?:ът)?\s+ми\s+е|телефон|номер|gsm|phone)\s+(.+)$/iu);
   const phoneSegment = phoneMatch?.[1]
     ? phoneMatch[1].split(/(?:,|\s+и\s+имейл|\s+а\s+имейл|\s+и\s+казвам\s+се)/i)[0]?.trim() || ""
     : "";
-  const phoneCandidate = normalizeSpokenPhone(phoneSegment || raw);
-  if (phoneCandidate.replace(/\D/g, "").length >= 8) fields.phone = phoneCandidate;
+  if (phoneSegment) {
+    const phoneCandidate = normalizeSpokenPhone(phoneSegment);
+    if (phoneCandidate.replace(/\D/g, "").length >= 8 && phoneCandidate.replace(/\D/g, "").length <= 15)
+      fields.phone = phoneCandidate;
+  }
+
+  if (!fields.phone && raw.length < 120) {
+    const fallbackPhone = normalizeSpokenPhone(raw);
+    const digits = fallbackPhone.replace(/\D/g, "");
+    if (digits.length >= 8 && digits.length <= 15) {
+      fields.phone = fallbackPhone;
+    }
+  }
 
   return fields;
 }
@@ -752,7 +803,7 @@ function mergeSensitiveContact(
       if (!next) return base;
       if (next.startsWith(base)) return next;
       if (base.startsWith(next)) return base;
-      if (base.length < 10 && next.length < 10) return `${base}${next}`;
+      // Never concatenate — pick the longer/newer one
       return next.length >= base.length ? next : base;
     })(),
     ts: Date.now(),
@@ -1746,6 +1797,7 @@ export const useGeminiVoice = ({
   onSpeakingChange,
   onListeningChange,
   onTranscript,
+  onActionProcessingChange,
 }: UseGeminiVoiceProps = {}) => {
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -1846,6 +1898,7 @@ export const useGeminiVoice = ({
   // ★ NEW: timestamp of last successful submit_form — used by the "Gemini lies
   // about having sent the form" guard to avoid double-submits.
   const lastSubmitFormFiredAtRef = useRef<number>(0);
+  const submitFormInFlightRef = useRef<boolean>(false);
   const conversationFocusRef = useRef<ConversationFocusState>({
     lastTopic: "",
     lastEntityType: "",
@@ -2176,6 +2229,13 @@ export const useGeminiVoice = ({
     onTranscript?.("", false, "assistant");
   }, [onTranscript]);
 
+  const updateActionProcessing = useCallback(
+    (processing: boolean, action?: string | null) => {
+      onActionProcessingChange?.(processing, action || null);
+    },
+    [onActionProcessingChange],
+  );
+
   const clearUserLiveTranscript = useCallback(() => {
     onTranscript?.("", false, "user");
   }, [onTranscript]);
@@ -2229,18 +2289,20 @@ export const useGeminiVoice = ({
         return false;
       }
 
+      const visibleText = stripActionProcessingText(clean) || clean;
+
       const now = Date.now();
       const last = lastCommittedAssistantRef.current;
-      const isDuplicate = !options?.force && last.text === clean && now - last.ts < 2500;
+      const isDuplicate = !options?.force && last.text === visibleText && now - last.ts < 2500;
       if (isDuplicate) {
         console.log("[ASSISTANT][DEDUPED]", clean.slice(0, 120));
         clearAssistantLiveTranscript();
         return false;
       }
 
-      updateConversationFocusFromAssistant(clean);
-      onMessage?.({ role: "assistant", content: clean });
-      lastCommittedAssistantRef.current = { text: clean, ts: now };
+      updateConversationFocusFromAssistant(visibleText);
+      onMessage?.({ role: "assistant", content: visibleText });
+      lastCommittedAssistantRef.current = { text: visibleText, ts: now };
       clearAssistantLiveTranscript();
       return true;
     },
@@ -2275,11 +2337,10 @@ export const useGeminiVoice = ({
         const beforeDedupe = clean;
 
         // a) Phone repeats: "088 77 00 811 номерът ми е 088 77 00 811"
-        //    Robust approach: find ALL phone-like sequences, and if the same
-        //    normalized digits appear 2+ times in the string, keep only the first.
-        //    Window extended from 40 to 80 chars (handles longer connector phrases
-        //    like "имейлът ми е X, а номерът ми е X").
-        const phoneRe = /(\b[\d\s]{8,}\b)([^\d]{0,80}?)\1/g;
+        //    Pattern: same normalized digit sequence appearing twice, optionally
+        //    with up to ~30 chars of connector text between them. Replace with
+        //    the first occurrence only.
+        const phoneRe = /(\b[\d\s]{8,}\b)([^\d]{0,40}?)\1/g;
         let prev = "";
         while (prev !== clean) {
           prev = clean;
@@ -2289,54 +2350,54 @@ export const useGeminiVoice = ({
             .trim();
         }
 
-        // b) Email repeats: same address twice. Case-insensitive normalization
-        //    ensures "Foo@Gmail.com" and "foo@gmail.com" are recognized as dups.
-        //    Window extended from 40 to 80 chars.
-        const emailMatch = /([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,})/gi;
-        const allEmails = [...clean.matchAll(emailMatch)].map((m) => ({
-          raw: m[0],
-          norm: m[0].toLowerCase(),
-          idx: m.index ?? 0,
-        }));
-        const emailCounts = new Map<string, number>();
-        for (const e of allEmails) emailCounts.set(e.norm, (emailCounts.get(e.norm) || 0) + 1);
-        // If any email appears 2+ times, remove all but the first occurrence.
-        for (const [norm, count] of emailCounts) {
-          if (count < 2) continue;
-          const occurrences = allEmails.filter((e) => e.norm === norm);
-          // Remove from last to first so indices remain valid as we mutate `clean`.
-          for (let i = occurrences.length - 1; i >= 1; i--) {
-            const occ = occurrences[i];
-            // Remove the email AND surrounding filler words like "имейлът ми е " / "mail-ът ми е "
-            // (anything non-alphanumeric up to ~50 chars before the dup).
-            const start = Math.max(0, occ.idx - 50);
-            const before = clean.slice(start, occ.idx);
-            const fillerMatch = before.match(/[,\s]*(?:и\s+)?(?:имейл[а-я]*|e-?mail|поща|mail)[^a-z0-9@]*$/iu);
-            const removeStart = fillerMatch ? occ.idx - fillerMatch[0].length : occ.idx;
-            clean = clean.slice(0, removeStart) + clean.slice(occ.idx + occ.raw.length);
-          }
+        // b) Email repeats: same address twice in a row
+        const emailRe = /([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,})([^@]{0,40}?)\1/gi;
+        prev = "";
+        while (prev !== clean) {
+          prev = clean;
+          clean = clean
+            .replace(emailRe, (_m, p1) => p1)
+            .replace(/\s+/g, " ")
+            .trim();
         }
-        clean = clean
-          .replace(/\s*,\s*,/g, ",")
-          .replace(/,\s*$/, "")
-          .replace(/\s+/g, " ")
-          .trim();
 
-        // c) Immediate adjacent duplicate clauses: split ONLY on commas (not
-        //    periods — those are inside emails). If two adjacent clauses are
-        //    identical after normalization, keep only one.
-        const parts = clean.split(",").map((s) => s.trim());
+        // c) Immediate adjacent duplicate clauses: split on commas AND ". "
+        //    (period+space won't break emails like "name@gmail.com").
+        const parts = clean.split(/,|\.\s+/).map((s) => s.trim());
         const dedupedParts: string[] = [];
         for (const p of parts) {
           if (!p) continue;
           const norm = p.toLowerCase().replace(/\s+/g, "");
-          const lastNorm = dedupedParts.length
-            ? dedupedParts[dedupedParts.length - 1].toLowerCase().replace(/\s+/g, "")
-            : "";
-          if (norm && norm === lastNorm) continue; // exact adjacent dup
-          dedupedParts.push(p);
+          // Check against ALL previous parts (not just last) for fuzzy match
+          let isDup = false;
+          for (const prev of dedupedParts) {
+            const prevNorm = prev.toLowerCase().replace(/\s+/g, "");
+            if (!norm || !prevNorm) continue;
+            // Exact match
+            if (norm === prevNorm) {
+              isDup = true;
+              break;
+            }
+            // One is a substring of the other (catches partial repeats)
+            if (norm.length > 10 && prevNorm.length > 10) {
+              if (norm.includes(prevNorm) || prevNorm.includes(norm)) {
+                isDup = true;
+                break;
+              }
+            }
+          }
+          if (!isDup) dedupedParts.push(p);
         }
         clean = dedupedParts.join(", ").replace(/\s+/g, " ").trim();
+
+        // d2) Repeated "X ми е Y" pattern dedup — catches "088... ми е номерът. 088... ми е номерът"
+        clean = clean
+          .replace(
+            /(\b(?:ми е номер(?:ът)?|ми е имейл(?:ът)?|ми е телефон(?:ът)?)\b[^.]*?)(?:[,.]\s*(?:\S+\s+)*?\1)/gi,
+            "$1",
+          )
+          .replace(/\s+/g, " ")
+          .trim();
 
         // d) Connector-word cleanup: strip dangling "а тов" / "а те" fragments
         //    that appear when STT cuts off mid-word. These are always followed
@@ -2657,7 +2718,7 @@ export const useGeminiVoice = ({
 
     const cleanFull = stripLowConfidenceTag(candidateText).toLowerCase();
     const last = lastCommittedUtteranceRef.current;
-    if (cleanFull && last.text === cleanFull && Date.now() - last.ts < 1500) {
+    if (cleanFull && last.text === cleanFull && Date.now() - last.ts < 3500) {
       console.log("[STT] skip duplicate utterance", cleanFull);
       resetSttBuffers();
       return;
@@ -3003,11 +3064,8 @@ export const useGeminiVoice = ({
       // Typed text is clean & intentional — it must never be dropped by these guards.
       if (!isTyped) {
         if (Date.now() - speakEndRef.current < ECHO_GUARD_MS) return;
-        // Instant barge-in: NEO can be interrupted immediately, like a normal phone call.
-        // We only require that the utterance passes basic length/word thresholds
-        // (handled upstream via MIN_BARGE_IN_CHARS/WORDS + VAD_BARGE_IN_FRAMES_REQUIRED)
-        // so that stray noise doesn't cut NEO off mid-sentence.
-        // No ANTI_BARGE_IN_MS wait; no restrictive "is this a command?" gate.
+        if (isPlayingRef.current && Date.now() - speakStartRef.current < ANTI_BARGE_IN_MS) return;
+        if (isPlayingRef.current && !shouldAllowBargeIn(text) && !looksLikeGeneralContactInput(text)) return;
       }
 
       const now = Date.now();
@@ -3076,8 +3134,17 @@ export const useGeminiVoice = ({
         : mergeTranscriptCandidates(buildStableTranscriptFromBuffers(), text);
       const rawVisibleUserText = sanitizeUserTranscriptForUi(aggregatedUserTranscript);
       const autoDetectedIncomingMode = detectContactLikeMode(rawVisibleUserText || text);
-      if (sensitiveMode !== "general" && autoDetectedIncomingMode === "general") {
-        // User answered something non-contact (e.g. package choice) while assistant had asked for contact fields too.
+      const explicitContactCueInReply =
+        /(?:казвам\s+се|името\s+ми\s+е|имейл(?:ът)?\s+ми\s+е|email|имейл|майл|поща|телефон(?:ът)?\s+ми\s+е|номер(?:ът)?\s+ми\s+е|телефон|номер|gmail|abv|outlook|hotmail|yahoo)/iu.test(
+          aggregatedUserTranscript,
+        ) || /\d{6,}/.test(normalizeSpokenPhone(aggregatedUserTranscript));
+      if (
+        sensitiveMode !== "general" &&
+        autoDetectedIncomingMode === "general" &&
+        isVeryShortClearAnswer(rawVisibleUserText || text) &&
+        !explicitContactCueInReply
+      ) {
+        // Only downgrade for genuinely short non-contact confirmations.
         sensitiveMode = "general";
       }
       let visibleUserText = rawVisibleUserText || aggregatedUserTranscript;
@@ -3101,11 +3168,21 @@ export const useGeminiVoice = ({
       // Contact data is extracted only as Gemini payload hints below; never replaces what the user said.
       const autoDetectedContactMode = detectContactLikeMode(visibleUserText);
 
-      if (sensitiveMode !== "general") {
-        if (mergedContact) {
-          capturedSensitiveContactRef.current = mergedContact;
-        }
+      // ★ FIX: Always store captured contact data — even in "general" mode.
+      // Previously only stored when sensitiveMode !== "general", which meant
+      // typed input with name+email+phone in one message was never captured,
+      // causing FAKE_SUBMIT_GUARD to find null and skip.
+      if (mergedContact && (mergedContact.name || mergedContact.email || mergedContact.phone)) {
+        capturedSensitiveContactRef.current = mergedContact;
+        console.log("[CONTACT CAPTURE] stored:", {
+          name: mergedContact.name || "",
+          email: mergedContact.email || "",
+          phone: mergedContact.phone || "",
+          mode: sensitiveMode,
+        });
+      }
 
+      if (sensitiveMode !== "general") {
         // ★ Build Gemini payload with contact hints — raw transcript stays intact for UI
         if (sensitiveMode === "phone") {
           const phoneCandidate = mergedContact?.phone || normalizeSpokenPhone(aggregatedUserTranscript);
@@ -3205,6 +3282,90 @@ export const useGeminiVoice = ({
           return;
         }
       }
+
+      // ★★★ EARLY CONFIRMATION SUBMIT ★★★
+      // When user sends a short confirmation AND we have captured contact data
+      // AND there's a known form target → fire submit_form IMMEDIATELY, bypass Gemini.
+      // This eliminates the slow round-trip where Gemini lies "Записах запитването"
+      // and only then the FAKE_SUBMIT_GUARD fires seconds later.
+      const userTextLower = (visibleUserText || aggregatedUserTranscript).toLowerCase().trim();
+      const isShortConfirmation =
+        userTextLower.length < 60 &&
+        /^(да|точно|това е|не искам|нищо друго|нямам|не, благодаря|потвърждавам|да, точно|точно така|правилно|вярно|ок|окей|добре|да,? това е|не,? нямам|не,? не искам|нищо повече|няма нужда|готово)[\s.,!]*$/i.test(
+          userTextLower,
+        );
+      const captured = capturedSensitiveContactRef.current;
+
+      // ★ FIX: If name wasn't captured, try extracting from last assistant message
+      if (captured && !captured.name) {
+        const lastAssistant = String(lastCommittedAssistantRef.current?.text || "");
+        const nameFromAssistant = lastAssistant.match(
+          /(?:Добре|Здравей(?:те)?|Благодар[яи]|Чудесно|Разбрах)[,\s]+(\p{Lu}\p{Ll}{1,20}(?:\s+\p{Lu}\p{Ll}{1,20})?)/u,
+        );
+        if (nameFromAssistant?.[1] && nameFromAssistant[1].trim().length >= 2) {
+          captured.name = nameFromAssistant[1].trim();
+          console.log("[EARLY_CONFIRM] Extracted name from assistant:", captured.name);
+        }
+      }
+
+      const hasEnoughForEarlySubmit =
+        !!captured?.name &&
+        captured.name.trim().length >= 2 &&
+        ((!!captured.email && looksLikeCompleteEmail(captured.email)) ||
+          (!!captured.phone && looksLikeCompletePhone(captured.phone)));
+      const recentlyFiredEarly = Date.now() - lastSubmitFormFiredAtRef.current < 30_000;
+
+      if (isShortConfirmation && hasEnoughForEarlySubmit && !recentlyFiredEarly) {
+        const sid = (sessionDataRef.current as any)?.sessionId || (sessionDataRef.current as any)?.session_id || "";
+        const target =
+          lastSubmitFormTargetRef.current ||
+          pickPreferredSubmitFormTarget(
+            extractSubmitFormTargetsFromInstruction((sessionDataRef.current as any)?.systemInstruction || ""),
+          );
+
+        if (sid && (target?.form_id || target?.fingerprint)) {
+          console.log(
+            "[EARLY_CONFIRM_SUBMIT] User confirmed with short answer + captured contact. Firing immediately.",
+            {
+              name: captured!.name,
+              email: captured!.email || "",
+              phone: captured!.phone || "",
+              userText: userTextLower,
+            },
+          );
+
+          // Show "Добре, един момент." in chat immediately
+          commitAssistantMessage("Добре, един момент.");
+          updateActionProcessing(true, "submit_form");
+
+          const extraFields: Record<string, string> = {};
+          if ((captured as any)?.plan) extraFields.plan = String((captured as any).plan);
+          if ((captured as any)?.message) extraFields.message = String((captured as any).message);
+
+          const synthesized = JSON.stringify({
+            type: "action_request",
+            action: "submit_form",
+            session_id: sid,
+            ...(target?.form_id ? { form_id: target.form_id } : {}),
+            ...(target?.fingerprint ? { fingerprint: target.fingerprint } : {}),
+            fields: {
+              name: captured!.name,
+              ...(captured!.email ? { email: captured!.email } : {}),
+              ...(captured!.phone ? { phone: captured!.phone } : {}),
+              ...extraFields,
+            },
+          });
+
+          void executeActionFromGeminiRef.current(synthesized);
+
+          // Still send to Gemini so it knows what happened, but mark that we already submitted
+          sendToGemini(
+            `[SYSTEM] Клиентът потвърди. Системата ВЕЧЕ изпрати submit_form автоматично. НЕ връщай action_request JSON. Просто изчакай резултата.`,
+          );
+          return;
+        }
+      }
+      // ★★★ END EARLY CONFIRMATION SUBMIT ★★★
 
       // Hint Gemini to fix garbled STT for emails/phones/names — 0 extra latency, same WS
       const lc = geminiPayloadText.toLowerCase();
@@ -4071,6 +4232,7 @@ export const useGeminiVoice = ({
             systemPrompt,
             companyName,
             sessionId,
+            enableSearch: false,
           }),
         });
 
@@ -4398,8 +4560,6 @@ export const useGeminiVoice = ({
     async (text: string) => {
       const trimmed = text.trim();
 
-      console.log("[ACTION PARSER] raw preview:", trimmed.slice(0, 1200));
-
       let directJson = trimmed.startsWith("{")
         ? trimmed
         : trimmed.match(/\{[\s\S]*"type"\s*:\s*"action_request"[\s\S]*\}/)?.[0] || "";
@@ -4420,7 +4580,6 @@ export const useGeminiVoice = ({
               candidate.includes("book_slot"))
           ) {
             directJson = candidate;
-            console.log("[ACTION PARSER] extracted JSON from mixed text via brace scan");
           }
         }
       }
@@ -4478,8 +4637,6 @@ export const useGeminiVoice = ({
         }
       }
 
-      console.log("[ACTION PARSER] directJson preview:", directJson ? directJson.slice(0, 1200) : "<none>");
-
       if (!directJson) {
         return false;
       }
@@ -4516,8 +4673,6 @@ export const useGeminiVoice = ({
 
       try {
         const parsed = JSON.parse(directJson);
-
-        console.log("[ACTION PARSER] parsed:", parsed?.type, parsed?.action, parsed?.phase, parsed?.session_id);
 
         if (parsed?.type !== "action_request") return false;
 
@@ -5072,6 +5227,19 @@ export const useGeminiVoice = ({
         // Both calendar and forms coexist — no redirect
         if (parsed?.action !== "submit_form") return false;
 
+        // ★ DEDUP GUARD: prevent double-submit when Gemini fires two consecutive TURN_COMPLETE with same JSON
+        if (submitFormInFlightRef.current) {
+          console.warn("[SUBMIT_FORM] already in-flight — skipping duplicate");
+          return true;
+        }
+        // Also skip if we just successfully submitted < 15s ago
+        if (Date.now() - lastSubmitFormFiredAtRef.current < 15_000) {
+          console.warn("[SUBMIT_FORM] recently submitted (<15s ago) — skipping duplicate");
+          return true;
+        }
+        submitFormInFlightRef.current = true;
+        updateActionProcessing(true, "submit_form");
+
         // Inject live session + deterministic form target so proxy always has a target.
         // ★ FIX: Gemini sometimes hallucinates "default_session_id" / placeholder values
         // instead of the real session id. Treat any known-bad placeholder as absent so
@@ -5138,6 +5306,8 @@ export const useGeminiVoice = ({
             ].join("\n"),
           );
 
+          submitFormInFlightRef.current = false;
+          updateActionProcessing(false, "submit_form");
           return true;
         }
 
@@ -5191,6 +5361,8 @@ export const useGeminiVoice = ({
             ].join("\n"),
           );
 
+          submitFormInFlightRef.current = false;
+          updateActionProcessing(false, "submit_form");
           return true;
         }
 
@@ -5226,13 +5398,17 @@ export const useGeminiVoice = ({
           );
         }
 
+        submitFormInFlightRef.current = false;
+        updateActionProcessing(false, "submit_form");
         return true;
       } catch {
+        submitFormInFlightRef.current = false;
         activeSubmitFormFlowRef.current = null;
+        updateActionProcessing(false, "submit_form");
         return false;
       }
     },
-    [onError, onMessage, sendToGemini],
+    [onError, onMessage, sendToGemini, updateActionProcessing],
   );
 
   useEffect(() => {
@@ -5420,8 +5596,6 @@ export const useGeminiVoice = ({
                 (import.meta as any)?.env?.VITE_SUPABASE_PUBLISHABLE_KEY ||
                 "";
 
-              console.log("[SEARCH WORKER] functionCall query:", query);
-
               // ★★★ FIX: Client-side guard against Gemini calling search_site_content
               // when it should be returning a submit_form / make_reservation action_request JSON.
               // Even after prompt hardening, Gemini Live sometimes prefers function calling over
@@ -5487,20 +5661,32 @@ export const useGeminiVoice = ({
                 const queryLooksLikeProductFact =
                   /цена|price|размер|size|модел|model|наличност|stock|специфика|характеристик/i.test(query);
 
+                // ★ Case G: activeSubmitFormFlowRef is set → we are mid-form, never search
+                const isInActiveFormFlow = !!activeSubmitFormFlowRef.current;
+
+                // ★ Case H: NEO just confirmed/summarized collected data → next step is submit, not search
+                const assistantJustConfirmedData =
+                  /потвърд.*данни|потвърд.*поръчка|само да потвърд|записах.*данни|записахме|да потвърдя/i.test(
+                    lastAssistantText,
+                  );
+
                 const shouldBlock =
-                  // Case A: all contact data captured AND user is confirming → must return submit_form JSON
+                  // Case A: all contact data captured AND user is confirming
                   (hasAllContact && isConfirmationWord) ||
-                  // Case B: reservation data complete AND user is confirming → must return make_reservation JSON
+                  // Case B: reservation data complete AND user is confirming
                   (hasReservationData && isConfirmationWord) ||
-                  // Case C: the query itself references form/contact data — this is almost never a legit search
+                  // Case C: the query itself references form/contact data
                   queryIsFormRelated ||
                   // Case D: NEO is actively collecting form data in its last message
                   assistantIsCollectingFormData ||
-                  // Case E: query is just echoing plan names that are already in business context
+                  // Case E: query is just echoing plan names
                   queryIsPlanEnumeration ||
-                  // Case F: we already have some contact data captured AND the query
-                  // is NOT about a concrete product fact → we're mid-flow, not researching
-                  (hasAnyCapturedContact && !queryLooksLikeProductFact);
+                  // Case F: partial contact data captured AND not a product fact query
+                  (hasAnyCapturedContact && !queryLooksLikeProductFact) ||
+                  // Case G: active form flow ref is set — we are mid-form submission
+                  isInActiveFormFlow ||
+                  // Case H: NEO just confirmed/summarized data and user is confirming
+                  (assistantJustConfirmedData && isConfirmationWord);
 
                 if (shouldBlock) {
                   console.warn("[SEARCH WORKER][BLOCKED] Gemini tried to call search during form flow. query=", query, {
@@ -5535,6 +5721,46 @@ export const useGeminiVoice = ({
                       },
                     }),
                   );
+
+                  const submitTarget =
+                    activeSubmitFormFlowRef.current ||
+                    lastSubmitFormTargetRef.current ||
+                    pickPreferredSubmitFormTarget(
+                      extractSubmitFormTargetsFromInstruction((sessionDataRef.current as any)?.systemInstruction || ""),
+                    );
+
+                  if (
+                    sid &&
+                    (submitTarget?.form_id || submitTarget?.fingerprint) &&
+                    (hasAllContact ||
+                      (!!activeSubmitFormFlowRef.current &&
+                        activeSubmitFormFlowRef.current.missing_required.length === 0))
+                  ) {
+                    const capturedFields: Record<string, string> = {
+                      ...(activeSubmitFormFlowRef.current?.fields || {}),
+                    };
+
+                    if (captured?.name) capturedFields.name = captured.name;
+                    if (captured?.email && looksLikeCompleteEmail(captured.email))
+                      capturedFields.email = captured.email;
+                    if (captured?.phone && looksLikeCompletePhone(captured.phone))
+                      capturedFields.phone = captured.phone;
+
+                    void maybeExecuteActionFromGemini(
+                      JSON.stringify({
+                        type: "action_request",
+                        action: "submit_form",
+                        session_id: sid,
+                        ...(submitTarget?.form_id ? { form_id: submitTarget.form_id } : {}),
+                        ...(submitTarget?.fingerprint ? { fingerprint: submitTarget.fingerprint } : {}),
+                        ...(activeSubmitFormFlowRef.current?.kind || submitTarget?.kind
+                          ? { kind: activeSubmitFormFlowRef.current?.kind || submitTarget?.kind }
+                          : {}),
+                        fields: capturedFields,
+                      }),
+                    );
+                    continue;
+                  }
 
                   // Nudge Gemini with an explicit instruction telling it what to do next
                   const nudge = hasReservationData
@@ -5757,16 +5983,22 @@ export const useGeminiVoice = ({
                     // ★ FIX: Check if this text matches action processing speech patterns
                     // (e.g. "чудесно, имам всички данни", "един момент, изпращам")
                     // If so, silence audio and suppress transcript
-                    if (ACTION_PROCESSING_SPEECH_PATTERNS.some((p) => p.test(partText))) {
+                    const visiblePartText = stripActionProcessingText(partText);
+                    const isPureActionProcessingText =
+                      !visiblePartText && ACTION_PROCESSING_SPEECH_PATTERNS.some((p) => p.test(partText));
+
+                    if (isPureActionProcessingText) {
                       actionTurnSilenceRef.current = true;
                       stopAssistantPlayback();
-                      currentResponseTextRef.current = partText;
-                      console.log("[MODEL PART TEXT][ACTION SPEECH SUPPRESSED]", partText.slice(0, 200));
+                      if (!currentResponseTextRef.current) {
+                        currentResponseTextRef.current = partText;
+                      }
                     } else {
+                      const nextPartText = visiblePartText || partText;
                       if (currentResponseTextRef.current && !currentResponseTextRef.current.endsWith(" ")) {
                         currentResponseTextRef.current += " ";
                       }
-                      currentResponseTextRef.current += partText;
+                      currentResponseTextRef.current += nextPartText;
                     }
                   }
                 }
@@ -5796,14 +6028,17 @@ export const useGeminiVoice = ({
                 !txt.includes("<<<") &&
                 !currentLooksLikeAction
               ) {
-                if (currentResponseTextRef.current && !currentResponseTextRef.current.endsWith(" ")) {
-                  currentResponseTextRef.current += " ";
-                }
-                currentResponseTextRef.current += txt;
-                // Only stream live transcript if not interrupted — but always accumulate
-                if (!assistantTurnCanceledRef.current) {
-                  liveAssistantTranscriptRef.current = currentResponseTextRef.current;
-                  onTranscript?.(liveAssistantTranscriptRef.current, false, "assistant");
+                const visibleTranscriptText = stripActionProcessingText(txt);
+                if (visibleTranscriptText) {
+                  if (currentResponseTextRef.current && !currentResponseTextRef.current.endsWith(" ")) {
+                    currentResponseTextRef.current += " ";
+                  }
+                  currentResponseTextRef.current += visibleTranscriptText;
+                  // Only stream live transcript if not interrupted — but always accumulate
+                  if (!assistantTurnCanceledRef.current) {
+                    liveAssistantTranscriptRef.current = currentResponseTextRef.current;
+                    onTranscript?.(liveAssistantTranscriptRef.current, false, "assistant");
+                  }
                 }
               }
             }
@@ -5901,10 +6136,29 @@ export const useGeminiVoice = ({
                 if (!handled && responseText && !responseText.includes("{")) {
                   try {
                     const captured = capturedSensitiveContactRef.current;
+
+                    // ★ FIX: If name wasn't captured from user input, try extracting it
+                    // from Gemini's response where it addresses the user by name
+                    // e.g. "Добре, Ангел, само да потвърдим..."
+                    if (captured && !captured.name && responseText) {
+                      const geminiNameMatch = responseText.match(
+                        /(?:Добре|Здравей(?:те)?|Благодар[яи]|Чудесно|Разбрах)[,\s]+(\p{Lu}\p{Ll}{1,20}(?:\s+\p{Lu}\p{Ll}{1,20})?)/u,
+                      );
+                      if (geminiNameMatch?.[1]) {
+                        const extractedName = geminiNameMatch[1].trim();
+                        if (extractedName.length >= 2 && extractedName.split(/\s+/).length <= 3) {
+                          captured.name = extractedName;
+                          console.log("[FAKE_SUBMIT_GUARD] Extracted name from Gemini response:", extractedName);
+                        }
+                      }
+                    }
+
                     const hasName = !!captured?.name && captured.name.trim().length >= 2;
                     const hasEmail = !!captured?.email && looksLikeCompleteEmail(captured.email);
                     const hasPhone = !!captured?.phone && looksLikeCompletePhone(captured.phone);
-                    const hasAllContact = hasName && hasEmail && hasPhone;
+                    // ★ FIX: Relaxed — name + at least one of email/phone is enough
+                    // Gemini often claims "подадено" even with partial data
+                    const hasEnoughContact = hasName && (hasEmail || hasPhone);
 
                     const lastUserText = String(lastCommittedUserRef.current?.text || "")
                       .toLowerCase()
@@ -5931,7 +6185,7 @@ export const useGeminiVoice = ({
 
                     const recentlyFired = Date.now() - lastSubmitFormFiredAtRef.current < 60_000;
 
-                    if (hasAllContact && claimsFormSent && !recentlyFired) {
+                    if (hasEnoughContact && claimsFormSent && !recentlyFired) {
                       console.warn(
                         "[FAKE_SUBMIT_GUARD] Gemini claimed form was sent without returning JSON. Synthesizing submit_form from captured data.",
                         {
