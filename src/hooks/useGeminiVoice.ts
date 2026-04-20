@@ -11,6 +11,7 @@ interface UseGeminiVoiceProps {
   onSpeakingChange?: (speaking: boolean) => void;
   onListeningChange?: (listening: boolean) => void;
   onTranscript?: (transcript: string, isFinal: boolean, role: "user" | "assistant") => void;
+  onActionProcessingChange?: (processing: boolean) => void;
 }
 
 type SessionData = {
