@@ -11,6 +11,7 @@ interface UseGeminiVoiceProps {
   onSpeakingChange?: (speaking: boolean) => void;
   onListeningChange?: (listening: boolean) => void;
   onTranscript?: (transcript: string, isFinal: boolean, role: "user" | "assistant") => void;
+  onActionProcessingChange?: (processing: boolean) => void;
 }
 
 type SessionData = {
@@ -5646,6 +5647,10 @@ export const useGeminiVoice = ({
     preWarmMicrophone,
     sendText,
     getSessionData,
+    setVoiceOverride: (_voiceId: string) => {
+      // Voice override is applied at session prepare time via demo_sessions.voice_name
+      // This is a no-op stub for compatibility with consumers that set it eagerly.
+    },
     interrupt: () => {
       assistantTurnCanceledRef.current = true;
       scheduledSourcesRef.current.forEach((s) => {
