@@ -182,7 +182,7 @@
   @media (max-width: 768px) {
     body {
       font-size: 15px;
-      line-height: 1.55;
+      line-height: 1.6;
       background:
         radial-gradient(ellipse 120% 45% at 50% -15%, hsl(220 70% 55% / 0.08) 0%, transparent 50%),
         hsl(var(--background));
