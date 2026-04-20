@@ -844,7 +844,8 @@ function cleanupSensitiveTranscript(text: string): string {
 
 function stripLowConfidenceTag(text: string): string {
   return String(text || "")
-    .replace(/^\[LOW_CONFIDENCE:\d+%\]\s*/, "")
+    .replace(/\s*\[LOW_CONFIDENCE:\d+%\]\s*/gi, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -1504,13 +1505,17 @@ function overlapsAsRollingCorrection(older: string, newer: string): boolean {
   if (!older || !newer) return false;
   const oldWords = older.split(/\s+/).filter(Boolean);
   const newWords = newer.split(/\s+/).filter(Boolean);
-  if (oldWords.length < 4 || newWords.length < 4) return false;
-  const halfNew = newWords.slice(0, Math.max(8, Math.ceil(newWords.length * 0.6))).join(" ");
-  for (let start = 0; start <= oldWords.length - 4; start++) {
-    const phrase = oldWords.slice(start, start + 4).join(" ");
-    if (halfNew.includes(phrase)) return true;
+  if (oldWords.length < 3 || newWords.length < 3) return false;
+  // Check if any 3-word phrase from older appears anywhere in newer
+  const newerJoined = newWords.join(" ");
+  let matchCount = 0;
+  const totalPhrases = Math.max(1, oldWords.length - 2);
+  for (let start = 0; start <= oldWords.length - 3; start++) {
+    const phrase = oldWords.slice(start, start + 3).join(" ");
+    if (newerJoined.includes(phrase)) matchCount++;
   }
-  return false;
+  // If ≥40% of 3-word phrases from older appear in newer, it's a rolling correction
+  return matchCount / totalPhrases >= 0.4;
 }
 
 function resolveRoomTypeFromState(rawRoomType: string, reservationState: any): string {
@@ -2920,6 +2925,7 @@ export const useGeminiVoice = ({
           lastInterimTranscriptRef.current = cleanFinalTranscript;
           longestInterimTranscriptRef.current = cleanFinalTranscript;
           const prevFinalChunk = finalChunksRef.current[finalChunksRef.current.length - 1] || "";
+          const allJoinedNorm = finalChunksRef.current.join(" ").toLowerCase().trim();
           if (!prevFinalChunk) {
             finalChunksRef.current.push(cleanFinalTranscript);
           } else {
@@ -2934,6 +2940,11 @@ export const useGeminiVoice = ({
             } else if (overlapsAsRollingCorrection(prevNorm, nextNorm)) {
               // Soniox re-emitted the same sentence with a correction — replace, don't append
               finalChunksRef.current[finalChunksRef.current.length - 1] = cleanFinalTranscript;
+            } else if (finalChunksRef.current.length > 1 && overlapsAsRollingCorrection(allJoinedNorm, nextNorm)) {
+              // ★ Rolling correction against ALL accumulated chunks (not just the last one).
+              // Soniox re-emitted the full utterance. Replace all chunks with the new version
+              // since it's the most up-to-date complete transcript.
+              finalChunksRef.current.splice(0, finalChunksRef.current.length, cleanFinalTranscript);
             } else {
               // Check for suffix→prefix overlap (e.g. chunk1 ends with "@gmail.com",
               // chunk2 starts with "@gmail.com, а номерът е…"). Stitch instead of appending.
@@ -2946,6 +2957,18 @@ export const useGeminiVoice = ({
                     .trim();
                 }
                 // else nextNorm is fully contained in prevNorm's tail — noop
+              } else if (finalChunksRef.current.length > 1) {
+                // ★ Last resort: check suffix→prefix overlap against full accumulated text
+                const overlapFull = getSuffixPrefixOverlap(allJoinedNorm, nextNorm);
+                if (overlapFull >= 4) {
+                  const uniqueSuffix = cleanFinalTranscript.slice(overlapFull).trim();
+                  if (uniqueSuffix) {
+                    finalChunksRef.current.push(uniqueSuffix);
+                  }
+                  // else fully contained — noop
+                } else {
+                  finalChunksRef.current.push(cleanFinalTranscript);
+                }
               } else {
                 finalChunksRef.current.push(cleanFinalTranscript);
               }
@@ -5309,6 +5332,20 @@ export const useGeminiVoice = ({
           submitFormInFlightRef.current = false;
           updateActionProcessing(false, "submit_form");
           return true;
+        }
+
+        // ★ Clean filler sounds / hesitation artifacts from field values before submitting
+        if (enrichedParsed?.fields && typeof enrichedParsed.fields === "object") {
+          const fillerRe =
+            /\b(?:ъъ+м*|ъм+|мм+|ммх+м*|мхм+|ахъ+м?|хм+|ъ+х+|ааа+|ехм|ммм+|uhm+|mhm+|hmm+|uh+|um+|ah+)\b[,.\s]*/gi;
+          for (const [key, val] of Object.entries(enrichedParsed.fields as Record<string, unknown>)) {
+            if (typeof val === "string") {
+              (enrichedParsed.fields as Record<string, string>)[key] = val
+                .replace(fillerRe, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+            }
+          }
         }
 
         const res = await fetch(PROXY_BASE, {
