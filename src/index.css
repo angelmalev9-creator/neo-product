@@ -168,7 +168,7 @@
     @apply bg-background text-foreground antialiased;
     font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-weight: 400;
-    font-size: 13px;
+    font-size: 14px;
     font-feature-settings: 'kern' 1, 'liga' 1;
     background:
       radial-gradient(ellipse 80% 50% at 50% -20%, hsl(220 70% 55% / 0.06) 0%, transparent 50%),
