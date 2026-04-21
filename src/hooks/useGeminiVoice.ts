@@ -57,23 +57,19 @@ const AUDIO_SAMPLE_RATE_OUT = 24000;
 const AUDIO_SAMPLE_RATE_IN = 16000;
 
 const ECHO_GUARD_MS = 80;
-// ↓ Latency optimization: намалени значително за по-бърз отговор.
-// Предишните стойности (3500/650/580/5500/500/4200/1800/1700) натрупваха
-// 2–5s закъснение преди Gemini да чуе репликата. Новите стойности дават
-// sub-500ms реакция, без да счупят dedup/barge-in.
-const ANTI_BARGE_IN_MS = 1200; // беше 3500 — NEO може да бъде прекъснат по-рано
-const MIN_BARGE_IN_CHARS = 12; // беше 20
-const MIN_BARGE_IN_WORDS = 3; // беше 5
+const ANTI_BARGE_IN_MS = 3500; // ↑ NEO изчаква минимум 3.5s преди да може да бъде прекъснат
+const MIN_BARGE_IN_CHARS = 20; // ↑ Изисква се повече реч преди barge-in
+const MIN_BARGE_IN_WORDS = 5; // ↑ Минимум 5 думи за да се смята за реална намеса
 const BARGE_IN_COMMANDS = ["стоп", "спри", "изчакай", "чакай", "момент", "секунда", "стига", "почакай"];
-const UTTERANCE_DEBOUNCE_MS = 280; // беше 650
-const SPEECH_FINAL_MIN_MS = 220; // беше 580
-const SPEECH_FINAL_MAX_MS = 2200; // беше 5500
-const UTTERANCE_END_MIN_MS = 200; // беше 500
-const UTTERANCE_END_MAX_MS = 2000; // беше 4200
-const CONTINUATION_EXTRA_MS = 600; // беше 1800 — за незавършено изречение
+const UTTERANCE_DEBOUNCE_MS = 650; // ↑ По-дълъг debounce — чака клиентът да спре
+const SPEECH_FINAL_MIN_MS = 580; // ↑ Минимум 580ms след финален токен преди изпращане
+const SPEECH_FINAL_MAX_MS = 5500; // ↑ Максимум — за по-дълги изречения
+const UTTERANCE_END_MIN_MS = 500; // ↑ По-дълъг минимален период
+const UTTERANCE_END_MAX_MS = 4200; // ↑ По-дълъг максимален период
+const CONTINUATION_EXTRA_MS = 1800; // ↑ Ако изречението е незавършено — чака повече
 const LOW_CONF_SHORT_TEXT_MAX_CHARS = 8;
 const LOW_CONF_SHORT_TEXT_MAX_WORDS = 2;
-const LOW_CONF_HOLD_MS = 700; // беше 1700
+const LOW_CONF_HOLD_MS = 1700;
 const LOW_CONF_MIN_COMMIT_CHARS = 8;
 const LOW_CONF_MIN_COMMIT_WORDS = 2;
 const SENSITIVE_CAPTURE_WINDOW_MS = 12000;
@@ -92,7 +88,7 @@ const VAD_BARGE_IN_FRAMES_REQUIRED = 35;
 
 // VAD (client-side) is only a fallback safety layer.
 // Server-final tokens should end the turn first.
-const VAD_SILENCE_MS = 1800; // беше 5500 — по-бърз край на репликата когато Soniox зависне
+const VAD_SILENCE_MS = 5500; // ↑ Изчаква 5.5s тишина преди да изпрати транскрипцията
 const VAD_NOISE_PROFILE_MS = 2500;
 const VAD_MIN_SPEECH_THRESHOLD = 0.009;
 const VAD_MAX_SPEECH_THRESHOLD = 0.036;
@@ -102,6 +98,39 @@ const TRANSIENT_CLICK_RMS_MAX = 0.014;
 const TRANSIENT_CLICK_PEAK_MIN = 0.16;
 const TRANSIENT_CLICK_CREST_MIN = 14;
 const VAD_SPEECH_FRAMES_REQUIRED = 5;
+
+const ACTION_PROCESSING_SPEECH_PATTERNS = [
+  /чудесно.*имам всички данни/i,
+  /имам всички данни/i,
+  /преди да изпрат/i,
+  /един момент/i,
+  /момент.*(изпращ|подав|резервир|провер)/i,
+  /(изпращам|подавам|попълвам|обработвам).*(форм|запитван|заявк)/i,
+  /(проверявам|потвърждавам).*(наличност|резервац|заявк)/i,
+  /(резервирам|запазвам).*(час|резервац)/i,
+  /(готово|изпратено).*(запитван|заявк|форм)/i,
+];
+
+const looksLikeActionPayload = (text: string) => {
+  const clean = String(text || "").trim();
+
+  return (
+    clean.startsWith("action_request:") ||
+    (clean.startsWith("{") && clean.includes("action_request")) ||
+    /\{[\s\S]*"type"\s*:\s*"action_request"[\s\S]*\}/.test(clean) ||
+    /```\s*json[\s\S]*"action"\s*:\s*"(submit_form|make_reservation|book_slot)"/i.test(clean) ||
+    /```[\s\S]*"type"\s*:\s*"action_request"[\s\S]*```/.test(clean)
+  );
+};
+
+const isSilentActionTurnText = (text: string) => {
+  const clean = String(text || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!clean) return false;
+
+  return looksLikeActionPayload(clean) || ACTION_PROCESSING_SPEECH_PATTERNS.some((pattern) => pattern.test(clean));
+};
 
 const clampInstruction = (text: string, maxChars: number) => {
   const t = String(text || "").trim();
@@ -759,24 +788,17 @@ function cleanupSensitiveTranscript(text: string): string {
 }
 
 function stripLowConfidenceTag(text: string): string {
-  // ★ FIX: премахваме [LOW_CONFIDENCE:NN%] от НАВСЯКЪДЕ в текста, не само
-  // от началото. Без `^` anchor-а, защото при сливане на buffers (rolling
-  // corrections от Soniox) tag-ът попада и в средата на низа и изтича
-  // към UI-а (виж bug report screenshot).
   return String(text || "")
-    .replace(/\[LOW_CONFIDENCE:\d+%\]\s*/g, "")
-    .replace(/\s+/g, " ")
+    .replace(/^\[LOW_CONFIDENCE:\d+%\]\s*/, "")
     .trim();
 }
 
 function isLowConfidenceTranscript(text: string): boolean {
-  // Проверяваме за tag където и да е в текста, не само в началото —
-  // съгласувано с stripLowConfidenceTag горе.
-  return /\[LOW_CONFIDENCE:\d+%\]/.test(String(text || ""));
+  return /^\[LOW_CONFIDENCE:\d+%\]/.test(String(text || ""));
 }
 
 function getTranscriptConfidencePercent(text: string): number | null {
-  const match = String(text || "").match(/\[LOW_CONFIDENCE:(\d+)%\]/);
+  const match = String(text || "").match(/^\[LOW_CONFIDENCE:(\d+)%\]/);
   return match ? Number(match[1]) : null;
 }
 
@@ -1527,6 +1549,114 @@ function pickPreferredSubmitFormTarget(targets: SubmitFormTarget[]): SubmitFormT
   return anyTarget || null;
 }
 
+type ActiveSubmitFormFlow = {
+  session_id: string;
+  form_id?: string;
+  fingerprint?: string;
+  kind?: string;
+  missing_required: string[];
+  fields: Record<string, string>;
+  updated_at: number;
+};
+
+const ACTIVE_SUBMIT_FORM_FLOW_TTL_MS = 120_000;
+
+function cleanupSubmitFlowMissingLabel(label: string): string {
+  return String(label || "")
+    .replace(/\s*\((?:избор|choice)\s*:[^)]+\)\s*$/i, "")
+    .trim();
+}
+
+function buildSubmitFormContinuationFields(args: {
+  reply: string;
+  missingRequired: string[];
+  flowFields?: Record<string, string>;
+  contact?: SensitiveContactFields | null;
+}): Record<string, string> {
+  const trimmedReply = String(args.reply || "").trim();
+  const out: Record<string, string> = { ...(args.flowFields || {}) };
+  const parsedContact = extractContactIntentFields(trimmedReply);
+  const mergedContact = {
+    name: parsedContact.name || args.contact?.name || "",
+    email: parsedContact.email || args.contact?.email || "",
+    phone: parsedContact.phone || args.contact?.phone || "",
+  };
+
+  if (mergedContact.name) out.name = mergedContact.name;
+  if (mergedContact.email && looksLikeCompleteEmail(mergedContact.email)) out.email = mergedContact.email;
+  if (mergedContact.phone && looksLikeCompletePhone(mergedContact.phone)) out.phone = mergedContact.phone;
+  if (!trimmedReply) return out;
+
+  const firstMissingRaw = Array.isArray(args.missingRequired)
+    ? args.missingRequired.find((value) => String(value || "").trim()) || ""
+    : "";
+  const firstMissing = cleanupSubmitFlowMissingLabel(firstMissingRaw);
+  if (!firstMissing) return { ...out, message: out.message || trimmedReply };
+
+  const normalizedMissing = transliterateBulgarianToLatin(firstMissing.toLowerCase());
+  const answerName = normalizeSensitiveName(trimmedReply);
+  const answerEmail = normalizeSpokenEmail(trimmedReply);
+  const answerPhone = normalizeSpokenPhone(trimmedReply);
+
+  if ((normalizedMissing.includes("ime") || normalizedMissing.includes("name")) && looksLikeSensitiveName(answerName)) {
+    out.name = answerName;
+    out[firstMissing] = answerName;
+    return out;
+  }
+
+  if (
+    (normalizedMissing.includes("email") || normalizedMissing.includes("mail")) &&
+    looksLikeCompleteEmail(answerEmail)
+  ) {
+    out.email = answerEmail;
+    out[firstMissing] = answerEmail;
+    return out;
+  }
+
+  if (
+    (normalizedMissing.includes("telefon") ||
+      normalizedMissing.includes("phone") ||
+      normalizedMissing.includes("gsm") ||
+      normalizedMissing.includes("nomer")) &&
+    looksLikeCompletePhone(answerPhone)
+  ) {
+    out.phone = answerPhone;
+    out[firstMissing] = answerPhone;
+    return out;
+  }
+
+  out[firstMissing] = trimmedReply;
+
+  if (
+    normalizedMissing.includes("plan") ||
+    normalizedMissing.includes("paket") ||
+    normalizedMissing.includes("package") ||
+    normalizedMissing.includes("abonament") ||
+    normalizedMissing.includes("tarif")
+  ) {
+    out.plan ??= trimmedReply;
+  }
+
+  if (
+    normalizedMissing.includes("message") ||
+    normalizedMissing.includes("opisanie") ||
+    normalizedMissing.includes("zapit") ||
+    normalizedMissing.includes("komentar") ||
+    normalizedMissing.includes("comment") ||
+    normalizedMissing.includes("detail") ||
+    normalizedMissing.includes("description") ||
+    normalizedMissing.includes("note")
+  ) {
+    out.message ??= trimmedReply;
+  }
+
+  if (normalizedMissing.includes("service") || normalizedMissing.includes("usluga")) {
+    out.service ??= trimmedReply;
+  }
+
+  return out;
+}
+
 type ConversationFocusState = {
   lastTopic: string;
   lastEntityType: string;
@@ -1690,6 +1820,8 @@ export const useGeminiVoice = ({
   const vadBargeInFramesRef = useRef<number>(0);
   const lastCalendarCheckedDateRef = useRef("");
   const earlyActionFiredRef = useRef(false);
+  // ★ NEW: Flag to suppress audio playback when current turn is an action JSON or processing phrase
+  const actionTurnSilenceRef = useRef(false);
 
   // === VOICE NATURALNESS: Audio processing refs ===
   const reverbNodeRef = useRef<ConvolverNode | null>(null);
@@ -1705,6 +1837,8 @@ export const useGeminiVoice = ({
   // ★ NEW: track what context we prepared for (sessionId/companyName/systemPrompt)
   const preparedKeyRef = useRef<string>("");
   const lastSubmitFormTargetRef = useRef<SubmitFormTarget | null>(null);
+  const activeSubmitFormFlowRef = useRef<ActiveSubmitFormFlow | null>(null);
+  const executeActionFromGeminiRef = useRef<(responseText: string) => Promise<boolean>>(async () => false);
   // ★ NEW: timestamp of last successful submit_form — used by the "Gemini lies
   // about having sent the form" guard to avoid double-submits.
   const lastSubmitFormFiredAtRef = useRef<number>(0);
@@ -2042,6 +2176,34 @@ export const useGeminiVoice = ({
     onTranscript?.("", false, "user");
   }, [onTranscript]);
 
+  const stopAssistantPlayback = useCallback(
+    (options?: { clearResponseText?: boolean }) => {
+      assistantTurnCanceledRef.current = true;
+      scheduledSourcesRef.current.forEach((s) => {
+        try {
+          s.stop();
+        } catch {}
+      });
+      scheduledSourcesRef.current = [];
+      if (activeSourceRef.current) {
+        try {
+          activeSourceRef.current.stop();
+        } catch {}
+        activeSourceRef.current = null;
+      }
+      audioQueueRef.current = [];
+      isProcessingQueueRef.current = false;
+      isPlayingRef.current = false;
+      nextPlayTimeRef.current = 0;
+      updateSpeaking(false);
+      clearAssistantLiveTranscript();
+      if (options?.clearResponseText) {
+        currentResponseTextRef.current = "";
+      }
+    },
+    [clearAssistantLiveTranscript, updateSpeaking],
+  );
+
   const commitAssistantMessage = useCallback(
     (text: string, options?: { force?: boolean }) => {
       const clean = String(text || "")
@@ -2057,13 +2219,8 @@ export const useGeminiVoice = ({
       // here rather than showing `{"type":"action_request",...}` to the user.
       // Also block markdown-fenced JSON blocks (```json ... ```) which Gemini sometimes
       // produces instead of raw JSON.
-      if (
-        (clean.startsWith("{") && clean.includes("action_request")) ||
-        /\{[\s\S]*"type"\s*:\s*"action_request"[\s\S]*\}/.test(clean) ||
-        /```\s*json[\s\S]*"action"\s*:\s*"(submit_form|make_reservation|book_slot)"/i.test(clean) ||
-        /```[\s\S]*"type"\s*:\s*"action_request"[\s\S]*```/.test(clean)
-      ) {
-        console.warn("[ASSISTANT][BLOCKED raw JSON leak]", clean.slice(0, 200));
+      if (isSilentActionTurnText(clean)) {
+        console.warn("[ASSISTANT][BLOCKED hidden action turn]", clean.slice(0, 200));
         clearAssistantLiveTranscript();
         return false;
       }
@@ -2232,17 +2389,6 @@ export const useGeminiVoice = ({
       const candidateNorm = candidate.toLowerCase();
 
       if (candidateNorm === bestNorm) continue;
-
-      // ★ FIX: преди другите стратегии, проверяваме дали candidate-ът е
-      // rolling correction на best-а (Soniox re-emit-ва същото изречение с
-      // малки поправки). Ако е — подменяме с по-дългия, не конкатенираме.
-      // Без този guard двата буфера (finalChunksRef + utteranceBufferRef)
-      // се слепват и получаваме "Казвам се X, имейлът е Y. Казвам се X,
-      // имейлът е Y" в UI-а.
-      if (overlapsAsRollingCorrection(bestNorm, candidateNorm)) {
-        if (candidate.length > best.length) best = candidate;
-        continue;
-      }
 
       if (candidateNorm.includes(bestNorm) && candidate.length >= best.length) {
         best = candidate;
@@ -2987,6 +3133,48 @@ export const useGeminiVoice = ({
       onTranscript?.("", false, "assistant");
       // ★ New user input → NEO must respond — clear any lingering barge-in cancel flag
       assistantTurnCanceledRef.current = false;
+
+      const activeSubmitFlow = activeSubmitFormFlowRef.current;
+      if (activeSubmitFlow) {
+        const isExpired = Date.now() - activeSubmitFlow.updated_at > ACTIVE_SUBMIT_FORM_FLOW_TTL_MS;
+        const hasTarget =
+          !!activeSubmitFlow.session_id && (!!activeSubmitFlow.form_id || !!activeSubmitFlow.fingerprint);
+
+        if (isExpired || !hasTarget) {
+          activeSubmitFormFlowRef.current = null;
+        } else {
+          const continuationFields = buildSubmitFormContinuationFields({
+            reply: visibleUserText || aggregatedUserTranscript,
+            missingRequired: activeSubmitFlow.missing_required,
+            flowFields: activeSubmitFlow.fields,
+            contact: mergedContact,
+          });
+
+          activeSubmitFormFlowRef.current = {
+            ...activeSubmitFlow,
+            fields: continuationFields,
+            updated_at: Date.now(),
+          };
+
+          console.log("[SUBMIT_FLOW] direct continuation → neo-worker-proxy", {
+            missing_required: activeSubmitFlow.missing_required,
+            fields: continuationFields,
+          });
+
+          void executeActionFromGeminiRef.current(
+            JSON.stringify({
+              type: "action_request",
+              action: "submit_form",
+              session_id: activeSubmitFlow.session_id,
+              ...(activeSubmitFlow.form_id ? { form_id: activeSubmitFlow.form_id } : {}),
+              ...(activeSubmitFlow.fingerprint ? { fingerprint: activeSubmitFlow.fingerprint } : {}),
+              ...(activeSubmitFlow.kind ? { kind: activeSubmitFlow.kind } : {}),
+              fields: continuationFields,
+            }),
+          );
+          return;
+        }
+      }
 
       // Hint Gemini to fix garbled STT for emails/phones/names — 0 extra latency, same WS
       const lc = geminiPayloadText.toLowerCase();
@@ -3819,6 +4007,7 @@ export const useGeminiVoice = ({
     isPreparedRef.current = false;
     setIsPrepared(false);
     lastSubmitFormTargetRef.current = null;
+    activeSubmitFormFlowRef.current = null;
     greetingSentRef.current = false;
     currentResponseTextRef.current = "";
   }, []);
@@ -4941,8 +5130,26 @@ export const useGeminiVoice = ({
         if (needsInput) {
           const missing = extractMissingRequired(result);
           const first = missing[0] || "следващото задължително поле";
+          const preservedFields = Object.fromEntries(
+            Object.entries(
+              enrichedParsed?.fields && typeof enrichedParsed.fields === "object"
+                ? (enrichedParsed.fields as Record<string, unknown>)
+                : {},
+            )
+              .map(([key, value]) => [key, String(value ?? "").trim()])
+              .filter(([, value]) => Boolean(value)),
+          ) as Record<string, string>;
 
-          // Key point: keep loop tight & deterministic: ask for ONE field only.
+          activeSubmitFormFlowRef.current = {
+            session_id: String(enrichedParsed?.session_id || ""),
+            form_id: enrichedParsed?.form_id ? String(enrichedParsed.form_id) : undefined,
+            fingerprint: enrichedParsed?.fingerprint ? String(enrichedParsed.fingerprint) : undefined,
+            kind: String(enrichedParsed?.kind || inferredTarget?.kind || "form"),
+            missing_required: missing,
+            fields: preservedFields,
+            updated_at: Date.now(),
+          };
+
           sendToGemini(
             [
               "WORKER_NEEDS_INPUT:",
@@ -4957,6 +5164,8 @@ export const useGeminiVoice = ({
           return true;
         }
 
+        activeSubmitFormFlowRef.current = null;
+
         if (result?.success) {
           lastSubmitFormFiredAtRef.current = Date.now();
           // Tell Gemini so it speaks the confirmation out loud
@@ -4965,15 +5174,14 @@ export const useGeminiVoice = ({
               "WORKER_SUBMIT_SUCCESS:",
               "Формата е изпратена успешно (submitted=true).",
               "",
-              "Кажи ЕДНА-ЕДИНСТВЕНА кратка реплика на клиента — например:",
-              '"Готово, запитването е подадено успешно. Благодарим Ви!"',
+              "Кажи САМО: 'Готово, запитването е подадено успешно. Мога ли да помогна с нещо друго?'",
               "",
               "⛔ СТРОГО ЗАБРАНЕНО:",
               "- Да повтаряш данните (име/имейл/телефон/план).",
-              "- Да благодариш втори път.",
-              "- Да казваш 'екипът ни ще се свърже до 24 часа' повече от веднъж.",
-              "- Да добавяш дълги обяснения.",
-              "След кратката реплика можеш да попиташ само 'Мога ли да помогна с нещо друго?' — нищо повече.",
+              "- Да казваш 'хубав ден', 'довиждане', или каквото и да е сбогуване.",
+              "- Да завършваш разговора — клиентът решава кога да спре.",
+              "- Да благодариш повече от веднъж.",
+              "- Да добавяш дълги обяснения или допълнителни въпроси освен 'Мога ли да помогна с нещо друго?'.",
             ].join("\n"),
           );
         } else {
@@ -4990,11 +5198,16 @@ export const useGeminiVoice = ({
 
         return true;
       } catch {
+        activeSubmitFormFlowRef.current = null;
         return false;
       }
     },
     [onError, onMessage, sendToGemini],
   );
+
+  useEffect(() => {
+    executeActionFromGeminiRef.current = maybeExecuteActionFromGemini;
+  }, [maybeExecuteActionFromGemini]);
 
   const textOnlyRef = useRef(false);
 
@@ -5444,9 +5657,12 @@ export const useGeminiVoice = ({
             } else {
               for (const part of modelTurn.parts) {
                 if (part.inlineData?.data) {
-                  cancelFillerWord(); // ← аудиото пристига → отмени filler
-                  clearSilenceWatchdog();
-                  playAudioChunk(part.inlineData.data);
+                  // ★ FIX: Skip audio playback if current turn is an action or processing phrase
+                  if (!actionTurnSilenceRef.current) {
+                    cancelFillerWord(); // ← аудиото пристига → отмени filler
+                    clearSilenceWatchdog();
+                    playAudioChunk(part.inlineData.data);
+                  }
                 }
                 if (part.text) {
                   const partText = String(part.text).trim();
@@ -5482,6 +5698,9 @@ export const useGeminiVoice = ({
                   if (looksLikeAction) {
                     // First chunk of an action JSON — replace buffer
                     currentResponseTextRef.current = partText;
+                    // ★ Silence audio for this entire turn — it's an action, not speech
+                    actionTurnSilenceRef.current = true;
+                    stopAssistantPlayback();
                     // ★ FIX 2.2: Fire book_slot САМО ако JSON-ът е пълен и валиден.
                     // При streaming partText може да е непълен → JSON.parse гърми тихо
                     // но earlyActionFiredRef вече е true → TURN_COMPLETE го пропуска → мълчание.
@@ -5502,12 +5721,23 @@ export const useGeminiVoice = ({
                     // ★ FIX: Continuation of a streaming JSON — concatenate WITHOUT space.
                     // A space inside a JSON key or value would corrupt the JSON.
                     currentResponseTextRef.current += partText;
+                    actionTurnSilenceRef.current = true;
                     console.log("[MODEL PART TEXT][JSON CONT]", currentResponseTextRef.current.slice(0, 200));
                   } else if (partText) {
-                    if (currentResponseTextRef.current && !currentResponseTextRef.current.endsWith(" ")) {
-                      currentResponseTextRef.current += " ";
+                    // ★ FIX: Check if this text matches action processing speech patterns
+                    // (e.g. "чудесно, имам всички данни", "един момент, изпращам")
+                    // If so, silence audio and suppress transcript
+                    if (ACTION_PROCESSING_SPEECH_PATTERNS.some((p) => p.test(partText))) {
+                      actionTurnSilenceRef.current = true;
+                      stopAssistantPlayback();
+                      currentResponseTextRef.current = partText;
+                      console.log("[MODEL PART TEXT][ACTION SPEECH SUPPRESSED]", partText.slice(0, 200));
+                    } else {
+                      if (currentResponseTextRef.current && !currentResponseTextRef.current.endsWith(" ")) {
+                        currentResponseTextRef.current += " ";
+                      }
+                      currentResponseTextRef.current += partText;
                     }
-                    currentResponseTextRef.current += partText;
                   }
                 }
               }
@@ -5552,6 +5782,8 @@ export const useGeminiVoice = ({
           if (content.turnComplete || content.turn_complete) {
             const wasCanceled = assistantTurnCanceledRef.current;
             assistantTurnCanceledRef.current = false;
+            // ★ Reset action silence flag at turn boundary
+            actionTurnSilenceRef.current = false;
             const responseText = currentResponseTextRef.current.trim();
 
             if (responseText) {
@@ -5642,12 +5874,7 @@ export const useGeminiVoice = ({
                     const hasName = !!captured?.name && captured.name.trim().length >= 2;
                     const hasEmail = !!captured?.email && looksLikeCompleteEmail(captured.email);
                     const hasPhone = !!captured?.phone && looksLikeCompletePhone(captured.phone);
-                    // ★ FIX: преди беше `hasAllContact` = изискваше ВСИЧКИ три полета.
-                    // Но някои форми приемат напр. само име+имейл ИЛИ име+телефон.
-                    // Сега guard-ът се активира при поне 2 валидни полета — ако формата
-                    // изисква повече, proxy-то ще върне needs_input и flow-ът продължава.
                     const hasAllContact = hasName && hasEmail && hasPhone;
-                    const hasMinimalContact = hasName && (hasEmail || hasPhone); // поне име + един контакт
 
                     const lastUserText = String(lastCommittedUserRef.current?.text || "")
                       .toLowerCase()
@@ -5674,15 +5901,13 @@ export const useGeminiVoice = ({
 
                     const recentlyFired = Date.now() - lastSubmitFormFiredAtRef.current < 60_000;
 
-                    if ((hasAllContact || hasMinimalContact) && claimsFormSent && !recentlyFired) {
+                    if (hasAllContact && claimsFormSent && !recentlyFired) {
                       console.warn(
                         "[FAKE_SUBMIT_GUARD] Gemini claimed form was sent without returning JSON. Synthesizing submit_form from captured data.",
                         {
                           captured,
                           lastUserText,
                           responsePreview: responseText.slice(0, 160),
-                          hasAllContact,
-                          hasMinimalContact,
                         },
                       );
 
@@ -5703,21 +5928,18 @@ export const useGeminiVoice = ({
                         if ((captured as any)?.plan) extraFields.plan = String((captured as any).plan);
                         if ((captured as any)?.message) extraFields.message = String((captured as any).message);
 
-                        // ★ FIX: подаваме САМО полетата които реално имаме,
-                        // вместо да изпращаме undefined за липсващите. Proxy-то ще
-                        // върне needs_input ако формата изисква още нещо.
-                        const fields: Record<string, string> = { ...extraFields };
-                        if (hasName) fields.name = captured!.name!;
-                        if (hasEmail) fields.email = captured!.email!;
-                        if (hasPhone) fields.phone = captured!.phone!;
-
                         const synthesized = {
                           type: "action_request",
                           action: "submit_form",
                           session_id: sid,
                           ...(target?.form_id ? { form_id: target.form_id } : {}),
                           ...(target?.fingerprint ? { fingerprint: target.fingerprint } : {}),
-                          fields,
+                          fields: {
+                            name: captured!.name,
+                            email: captured!.email,
+                            phone: captured!.phone,
+                            ...extraFields,
+                          },
                         };
 
                         console.log(
@@ -5763,24 +5985,10 @@ export const useGeminiVoice = ({
                           );
                         }
                       } else {
-                        // ★ FIX: преди само console.warn — тихо счупване. Сега
-                        // извеждаме диагностика плюс нотифицираме onError, за да
-                        // се вижда в конзолата/UI-а защо формата не тръгва.
-                        const diag = {
-                          sid: sid || "(EMPTY — липсва sessionData.sessionId)",
-                          target: target || "(EMPTY — systemInstruction не съдържа form_id/fingerprint)",
-                          hasSystemInstruction: !!(sessionDataRef.current as any)?.systemInstruction,
-                          systemInstructionLen: String((sessionDataRef.current as any)?.systemInstruction || "").length,
-                        };
-                        console.error(
-                          "[FAKE_SUBMIT_GUARD] cannot synthesize — missing session_id or form target",
-                          diag,
-                        );
-                        onError?.(
-                          `Формата не може да бъде изпратена: ${
-                            !sid ? "липсва session_id" : "липсва form_id/fingerprint в systemInstruction"
-                          }. Провери prepareSession()/connect() данните.`,
-                        );
+                        console.warn("[FAKE_SUBMIT_GUARD] cannot synthesize — missing session_id or form target", {
+                          sid,
+                          target,
+                        });
                       }
                     }
                   } catch (guardErr) {
