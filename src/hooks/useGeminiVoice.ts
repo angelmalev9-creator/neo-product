@@ -57,19 +57,23 @@ const AUDIO_SAMPLE_RATE_OUT = 24000;
 const AUDIO_SAMPLE_RATE_IN = 16000;
 
 const ECHO_GUARD_MS = 80;
-const ANTI_BARGE_IN_MS = 3500; // ↑ NEO изчаква минимум 3.5s преди да може да бъде прекъснат
-const MIN_BARGE_IN_CHARS = 20; // ↑ Изисква се повече реч преди barge-in
-const MIN_BARGE_IN_WORDS = 5; // ↑ Минимум 5 думи за да се смята за реална намеса
+// ↓ Latency optimization: намалени значително за по-бърз отговор.
+// Предишните стойности (3500/650/580/5500/500/4200/1800/1700) натрупваха
+// 2–5s закъснение преди Gemini да чуе репликата. Новите стойности дават
+// sub-500ms реакция, без да счупят dedup/barge-in.
+const ANTI_BARGE_IN_MS = 1200; // беше 3500 — NEO може да бъде прекъснат по-рано
+const MIN_BARGE_IN_CHARS = 12; // беше 20
+const MIN_BARGE_IN_WORDS = 3; // беше 5
 const BARGE_IN_COMMANDS = ["стоп", "спри", "изчакай", "чакай", "момент", "секунда", "стига", "почакай"];
-const UTTERANCE_DEBOUNCE_MS = 650; // ↑ По-дълъг debounce — чака клиентът да спре
-const SPEECH_FINAL_MIN_MS = 580; // ↑ Минимум 580ms след финален токен преди изпращане
-const SPEECH_FINAL_MAX_MS = 5500; // ↑ Максимум — за по-дълги изречения
-const UTTERANCE_END_MIN_MS = 500; // ↑ По-дълъг минимален период
-const UTTERANCE_END_MAX_MS = 4200; // ↑ По-дълъг максимален период
-const CONTINUATION_EXTRA_MS = 1800; // ↑ Ако изречението е незавършено — чака повече
+const UTTERANCE_DEBOUNCE_MS = 280; // беше 650
+const SPEECH_FINAL_MIN_MS = 220; // беше 580
+const SPEECH_FINAL_MAX_MS = 2200; // беше 5500
+const UTTERANCE_END_MIN_MS = 200; // беше 500
+const UTTERANCE_END_MAX_MS = 2000; // беше 4200
+const CONTINUATION_EXTRA_MS = 600; // беше 1800 — за незавършено изречение
 const LOW_CONF_SHORT_TEXT_MAX_CHARS = 8;
 const LOW_CONF_SHORT_TEXT_MAX_WORDS = 2;
-const LOW_CONF_HOLD_MS = 1700;
+const LOW_CONF_HOLD_MS = 700; // беше 1700
 const LOW_CONF_MIN_COMMIT_CHARS = 8;
 const LOW_CONF_MIN_COMMIT_WORDS = 2;
 const SENSITIVE_CAPTURE_WINDOW_MS = 12000;
@@ -88,7 +92,7 @@ const VAD_BARGE_IN_FRAMES_REQUIRED = 35;
 
 // VAD (client-side) is only a fallback safety layer.
 // Server-final tokens should end the turn first.
-const VAD_SILENCE_MS = 5500; // ↑ Изчаква 5.5s тишина преди да изпрати транскрипцията
+const VAD_SILENCE_MS = 1800; // беше 5500 — по-бърз край на репликата когато Soniox зависне
 const VAD_NOISE_PROFILE_MS = 2500;
 const VAD_MIN_SPEECH_THRESHOLD = 0.009;
 const VAD_MAX_SPEECH_THRESHOLD = 0.036;
@@ -755,17 +759,24 @@ function cleanupSensitiveTranscript(text: string): string {
 }
 
 function stripLowConfidenceTag(text: string): string {
+  // ★ FIX: премахваме [LOW_CONFIDENCE:NN%] от НАВСЯКЪДЕ в текста, не само
+  // от началото. Без `^` anchor-а, защото при сливане на buffers (rolling
+  // corrections от Soniox) tag-ът попада и в средата на низа и изтича
+  // към UI-а (виж bug report screenshot).
   return String(text || "")
-    .replace(/^\[LOW_CONFIDENCE:\d+%\]\s*/, "")
+    .replace(/\[LOW_CONFIDENCE:\d+%\]\s*/g, "")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
 function isLowConfidenceTranscript(text: string): boolean {
-  return /^\[LOW_CONFIDENCE:\d+%\]/.test(String(text || ""));
+  // Проверяваме за tag където и да е в текста, не само в началото —
+  // съгласувано с stripLowConfidenceTag горе.
+  return /\[LOW_CONFIDENCE:\d+%\]/.test(String(text || ""));
 }
 
 function getTranscriptConfidencePercent(text: string): number | null {
-  const match = String(text || "").match(/^\[LOW_CONFIDENCE:(\d+)%\]/);
+  const match = String(text || "").match(/\[LOW_CONFIDENCE:(\d+)%\]/);
   return match ? Number(match[1]) : null;
 }
 
@@ -2221,6 +2232,17 @@ export const useGeminiVoice = ({
       const candidateNorm = candidate.toLowerCase();
 
       if (candidateNorm === bestNorm) continue;
+
+      // ★ FIX: преди другите стратегии, проверяваме дали candidate-ът е
+      // rolling correction на best-а (Soniox re-emit-ва същото изречение с
+      // малки поправки). Ако е — подменяме с по-дългия, не конкатенираме.
+      // Без този guard двата буфера (finalChunksRef + utteranceBufferRef)
+      // се слепват и получаваме "Казвам се X, имейлът е Y. Казвам се X,
+      // имейлът е Y" в UI-а.
+      if (overlapsAsRollingCorrection(bestNorm, candidateNorm)) {
+        if (candidate.length > best.length) best = candidate;
+        continue;
+      }
 
       if (candidateNorm.includes(bestNorm) && candidate.length >= best.length) {
         best = candidate;
@@ -5620,7 +5642,12 @@ export const useGeminiVoice = ({
                     const hasName = !!captured?.name && captured.name.trim().length >= 2;
                     const hasEmail = !!captured?.email && looksLikeCompleteEmail(captured.email);
                     const hasPhone = !!captured?.phone && looksLikeCompletePhone(captured.phone);
+                    // ★ FIX: преди беше `hasAllContact` = изискваше ВСИЧКИ три полета.
+                    // Но някои форми приемат напр. само име+имейл ИЛИ име+телефон.
+                    // Сега guard-ът се активира при поне 2 валидни полета — ако формата
+                    // изисква повече, proxy-то ще върне needs_input и flow-ът продължава.
                     const hasAllContact = hasName && hasEmail && hasPhone;
+                    const hasMinimalContact = hasName && (hasEmail || hasPhone); // поне име + един контакт
 
                     const lastUserText = String(lastCommittedUserRef.current?.text || "")
                       .toLowerCase()
@@ -5647,13 +5674,15 @@ export const useGeminiVoice = ({
 
                     const recentlyFired = Date.now() - lastSubmitFormFiredAtRef.current < 60_000;
 
-                    if (hasAllContact && claimsFormSent && !recentlyFired) {
+                    if ((hasAllContact || hasMinimalContact) && claimsFormSent && !recentlyFired) {
                       console.warn(
                         "[FAKE_SUBMIT_GUARD] Gemini claimed form was sent without returning JSON. Synthesizing submit_form from captured data.",
                         {
                           captured,
                           lastUserText,
                           responsePreview: responseText.slice(0, 160),
+                          hasAllContact,
+                          hasMinimalContact,
                         },
                       );
 
@@ -5674,18 +5703,21 @@ export const useGeminiVoice = ({
                         if ((captured as any)?.plan) extraFields.plan = String((captured as any).plan);
                         if ((captured as any)?.message) extraFields.message = String((captured as any).message);
 
+                        // ★ FIX: подаваме САМО полетата които реално имаме,
+                        // вместо да изпращаме undefined за липсващите. Proxy-то ще
+                        // върне needs_input ако формата изисква още нещо.
+                        const fields: Record<string, string> = { ...extraFields };
+                        if (hasName) fields.name = captured!.name!;
+                        if (hasEmail) fields.email = captured!.email!;
+                        if (hasPhone) fields.phone = captured!.phone!;
+
                         const synthesized = {
                           type: "action_request",
                           action: "submit_form",
                           session_id: sid,
                           ...(target?.form_id ? { form_id: target.form_id } : {}),
                           ...(target?.fingerprint ? { fingerprint: target.fingerprint } : {}),
-                          fields: {
-                            name: captured!.name,
-                            email: captured!.email,
-                            phone: captured!.phone,
-                            ...extraFields,
-                          },
+                          fields,
                         };
 
                         console.log(
@@ -5731,10 +5763,24 @@ export const useGeminiVoice = ({
                           );
                         }
                       } else {
-                        console.warn("[FAKE_SUBMIT_GUARD] cannot synthesize — missing session_id or form target", {
-                          sid,
-                          target,
-                        });
+                        // ★ FIX: преди само console.warn — тихо счупване. Сега
+                        // извеждаме диагностика плюс нотифицираме onError, за да
+                        // се вижда в конзолата/UI-а защо формата не тръгва.
+                        const diag = {
+                          sid: sid || "(EMPTY — липсва sessionData.sessionId)",
+                          target: target || "(EMPTY — systemInstruction не съдържа form_id/fingerprint)",
+                          hasSystemInstruction: !!(sessionDataRef.current as any)?.systemInstruction,
+                          systemInstructionLen: String((sessionDataRef.current as any)?.systemInstruction || "").length,
+                        };
+                        console.error(
+                          "[FAKE_SUBMIT_GUARD] cannot synthesize — missing session_id or form target",
+                          diag,
+                        );
+                        onError?.(
+                          `Формата не може да бъде изпратена: ${
+                            !sid ? "липсва session_id" : "липсва form_id/fingerprint в systemInstruction"
+                          }. Провери prepareSession()/connect() данните.`,
+                        );
                       }
                     }
                   } catch (guardErr) {
