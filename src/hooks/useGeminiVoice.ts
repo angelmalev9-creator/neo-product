@@ -46,6 +46,10 @@ type SensitiveContactFields = {
   name?: string;
   email?: string;
   phone?: string;
+  // ★ FIX: plan и message се стафват в същия ref от FAKE_SUBMIT_GUARD кода.
+  // Без тях synthesized submit_form е непълен при форми, които изискват plan/message.
+  plan?: string;
+  message?: string;
 };
 
 type CapturedSensitiveContact = SensitiveContactFields & {
@@ -129,7 +133,13 @@ const isSilentActionTurnText = (text: string) => {
     .trim();
   if (!clean) return false;
 
-  return looksLikeActionPayload(clean) || ACTION_PROCESSING_SPEECH_PATTERNS.some((pattern) => pattern.test(clean));
+  // ★ FIX: преди блокирахме и естествени реплики като "Един момент, изпращам"
+  // или "имам всички данни" — но тези фрази NEO ги КАЗВА на глас на клиента,
+  // значи трябва да се виждат и в чата. Единственото нещо, което трябва
+  // да се блокира, е чист JSON payload (който е technical and not spoken).
+  // ACTION_PROCESSING_SPEECH_PATTERNS остава използван по време на streaming
+  // за да спре audio playback на JSON, но не и за финален commit в UI-а.
+  return looksLikeActionPayload(clean);
 };
 
 const clampInstruction = (text: string, maxChars: number) => {
@@ -751,9 +761,14 @@ function mergeSensitiveContact(
       if (base.length < 10 && next.length < 10) return `${base}${next}`;
       return next.length >= base.length ? next : base;
     })(),
+    // ★ FIX: запазваме plan/message при merge — иначе когато user-ът каже
+    // име след като вече сме уловили plan, extractedFields няма да носи plan
+    // и merged.plan ще стане undefined.
+    plan: incoming.plan || current?.plan,
+    message: incoming.message || current?.message,
     ts: Date.now(),
   };
-  if (!merged.name && !merged.email && !merged.phone) return null;
+  if (!merged.name && !merged.email && !merged.phone && !merged.plan && !merged.message) return null;
   return merged;
 }
 
@@ -3112,6 +3127,66 @@ export const useGeminiVoice = ({
             .filter(Boolean)
             .join(" ");
         }
+      }
+
+      // ★ FIX: улавяме plan (избор на пакет) и message (цел/съобщение) в
+      // capturedSensitiveContactRef, за да може FAKE_SUBMIT_GUARD да синтезира
+      // пълен submit_form payload, когато Gemini каже "Изпращам" без JSON.
+      //
+      // Тези полета не са "sensitive contact" в строгия смисъл, но ги пазим
+      // тук (стафнати през SensitiveContactFields.plan/.message), защото
+      // това е единственият ref, до който синтезиращия код има достъп.
+      try {
+        const textForCapture = rawVisibleUserText || text;
+        const lcText = textForCapture.toLowerCase();
+
+        // --- Plan capture ---
+        // Избор на пакет: "втория план", "Advanced пакет", "стандартния",
+        // "професионален", "базов". Heuristics — ако NEO-то е питало за
+        // пакет (виж последната асистентска реплика), плюс ако текстът
+        // съдържа пакет-подобни думи.
+        const lastAssistant = String(lastCommittedAssistantRef.current?.text || "").toLowerCase();
+        const neoAskedAboutPlan = /пакет|план|advanced|basic|standard|standart|стандарт|професионал|базов/i.test(
+          lastAssistant,
+        );
+        const userMentionedPlan =
+          /(първи(ят|я)?|втори(ят|я)?|трети(ят|я)?|advanced|basic|standard|standart|стандарт|професионал|базов|пакет|план)/i.test(
+            lcText,
+          );
+        if (neoAskedAboutPlan && userMentionedPlan) {
+          // Вземаме цялата реплика като plan hint — proxy-то ще я обработи.
+          const planHint = textForCapture.trim().slice(0, 200);
+          if (planHint.length >= 3) {
+            capturedSensitiveContactRef.current = {
+              ...(capturedSensitiveContactRef.current || { ts: Date.now() }),
+              plan: planHint,
+              ts: Date.now(),
+            };
+            console.log("[CAPTURE] plan:", planHint.slice(0, 80));
+          }
+        }
+
+        // --- Message capture ---
+        // Свободен текст за целта на сайта / проекта / съобщение.
+        // Активира се САМО ако NEO е питало за съобщение/цел/проект и
+        // текстът е достатъчно дълъг (не е "да"/"добре"/избор на пакет).
+        const neoAskedAboutMessage =
+          /съобщение|цел|каква е целта|за какво|проект|опиши|разкажи|какво ще|какъв бизнес/i.test(lastAssistant);
+        const looksLikeMessage =
+          textForCapture.trim().length >= 15 &&
+          !/^\s*(да|не|добре|ок|ok|okay|разбира се|точно така)\s*[.!?]?\s*$/i.test(textForCapture.trim()) &&
+          !userMentionedPlan; // не е plan избор
+        if (neoAskedAboutMessage && looksLikeMessage) {
+          const messageHint = textForCapture.trim().slice(0, 500);
+          capturedSensitiveContactRef.current = {
+            ...(capturedSensitiveContactRef.current || { ts: Date.now() }),
+            message: messageHint,
+            ts: Date.now(),
+          };
+          console.log("[CAPTURE] message:", messageHint.slice(0, 80));
+        }
+      } catch (captureErr) {
+        console.warn("[CAPTURE] plan/message heuristic threw:", captureErr);
       }
 
       commitUserMessage(visibleUserText || aggregatedUserTranscript);
@@ -5875,6 +5950,12 @@ export const useGeminiVoice = ({
                     const hasEmail = !!captured?.email && looksLikeCompleteEmail(captured.email);
                     const hasPhone = !!captured?.phone && looksLikeCompletePhone(captured.phone);
                     const hasAllContact = hasName && hasEmail && hasPhone;
+                    // ★ FIX: много форми не изискват phone (напр. name+email+message+plan).
+                    // Guard-ът трябва да се активира при минимум name+email — proxy-то
+                    // ще върне needs_input ако форматът изисква още полета. Без този
+                    // фикс NEO казваше "Изпращам запитването сега" но реално нищо
+                    // не се случваше докато клиентът не попита изрично.
+                    const hasMinimalContact = hasName && hasEmail;
 
                     const lastUserText = String(lastCommittedUserRef.current?.text || "")
                       .toLowerCase()
@@ -5901,13 +5982,15 @@ export const useGeminiVoice = ({
 
                     const recentlyFired = Date.now() - lastSubmitFormFiredAtRef.current < 60_000;
 
-                    if (hasAllContact && claimsFormSent && !recentlyFired) {
+                    if ((hasAllContact || hasMinimalContact) && claimsFormSent && !recentlyFired) {
                       console.warn(
                         "[FAKE_SUBMIT_GUARD] Gemini claimed form was sent without returning JSON. Synthesizing submit_form from captured data.",
                         {
                           captured,
                           lastUserText,
                           responsePreview: responseText.slice(0, 160),
+                          hasAllContact,
+                          hasMinimalContact,
                         },
                       );
 
@@ -5928,18 +6011,20 @@ export const useGeminiVoice = ({
                         if ((captured as any)?.plan) extraFields.plan = String((captured as any).plan);
                         if ((captured as any)?.message) extraFields.message = String((captured as any).message);
 
+                        // ★ FIX: подаваме САМО полетата, които реално имаме.
+                        // Преди изпращахме `phone: undefined` което proxy-то отхвърляше.
+                        const fields: Record<string, string> = { ...extraFields };
+                        if (hasName) fields.name = captured!.name!;
+                        if (hasEmail) fields.email = captured!.email!;
+                        if (hasPhone) fields.phone = captured!.phone!;
+
                         const synthesized = {
                           type: "action_request",
                           action: "submit_form",
                           session_id: sid,
                           ...(target?.form_id ? { form_id: target.form_id } : {}),
                           ...(target?.fingerprint ? { fingerprint: target.fingerprint } : {}),
-                          fields: {
-                            name: captured!.name,
-                            email: captured!.email,
-                            phone: captured!.phone,
-                            ...extraFields,
-                          },
+                          fields,
                         };
 
                         console.log(
@@ -5947,15 +6032,24 @@ export const useGeminiVoice = ({
                           JSON.stringify(synthesized).slice(0, 400),
                         );
 
-                        // Don't show Gemini's lie to the user. Swallow the text.
-                        clearAssistantLiveTranscript();
-                        currentResponseTextRef.current = "";
+                        // ★ FIX: НЕ трием асистентската реплика — клиентът я е чул на глас
+                        // ("Изпращам запитването сега. Очаквайте обаждане до 24 часа")
+                        // и трябва да я види и в чата. Просто тръгваме submit-а наред с нея.
+                        // Преди тук викахме: clearAssistantLiveTranscript(); currentResponseTextRef.current = "";
+                        // което правеше транскрипцията на NEO да изчезва от UI-а.
 
                         // Fire through the existing action parser so all the normal
                         // enrichment / proxy logic runs unchanged.
                         const synthHandled = await maybeExecuteActionFromGemini(JSON.stringify(synthesized));
 
                         if (synthHandled) {
+                          // ★ FIX: commit-ваме асистентската реплика в чата.
+                          // NEO я е казал на глас ("Изпращам запитването. Очаквайте
+                          // обаждане до 24 часа") и клиентът трябва да я види в UI-а.
+                          // Преди просто return-вахме и репликата изчезваше.
+                          commitAssistantMessage(responseText);
+                          currentResponseTextRef.current = "";
+
                           // Correct Gemini so it stops lying in future turns.
                           try {
                             sendToGemini(
