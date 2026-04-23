@@ -241,9 +241,21 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
 
   const getLeadForConversation = (convoId: string) => leads.find(l => l.conversation_id === convoId);
   const getBookingForConversation = (convoId: string) => bookings.find(b => b.conversation_id === convoId);
-  const getLeadName = (lead: CapturedLead) => {
-    if (lead.first_name || lead.last_name) return `${lead.first_name || ''} ${lead.last_name || ''}`.trim();
-    return lead.name || 'Неизвестен';
+  const isValidName = (name: string | null | undefined) => {
+    if (!name) return false;
+    const trimmed = name.trim().toLowerCase();
+    if (trimmed.length < 2) return false;
+    return !['неизвестен', 'клиент', 'посетител', 'unknown', 'visitor', 'guest', 'null', 'undefined'].includes(trimmed);
+  };
+  const isValidEmail = (email: string | null | undefined) => {
+    if (!email) return false;
+    return /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(email.trim());
+  };
+  const getLeadName = (lead: CapturedLead): string | null => {
+    const composed = `${lead.first_name || ''} ${lead.last_name || ''}`.trim();
+    if (isValidName(composed)) return composed;
+    if (isValidName(lead.name)) return lead.name as string;
+    return null;
   };
   const formatDuration = (s: number | null) => {
     if (!s) return '0с';
