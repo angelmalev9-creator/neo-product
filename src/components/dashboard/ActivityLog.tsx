@@ -397,11 +397,28 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                               <Sparkles className="w-3 h-3 animate-pulse" /> Анализиране...
                             </div>
                           ) : parsed ? (
-                            <div className="space-y-1.5 text-xs">
+                            <div className="space-y-2 text-xs">
                               <p className="text-foreground leading-relaxed">{parsed.summary}</p>
-                              {parsed.intent && <p className="text-muted-foreground"><span className="text-primary font-medium">Намерение:</span> {parsed.intent}</p>}
-                              {parsed.outcome && <p className="text-muted-foreground"><span className="text-green-500 font-medium">Резултат:</span> {parsed.outcome}</p>}
-                              {parsed.actions && <p className="text-muted-foreground"><span className="font-medium">Стъпки:</span> {parsed.actions}</p>}
+                              {parsed.intent && (
+                                <div className="rounded-md border border-primary/20 bg-primary/5 px-2 py-1.5">
+                                  <span className="text-[9px] uppercase font-semibold text-primary tracking-wide">Намерение</span>
+                                  <p className="text-foreground/90 mt-0.5">{parsed.intent}</p>
+                                </div>
+                              )}
+                              {parsed.outcome && (
+                                <div className="rounded-md border border-green-500/20 bg-green-500/5 px-2 py-1.5">
+                                  <span className="text-[9px] uppercase font-semibold text-green-500 tracking-wide">Резултат</span>
+                                  <p className="text-foreground/90 mt-0.5">{parsed.outcome}</p>
+                                </div>
+                              )}
+                              {parsed.actions && (
+                                <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1.5">
+                                  <span className="text-[9px] uppercase font-bold text-amber-400 tracking-wide flex items-center gap-1">
+                                    <TrendingUp className="w-2.5 h-2.5" /> Следващи стъпки
+                                  </span>
+                                  <p className="text-foreground font-medium mt-0.5">{parsed.actions}</p>
+                                </div>
+                              )}
                               <button onClick={(e) => { e.stopPropagation(); summarizeConversation(convo.id); }}
                                 className="text-[10px] text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 mt-1">
                                 <RefreshCw className="w-2.5 h-2.5" /> Преанализирай
