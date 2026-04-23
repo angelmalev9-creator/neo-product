@@ -314,8 +314,10 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
               const parsed = parseSummary(convo.summary);
               const isSummarizing = summarizing === convo.id;
               const date = new Date(convo.started_at);
-              const clientName = lead ? getLeadName(lead) : booking?.attendee_name || null;
-              const clientEmail = lead?.email || booking?.attendee_email || null;
+              const rawClientName = lead ? getLeadName(lead) : (booking?.attendee_name && isValidName(booking.attendee_name) ? booking.attendee_name : null);
+              const clientName = rawClientName;
+              const rawEmail = lead?.email || booking?.attendee_email || null;
+              const clientEmail = isValidEmail(rawEmail) ? rawEmail : null;
               const clientPhone = lead?.phone || booking?.attendee_phone || null;
               const clientService = lead?.service || booking?.service || null;
               const hasClientData = !!(clientName || clientEmail || clientPhone);
