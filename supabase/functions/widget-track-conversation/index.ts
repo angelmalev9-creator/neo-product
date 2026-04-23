@@ -99,29 +99,12 @@ serve(async (req) => {
       const latestUserMessage = recentMessages?.find((message) => message.role === "user")?.content || "";
       const latestAssistantMessage = recentMessages?.find((message) => message.role === "assistant")?.content || "";
 
-      // Use client seq to derive a deterministic, monotonic timestamp
-      // seq is a counter starting at 1 from the client, incremented per message
-      const clientSeq = typeof seq === "number" && seq > 0 ? seq : 0;
-
-      // Base: conversation start time or earliest message
-      const { data: convoRow } = await supabase
-        .from("conversations")
-        .select("started_at")
-        .eq("id", conversationId)
-        .single();
-
-      const baseTs = convoRow?.started_at
-        ? new Date(convoRow.started_at).getTime()
-        : Date.now();
-
-      // Each seq gets a 500ms offset from base to maintain strict ordering
-      const seqTs = baseTs + (clientSeq * 500);
-
-      // Also ensure we're always after the latest existing message
+      // Always insert in real-time order: now() but strictly after the last message
       const latestExistingTs = recentMessages?.[0]?.created_at
         ? new Date(recentMessages[0].created_at).getTime()
         : 0;
-      const nextTs = Math.max(seqTs, latestExistingTs + 1);
+      const nowTs = Date.now();
+      const nextTs = Math.max(nowTs, latestExistingTs + 1);
 
       const inserts: { conversation_id: string; role: string; content: string; created_at: string }[] = [];
 
