@@ -8,7 +8,7 @@ const steps = [
     icon: Link,
     number: '01',
     title: 'Поставете линка на сайта си.',
-    desc: 'NEO прочита всичко — услуги, цени, работно време — и се учи сам.',
+    desc: 'NEO прочита всичко — услуги, цени, контакти — и се учи сам.',
     color: 'text-primary',
     bg: 'bg-primary/10',
     border: 'border-primary/30',
@@ -55,7 +55,7 @@ const HowItWorks = () => {
             <span className="text-accent">Наистина.</span>
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
-            Без код, без интеграции, без обаждания с продажбен отдел.
+            Настройвате го сами, без технически опит. Само един ред код на сайта Ви и NEO започва да работи още днес.
           </p>
         </div>
 
@@ -96,7 +96,7 @@ const HowItWorks = () => {
             onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
           >
             <Play className="w-3.5 h-3.5 fill-current" />
-            Пробвайте безплатно
+            Тествайте го сега безплатно
           </Button>
         </motion.div>
       </div>

@@ -57,7 +57,7 @@ const CalendarPreview = () => (
     <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
       <div className="flex items-center gap-2">
         <Calendar className="w-3.5 h-3.5 text-emerald-400" />
-        <span className="text-[10px] font-semibold text-foreground">Google Calendar</span>
+        <span className="text-[10px] font-semibold text-foreground">NEO календар</span>
       </div>
       <span className="text-[8px] text-emerald-400 font-medium px-1.5 py-0.5 rounded-full bg-emerald-500/10">Свързан</span>
     </div>
@@ -244,7 +244,7 @@ const features = [
   {
     icon: Mic,
     title: 'Говори и пише',
-    desc: 'На български, английски и руски, в чат и по телефон, с един и същ глас.',
+    desc: 'На български, английски и руски, в чат и по телефон, избирате глас по Ваш вкус.',
     color: 'text-primary',
     bg: 'bg-primary/10',
     border: 'border-primary/20',
@@ -253,11 +253,11 @@ const features = [
   {
     icon: Calendar,
     title: 'Записва часове сам',
-    desc: 'Синхронизира се с Google Calendar. Без двойни записи, без пропуснати срещи.',
+    desc: 'Синхронизира се с вградения календар. Без двойни записи, без пропуснати срещи.',
     color: 'text-emerald-400',
     bg: 'bg-emerald-500/10',
     border: 'border-emerald-500/20',
-    liveLabel: 'Свързан с Google Calendar',
+    liveLabel: 'Свързан с вградения календар',
   },
   {
     icon: Users,
@@ -313,7 +313,7 @@ const FeaturesGrid = () => {
             Един инструмент. <span className="text-accent">Работата на трима служители.</span>
           </h2>
           <p className="neo-subheading text-muted-foreground max-w-lg mx-auto">
-            NEO замества рецепционист, чат на сайта и нощен колцентър.
+            NEO замества рецепционист, чатбот на сайта и нощен колцентър.
           </p>
         </div>
 

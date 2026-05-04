@@ -157,7 +157,10 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
           const current = prev[row.conversation_id];
           if (!current) return prev;
           if (current.some(m => m.id === row.id)) return prev;
-          return { ...prev, [row.conversation_id]: [...current, row].sort((a, b) => a.created_at.localeCompare(b.created_at)) };
+          return {
+  ...prev,
+  [row.conversation_id]: [...current, row],
+};
         });
         setConversations(prev => prev.map(c =>
           c.id === row.conversation_id ? { ...c, messages_count: (c.messages_count || 0) + 1 } : c
@@ -203,6 +206,45 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
     } finally { setLoading(false); }
   };
 
+  const reconstructOrder = (msgs: ConversationMessage[]): ConversationMessage[] => {
+    if (msgs.length <= 1) return msgs;
+    const times = msgs.map(m => new Date(m.created_at).getTime());
+    if (Math.max(...times) - Math.min(...times) > 500) {
+      console.log('[ActivityLog] timestamps are distinct, using normal sort');
+      return [...msgs].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    }
+    console.log('[ActivityLog] timestamps identical, reconstructing order. Messages:', msgs.map(m => ({ role: m.role, content: m.content.slice(0, 50) })));
+    const assistants: ConversationMessage[] = [];
+    const users: ConversationMessage[] = [];
+    msgs.forEach(m => { if (m.role === 'assistant') assistants.push(m); else users.push(m); });
+    const isGreeting = (c: string) => {
+      const l = c.toLowerCase();
+      return (l.includes('аз съм') || l.includes('i am') || l.includes("i'm"))
+        && (l.includes('какво мога') || l.includes('как мога') || l.includes('помогна') || l.includes('how can i'));
+    };
+    let greetIdx = assistants.findIndex(m => isGreeting(m.content));
+    console.log('[ActivityLog] greeting index among assistants:', greetIdx);
+    // If no greeting pattern found, use shortest assistant message
+    if (greetIdx < 0) {
+      let shortestIdx = 0;
+      for (let i = 1; i < assistants.length; i++) {
+        if (assistants[i].content.length < assistants[shortestIdx].content.length) shortestIdx = i;
+      }
+      greetIdx = shortestIdx;
+      console.log('[ActivityLog] no greeting pattern, using shortest at index:', greetIdx);
+    }
+    // Move greeting to front
+    const greeting = assistants.splice(greetIdx, 1)[0];
+    const result: ConversationMessage[] = [greeting];
+    let ai = 0, ui = 0;
+    while (ui < users.length || ai < assistants.length) {
+      if (ui < users.length) result.push(users[ui++]);
+      if (ai < assistants.length) result.push(assistants[ai++]);
+    }
+    console.log('[ActivityLog] reconstructed order:', result.map(m => ({ role: m.role, content: m.content.slice(0, 50) })));
+    return result;
+  };
+
   const loadMessages = async (conversationId: string) => {
     if (messages[conversationId]) return;
     setLoadingMessages(conversationId);
@@ -213,7 +255,8 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
         supabase.from('email_logs').select('*')
           .eq('conversation_id', conversationId).order('created_at', { ascending: false }),
       ]);
-      setMessages(prev => ({ ...prev, [conversationId]: msgsRes.data || [] }));
+      const ordered = reconstructOrder(msgsRes.data || []);
+      setMessages(prev => ({ ...prev, [conversationId]: ordered }));
       if (emailsRes.data && emailsRes.data.length > 0) {
         setEmails(prev => ({ ...prev, [conversationId]: emailsRes.data as EmailLog[] }));
       }
@@ -456,7 +499,7 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                         {loadingMessages === convo.id ? (
                           <div className="space-y-2"><Skeleton className="h-4 w-3/4" /><Skeleton className="h-4 w-1/2" /></div>
                         ) : convoMessages && convoMessages.length > 0 ? (
-                          <div className="space-y-1 max-h-64 overflow-y-auto rounded-lg bg-card/40 border border-border/20 p-2">
+                          <div className="flex flex-col space-y-1 max-h-64 overflow-y-auto rounded-lg bg-card/40 border border-border/20 p-2">
                             {convoMessages
                               .filter((msg) => {
                                 const c = msg.content || '';
@@ -465,19 +508,7 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                                 if (!c.replace(/\[SYSTEM:[^\]]*\]/g, '').replace(/\[CURRENT_DATE_CONTEXT:[^\]]*\]/g, '').trim()) return false;
                                 return true;
                               })
-                              .reduce((acc: ConversationMessage[], msg) => {
-                                const last = acc[acc.length - 1];
-                                if (last && last.role === msg.role) {
-                                  const lastClean = last.content.replace(/\s+/g, ' ').trim();
-                                  const currClean = msg.content.replace(/\s+/g, ' ').trim();
-                                  if (lastClean === currClean || lastClean.includes(currClean) || currClean.includes(lastClean)) {
-                                    if (currClean.length > lastClean.length) acc[acc.length - 1] = msg;
-                                    return acc;
-                                  }
-                                }
-                                acc.push(msg);
-                                return acc;
-                              }, [])
+                              
                               .map((msg) => (
                               <div key={msg.id} className={`flex ${msg.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
                                 <div className={`rounded-lg px-2.5 py-1.5 max-w-[85%] text-xs leading-relaxed ${
@@ -490,7 +521,7 @@ const ActivityLog = ({ userId }: ActivityLogProps) => {
                                     {' · '}
                                     {new Date(msg.created_at).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })}
                                   </span>
-                                  <p className="mt-0.5">{msg.content.replace(/\[CURRENT_DATE_CONTEXT:[^\]]*\]\s*/g, '').replace(/\[SYSTEM:[^\]]*\]\s*/g, '').trim()}</p>
+                                  <p className="mt-0.5 whitespace-pre-wrap break-words">{msg.content.replace(/\[CURRENT_DATE_CONTEXT:[^\]]*\]\s*/g, '').replace(/\[SYSTEM:[^\]]*\]\s*/g, '').trim()}</p>
                                 </div>
                               </div>
                             ))}

@@ -161,7 +161,22 @@ const VoicePicker = ({
               <span className="text-[10px] text-muted-foreground ml-1.5">{currentVoice.description}</span>
             </div>
           </div>
-          <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", open && "rotate-180")} />
+         <div
+className={cn(
+"flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-all",
+"bg-[#2C65D8] text-white shadow-sm hover:opacity-95",
+open && "scale-[0.98]"
+)}
+>
+<span>Изберете глас</span>
+
+<ChevronDown
+className={cn(
+"w-3.5 h-3.5 transition-transform",
+open && "rotate-180"
+)}
+/>
+</div>
         </button>
 
         {open && (

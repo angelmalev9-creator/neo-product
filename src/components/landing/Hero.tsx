@@ -65,8 +65,8 @@ const DashboardContent = () => (
     <div className="grid grid-cols-3 gap-1.5">
       {[
         { icon: MessageSquare, label: 'Разговори', value: '47', color: 'text-primary' },
-        { icon: Calendar, label: 'Клиенти', value: '12', color: 'text-emerald-400' },
-        { icon: Calendar, label: 'Резервации', value: '8', color: 'text-blue-400' },
+        { icon: Calendar, label: 'Резервации', value: '12', color: 'text-emerald-400' },
+        { icon: Calendar, label: 'Клиенти', value: '8', color: 'text-blue-400' },
       ].map((s) => (
         <div key={s.label} className="rounded-lg bg-card/60 border border-border/10 p-1.5">
           <s.icon className={`w-2.5 h-2.5 ${s.color} mb-0.5`} />
@@ -97,7 +97,7 @@ const DashboardContent = () => (
     <div className="space-y-1">
       {[
         { text: 'Нов клиент: Мария И.', time: '2 мин' },
-        { text: 'Час записан: 14:30', time: '5 мин' },
+        { text: 'Записан час за 14:30', time: '5 мин' },
       ].map((a) => (
         <div key={a.text} className="flex items-center justify-between px-2 py-1 rounded-md bg-card/50 border border-border/8">
           <span className="text-[7px] text-foreground/80">{a.text}</span>
@@ -181,6 +181,9 @@ const Hero = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-center">
           {/* LEFT — Copy */}
           <div className="max-w-xl">
+            <p className="text-[9px] text-foreground/30 mb-2">
+  NEO Assistant – AI рецепционист за Вашия сайт
+</p>
             <RatingBadge />
 
             <motion.h1
@@ -199,8 +202,10 @@ const Hero = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="neo-subheading text-foreground/80 mb-5 max-w-md opacity-75"
             >
-              NEO говори с клиентите Ви и записва часове дори докато Вие спите.<br />
-              Може да попълва контактни форми и да прави резервации с вграден календар.
+              Говори с клиентите Ви, отговаря на въпроси и записва часове автоматично.<br />
+  Изпраща имейли и събира клиентски данни вместо Вас — 24/7.
+
+
             </motion.p>
 
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="flex flex-col sm:flex-row gap-2.5 mb-4">
@@ -209,7 +214,7 @@ const Hero = () => {
                 onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 <Play className="w-3.5 h-3.5 fill-current" />
-                Пробвайте безплатно
+                Тествайте безплатно
               </Button>
               <Button
                 variant="outline"

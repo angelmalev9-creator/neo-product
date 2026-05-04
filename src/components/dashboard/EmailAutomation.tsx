@@ -89,9 +89,7 @@ const EmailAutomation = () => {
     // Check for OAuth callback
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
-    const gmailCallback = urlParams.get('gmail_callback');
-    
-    if (code && gmailCallback) {
+    if (code) {
       handleOAuthCallback(code);
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -104,14 +102,11 @@ const EmailAutomation = () => {
   const handleOAuthCallback = async (code: string) => {
     setLoading(true);
     try {
-      const redirectUri = `${window.location.origin}/dashboard?gmail_callback=true`;
-      
       const { data, error } = await supabase.functions.invoke('gmail-oauth', {
-        body: { 
-          action: 'exchange-code',
-          code,
-          redirectUri 
-        },
+      body: { 
+      action: 'exchange-code',
+      code
+      },
       });
 
       if (error) throw error;
@@ -257,13 +252,10 @@ const EmailAutomation = () => {
       }
 
       // Get the OAuth URL from our edge function
-      const redirectUri = `${window.location.origin}/dashboard?gmail_callback=true`;
-      
       const { data, error } = await supabase.functions.invoke('gmail-oauth', {
-        body: { 
-          action: 'get-auth-url',
-          redirectUri 
-        },
+      body: { 
+      action: 'get-auth-url'
+      },
       });
 
       if (error) throw error;

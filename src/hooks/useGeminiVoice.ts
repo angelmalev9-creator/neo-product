@@ -94,6 +94,19 @@ const VAD_BARGE_IN_FRAMES_REQUIRED = 35;
 // Server-final tokens should end the turn first.
 const VAD_SILENCE_MS = 5500; // ↑ Изчаква 5.5s тишина преди да изпрати транскрипцията
 const VAD_NOISE_PROFILE_MS = 2500;
+
+// ★ COST OPTIMIZATION: Only allow the 2 best male + 2 best female voices
+// Most energetic, human-sounding, and converting voices from Gemini Live
+const ALLOWED_VOICES: Record<string, boolean> = {
+  "Enceladus": true,   // Male — clear, confident, natural BG pronunciation
+  "Puck": true,        // Male — warm, energetic, conversational
+  "Kore": true,        // Female — warm, professional, engaging
+  "Aoede": true,       // Female — clear, natural, friendly
+};
+const DEFAULT_VOICE = "Enceladus";
+
+// ★ DEMO SESSION: hard time limit for demo sessions (3 minutes)
+const DEMO_SESSION_MAX_MS = 180_000; // 3 minutes
 const VAD_MIN_SPEECH_THRESHOLD = 0.009;
 const VAD_MAX_SPEECH_THRESHOLD = 0.036;
 const VAD_THRESHOLD_MULTIPLIER = 4.2;
@@ -1785,6 +1798,8 @@ export const useGeminiVoice = ({
   const connectMutexRef = useRef(false);
   const companyNameRef = useRef<string>("");
   const silenceWatchdogRef = useRef<number | null>(null);
+  // ★ DEMO SESSION: auto-disconnect timer
+  const demoSessionTimerRef = useRef<number | null>(null);
   const silenceNudgeSentRef = useRef(false);
   const silenceNudgeCountRef = useRef(0);
   const gainRef = useRef<GainNode | null>(null);
@@ -4131,63 +4146,18 @@ export const useGeminiVoice = ({
         // Тези инструкции карат модела да говори с естествена BG интонация,
         // правилни ударения, спокоен тон и кратки, разговорни отговори.
         const BG_VOICE_PREFIX =
-          `Говориш единствено на български език. ` +
-          `Произнасяй всяка дума с правилно българско ударение и естествена интонация — ` +
-          `като роден говорител, не като преводач. ` +
-          `Темпото на речта е спокойно и уверено — не бързо, не монотонно. ` +
-          `Тонът е топъл, емоционален и ангажиращ — като внимателен приятел, който наистина се интересува. ` +
-          `Използвай естествени паузи между изреченията. ` +
-          `Никога не произнасяй думи на английски освен ако клиентът не го изисква изрично.\n\n` +
-          // ── Човешки речеви навици ──────────────────────────────────────
-          `КРИТИЧНО — ГЛАСОВ AI РЕЦЕПЦИОНИСТ:\n` +
-          `- Адаптивна дължина: кратко при прост въпрос, подробно когато клиентът поиска детайли.\n` +
-          `- Всеки отговор = конкретна информация + следваща стъпка. Без празни фрази.\n` +
-          `- Предлагай 2 опции когато е нужен избор. Ако клиентът е нерешителен — ПРЕПОРЪЧАЙ.\n` +
-          `- Ако не разбереш — кажи го: "Може ли малко по-конкретно?"\n` +
-          `- Говори с вариация в интонацията.\n` +
-          `- НИКОГА не пиши "ъмм", "мхм", "аха", "хмм", "знаеш ли", "виж" — те се добавят от аудио системата.\n` +
-          `- НИКОГА не казвай празни фрази: "модерни и функционални", "реални резултати", "цялостна подкрепа".\n` +
-          `- ВИНАГИ давай КОНКРЕТИКА от бизнес контекста.\n\n` +
-          // ── Произношение на числа, мерки и съкращения ────────────────────
-          `ПРАВИЛА ЗА ПРОИЗНОШЕНИЕ:\n` +
-          `- ЦЕНИ — КРИТИЧНО ВАЖНО:\n` +
-          `  "3.06 EUR" → "три евро и шест стотинки". НИКОГА "триста шест евро".\n` +
-          `  "8560 EUR" → "осем хиляди петстотин и шестдесет евро".\n` +
-          `  "210 €/мес" → "двеста и десет евро на месец".\n` +
-          `  Ако цената има стотинки → кажи "и X стотинки". Не закръгляй.\n` +
-          `  ПРОВЕРЯВАЙ: ако цената е под 10 евро, тя НЕ Е стотици евро.\n` +
-          `- Големи числа: "15999 €" → "петнадесет хиляди деветстотин деветдесет и девет евро".\n` +
-          `- "31291 лв" → "тридесет и една хиляди двеста деветдесет и един лева".\n` +
-          `- Двигатели: "4.7i" → "четири точка седем". "3.0d" → "три литра дизел". "5.5i" → "пет и половина литра".\n` +
-          `- Мощност: "408 к.с." → "четиристотин и осем конски сили". "211 к.с." → "двеста и единадесет конски сили".\n` +
-          `- Модели коли: "CLS550" → "ЦЕ ЕЛ ЕС петстотин и петдесет". "GL350" → "ЖЕ ЕЛ триста и петдесет". "S550" → "ЕС петстотин и петдесет".\n` +
-          `- Двигателни типове: "V8" → "ве осем". "V6" → "ве шест". "AMG" → "А МЕ ЖЕ".\n` +
-          `- Пробег: "194000 км" → "сто деветдесет и четири хиляди километра".\n` +
-          `- Години: "2013" → "две хиляди и тринадесета година". "2022" → "две хиляди двадесет и втора".\n` +
-          `- Месечни вноски: "363 €/мес" → "триста шестдесет и три евро на месец".\n` +
-          `- Проценти: "15%" → "петнадесет процента".\n` +
-          `- Разстояния: "10000 км" → "десет хиляди километра".\n` +
-          `- Съкращения: "к.с." → "конски сили". "л." → "литра". "лв." → "лева". "€" → "евро".\n` +
-          `- НИКОГА не произнасяй цифрите поотделно — винаги като пълно число на български.\n\n` +
-          // ── Стил на отговорите (критично за добър voice UX) ──────────────
-          `ПРАВИЛА ЗА ОТГОВОРИТЕ:\n` +
-          `- АДАПТИВНА ДЪЛЖИНА: кратко при прост въпрос, по-дълго при детайлен.\n` +
-          `- Задавай само ЕДИН въпрос наведнъж.\n` +
-          `- НЕ изреждай повече от 2 варианта без да попиташ кой интересува клиента.\n` +
-          `- Ако клиентът е нерешителен ("де да знам") → ПРЕПОРЪЧАЙ конкретно, не питай пак.\n` +
-          `- Говори разговорно и естествено — без списъци, без формален тон.\n` +
-          `- ЗАБРАНЕНО: "ъмм/мхм/аха/хмм" в текста, "знаеш ли/виж/представи си", "Толкова се радвам", "Чудесно".\n` +
-          `- ЗАБРАНЕНО: празни фрази като "модерни и функционални", "реални резултати".\n` +
-          `- ВИНАГИ давай КОНКРЕТИКА: точна цена, точно какво включва, точна разлика.\n\n` +
-          `ПРАВИЛА ЗА КОНТАКТНИ ДАННИ:\n` +
-          `- НИКОГА не казвай примерни имейли (example.com), телефони или имена. Те не съществуват.\n` +
-          `- Ако клиентът не е дал имейл, телефон или име — ПОПИТАЙ го директно. Не измисляй.\n` +
-          `- Когато повтаряш данни за потвърждение — използвай САМО реално получените от клиента.\n` +
-          `- Ако данните са непълни или неясни — помоли клиента да ги повтори или напише в чата.\n\n`;
-
-        if (resolvedInstruction && !resolvedInstruction.startsWith("Говориш единствено")) {
+          `Говориш единствено на български език с правилно ударение и естествена интонация. ` +
+          `Темпото е спокойно и уверено. Тонът е топъл и ангажиращ.\n\n` +
+          `ТВЪРД ЛИМИТ: МАКСИМУМ 2-3 ИЗРЕЧЕНИЯ НА ОТГОВОР. При изброяване максимум 4. ` +
+          `Ако не се побираш → кажи най-важното и завърши с въпрос: "Искате ли да чуете и за [останалото]?"\n\n` +
+          `ПРОИЗНОШЕНИЕ:\n` +
+          `- "3.06 EUR" → "три евро и шест стотинки". НИКОГА "триста шест".\n` +
+          `- Цена < 10 евро → НЕ Е стотици. Billing period САМО ако е изрично в данните.\n` +
+          `- "€" → "евро". Числа винаги на български.\n\n` +
+          `ЗАБРАНЕНИ ЗВУЦИ В ТЕКСТА: "ъмм/мхм/аха/хмм/знаеш ли/виж" — добавят се автоматично.\n` +
+          `ЗАБРАНЕНИ ФРАЗИ: "модерни и функционални", "реални резултати", примерни имейли (example.com).\n` +
+          `Контактни данни: САМО реално получените от клиента. Не измисляй.\n\n`;
           resolvedInstruction = BG_VOICE_PREFIX + resolvedInstruction;
-        }
 
         // Step 2: If the original systemPrompt contains calendar instructions, append them
         // This ensures the calendar block from widget-session survives even if gemini-session discards it
@@ -4280,6 +4250,12 @@ export const useGeminiVoice = ({
     clearSilenceWatchdog();
     silenceNudgeSentRef.current = false;
     silenceNudgeCountRef.current = 0;
+
+    // ★ DEMO SESSION: clear auto-disconnect timer
+    if (demoSessionTimerRef.current) {
+      window.clearTimeout(demoSessionTimerRef.current);
+      demoSessionTimerRef.current = null;
+    }
 
     if (dgKeepAliveRef.current) {
       clearInterval(dgKeepAliveRef.current);
@@ -5287,8 +5263,9 @@ export const useGeminiVoice = ({
   const textOnlyRef = useRef(false);
 
   const connect = useCallback(
-    async (systemPrompt: string, companyName: string, sessionId?: string, textOnly?: boolean) => {
+    async (systemPrompt: string, companyName: string, sessionId?: string, textOnly?: boolean, isDemo?: boolean) => {
       textOnlyRef.current = !!textOnly;
+      const isDemoSession = !!isDemo;
       const key = `${sessionId || ""}::${companyName || ""}::${hash32(systemPrompt || "")}`;
 
       if (isConnectedRef.current && preparedKeyRef.current && preparedKeyRef.current !== key) {
@@ -5346,7 +5323,8 @@ export const useGeminiVoice = ({
           // ── Voice selection ───────────────────────────────────────────────
           // Enceladus = ясен, неутрален мъжки глас — по-добро произношение на български
           // (Charon е добър за английски, но Enceladus/Sadachbia са по-чисти за славянски езици)
-          const voiceName = (session as any).voiceName || "Enceladus";
+          const rawVoiceName = (session as any).voiceName || DEFAULT_VOICE;
+          const voiceName = ALLOWED_VOICES[rawVoiceName] ? rawVoiceName : DEFAULT_VOICE;
 
           const setupPayload: any = {
             setup: {
@@ -5356,7 +5334,7 @@ export const useGeminiVoice = ({
                 // temperature 0.95 — по-топъл, по-емоционален глас; звучи като жив човек
                 // Високата температура добавя естествена вариация в интонацията
                 temperature: 0.95,
-                max_output_tokens: 1500,
+                max_output_tokens: 800,
                 speech_config: {
                   voice_config: {
                     prebuilt_voice_config: {
@@ -5404,6 +5382,31 @@ export const useGeminiVoice = ({
             if (!greetingSentRef.current) {
               greetingSentRef.current = true;
               currentResponseTextRef.current = "";
+
+              // ★ DEMO SESSION: Start 3-minute auto-disconnect timer (only for demos)
+              if (isDemoSession) {
+                if (demoSessionTimerRef.current) {
+                  window.clearTimeout(demoSessionTimerRef.current);
+                }
+                demoSessionTimerRef.current = window.setTimeout(() => {
+                demoSessionTimerRef.current = null;
+                if (isConnectedRef.current) {
+                  console.log("[DEMO] ⏰ 3-minute demo session limit reached — auto-disconnect");
+                  // Send a goodbye message before disconnecting
+                  try {
+                    sendToGemini("[SYSTEM] Демо сесията приключи. Кажи на клиента КРАТКО: Благодаря за интереса! Демо сесията приключи. За повече информация, посетете сайта ни. Довиждане!");
+                    // Give Gemini 5 seconds to speak the goodbye, then disconnect
+                    setTimeout(() => {
+                      disconnect();
+                    }, 5000);
+                  } catch {
+                    disconnect();
+                  }
+                }
+              }, DEMO_SESSION_MAX_MS);
+              console.log(`[DEMO] ⏰ Demo timer started: ${DEMO_SESSION_MAX_MS / 1000}s`);
+              } // end isDemoSession
+
               // ★ Trigger Gemini to SPEAK the greeting aloud.
               // The instant text greeting is already shown in the UI by the caller.
               // This sends a hidden prompt so the model generates audio for the greeting.

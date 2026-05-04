@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ActivityLog from '@/components/dashboard/ActivityLog';
 import ConversationStats from '@/components/dashboard/ConversationStats';
 import { motion } from 'framer-motion';
@@ -16,10 +16,20 @@ const TABS = [
 ];
 
 const ConversationsPage = ({ userId, section }: ConversationsPageProps) => {
-  const [tab, setTab] = useState(section === 'stats' ? 'stats' : 'log');
+  const [tab, setTab] = useState<'log' | 'stats'>(
+    section === 'stats' ? 'stats' : 'log'
+  );
+
+  // 👉 sync ако section се смени отвън (много важно)
+  useEffect(() => {
+    if (section === 'stats') setTab('stats');
+    else setTab('log');
+  }, [section]);
 
   return (
-    <div className="h-full flex flex-col p-4 lg:p-6 overflow-hidden overflow-x-hidden">
+    <div className="h-full flex flex-col p-4 lg:p-6 overflow-hidden">
+
+      {/* TABS */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -29,7 +39,7 @@ const ConversationsPage = ({ userId, section }: ConversationsPageProps) => {
         {TABS.map((t) => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => setTab(t.id as 'log' | 'stats')}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-150',
               tab === t.id
@@ -43,15 +53,24 @@ const ConversationsPage = ({ userId, section }: ConversationsPageProps) => {
         ))}
       </motion.div>
 
+      {/* CONTENT */}
       <motion.div
-        key={tab}
+        key={`${tab}-${userId}`} // 👉 force re-render при смяна
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain rounded-2xl border border-border/10 bg-card/60 p-4 lg:p-5"
+        className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain rounded-2xl border border-border/10 bg-card/60 p-4 lg:p-5"
       >
-        {tab === 'log' ? <ActivityLog userId={userId} /> : <ConversationStats userId={userId} />}
+        {tab === 'log' ? (
+          <ActivityLog
+            key={`log-${userId}`} // 👉 force fresh fetch
+            userId={userId}
+          />
+        ) : (
+          <ConversationStats userId={userId} />
+        )}
       </motion.div>
+
     </div>
   );
 };

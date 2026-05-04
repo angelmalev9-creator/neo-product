@@ -28,10 +28,10 @@ const Pricing = () => {
     {
       id: 'starter', name: 'Основен', price: yearly ? '15' : '25', yearlyTotal: '180',
       minutes: '500', callsPerDay: '~25 обаждания/ден',
-      description: 'За малки бизнеси, които не искат да пропускат обаждания.',
+      description: 'За старт. Ограничен капацитет при повече обаждания.',
       features: [
-        { text: '500 минути / месец', icon: Phone },
-        { text: 'Отговаря 24/7 на чат и телефон', icon: Headphones },
+        { text: 'Само 500 минути / месец', icon: Phone },
+        { text: 'Отговаря 24/7 с глас и чат', icon: Headphones },
         { text: 'Говори на български и английски', icon: Globe },
         { text: 'Уиджет за сайта Ви', icon: Palette },
         { text: 'Виждате всеки разговор и резултата от него', icon: BarChart3 },
@@ -43,15 +43,14 @@ const Pricing = () => {
     {
       id: 'growth', name: 'Растеж', price: yearly ? '23' : '33', yearlyTotal: '276',
       minutes: '2500', callsPerDay: '~125 обаждания/ден',
-      description: 'За растящи бизнеси с повече клиенти и нужда от автоматизация.',
+      description: 'Най-добрият баланс цена / обем.',
       features: [
         { text: '2 500 минути / месец', icon: Phone },
         { text: 'Всичко от Основен +', icon: Check },
-        { text: 'Записва часове автоматично в Google Calendar', icon: Calendar },
-        { text: 'Отговаря на имейли, които не може да затвори по телефон', icon: Mail },
-        { text: 'Детайлни графики и анализ на разговори', icon: TrendingUp },
-        { text: 'Улавя и записва всеки потенциален клиент', icon: Users },
-        { text: 'Приоритетна поддръжка', icon: Headphones },
+        { text: 'Записва часове автоматично с вграден календар', icon: Calendar },
+        { text: 'Изпраща имейл запитвания и известия към клиентите', icon: Mail },
+        { text: 'Детайлни анализи в реално време', icon: TrendingUp },
+        { text: 'Записва всеки разговор и класифицира клиентите', icon: Users },
       ],
       cta: 'Изберете Растеж', featured: true,
       priceId: yearly ? PRICE_IDS.growth.yearly : PRICE_IDS.growth.monthly,
@@ -59,7 +58,7 @@ const Pricing = () => {
     {
       id: 'empire', name: 'Мащаб', price: yearly ? '50' : '60', yearlyTotal: '600',
       minutes: '10000', callsPerDay: '500+ обаждания/ден',
-      description: 'За бизнеси с голям обем обаждания и нужда от пълен контрол.',
+      description: 'Най-добра стойност при голям обем.',
       features: [
         { text: '10 000 минути / месец', icon: Phone },
         { text: 'Всичко от Растеж +', icon: Check },
@@ -113,7 +112,7 @@ const Pricing = () => {
             Изберете план. <span className="text-accent">Променете по всяко време.</span>
           </h2>
           <p className="neo-subheading text-muted-foreground mb-8">
-            Всички планове включват 14 дни безплатен период. Без карта. Без автоматично таксуване.
+            Инсталирайте NEO днес и вижте разликата още този месец. Променете по всяко време.
           </p>
 
           {/* Billing Toggle */}
@@ -190,7 +189,7 @@ const Pricing = () => {
                 <p className="text-xs lg:text-sm text-muted-foreground mb-4">{plan.description}</p>
 
                 <div className="flex items-baseline gap-1.5 mb-1">
-                  <span className={`text-4xl lg:text-5xl font-black tracking-tight ${plan.featured ? '' : 'text-foreground'}`}
+  <span className={`text-4xl lg:text-5xl font-black tracking-tight ${plan.featured ? '' : 'text-foreground'}`}
                     style={plan.featured ? { color: 'hsl(142 71% 45%)' } : undefined}
                   >
                     {plan.price} EUR
@@ -205,6 +204,23 @@ const Pricing = () => {
                 )}
 
                 <div className="flex items-center gap-2 mb-5">
+                  {plan.id === 'growth' && (
+  <p className="text-xs text-green-400 mt-2 opacity-80">
+    До 3x по-ниска цена на минута
+  </p>
+)}
+
+{plan.id === 'starter' && (
+  <p className="text-xs text-yellow-500 mt-2 opacity-80">
+    Ще са нужни допълнителни минути при по-голям обем
+  </p>
+)}
+
+{plan.id === 'empire' && (
+  <p className="text-xs text-orange-400 mt-2 opacity-80">
+    Най-добра стойност за голям обем
+  </p>
+)}
                   <Phone className="w-4 h-4 text-primary" />
                   <span className="text-sm text-foreground font-medium">{plan.minutes} минути</span>
                   <span className="text-xs text-muted-foreground">({plan.callsPerDay})</span>
