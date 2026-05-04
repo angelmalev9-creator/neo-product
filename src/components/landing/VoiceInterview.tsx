@@ -94,7 +94,7 @@ type DemoEmailLog = {
   is_demo: boolean | null;
 };
 
-const DEMO_DURATION_SECONDS = 300;
+const DEMO_DURATION_SECONDS = 180;
 
 // ✅ CRITICAL: Final message needs 10+ seconds to be spoken clearly
 const DEMO_END_TRIGGER_SECONDS = 10;
@@ -291,7 +291,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
 
   // ✅ Hard-coded final demo message (NOT i18n dependent)
   const buildFinalDemoMessage = useCallback(() => {
-    return "За съжаление ДЕМО сесията приключи. Ако ви хареса НЕО, може да изберете план според нуждите на бизнеса ви, и да създадете свой НЕО асистент в рамките на 5 минути, без сложни настройки или опит.";
+    return "За съжаление ДЕМО сесията приключи. Ако ви хареса НЕО, може да изберете план според нуждите на бизнеса ви, и да създадете свой НЕО асистент в рамките на 3 минути, без сложни настройки или опит.";
   }, []);
 
   /**
