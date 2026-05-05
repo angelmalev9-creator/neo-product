@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useUsage } from '@/pages/Dashboard';
 
 interface SettingsPageProps {
   userId: string;
@@ -14,8 +15,8 @@ interface SettingsPageProps {
   subscribed: boolean;
   tierName: string;
   subscriptionEnd: string | null;
-  usedMinutes: number;
-  planLimit: number;
+  usedMinutes: number;       // kept for backward compat but IGNORED — reads from context
+  planLimit: number;          // kept for backward compat but IGNORED — reads from context
   onManageSubscription: () => void;
   portalLoading: boolean;
   websiteUrl: string;
@@ -32,11 +33,15 @@ const formatUsageMinutes = (value: number) => {
 
 const SettingsPage = ({
   userId, section = 'plan', subscribed, tierName, subscriptionEnd,
-  usedMinutes, planLimit, onManageSubscription, portalLoading,
+  // usedMinutes & planLimit props are IGNORED — single source of truth is UsageContext
+  onManageSubscription, portalLoading,
   websiteUrl, setWebsiteUrl, companyName, setCompanyName, userEmail,
 }: SettingsPageProps) => {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
+
+  // ═══ FIX: Single source of truth from UsageContext ═══
+  const { usedMinutes, planLimit } = useUsage();
 
   const usagePercent = planLimit > 0 ? (usedMinutes / planLimit) * 100 : 0;
   const remainingMinutes = Math.max(0, planLimit - usedMinutes);

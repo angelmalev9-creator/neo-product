@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +11,49 @@ import ConversationsPage from '@/components/dashboard/ConversationsPage';
 import NeoPage from '@/components/dashboard/NeoPage';
 import SettingsPage from '@/components/dashboard/SettingsPage';
 import ChannelsPage from '@/components/dashboard/ChannelsPage';
+
+// ═══════════════════════════════════════════════════════════════
+// FIX #1: UsageContext — единен източник на истина за usage данни
+// ═══════════════════════════════════════════════════════════════
+// Преди: всеки таб (DashboardHome, Settings, NeoPage) получаваше
+// usedMinutes/planLimit като props, но ги кешираше в локален state.
+// Realtime subscription беше само в Dashboard.tsx → подкомпонентите
+// виждаха стари стойности докато не се презареди страницата.
+//
+// Сега: UsageContext е единственият source of truth. Всички компоненти
+// четат от него директно. Когато realtime update дойде или loadUsage
+// рефрешне данните, ВСИЧКИ табове виждат новите стойности веднага.
+// ═══════════════════════════════════════════════════════════════
+
+interface UsageContextValue {
+  usedMinutes: number;
+  planLimit: number;
+  remainingMinutes: number;
+  subscriptionTier: string;
+  daysUntilReset: number;
+  /** Последно обновяване (ISO timestamp) — за "Last synced" индикатор */
+  lastSyncedAt: string | null;
+  /** Ръчно презареждане на usage данните */
+  refreshUsage: () => Promise<void>;
+  /** Setter за external updates (напр. от NeoPage voice test) */
+  setUsedMinutes: (minutes: number) => void;
+}
+
+const UsageContext = createContext<UsageContextValue>({
+  usedMinutes: 0,
+  planLimit: 100,
+  remainingMinutes: 100,
+  subscriptionTier: 'starter',
+  daysUntilReset: 30,
+  lastSyncedAt: null,
+  refreshUsage: async () => {},
+  setUsedMinutes: () => {},
+});
+
+/** Hook за достъп до usage данните от всеки компонент в Dashboard дървото */
+export const useUsage = () => useContext(UsageContext);
+
+// ═══════════════════════════════════════════════════════════════
 
 const TIER_NAMES: Record<string, string> = {
   starter: 'NEO Старт',
@@ -29,8 +72,16 @@ const Dashboard = () => {
   const [voiceSpeed, setVoiceSpeed] = useState(1.0);
   const [portalLoading, setPortalLoading] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  // ─── Usage state (единствен source of truth) ───
   const [usedMinutes, setUsedMinutes] = useState(0);
   const [planLimit, setPlanLimit] = useState(100);
+  const [subscriptionTier, setSubscriptionTier] = useState('starter');
+  const [daysUntilReset, setDaysUntilReset] = useState(30);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
+
+  // ─── Conversations realtime counter (за бъдещ UI badge) ───
+  const [conversationsUpdatedAt, setConversationsUpdatedAt] = useState<string | null>(null);
 
   const [demoSession, setDemoSession] = useState<{
     id: string; url: string; summary: string | null; language: string | null;
@@ -53,17 +104,84 @@ const Dashboard = () => {
     if (user) { checkSubscription(); loadProfile(); loadUsage(); loadDemoSession(); }
   }, [user]);
 
+  // ═══════════════════════════════════════════════════════════════
+  // FIX #2: Realtime subscriptions за profiles + conversations + leads
+  // ═══════════════════════════════════════════════════════════════
+  // Преди: само profiles.used_minutes беше realtime → conversations
+  // и leads изискваха ръчен refresh на страницата.
+  //
+  // Сега: 3 канала:
+  //   1) profiles (used_minutes, subscription_tier промени)
+  //   2) conversations (INSERT/UPDATE → auto-refresh за ConversationsPage)
+  //   3) captured_leads (INSERT → auto-refresh за PotentialClients)
+  // ═══════════════════════════════════════════════════════════════
   useEffect(() => {
     if (!user) return;
-    const channel = supabase.channel('profile-usage-realtime')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `user_id=eq.${user.id}` }, (payload) => {
-        const newMinutes = payload.new?.used_minutes;
-        if (newMinutes !== undefined && newMinutes !== null) {
-          const parsed = parseFloat(String(newMinutes));
-          if (!isNaN(parsed)) setUsedMinutes(parsed);
-        }
-      }).subscribe();
-    return () => { supabase.removeChannel(channel); };
+
+    const channel = supabase.channel('dashboard-realtime')
+      // ── Profiles: usage + subscription промени ──
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const p = payload.new;
+          if (!p) return;
+
+          const newMinutes = p.used_minutes;
+          if (newMinutes !== undefined && newMinutes !== null) {
+            const parsed = parseFloat(String(newMinutes));
+            if (!isNaN(parsed)) {
+              setUsedMinutes(parsed);
+              setLastSyncedAt(new Date().toISOString());
+            }
+          }
+
+          // Subscription tier може да се промени от Stripe webhook
+          if (p.subscription_tier && p.subscription_tier !== subscriptionTier) {
+            setSubscriptionTier(p.subscription_tier);
+            checkSubscription(); // refresh full subscription state
+          }
+        },
+      )
+      // ── Conversations: нови/обновени разговори ──
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT + UPDATE (за end/summary)
+          schema: 'public',
+          table: 'conversations',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (_payload) => {
+          // Emit a custom event that ConversationsPage can listen to
+          // instead of each tab doing its own polling
+          setConversationsUpdatedAt(new Date().toISOString());
+          window.dispatchEvent(new CustomEvent('neo-conversations-updated'));
+        },
+      )
+      // ── Captured leads: нови leads ──
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'captured_leads',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (_payload) => {
+          window.dispatchEvent(new CustomEvent('neo-leads-updated'));
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const loadDemoSession = async () => {
@@ -92,20 +210,37 @@ const Dashboard = () => {
     }
   };
 
+  // ═══════════════════════════════════════════════════════════════
+  // FIX #3: loadUsage — по-рядко polling, разчита на realtime
+  // ═══════════════════════════════════════════════════════════════
+  // Преди: polling на всеки 20 секунди + focus + visibilitychange
+  // = агресивно натоварване. Сега: realtime subscription handle-ва
+  // по-голямата част от обновленията. Polling остава само като fallback
+  // на всеки 60 секунди и при tab focus.
+  // ═══════════════════════════════════════════════════════════════
   const loadUsage = useCallback(async () => {
     if (!user) return;
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       if (!currentSession) return;
       const { data } = await supabase.functions.invoke('track-usage', { body: { action: 'get_usage' } });
-      if (data) { setUsedMinutes(data.used_minutes || 0); setPlanLimit(data.plan_limit || 100); }
+      if (data) {
+        setUsedMinutes(data.used_minutes || 0);
+        setPlanLimit(data.plan_limit || 100);
+        setSubscriptionTier(data.subscription_tier || 'starter');
+        setDaysUntilReset(data.days_until_reset ?? 30);
+        setLastSyncedAt(new Date().toISOString());
+      }
     } catch { /* silent */ }
   }, [user]);
 
   useEffect(() => {
     if (!user) return;
     const refreshUsage = () => { void loadUsage(); };
-    const intervalId = window.setInterval(refreshUsage, 20000);
+
+    // FIX: 60s вместо 20s — realtime handle-ва immediate updates
+    const intervalId = window.setInterval(refreshUsage, 60_000);
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') refreshUsage();
     };
@@ -132,6 +267,18 @@ const Dashboard = () => {
   const handleLogout = async () => { await signOut(); navigate('/'); };
 
   const tierName = TIER_NAMES[subscription.tier || 'starter'] || 'Активен';
+
+  // ─── Usage context value ───
+  const usageContextValue: UsageContextValue = {
+    usedMinutes,
+    planLimit,
+    remainingMinutes: Math.max(0, planLimit - usedMinutes),
+    subscriptionTier,
+    daysUntilReset,
+    lastSyncedAt,
+    refreshUsage: loadUsage,
+    setUsedMinutes,
+  };
 
   if (loading) {
     return (
@@ -260,25 +407,27 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="dark min-h-screen h-screen bg-[hsl(230_40%_6%)] flex overflow-hidden">
-      <div className="hidden lg:block">
-        <DashboardSidebar
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          onLogout={handleLogout}
-          userEmail={user?.email}
-          subscribed={subscription.subscribed}
-          tierName={tierName}
-        />
-      </div>
+    <UsageContext.Provider value={usageContextValue}>
+      <div className="dark min-h-screen h-screen bg-[hsl(230_40%_6%)] flex overflow-hidden">
+        <div className="hidden lg:block">
+          <DashboardSidebar
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            onLogout={handleLogout}
+            userEmail={user?.email}
+            subscribed={subscription.subscribed}
+            tierName={tierName}
+          />
+        </div>
 
-      <div className="flex-1 flex flex-col min-w-0 h-screen">
-        <DashboardMobileNav activeTab={activeTab} onTabChange={setActiveTab} />
-        <main className="flex-1 min-h-0 overflow-hidden overflow-x-hidden overscroll-y-none pb-[4.25rem] lg:pb-0">
-          {renderContent()}
-        </main>
+        <div className="flex-1 flex flex-col min-w-0 h-screen">
+          <DashboardMobileNav activeTab={activeTab} onTabChange={setActiveTab} />
+          <main className="flex-1 min-h-0 overflow-hidden overflow-x-hidden overscroll-y-none pb-[4.25rem] lg:pb-0">
+            {renderContent()}
+          </main>
+        </div>
       </div>
-    </div>
+    </UsageContext.Provider>
   );
 };
 

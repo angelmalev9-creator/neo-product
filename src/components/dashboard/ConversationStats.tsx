@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -77,111 +77,109 @@ const ConversationStats = ({ userId }: ConversationStatsProps) => {
   const [expandedConversation, setExpandedConversation] = useState<string | null>(null);
   const [summarizing, setSummarizing] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (userId) {
-      loadData();
-    }
-  }, [userId]);
+  // ═══════════════════════════════════════════════════════════════
+  // FIX: loadData разделен на две части:
+  //   1) loadStats — ползва count: exact (без limit) за ТОЧНИ числа
+  //   2) loadConversations — зарежда последните 50 за списъка
+  //
+  // ПРЕДИ: limit(50) → stats се изчисляваха от 50 записа → 58 мин
+  // СЕГА: stats ползват агрегирани DB queries без limit
+  // ═══════════════════════════════════════════════════════════════
 
-  // Real-time subscription for conversations and leads
-  useEffect(() => {
+  const loadData = useCallback(async () => {
     if (!userId) return;
-
-    console.log('[ConversationStats] Setting up realtime subscriptions for user:', userId);
-
-    // Subscribe to conversations changes
-    const conversationsChannel = supabase
-      .channel('conversations-realtime-stats')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'conversations',
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          console.log('[ConversationStats] Conversation change:', payload.eventType, payload);
-          // Reload data on any change
-          loadData();
-        }
-      )
-      .subscribe((status) => {
-        console.log('[ConversationStats] Conversations subscription status:', status);
-      });
-
-    // Subscribe to captured_leads changes
-    const leadsChannel = supabase
-      .channel('leads-realtime-stats')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'captured_leads',
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          console.log('[ConversationStats] Lead change:', payload.eventType, payload);
-          loadData();
-        }
-      )
-      .subscribe((status) => {
-        console.log('[ConversationStats] Leads subscription status:', status);
-      });
-
-    return () => {
-      console.log('[ConversationStats] Cleaning up realtime subscriptions');
-      supabase.removeChannel(conversationsChannel);
-      supabase.removeChannel(leadsChannel);
-    };
-  }, [userId]);
-
-  const loadData = async () => {
     setLoading(true);
     try {
-      // Load conversations
-      const { data: convos, error: convosError } = await supabase
-        .from('conversations')
-        .select('*')
-        .eq('user_id', userId)
-        .order('started_at', { ascending: false })
-        .limit(50);
+      // ── Stats: агрегирани queries БЕЗ limit ──
+      const [
+        totalConvRes,
+        totalDurRes,
+        leadsCountRes,
+        sentimentPosRes,
+        sentimentNeuRes,
+        sentimentNegRes,
+        recentConvos,
+        leadsData,
+      ] = await Promise.all([
+        // Total conversations count (exact, no limit)
+        supabase
+          .from('conversations')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId),
 
-      if (convosError) throw convosError;
+        // Total duration (ALL conversations, no limit)
+        supabase
+          .from('conversations')
+          .select('duration_seconds')
+          .eq('user_id', userId)
+          .not('duration_seconds', 'is', null),
 
-      // Load captured leads
-      const { data: leadsData, error: leadsError } = await supabase
-        .from('captured_leads')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(50);
+        // Leads count (exact)
+        supabase
+          .from('captured_leads')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId),
 
-      if (leadsError) throw leadsError;
+        // Sentiment counts
+        supabase
+          .from('conversations')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('sentiment', 'positive'),
+        supabase
+          .from('conversations')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('sentiment', 'neutral'),
+        supabase
+          .from('conversations')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('sentiment', 'negative'),
 
-      setConversations(convos || []);
-      setLeads(leadsData || []);
+        // Recent conversations for the list (limit 50 — display only)
+        supabase
+          .from('conversations')
+          .select('*')
+          .eq('user_id', userId)
+          .order('started_at', { ascending: false })
+          .limit(50),
 
-      // Calculate stats
-      const totalConvos = convos?.length || 0;
-      const totalSeconds = convos?.reduce((acc, c) => acc + (c.duration_seconds || 0), 0) || 0;
-      const leadsCount = convos?.filter(c => c.lead_captured).length || 0;
+        // Recent leads for the list
+        supabase
+          .from('captured_leads')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(50),
+      ]);
 
-      const sentimentBreakdown = {
-        positive: convos?.filter(c => c.sentiment === 'positive').length || 0,
-        neutral: convos?.filter(c => c.sentiment === 'neutral').length || 0,
-        negative: convos?.filter(c => c.sentiment === 'negative').length || 0,
-      };
+      // Conversations for display
+      setConversations(recentConvos.data || []);
+      setLeads(leadsData.data || []);
+
+      // Stats from aggregated queries
+      const totalConvos = totalConvRes.count ?? 0;
+
+      // Sum ALL duration_seconds (no limit)
+      const totalSeconds = (totalDurRes.data || []).reduce(
+        (acc: number, c: any) => acc + (c.duration_seconds || 0),
+        0,
+      );
+
+      const leadsCount = leadsCountRes.count ?? 0;
 
       setStats({
         totalConversations: totalConvos,
         totalMinutes: Math.round(totalSeconds / 60),
         avgDuration: totalConvos > 0 ? Math.round(totalSeconds / totalConvos) : 0,
         leadsCapured: leadsCount,
-        sentimentBreakdown,
+        sentimentBreakdown: {
+          positive: sentimentPosRes.count ?? 0,
+          neutral: sentimentNeuRes.count ?? 0,
+          negative: sentimentNegRes.count ?? 0,
+        },
       });
-
     } catch (error) {
       console.error('Error loading stats:', error);
       toast({
@@ -192,7 +190,30 @@ const ConversationStats = ({ userId }: ConversationStatsProps) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, toast]);
+
+  useEffect(() => {
+    if (userId) loadData();
+  }, [userId, loadData]);
+
+  // ═══════════════════════════════════════════════════════════════
+  // FIX: Вместо собствени realtime subscriptions (дублираха Dashboard-а),
+  // слушаме CustomEvents от Dashboard.tsx единния realtime канал.
+  // Това елиминира 2 излишни Supabase канала.
+  // ═══════════════════════════════════════════════════════════════
+  useEffect(() => {
+    if (!userId) return;
+
+    const handleUpdate = () => { loadData(); };
+
+    window.addEventListener('neo-conversations-updated', handleUpdate);
+    window.addEventListener('neo-leads-updated', handleUpdate);
+
+    return () => {
+      window.removeEventListener('neo-conversations-updated', handleUpdate);
+      window.removeEventListener('neo-leads-updated', handleUpdate);
+    };
+  }, [userId, loadData]);
 
   const summarizeConversation = async (conversationId: string) => {
     setSummarizing(conversationId);
@@ -223,51 +244,41 @@ const ConversationStats = ({ userId }: ConversationStatsProps) => {
     }
   };
 
-  const getSentimentIcon = (sentiment: string | null) => {
-    switch (sentiment) {
-      case 'positive':
-        return <Smile className="w-4 h-4 text-green-500" />;
-      case 'negative':
-        return <Frown className="w-4 h-4 text-red-500" />;
-      default:
-        return <Meh className="w-4 h-4 text-yellow-500" />;
-    }
-  };
-
-  const getSentimentBadge = (sentiment: string | null) => {
-    const colors: Record<string, string> = {
-      positive: 'bg-green-500/10 text-green-500 border-green-500/20',
-      negative: 'bg-red-500/10 text-red-500 border-red-500/20',
-      neutral: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-    };
-    return colors[sentiment || 'neutral'] || colors.neutral;
-  };
-
   const formatDuration = (seconds: number | null) => {
-    if (!seconds) return '0с';
-    if (seconds < 60) return `${seconds}с`;
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}м ${secs}с`;
+    if (!seconds || seconds <= 0) return '0с';
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    if (m === 0) return `${s}с`;
+    return `${m}м ${s}с`;
+  };
+
+  const getSentimentIcon = (sentiment: string | null) => {
+    if (sentiment === 'positive') return <Smile className="w-4 h-4 text-green-500" />;
+    if (sentiment === 'negative') return <Frown className="w-4 h-4 text-red-500" />;
+    return <Meh className="w-4 h-4 text-yellow-500" />;
+  };
+
+  const getSentimentBadge = (sentiment: string) => {
+    if (sentiment === 'positive') return 'bg-green-500/10 text-green-500 border-green-500/20';
+    if (sentiment === 'negative') return 'bg-red-500/10 text-red-500 border-red-500/20';
+    return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
   };
 
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-xl" />
-          ))}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
         </div>
-        <Skeleton className="h-64 rounded-xl" />
+        <Skeleton className="h-48 rounded-xl" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="space-y-4">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Card className="neo-glass border-border/30">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -285,8 +296,8 @@ const ConversationStats = ({ userId }: ConversationStatsProps) => {
         <Card className="neo-glass border-border/30">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Clock className="w-5 h-5 text-primary" />
+              <div className="p-2 rounded-lg bg-blue-500/10">
+                <Clock className="w-5 h-5 text-blue-500" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{stats.totalMinutes}</p>

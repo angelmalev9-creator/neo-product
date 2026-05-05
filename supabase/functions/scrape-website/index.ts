@@ -9,7 +9,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const FETCH_TIMEOUT_MS = 120_000;
+const FETCH_TIMEOUT_MS = 115_000;
 const MAX_ATTEMPTS = 30;
 const POLL_DELAY_MS = 3_000;
 
@@ -367,7 +367,7 @@ serve(async (req) => {
     const crawlerUrl = "http://37.60.224.81:10000";
     push("crawler_start", { crawlerUrl });
 
-    const crawlerPayload = { url, maxPages: 120, maxDepth: 6, followInternalLinks: true, includeSitemap: true };
+    const crawlerPayload = { url, maxPages: 120, maxDepth: 6, followInternalLinks: true, includeSitemap: true, deadline_ms: 110_000 };
 
     let pages: any[] = [];
     let capabilities: any[] = [];

@@ -99,6 +99,10 @@ const DEMO_DURATION_SECONDS = 180;
 // ✅ CRITICAL: Final message needs 10+ seconds to be spoken clearly
 const DEMO_END_TRIGGER_SECONDS = 10;
 
+// ═══ FIX: 5-minute cooldown between demo sessions ═══
+const DEMO_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
+const COOLDOWN_STORAGE_KEY = 'neo_demo_last_session_end';
+
 const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
   // ✅ CRITICAL: useScrollAnimation MUST be the very first hook to avoid React "Should have a queue" errors
   const { ref: sectionRef, isVisible } = useScrollAnimation();
@@ -112,6 +116,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
   const [timeRemaining, setTimeRemaining] = useState(DEMO_DURATION_SECONDS);
   const [demoEnded, setDemoEnded] = useState(false);
   const [showEndModal, setShowEndModal] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const [textInput, setTextInput] = useState("");
   const [actionsTaken, setActionsTaken] = useState<string[]>([]);
   const [latestEmailLog, setLatestEmailLog] = useState<DemoEmailLog | null>(null);
@@ -1021,6 +1026,8 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
       playDisconnectSound();
       stopAmbient();
       disconnect();
+      // ═══ FIX: Записва cooldown timestamp при disconnect ═══
+      try { localStorage.setItem(COOLDOWN_STORAGE_KEY, String(Date.now())); } catch {}
       setShowEndModal(true);
     };
 
@@ -1235,7 +1242,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
       setTextOnlyMode(false);
       playConnectSound();
       startAmbient();
-      await connect(systemPrompt, companyName, sessionId ?? undefined);
+      await connect(systemPrompt, companyName, sessionId ?? undefined, undefined, true);
     } else {
       // Text-only mode — connect to Gemini WS for audio output, but skip mic/STT
       setTextOnlyMode(true);
@@ -1244,7 +1251,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
         title: "🎤 Микрофонът не е разрешен",
         description: "НЕО ще ви отговаря с глас, а вие пишете.",
       });
-      await connect(systemPrompt, companyName, sessionId ?? undefined, true);
+      await connect(systemPrompt, companyName, sessionId ?? undefined, true, true);
     }
   }, [
     sessionId,
@@ -1277,16 +1284,46 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     setLiveAssistantTranscript('');
     setLiveUserTranscript('');
     disconnect();
+    // ═══ FIX: Записва cooldown и показва review при ръчен end ═══
+    try { localStorage.setItem(COOLDOWN_STORAGE_KEY, String(Date.now())); } catch {}
+    setShowEndModal(true);
     setTextOnlyMode(false);
   }, [disconnect, playDisconnectSound, stopAmbient, liveAssistantTranscript, liveUserTranscript]);
 
   const handleTryAgain = useCallback(() => {
+    // ═══ FIX: Cooldown проверка — 5 минути между demo сесии ═══
+    try {
+      const lastEnd = parseInt(localStorage.getItem(COOLDOWN_STORAGE_KEY) || '0', 10);
+      const elapsed = Date.now() - lastEnd;
+      if (elapsed < DEMO_COOLDOWN_MS) {
+        const remainingSec = Math.ceil((DEMO_COOLDOWN_MS - elapsed) / 1000);
+        setCooldownRemaining(remainingSec);
+        toast({
+          title: 'Моля, изчакайте',
+          description: `Можете да опитате отново след ${Math.ceil(remainingSec / 60)} мин.`,
+        });
+        // Start countdown
+        const interval = window.setInterval(() => {
+          const now = Date.now();
+          const left = Math.ceil((DEMO_COOLDOWN_MS - (now - lastEnd)) / 1000);
+          if (left <= 0) {
+            setCooldownRemaining(0);
+            window.clearInterval(interval);
+          } else {
+            setCooldownRemaining(left);
+          }
+        }, 1000);
+        return;
+      }
+    } catch {}
+
     setShowEndModal(false);
     setMessages([]);
     setTimeRemaining(DEMO_DURATION_SECONDS);
     setDemoEnded(false);
     setTextInput("");
     setTextOnlyMode(false);
+    setCooldownRemaining(0);
 
     demoEndedRef.current = false;
     finalMessageSentRef.current = false;
@@ -1295,7 +1332,7 @@ const VoiceInterview = ({ sessionId }: VoiceInterviewProps) => {
     lastAssistantMessageAtRef.current = 0;
     greetingShownRef.current = false;
     textChatHistoryRef.current = [];
-  }, []);
+  }, [toast]);
 
   const handleSendText = useCallback(async () => {
     const trimmed = textInput.trim();

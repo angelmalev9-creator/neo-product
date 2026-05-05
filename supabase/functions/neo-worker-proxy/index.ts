@@ -413,10 +413,24 @@ async function loadCompanyName(sessionId: string): Promise<string> {
   try {
     const SUPABASE_URL = (Deno.env.get("SUPABASE_URL") || "").trim();
     const SUPABASE_KEY = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("NEO_SERVICE_ROLE_KEY") || "").trim();
-    if (!SUPABASE_URL || !SUPABASE_KEY) return "компанията";
+    if (!SUPABASE_URL || !SUPABASE_KEY) return "neo-assistant.com";
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
     const { data } = await supabase.from("demo_sessions").select("company_name").eq("id", sessionId).single();
-    return safeStr(data?.company_name).trim() || "компанията";
+    const name = safeStr(data?.company_name).trim();
+if (name) return name;
+
+try {
+  const { data: d2 } = await supabase
+    .from("demo_sessions")
+    .select("url")
+    .eq("id", sessionId)
+    .single();
+
+  const url = safeStr(d2?.url).trim();
+  if (url) return new URL(url).hostname.replace("www.","");
+} catch {}
+
+return "neo-assistant.com";
   } catch { return "компанията"; }
 }
 
@@ -440,37 +454,477 @@ function escapeHtml(s: string): string {
 }
 
 function buildOwnerEmailHtml(clientName: string, clientEmail: string, clientPhone: string, fields: Record<string, unknown>, companyName: string, s: EmailStyleCfg = {} as EmailStyleCfg): string {
-  const accent = s.accentColor || "#dc2626";
-  const headerBg = s.headerBgColor || "#111827";
-  const bg = s.backgroundColor || "#ffffff";
+  const accent = "#27C2FF";
+  const headerBg = "#11152b";
+  const bg = "#11152b";
   const font = s.fontFamily || "'Montserrat',Arial,sans-serif";
-  const textClr = s.textColor || s.fontColor || "#333333";
+  const textClr = "#e5e7eb";
   const footerBg = s.footerBgColor || "#111827";
   const footerClr = s.footerTextColor || "#9ca3af";
-  const logoUrl = s.logoUrl || "";
+  const logoUrl = s.logoUrl || "https://onufuxczpqlxxkgyltlz.supabase.co/storage/v1/object/public/assets/nelogo1.png";
   const labelMap: Record<string, string> = { name:"Име",yourname:"Име",full_name:"Име","три имена":"Име",email:"Имейл",youremail:"Имейл","e-mail":"Имейл",mail:"Имейл",phone:"Телефон",yourphone:"Телефон",tel:"Телефон",telephone:"Телефон",gsm:"Телефон",message:"Съобщение",yourmessage:"Съобщение",comment:"Коментар",plan:"Пакет",package:"Пакет",service:"Услуга",date:"Дата",time:"Час",address:"Адрес",city:"Град",company:"Фирма",subject:"Тема" };
   function translateKey(key: string): string { const k = key.toLowerCase().replace(/[\*\s]+/g,"").trim(); for (const [eng,bg] of Object.entries(labelMap)) { if (k===eng||k.includes(eng)) return bg; } return key.charAt(0).toUpperCase()+key.slice(1); }
-  const fieldRows = Object.entries(fields).filter(([,v]) => safeStr(v).trim()).map(([k,v]) => { const label=translateKey(k); const val=safeStr(v).trim(); const isLink=val.includes("@")?`<a href="mailto:${escapeHtml(val)}" style="color:${accent};text-decoration:none;">${escapeHtml(val)}</a>`:escapeHtml(val); return `<tr><td style="padding:10px 16px;font-size:13px;font-weight:600;color:#6b7280;border-bottom:1px solid #f3f4f6;width:120px;vertical-align:top;font-family:${font};">${escapeHtml(label)}</td><td style="padding:10px 16px;font-size:14px;color:${textClr};border-bottom:1px solid #f3f4f6;font-family:${font};">${isLink}</td></tr>`; }).join("");
+  const fieldRows = Object.entries(fields).filter(([,v]) => safeStr(v).trim()).map(([k,v]) => { const label=translateKey(k); const val=safeStr(v).trim(); const isLink=val.includes("@")?`<a href="mailto:${escapeHtml(val)}" style="color:${accent};text-decoration:none;">${escapeHtml(val)}</a>`:escapeHtml(val); return `<tr><td style="padding:10px 16px;font-size:13px;font-weight:600;background:#171d38;color:#95a4c6;border-bottom:1px solid #283251;width:120px;vertical-align:top;font-family:${font};">${escapeHtml(label)}</td><td style="padding:10px 16px;font-size:14px;background:#0d1228;color:#ffffff;border-bottom:1px solid #283251;font-family:${font};word-break:break-word;overflow-wrap:anywhere;">${isLink}</td></tr>`; }).join("");
   const logoHtml = logoUrl ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(companyName)}" style="max-height:36px;max-width:160px;display:block;" />` : `<div style="width:32px;height:32px;background-color:${accent};border-radius:6px;text-align:center;line-height:32px;"><span style="color:#ffffff;font-size:14px;font-weight:700;">N</span></div>`;
-  return `<!DOCTYPE html><html lang="bg"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>*{font-family:${font}!important;}@media only screen and (max-width:480px){.neo-outer{padding:12px 8px!important;}.neo-pad{padding-left:16px!important;padding-right:16px!important;}.neo-card{border-radius:8px!important;}.neo-title{font-size:16px!important;}.neo-sub{font-size:12px!important;}td{font-size:13px!important;}}</style></head><body style="margin:0;padding:0;background-color:#f3f4f6;font-family:${font};"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;"><tr><td class="neo-outer" style="padding:24px 16px;"><table role="presentation" align="center" width="100%" cellpadding="0" cellspacing="0" class="neo-card" style="max-width:540px;margin:0 auto;background-color:${bg};border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);"><tr><td style="background-color:${headerBg};padding:20px 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="width:40px;vertical-align:middle;">${logoHtml}</td><td style="vertical-align:middle;padding-left:10px;"><p class="neo-title" style="color:#ffffff;font-size:17px;font-weight:700;margin:0;">Ново запитване</p><p class="neo-sub" style="color:#9ca3af;font-size:13px;margin:4px 0 0;"><span style="color:${accent};">NEO</span> получи запитване за ${escapeHtml(companyName)}</p></td></tr></table></td></tr><tr><td style="background-color:${accent};height:3px;font-size:1px;">&nbsp;</td></tr><tr><td class="neo-pad" style="padding:24px;"><p style="color:${textClr};font-size:14px;font-weight:700;margin:0 0 14px;">Данни от клиента:</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">${fieldRows}</table></td></tr><tr><td class="neo-pad" style="padding:0 24px 20px;"><div style="border-top:1px solid #f3f4f6;padding-top:14px;"><p style="color:${footerClr};font-size:12px;margin:0;line-height:1.5;">Подадено автоматично от <strong style="color:${accent};">NEO</strong> — AI асистент на вашия сайт. <a href="https://neo-assistant.com" style="color:${accent};text-decoration:none;">neo-assistant.com</a></p></div></td></tr></table></td></tr></table></body></html>`;
+  return `<!DOCTYPE html><html lang="bg"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>
+*{font-family:${font}!important;}
+img{
+max-width:100%;
+height:auto;
+display:block;
+}
+
+.ExternalClass{
+width:100%;
+}
+
+table{
+border-collapse:collapse;
+mso-table-lspace:0;
+mso-table-rspace:0;
+}
+
+body{
+margin:0!important;
+padding:0!important;
+-webkit-text-size-adjust:100%!important;
+}
+
+/* Gmail dark mode anti-invert */
+
+
+[data-ogsc] body,
+[data-ogsb] body{
+background:#070b18 !important;
+}
+body,
+table,
+tr,
+td{
+background:#11152b !important;
+}
+
+.neo-card{
+background:#11152b !important;
+}
+
+p,span,strong,td{
+color:#ffffff !important;
+-webkit-text-fill-color:#ffffff !important;
+}
+
+a{
+color:#27C2FF !important;
+-webkit-text-fill-color:#27C2FF !important;
+}
+
+[data-ogsc] *{
+background:#11152b !important;
+color:#ffffff !important;
+-webkit-text-fill-color:#ffffff !important;
+}
+
+:root{
+color-scheme:dark;
+supported-color-schemes:dark;
+}
+
+html{
+background:#070b18 !important;
+}
+
+body{
+background:#070b18 !important;
+color:#ffffff !important;
+}
+
+body *{
+color:inherit;
+}
+
+div[style*="background"],
+table,
+tr,
+td{
+background:#11152b !important;
+}
+
+u + .body .gmail-blend-screen{
+background:#070b18 !important;
+mix-blend-mode:normal !important;
+opacity:1 !important;
+}
+
+u + .body .gmail-blend-difference{
+background:#070b18 !important;
+mix-blend-mode:normal !important;
+opacity:1 !important;
+}
+
+@media only screen and (max-width:640px){
+
+body,
+table,
+td,
+.neo-card{
+background:#0f172a !important;
+}
+
+.neo-card{
+border:1px solid #334155 !important;
+box-shadow:
+0 0 0 1px rgba(96,165,250,.22) inset !important;
+}
+
+}
+
+body{
+background:#070b18 !important;
+color:#ffffff !important;
+-webkit-text-fill-color:#ffffff !important;
+}
+
+u + .body,
+u + .body table,
+u + .body td{
+background:#11152b !important;
+color:#ffffff !important;
+-webkit-text-fill-color:#ffffff !important;
+}
+@media (prefers-color-scheme: dark){
+body,table,tr,td,div{
+background:#11152b !important;
+}
+p,span,strong,a,td{
+color:#ffffff !important;
+-webkit-text-fill-color:#ffffff !important;
+}
+a{
+color:#27C2FF !important;
+-webkit-text-fill-color:#27C2FF !important;
+}
+}@media only screen and (max-width:480px){.neo-outer{padding:12px 8px!important;}.neo-pad{padding-left:16px!important;padding-right:16px!important;}.neo-card{border-radius:8px!important;}.neo-title{font-size:16px!important;}.neo-sub{font-size:12px!important;}}</style></head><body class="body" style="margin:0;padding:0;background-color:#070b18;font-family:${font};">
+<div class="gmail-blend-screen">
+<div class="gmail-blend-difference"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#070b18;"><tr>
+<td class="neo-outer" style="padding:24px 16px;">
+
+<table role="presentation"
+align="center"
+width="100%"
+cellpadding="0"
+cellspacing="0"
+style="
+max-width:556px;
+margin:0 auto;
+border:1px solid rgba(39,194,255,.30);
+border-radius:18px;
+padding:6px;
+background:#020617;
+box-shadow:
+0 0 0 1px rgba(39,194,255,.08),
+0 0 24px rgba(39,194,255,.06);
+">
+<tr>
+<td style="padding:0;"><table role="presentation" align="center" width="100%" cellpadding="0" cellspacing="0" class="neo-card" style="
+width:100%;
+max-width:540px;
+margin:0 auto;
+background:#0f172a !important;
+border:1px solid #334155 !important;
+border-radius:16px;
+overflow:hidden;
+
+box-shadow:
+0 0 0 1px rgba(96,165,250,.28) inset,
+0 0 0 1px rgba(30,41,59,.95),
+0 8px 30px rgba(0,0,0,.55) !important;
+
+mso-border-alt:1px solid #334155;
+">
+<tr><td style="background:linear-gradient(180deg,#181d45 0%,#11152b 100%);padding:20px 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="width:40px;vertical-align:middle;">${logoHtml}</td><td style="vertical-align:middle;padding-left:10px;"><p class="neo-title" style="color:#ffffff;font-size:26px;font-weight:800;line-height:1;margin:0;">Ново запитване</p><p class="neo-sub" style="color:#b8c4e2;font-size:13px;margin:8px 0 0;"><span style="color:${accent};">NEO</span> получи запитване за ${escapeHtml(companyName)}</p></td></tr></table></td></tr><tr>
+<td style="
+height:1px;
+background:#334155;
+font-size:0;
+line-height:0;">
+&nbsp;
+</td>
+</tr><tr><td class="neo-pad" style="padding:24px;"><p style="color:#27C2FF;font-size:14px;font-weight:700;margin:0 0 14px;letter-spacing:.04em;">▸ ДАННИ ОТ КЛИЕНТА</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #283251;border-radius:8px;overflow:hidden;">${fieldRows}</table></td></tr><tr>
+<td style="background:#0b1022;border-top:1px solid #334155;padding:18px 24px;">
+<p style="margin:0;font-size:12px;line-height:1.7;color:#94a3b8;">
+Подадено автоматично от
+<strong style="color:#27C2FF;">NEO</strong>
+— AI асистент на вашия сайт.
+<a href="https://neo-assistant.com" style="color:#27C2FF;text-decoration:none;font-weight:600;">
+neo-assistant.com
+</a>
+</p>
+</td>
+</tr></table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</body>
+</html>`;
 }
 
 function buildClientEmailHtml(clientName: string, companyName: string, s: EmailStyleCfg = {} as EmailStyleCfg): string {
-  const accent = s.accentColor || "#dc2626";
-  const headerBg = s.headerBgColor || "#111827";
-  const bg = s.backgroundColor || "#ffffff";
+  const accent = "#27C2FF";
+  const headerBg = "#171b3d";
+  const bg = "#11152b";
   const font = s.fontFamily || "'Montserrat',Arial,sans-serif";
-  const textClr = s.textColor || s.fontColor || "#333333";
+  const textClr = "#e5e7eb";
   const footerBg = s.footerBgColor || "#111827";
   const footerClr = s.footerTextColor || "#9ca3af";
   const btnColor = s.buttonColor || accent;
   const btnTextClr = s.buttonTextColor || "#ffffff";
-  const logoUrl = s.logoUrl || "";
+  const logoUrl = s.logoUrl || "https://onufuxczpqlxxkgyltlz.supabase.co/storage/v1/object/public/assets/nelogo1.png";
   const headerText = s.headerText || "";
   const footerText = s.footerText || "";
   const logoHtml = logoUrl ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(companyName)}" style="max-height:36px;max-width:160px;display:block;" />` : `<div style="width:32px;height:32px;background-color:${accent};border-radius:6px;text-align:center;line-height:32px;"><span style="color:#ffffff;font-size:14px;font-weight:700;">N</span></div>`;
-  const headerLabel = headerText || companyName;
-  return `<!DOCTYPE html><html lang="bg"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>*{font-family:${font}!important;}@media only screen and (max-width:480px){.neo-outer{padding:12px 8px!important;}.neo-pad{padding-left:16px!important;padding-right:16px!important;}.neo-card{border-radius:8px!important;}.neo-greeting{font-size:17px!important;}.neo-text{font-size:13px!important;}}</style></head><body style="margin:0;padding:0;background-color:#f3f4f6;font-family:${font};"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;"><tr><td class="neo-outer" style="padding:24px 16px;"><table role="presentation" align="center" width="100%" cellpadding="0" cellspacing="0" class="neo-card" style="max-width:540px;margin:0 auto;background-color:${bg};border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);"><tr><td style="background-color:${headerBg};padding:20px 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="width:40px;vertical-align:middle;">${logoHtml}</td>${!logoUrl ? `<td style="vertical-align:middle;padding-left:10px;"><p style="color:#ffffff;font-size:16px;font-weight:700;margin:0;">${escapeHtml(headerLabel)}</p></td>` : ""}</tr></table></td></tr><tr><td style="background-color:${accent};height:3px;font-size:1px;">&nbsp;</td></tr><tr><td class="neo-pad" style="padding:24px 24px 0;"><div style="background-color:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;text-align:center;"><p style="color:#166534;font-size:14px;font-weight:600;margin:0;">✅ Запитването Ви е изпратено успешно</p></div></td></tr><tr><td class="neo-pad" style="padding:20px 24px;"><p class="neo-greeting" style="color:${textClr};font-size:18px;font-weight:700;margin:0 0 14px;">Здравейте${clientName?", "+escapeHtml(clientName):""}!</p><p class="neo-text" style="color:${textClr};font-size:14px;line-height:1.7;margin:0 0 12px;">Вашето запитване към <strong>${escapeHtml(companyName)}</strong> беше изпратено успешно. Екипът ще се свърже с Вас възможно най-скоро.</p><p class="neo-text" style="color:#6b7280;font-size:13px;line-height:1.6;margin:0;">Обикновено отговор се получава в рамките на работния ден.</p></td></tr><tr><td class="neo-pad" style="padding:0 24px 20px;"><div style="border-top:1px solid #e5e7eb;padding-top:14px;"><p style="color:#9ca3af;font-size:12px;margin:0 0 2px;">С уважение,</p><p style="color:${textClr};font-size:13px;font-weight:600;margin:0;">${escapeHtml(companyName)}</p></div></td></tr>${footerText ? `<tr><td style="background-color:${footerBg};padding:12px 24px;text-align:center;"><p style="color:${footerClr};font-size:10px;margin:0;">${escapeHtml(footerText)}</p></td></tr>` : `<tr><td style="background-color:${footerBg};padding:12px 24px;text-align:center;"><p style="color:${footerClr};font-size:10px;margin:0;">&copy; ${new Date().getFullYear()} ${escapeHtml(companyName)}. Всички права запазени.</p></td></tr>`}</table></td></tr></table></body></html>`;
+  const headerLabel = companyName;
+  return `<!DOCTYPE html><html lang="bg"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>
+*{font-family:${font}!important;}
+img{
+max-width:100%;
+height:auto;
+display:block;
+}
+
+.ExternalClass{
+width:100%;
+}
+
+table{
+border-collapse:collapse;
+mso-table-lspace:0;
+mso-table-rspace:0;
+}
+
+body{
+margin:0!important;
+padding:0!important;
+-webkit-text-size-adjust:100%!important;
+}
+
+/* Gmail dark mode anti-invert */
+
+
+[data-ogsc] body,
+[data-ogsb] body{
+background:#070b18 !important;
+}
+
+body,
+table,
+tr,
+td{
+background:#11152b !important;
+}
+
+.neo-card{
+background:#11152b !important;
+}
+
+p,span,strong,td{
+color:#ffffff !important;
+-webkit-text-fill-color:#ffffff !important;
+}
+
+a{
+color:#27C2FF !important;
+-webkit-text-fill-color:#27C2FF !important;
+}
+
+[data-ogsc] *{
+background:#11152b !important;
+color:#ffffff !important;
+-webkit-text-fill-color:#ffffff !important;
+}
+
+:root{
+color-scheme:dark;
+supported-color-schemes:dark;
+}
+
+html{
+background:#070b18 !important;
+}
+
+body{
+background:#070b18 !important;
+color:#ffffff !important;
+}
+
+body *{
+color:inherit;
+}
+
+div[style*="background"],
+table,
+tr,
+td{
+background:#11152b !important;
+}
+
+u + .body .gmail-blend-screen{
+background:#070b18 !important;
+mix-blend-mode:normal !important;
+opacity:1 !important;
+}
+
+u + .body .gmail-blend-difference{
+background:#070b18 !important;
+mix-blend-mode:normal !important;
+opacity:1 !important;
+}
+
+@media only screen and (max-width:640px){
+
+body,
+table,
+td,
+.neo-card{
+background:#0f172a !important;
+}
+
+.neo-card{
+border:1px solid #334155 !important;
+box-shadow:
+0 0 0 1px rgba(96,165,250,.22) inset !important;
+}
+
+}
+
+body{
+background:#070b18 !important;
+color:#ffffff !important;
+-webkit-text-fill-color:#ffffff !important;
+}
+
+u + .body,
+u + .body table,
+u + .body td{
+background:#11152b !important;
+color:#ffffff !important;
+-webkit-text-fill-color:#ffffff !important;
+}
+
+@media (prefers-color-scheme: dark){
+body,table,tr,td,div{
+background:#11152b !important;
+}
+p,span,strong,a,td{
+color:#ffffff !important;
+-webkit-text-fill-color:#ffffff !important;
+}
+a{
+color:#27C2FF !important;
+-webkit-text-fill-color:#27C2FF !important;
+}
+}@media only screen and (max-width:480px){
+.neo-outer{padding:14px 10px!important;}
+.neo-pad{padding-left:18px!important;padding-right:18px!important;}
+.neo-card{
+width:100%!important;
+max-width:100%!important;
+border-radius:10px!important;
+}
+.neo-greeting{
+font-size:22px!important;
+line-height:1.45!important;
+color:#ffffff!important;
+}
+.neo-text{
+font-size:16px!important;
+line-height:1.75!important;
+color:#e5e7eb!important;
+}
+td,p,a,span{
+color:#ffffff!important;
+}
+}</style></head><body class="body" style="margin:0;padding:0;background-color:#070b18;font-family:${font};">
+<div class="gmail-blend-screen">
+<div class="gmail-blend-difference">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#070b18;"><tr>
+<td class="neo-outer" style="padding:24px 16px;">
+
+<table role="presentation"
+align="center"
+width="100%"
+cellpadding="0"
+cellspacing="0"
+style="
+max-width:556px;
+margin:0 auto;
+border:1px solid rgba(39,194,255,.30);
+border-radius:18px;
+padding:6px;
+background:#020617;
+box-shadow:
+0 0 0 1px rgba(39,194,255,.08),
+0 0 24px rgba(39,194,255,.06);
+">
+<tr>
+<td style="padding:0;"><table role="presentation" align="center" width="100%" cellpadding="0" cellspacing="0" class="neo-card" style="
+width:100%;
+max-width:540px;
+margin:0 auto;
+background:#0f172a !important;
+border:1px solid #334155 !important;
+border-radius:16px;
+overflow:hidden;
+box-shadow:
+0 0 0 1px rgba(96,165,250,.28) inset,
+0 0 0 1px rgba(30,41,59,.95),
+0 8px 30px rgba(0,0,0,.55) !important;
+mso-border-alt:1px solid #334155;
+"><tr><td style="background:linear-gradient(180deg,#181d45 0%,#11152b 100%);padding:20px 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="width:40px;vertical-align:middle;">${logoHtml}</td><td style="vertical-align:middle;padding-left:10px;">
+<p class="neo-title" style="color:#ffffff;font-size:26px;font-weight:800;line-height:1;margin:0;">
+Вашето запитване
+</p>
+<p class="neo-sub" style="color:#b8c4e2;font-size:13px;margin:8px 0 0;">
+<span style="color:${accent};">NEO</span> изпрати запитването успешно
+</p>
+
+</td></tr></table></td></tr><tr>
+<td style="
+height:1px;
+background:#334155;
+font-size:0;
+line-height:0;">
+&nbsp;
+</td>
+</tr><tr><td class="neo-pad" style="padding:20px 24px;"><p class="neo-greeting" style="color:#e5e7eb;font-size:26px;font-weight:800;margin:0 0 14px;">Здравейте, ${escapeHtml(clientName || "клиент")}!</p><p class="neo-text" style="color:#e5e7eb;font-size:14px;line-height:1.8;margin:0 0 12px;">Вашето запитване към <a href="https://${escapeHtml(companyName)}" style="color:#27C2FF;text-decoration:none;font-weight:700;">${escapeHtml(companyName)}</a> беше изпратено успешно. Екипът ще се свърже с Вас възможно най-скоро.</p><p class="neo-text" style="color:#9ca3af;font-size:13px;line-height:1.6;margin:0;">Обикновено отговор се получава в рамките на работния ден.</p></td></tr><tr><td class="neo-pad" style="padding:0 24px 20px;"><div style="border-top:1px solid #334155;padding-top:14px;"><p style="color:#9ca3af;font-size:12px;margin:0 0 2px;">С уважение,</p><p style="margin:0;"><a href="https://${escapeHtml(companyName)}" style="color:#27C2FF;font-size:13px;font-weight:600;text-decoration:none;">${escapeHtml(companyName)}</a></p></div></td></tr><tr>
+<td class="neo-pad" style="padding:0 24px 20px;">
+<div style="border-top:1px solid #283251;padding-top:14px;">
+<p style="margin:0;font-size:12px;line-height:1.6;color:#9ca3af;">
+Подадено автоматично от
+<strong style="color:#27C2FF;">NEO</strong>
+— AI асистент на вашия сайт.
+<a href="https://neo-assistant.com"
+style="color:#27C2FF;text-decoration:none;">
+neo-assistant.com
+</a>
+</p>
+</div>
+</td>
+</tr></table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</body>
+</html>`;
 }
 
 interface EmailStyleCfg {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,13 +11,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useUsage } from '@/pages/Dashboard';
 
 interface DashboardHomeProps {
   subscribed: boolean;
   tierName: string;
   subscriptionEnd: string | null;
-  usedMinutes: number;
-  planLimit: number;
+  usedMinutes: number;       // kept for backward compat — IGNORED, reads from context
+  planLimit: number;          // kept for backward compat — IGNORED, reads from context
   onManageSubscription: () => void;
   portalLoading: boolean;
   onTabChange: (tab: string) => void;
@@ -83,11 +84,16 @@ const fadeUp = {
 const formatUsageMinutes = (v: number) => v <= 0 ? '0' : v < 10 ? v.toFixed(1) : v.toFixed(0);
 
 const DashboardHome = ({
-  subscribed, tierName, subscriptionEnd, usedMinutes, planLimit,
+  subscribed, tierName, subscriptionEnd,
+  // usedMinutes & planLimit props IGNORED — single source of truth is UsageContext
   onManageSubscription, portalLoading, onTabChange,
   websiteUrl, calendarConnected, hasTestedNeo, userId,
 }: DashboardHomeProps) => {
   const navigate = useNavigate();
+
+  // ═══ FIX: Single source of truth from UsageContext ═══
+  const { usedMinutes, planLimit } = useUsage();
+
   const usagePercent = planLimit > 0 ? (usedMinutes / planLimit) * 100 : 0;
   const isActive = subscribed && websiteUrl;
 
@@ -119,7 +125,7 @@ const DashboardHome = ({
     })();
   }, [userId, subscribed]);
 
-  const fetchTodayStats = async () => {
+  const fetchTodayStats = useCallback(async () => {
     if (!userId) return;
     const todayStart = getTodayStart();
     const [convRes, clientConvRes, bookingsRes, totalConvRes, totalClientConvRes, totalBookRes, avgDurRes] = await Promise.all([
@@ -142,9 +148,9 @@ const DashboardHome = ({
       setAvgDuration(Math.round(total / avgDurRes.data.length));
     }
     setStatsLoading(false);
-  };
+  }, [userId]);
 
-  const fetchChartData = async (filter: TimeFilter) => {
+  const fetchChartData = useCallback(async (filter: TimeFilter) => {
     if (!userId) return;
     const { start, end } = getFilterRange(filter);
     const labels = getBucketLabels(filter);
@@ -159,31 +165,37 @@ const DashboardHome = ({
       conversations: convos.filter(c => bucketIndex(c.created_at, filter, start) === i).length,
       clients: clientConvos.filter(c => bucketIndex(c.created_at, filter, start) === i).length,
     })));
-  };
+  }, [userId]);
 
   useEffect(() => {
     if (!userId || !subscribed) return;
     fetchTodayStats();
     fetchChartData(chartFilter);
-    const channel = supabase.channel('today-stats-realtime')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'conversations', filter: `user_id=eq.${userId}` }, () => {
-        setTodayConversations(prev => prev + 1);
-        setTotalConversations(prev => prev + 1);
-        fetchChartData(chartFilter);
-      })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'conversations', filter: `user_id=eq.${userId}` }, (payload) => {
-        if ((payload.new as any).lead_captured === true && (payload.old as any).lead_captured !== true) {
-          setTodayClients(prev => prev + 1);
-          setTotalLeads(prev => prev + 1);
-        }
-      })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'calendar_bookings', filter: `user_id=eq.${userId}` }, () => {
-        setTodayBookings(prev => prev + 1);
-        setTotalBookings(prev => prev + 1);
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [userId, subscribed, chartFilter]);
+  }, [userId, subscribed, fetchTodayStats, fetchChartData, chartFilter]);
+
+  // ═══ FIX: Слушай neo-conversations-updated от Dashboard.tsx realtime ═══
+  // Вместо собствен realtime канал — ползваме единния от Dashboard
+  // Това елиминира дублиращи се subscription-и
+  useEffect(() => {
+    if (!userId || !subscribed) return;
+
+    const handleConversationsUpdated = () => {
+      fetchTodayStats();
+      fetchChartData(chartFilter);
+    };
+
+    const handleLeadsUpdated = () => {
+      fetchTodayStats();
+    };
+
+    window.addEventListener('neo-conversations-updated', handleConversationsUpdated);
+    window.addEventListener('neo-leads-updated', handleLeadsUpdated);
+
+    return () => {
+      window.removeEventListener('neo-conversations-updated', handleConversationsUpdated);
+      window.removeEventListener('neo-leads-updated', handleLeadsUpdated);
+    };
+  }, [userId, subscribed, chartFilter, fetchTodayStats, fetchChartData]);
 
   if (!subscribed) {
     return (
@@ -202,122 +214,85 @@ const DashboardHome = ({
     );
   }
 
-  // Determine setup state
-  const setupSteps = [
-    { id: 'train', label: 'Обучете NEO с Вашия сайт', description: 'Въведете URL и NEO ще научи всичко за бизнеса Ви', icon: Globe, done: hasSession, tab: 'setup-training' },
-    { id: 'test', label: 'Тествайте как звучи NEO', description: 'Чуйте жив разговор и проверете отговорите', icon: Mic, done: hasTestedNeo, tab: 'neo-test' },
-    { id: 'deploy', label: 'Добавете NEO към сайта Ви', description: 'Копирайте код за уиджет или свържете телефонен номер', icon: Palette, done: hasWidget, tab: 'channels-widget' },
+  const steps = [
+    { id: 'train', label: 'Обучете NEO', description: 'Добавете сайт и база знания', done: !!websiteUrl && hasSession, tab: 'setup' },
+    { id: 'test', label: 'Тествайте', description: 'Пробвайте гласовия асистент', done: hasTestedNeo, tab: 'neo-test' },
+    { id: 'widget', label: 'Добавете на сайта', description: 'Вградете уиджета', done: hasWidget, tab: 'channels-widget' },
   ];
-  const completedSteps = setupSteps.filter(s => s.done).length;
-  const allDone = completedSteps === setupSteps.length;
-  const nextStep = setupSteps.find(s => !s.done);
-
-  // Show onboarding wizard if setup is not complete
-  const showOnboarding = !allDone && totalConversations === 0;
+  const completedSteps = steps.filter(s => s.done).length;
+  const showOnboarding = completedSteps < steps.length;
+  const nextStep = steps.find(s => !s.done);
 
   const conversionRate = totalConversations > 0 ? Math.round((totalLeads / totalConversations) * 100) : 0;
   const bookingRate = totalConversations > 0 ? Math.round((totalBookings / totalConversations) * 100) : 0;
-  const automationScore = Math.min(99, Math.max(12, Math.round((conversionRate * 0.45) + (bookingRate * 0.35) + ((100 - Math.min(usagePercent, 100)) * 0.2))));
-  const formatDuration = (s: number) => s < 60 ? `${s}с` : `${Math.floor(s / 60)}м ${s % 60}с`;
+  const automationScore = Math.min(100, Math.round(
+    (conversionRate * 0.4) + (bookingRate * 0.3) + (Math.min(usagePercent, 100) * 0.3)
+  ));
+
+  const formatDuration = (seconds: number) => {
+    if (!seconds || seconds <= 0) return '0с';
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    if (m === 0) return `${s}с`;
+    return `${m}м ${s}с`;
+  };
 
   return (
-    <div className="h-full overflow-y-auto overflow-x-hidden overscroll-y-contain">
-      <div className="p-3 sm:p-5 lg:p-6 space-y-4 sm:space-y-5 max-w-[1400px]">
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-4 lg:p-6 space-y-3">
 
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="flex items-center justify-between">
           <div>
-            <h1 className="text-[18px] sm:text-[20px] font-semibold text-[hsl(0_0%_100%/0.92)] tracking-tight">
-              {showOnboarding ? 'Добре дошли в NEO' : 'Анализи'}
-            </h1>
-            <p className="text-[11px] text-[hsl(0_0%_100%/0.35)] mt-0.5">
-              {showOnboarding ? 'Настройте асистента си за 3 минути' : 'Преглед на активността на NEO'}
-            </p>
+            <h1 className="text-base font-bold text-[hsl(0_0%_100%/0.92)]">Анализи</h1>
+            <p className="text-[11px] text-[hsl(0_0%_100%/0.35)]">Преглед на активността на NEO</p>
           </div>
-          <motion.span
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.15 }}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium border ${isActive
-              ? 'bg-[#10b981]/10 border-[#10b981]/20 text-[#10b981]'
-              : 'bg-[hsl(0_0%_100%/0.03)] border-[hsl(0_0%_100%/0.06)] text-[hsl(0_0%_100%/0.4)]'
-            }`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-[#10b981] animate-pulse' : 'bg-[hsl(0_0%_100%/0.25)]'}`} />
-            {isActive ? 'Online' : 'Offline'}
-          </motion.span>
+          {isActive && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#10b981]/10 border border-[#10b981]/20">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse" />
+              <span className="text-[10px] text-[#10b981] font-medium">Online</span>
+            </div>
+          )}
         </motion.div>
 
-        {/* Onboarding wizard */}
+        {/* Onboarding */}
         {showOnboarding && (
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.1 }}
-            className="glass-card p-4 sm:p-6 space-y-5"
+            className="glass-card p-4 space-y-3"
           >
-            {/* Progress */}
-            <div className="flex items-center gap-3">
-              <div className="flex gap-1.5 flex-1">
-                {setupSteps.map((step, i) => (
-                  <div key={i} className={cn('flex-1 h-2 rounded-full transition-all duration-500', step.done ? 'bg-primary' : 'bg-[hsl(0_0%_100%/0.06)]')} />
-                ))}
-              </div>
-              <span className="text-[11px] font-medium text-[hsl(0_0%_100%/0.45)]">{completedSteps}/{setupSteps.length}</span>
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] uppercase tracking-[0.1em] text-[hsl(0_0%_100%/0.28)] font-medium">Настройка</p>
+              <span className="text-[10px] text-primary font-medium">{completedSteps}/{steps.length}</span>
             </div>
-
-            {/* Steps */}
-            <div className="space-y-2">
-              {setupSteps.map((step, i) => {
-                const isNext = nextStep?.id === step.id;
-                const StepIcon = step.icon;
+            <div className="flex gap-1">
+              {steps.map((_, i) => (
+                <div key={i} className={cn('flex-1 h-2 rounded-full transition-all duration-500', steps[i].done ? 'bg-primary' : 'bg-[hsl(0_0%_100%/0.06)]')} />
+              ))}
+            </div>
+            <div className="space-y-1">
+              {steps.map((step) => {
+                const Icon = step.done ? CheckCircle2 : Circle;
                 return (
                   <motion.button
                     key={step.id}
-                    initial={{ opacity: 0, x: -12 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.15 + i * 0.08 }}
-                    onClick={() => onTabChange(step.tab)}
+                    whileHover={{ x: 2 }}
+                    onClick={() => !step.done && onTabChange(step.tab)}
                     className={cn(
                       'w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl text-left transition-all duration-200',
-                      step.done
-                        ? 'bg-[#10b981]/5 border border-[#10b981]/15'
-                        : isNext
-                          ? 'bg-primary/8 border border-primary/20 hover:bg-primary/12 hover:border-primary/30'
-                          : 'bg-[hsl(0_0%_100%/0.02)] border border-[hsl(0_0%_100%/0.04)] opacity-50'
+                      step.done ? 'opacity-50 cursor-default' : 'hover:bg-[hsl(0_0%_100%/0.03)] cursor-pointer'
                     )}
                   >
-                    <div className={cn(
-                      'w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors',
-                      step.done ? 'bg-[#10b981]/15' : isNext ? 'bg-primary/15' : 'bg-[hsl(0_0%_100%/0.04)]'
-                    )}>
-                      {step.done
-                        ? <CheckCircle2 className="w-5 h-5 text-[#10b981]" />
-                        : <StepIcon className={cn('w-5 h-5', isNext ? 'text-primary' : 'text-[hsl(0_0%_100%/0.25)]')} />
-                      }
-                    </div>
+                    <Icon className={cn('w-4 h-4 shrink-0', step.done ? 'text-primary' : 'text-[hsl(0_0%_100%/0.15)]')} />
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className={cn(
-                          'text-[10px] font-bold rounded-full px-1.5 py-0.5',
-                          step.done ? 'bg-[#10b981]/15 text-[#10b981]' : isNext ? 'bg-primary/15 text-primary' : 'bg-[hsl(0_0%_100%/0.04)] text-[hsl(0_0%_100%/0.25)]'
-                        )}>
-                          {i + 1}
-                        </span>
-                        <p className={cn(
-                          'text-[13px] font-medium truncate',
-                          step.done ? 'text-[#10b981]' : isNext ? 'text-[hsl(0_0%_100%/0.92)]' : 'text-[hsl(0_0%_100%/0.35)]'
-                        )}>
-                          {step.label}
-                        </p>
-                      </div>
-                      <p className="text-[11px] text-[hsl(0_0%_100%/0.35)] mt-0.5 truncate">{step.description}</p>
+                      <p className={cn('text-[13px] font-medium', step.done ? 'text-[hsl(0_0%_100%/0.4)] line-through' : 'text-[hsl(0_0%_100%/0.85)]')}>
+                        {step.label}
+                      </p>
+                      <p className="text-[10px] text-[hsl(0_0%_100%/0.3)] truncate">{step.description}</p>
                     </div>
-                    {isNext && (
-                      <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center">
-                        <ArrowRight className="w-4 h-4 text-primary" />
-                      </div>
-                    )}
+                    {!step.done && <ArrowRight className="w-3.5 h-3.5 text-[hsl(0_0%_100%/0.15)]" />}
                   </motion.button>
                 );
               })}
@@ -348,23 +323,24 @@ const DashboardHome = ({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25, duration: 0.4 }}
-            className="lg:col-span-2 glass-card p-4 sm:p-5"
+            className="lg:col-span-2 glass-card p-4"
           >
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-1">
               <div>
-                <h2 className="text-[14px] font-medium text-[hsl(0_0%_100%/0.92)]">Обаждания</h2>
-                <p className="text-[10px] text-[hsl(0_0%_100%/0.28)] mt-0.5">Общо за периода</p>
+                <h3 className="text-[13px] font-semibold text-[hsl(0_0%_100%/0.85)]">Обаждания</h3>
+                <p className="text-[10px] text-[hsl(0_0%_100%/0.35)]">Общо за периода</p>
               </div>
-              <div className="flex items-center gap-px bg-[hsl(0_0%_100%/0.04)] rounded-lg p-0.5">
+              <div className="flex gap-0.5 bg-[hsl(0_0%_100%/0.04)] rounded-lg p-0.5">
                 {(Object.keys(TIME_FILTER_LABELS) as TimeFilter[]).map((f) => (
                   <button
                     key={f}
                     onClick={() => { setChartFilter(f); fetchChartData(f); }}
-                    className={`text-[10px] px-2.5 py-1 rounded-md transition-all ${
+                    className={cn(
+                      'px-2 py-1 text-[10px] font-medium rounded-md transition-all',
                       chartFilter === f
-                        ? 'bg-primary text-[hsl(0_0%_100%)] font-semibold'
-                        : 'text-[hsl(0_0%_100%/0.4)] hover:text-[hsl(0_0%_100%/0.7)]'
-                    }`}
+                        ? 'bg-primary/15 text-primary'
+                        : 'text-[hsl(0_0%_100%/0.3)] hover:text-[hsl(0_0%_100%/0.6)]'
+                    )}
                   >
                     {TIME_FILTER_LABELS[f]}
                   </button>

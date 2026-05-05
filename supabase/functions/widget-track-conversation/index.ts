@@ -99,12 +99,12 @@ serve(async (req) => {
       const latestUserMessage = recentMessages?.find((message) => message.role === "user")?.content || "";
       const latestAssistantMessage = recentMessages?.find((message) => message.role === "assistant")?.content || "";
 
-      // Always insert in real-time order: now() but strictly after the last message
+      // Ensure each message gets a unique timestamp at least 1 second after the last
       const latestExistingTs = recentMessages?.[0]?.created_at
         ? new Date(recentMessages[0].created_at).getTime()
         : 0;
       const nowTs = Date.now();
-      const nextTs = Math.max(nowTs, latestExistingTs + 1);
+      const nextTs = Math.max(nowTs, latestExistingTs + 1000);
 
       const inserts: { conversation_id: string; role: string; content: string; created_at: string }[] = [];
 
@@ -127,7 +127,7 @@ serve(async (req) => {
             conversation_id: conversationId,
             role: "assistant",
             content: nextAssistantMessage,
-            created_at: new Date(nextTs + (userMessage ? 1 : 0)).toISOString(),
+            created_at: new Date(nextTs + (userMessage ? 1000 : 0)).toISOString(),
           });
         }
       }

@@ -117,15 +117,7 @@ const TRANSIENT_CLICK_CREST_MIN = 14;
 const VAD_SPEECH_FRAMES_REQUIRED = 5;
 
 const ACTION_PROCESSING_SPEECH_PATTERNS = [
-  /чудесно.*имам всички данни/i,
-  /имам всички данни/i,
-  /преди да изпрат/i,
   /един момент/i,
-  /момент.*(изпращ|подав|резервир|провер)/i,
-  /(изпращам|подавам|попълвам|обработвам).*(форм|запитван|заявк)/i,
-  /(проверявам|потвърждавам).*(наличност|резервац|заявк)/i,
-  /(резервирам|запазвам).*(час|резервац)/i,
-  /(готово|изпратено).*(запитван|заявк|форм)/i,
 ];
 
 const looksLikeActionPayload = (text: string) => {
@@ -4103,7 +4095,7 @@ export const useGeminiVoice = ({
   }, []);
 
   const prepareSession = useCallback(
-    async (systemPrompt: string, companyName: string, sessionId?: string) => {
+    async (systemPrompt: string, companyName: string, sessionId?: string, mode?: 'demo' | 'production') => {
       const key = `${sessionId || ""}::${companyName || ""}::${hash32(systemPrompt || "")}`;
 
       if (isPreparingRef.current) return;
@@ -4131,6 +4123,7 @@ export const useGeminiVoice = ({
             systemPrompt,
             companyName,
             sessionId,
+            mode: mode || 'production',
           }),
         });
 
@@ -5279,7 +5272,38 @@ export const useGeminiVoice = ({
       setIsConnecting(true);
 
       try {
-        await prepareSession(systemPrompt, companyName, sessionId);
+        // ═══ FIX: Проверка за plan limit преди connect ═══
+        if (!isDemoSession) {
+          try {
+            const anonKey = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string) || "";
+            const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string) || "https://onufuxczpqlxxkgyltlz.supabase.co";
+            const usageRes = await fetch(`${supabaseUrl}/functions/v1/track-usage`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': anonKey,
+                'Authorization': `Bearer ${anonKey}`,
+              },
+              body: JSON.stringify({ action: 'get_usage' }),
+            });
+            if (usageRes.ok) {
+              const usageData = await usageRes.json();
+              if (usageData && usageData.remaining_minutes !== undefined && usageData.remaining_minutes <= 0) {
+                const errMsg = 'Минутите ви са изчерпани. Моля, надградете плана си.';
+                onError?.(errMsg);
+                connectMutexRef.current = false;
+                isConnectingRef.current = false;
+                setIsConnecting(false);
+                return;
+              }
+            }
+          } catch (limitErr) {
+            console.warn('[CONNECT] Usage limit check failed, proceeding:', limitErr);
+          }
+        }
+
+        const sessionMode = isDemoSession ? 'demo' : 'production';
+        await prepareSession(systemPrompt, companyName, sessionId, sessionMode);
 
         if (!textOnly) {
           if (!streamRef.current) {

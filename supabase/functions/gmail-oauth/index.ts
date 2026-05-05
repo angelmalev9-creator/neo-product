@@ -33,7 +33,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { action, code, redirectUri } = await req.json();
+    const { action, code } = await req.json();
+
+    const REDIRECT_URI = "https://neo-assistant.com/dashboard";
     const userId = await getUserId(req);
 
     if (!userId) {
@@ -54,11 +56,11 @@ serve(async (req) => {
 
       const params = new URLSearchParams({
         client_id: GOOGLE_CLIENT_ID,
-        redirect_uri: redirectUri,
+        redirect_uri: REDIRECT_URI,
         response_type: "code",
         scope: scopes,
         access_type: "offline",
-        prompt: "consent",
+        prompt: "select_account",
       });
 
       return new Response(
@@ -69,7 +71,7 @@ serve(async (req) => {
 
     // ── EXCHANGE CODE ──
     if (action === "exchange-code") {
-      if (!code || !redirectUri) {
+      if (!code) {
         return new Response(JSON.stringify({ error: "Missing code or redirectUri" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -84,7 +86,7 @@ serve(async (req) => {
           code,
           client_id: GOOGLE_CLIENT_ID,
           client_secret: GOOGLE_CLIENT_SECRET,
-          redirect_uri: redirectUri,
+          redirect_uri: REDIRECT_URI,
           grant_type: "authorization_code",
         }),
       });
