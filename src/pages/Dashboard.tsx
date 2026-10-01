@@ -63,6 +63,9 @@ const TIER_NAMES: Record<string, string> = {
 
 const Dashboard = () => {
   const { user, subscription, signOut, loading, checkSubscription } = useAuth();
+  const isInternalChatTester = user?.email?.toLowerCase() === 'angelmalev9@gmail.com';
+  const hasDashboardAccess = subscription.subscribed || isInternalChatTester;
+  const effectiveTier = isInternalChatTester ? 'empire' : subscription.tier;
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -266,7 +269,7 @@ const Dashboard = () => {
 
   const handleLogout = async () => { await signOut(); navigate('/'); };
 
-  const tierName = TIER_NAMES[subscription.tier || 'starter'] || 'Активен';
+  const tierName = TIER_NAMES[effectiveTier || 'starter'] || 'Активен';
 
   // ─── Usage context value ───
   const usageContextValue: UsageContextValue = {
@@ -292,7 +295,7 @@ const Dashboard = () => {
   }
 
   const renderContent = () => {
-    if (!subscription.subscribed && activeTab !== 'home') {
+    if (!hasDashboardAccess && activeTab !== 'home') {
       setActiveTab('home');
       return null;
     }
@@ -300,7 +303,7 @@ const Dashboard = () => {
     if (activeTab === 'home') {
       return (
         <DashboardHome
-          subscribed={subscription.subscribed}
+          subscribed={hasDashboardAccess}
           tierName={tierName}
           subscriptionEnd={subscription.subscription_end}
           usedMinutes={usedMinutes}
@@ -333,7 +336,7 @@ const Dashboard = () => {
           demoSession={demoSession}
           setDemoSession={setDemoSession}
           onTabChange={setActiveTab}
-          subscriptionTier={subscription.tier || undefined}
+          subscriptionTier={effectiveTier || undefined}
         />
       );
     }
@@ -360,7 +363,7 @@ const Dashboard = () => {
           usedMinutes={usedMinutes}
           planLimit={planLimit}
           onUsageUpdate={setUsedMinutes}
-          subscriptionTier={subscription.tier || undefined}
+          subscriptionTier={effectiveTier || undefined}
         />
       );
     }
@@ -387,7 +390,7 @@ const Dashboard = () => {
         <SettingsPage
           userId={user?.id || ''}
           section={sectionMap[activeTab] || 'plan'}
-          subscribed={subscription.subscribed}
+          subscribed={hasDashboardAccess}
           tierName={tierName}
           subscriptionEnd={subscription.subscription_end}
           usedMinutes={usedMinutes}
@@ -415,7 +418,7 @@ const Dashboard = () => {
             onTabChange={setActiveTab}
             onLogout={handleLogout}
             userEmail={user?.email}
-            subscribed={subscription.subscribed}
+            subscribed={hasDashboardAccess}
             tierName={tierName}
           />
         </div>

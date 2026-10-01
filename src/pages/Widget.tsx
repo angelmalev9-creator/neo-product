@@ -7,6 +7,7 @@ import { useAudioEffects } from '@/hooks/useAudioEffects';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import LeadCaptureModal, { LeadData } from '@/components/widget/LeadCaptureModal';
+import ChatOnlyWidget from '@/components/widget/ChatOnlyWidget';
 import { cleanTranscriptForStorage } from '@/utils/transcriptCleanup';
 import neoLogoImg from '@/assets/neo-logo.png';
 
@@ -16,6 +17,9 @@ interface Message {
 }
 
 interface WidgetConfig {
+  assistantMode?: 'voice' | 'chat';
+  backgroundColor?: string;
+  hideNeoBranding?: boolean;
   position: string;
   color: string;
   buttonText: string;
@@ -150,14 +154,12 @@ const Widget = () => {
     }
     if (message.role === 'assistant') {
       setLiveAssistantTranscript('');
-      // If assistant sends a new message, action processing is done
       setIsProcessingAction(false);
       if (actionTimeoutRef.current) {
         clearTimeout(actionTimeoutRef.current);
         actionTimeoutRef.current = null;
       }
     }
-    // Skip duplicate typed user messages (already added in handleSendText)
     if (message.role === 'user' && typedMessageAddedRef.current === message.content) {
       typedMessageAddedRef.current = null;
       return;
@@ -250,7 +252,6 @@ const Widget = () => {
     const cid = conversationIdRef.current;
     if (!cid || !normalized) return;
 
-    // Don't persist raw action_request JSON
     if (normalized.startsWith('action_request:') || normalized.startsWith('{"type":"action_request"')) return;
 
     const incremental = extractIncrementalTranscript(lastPersistedTranscriptRef.current[role], normalized);
@@ -260,10 +261,8 @@ const Widget = () => {
     if (persistedTranscriptKeysRef.current.has(key)) return;
     persistedTranscriptKeysRef.current.add(key);
 
-    // Assign a monotonic sequence number for server-side ordering
     const seq = ++messageSeqRef.current;
 
-    // Queue this persist call so they execute sequentially (no concurrent race)
     persistQueueRef.current = persistQueueRef.current.then(async () => {
       const result = await trackConversation('message', role === 'user'
         ? { userMessage: incremental, conversationId: cid, seq }
@@ -322,14 +321,15 @@ const Widget = () => {
     try {
       const { data, error: fnError } = await supabase.functions.invoke('widget-session', { body: { userId } });
       if (fnError || !data) { setError('Неуспешно зареждане'); return; }
+      const nextConfig = data.widgetConfig || null;
       setSystemPrompt(data.systemPrompt);
       setCompanyName(data.companyName || companyParam || 'компанията');
-      setConfig(data.widgetConfig);
+      setConfig(nextConfig);
       setLogoUrl(data.logoUrl || null);
       if (data.sessionId) setSessionId(data.sessionId);
       if (data.bookingCatalog) setCatalog(data.bookingCatalog);
       setIsReady(true);
-      if (!isReady) {
+      if (!isReady && nextConfig?.assistantMode !== 'chat') {
         prepareSession(data.systemPrompt, data.companyName || 'компанията', data.sessionId || undefined).catch(console.error);
       }
     } catch { setError('Грешка при зареждане'); }
@@ -417,7 +417,6 @@ const Widget = () => {
     if (!leadSubmitted) setShowLeadModal(true);
     const cid = conversationIdRef.current;
     if (cid) {
-      // Persist any messages that weren't persisted yet, using the sequential queue
       const currentMessages = messagesRef.current;
       for (const msg of currentMessages) {
         const key = `${cid}:${msg.role}:${msg.content.replace(/\s+/g, ' ').trim()}`;
@@ -432,7 +431,6 @@ const Widget = () => {
           ).catch(() => {});
         }
       }
-      // Wait for all pending persists to finish, then end
       await persistQueueRef.current;
       await trackConversation('end', { conversationId: cid });
       conversationIdRef.current = null;
@@ -451,7 +449,6 @@ const Widget = () => {
     setLeadSubmitted(true);
   }, [userId]);
 
-  
   const handleSendText = useCallback(async () => {
     if (!textInput.trim() || !isConnected || sendingRef.current) return;
     sendingRef.current = true;
@@ -461,7 +458,6 @@ const Widget = () => {
     setMessages(prev => [...prev, { role: 'user', content: msg }]);
     void persistTranscriptMessage('user', msg);
     sendText(msg);
-    // Debounce guard - prevent double sends within 500ms
     setTimeout(() => { sendingRef.current = false; }, 500);
   }, [textInput, isConnected, sendText, persistTranscriptMessage]);
 
@@ -471,10 +467,8 @@ const Widget = () => {
 
   const widgetColor = config?.color || '#ea384c';
 
-  // Avatar component
   const AvatarIcon = ({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) => {
     const sizes = { sm: 'w-5 h-5', md: 'w-8 h-8', lg: 'w-14 h-14' };
-    const iconSizes = { sm: 'w-3 h-3', md: 'w-4 h-4', lg: 'w-7 h-7' };
     return (
       <div className={`${sizes[size]} rounded-xl overflow-hidden shrink-0`}>
         {logoUrl ? (
@@ -486,7 +480,6 @@ const Widget = () => {
     );
   };
 
-  // Catalog image card for mentioned items
   const CatalogCard = ({ item }: { item: CatalogItem }) => {
     const img = item.images?.[0];
     if (!img) return null;
@@ -505,7 +498,6 @@ const Widget = () => {
     );
   };
 
-  // Action processing loader
   const ActionLoader = () => (
     <div className="flex gap-2 justify-start">
       <AvatarIcon size="sm" />
@@ -515,10 +507,7 @@ const Widget = () => {
             <div
               key={i}
               className="w-1.5 h-1.5 rounded-full bg-primary"
-              style={{
-                animation: 'bounce 1.4s ease-in-out infinite',
-                animationDelay: `${i * 0.16}s`,
-              }}
+              style={{ animation: 'bounce 1.4s ease-in-out infinite', animationDelay: `${i * 0.16}s` }}
             />
           ))}
         </div>
@@ -553,6 +542,18 @@ const Widget = () => {
     );
   }
 
+  if (config?.assistantMode === 'chat' && userId) {
+    return (
+      <ChatOnlyWidget
+        userId={userId}
+        companyName={companyName || 'NEO'}
+        logoUrl={logoUrl}
+        systemPrompt={systemPrompt}
+        config={config}
+      />
+    );
+  }
+
   return (
     <div className="h-screen flex flex-col bg-[hsl(220_55%_10%)] overflow-hidden">
       <style>{`
@@ -561,7 +562,6 @@ const Widget = () => {
           40% { transform: scale(1); }
         }
       `}</style>
-      {/* Lead Capture Modal */}
       <LeadCaptureModal
         isOpen={showLeadModal}
         onClose={() => setShowLeadModal(false)}
@@ -569,7 +569,6 @@ const Widget = () => {
         companyName={companyName}
       />
       
-      {/* Header */}
       <header className="border-b border-border/20 bg-card/50 backdrop-blur-xl px-4 py-3 flex items-center gap-3">
         <AvatarIcon size="md" />
         <div className="flex-1 min-w-0">
@@ -595,7 +594,6 @@ const Widget = () => {
         )}
       </header>
 
-      {/* Messages */}
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
         {messages.length === 0 && !isConnected && (
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
@@ -632,14 +630,10 @@ const Widget = () => {
                       : 'rounded-2xl rounded-tr-md text-white'
                     }
                   `}
-                  style={msg.role === 'user' ? { 
-                    backgroundColor: widgetColor,
-                    boxShadow: `0 2px 12px ${widgetColor}30`
-                  } : undefined}
+                  style={msg.role === 'user' ? { backgroundColor: widgetColor, boxShadow: `0 2px 12px ${widgetColor}30` } : undefined}
                 >
                   {cleanContent}
                 </div>
-                {/* Show catalog item images if mentioned */}
                 {mentionedItems.map((item, idx) => (
                   <CatalogCard key={idx} item={item} />
                 ))}
@@ -648,7 +642,6 @@ const Widget = () => {
           );
         })}
 
-        {/* Action processing indicator */}
         {isProcessingAction && !isSpeaking && <ActionLoader />}
 
         {liveTranscript && isListening && (
@@ -669,9 +662,7 @@ const Widget = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Controls */}
       <div className="border-t border-border/20 bg-card/50 backdrop-blur-xl p-4 space-y-3">
-        {/* Status */}
         <div className="text-center text-xs h-4 flex items-center justify-center">
           {isConnecting && (
             <span className="text-primary font-medium flex items-center gap-2">
@@ -706,7 +697,6 @@ const Widget = () => {
           )}
         </div>
 
-        {/* Text input + Mic mute */}
         {isConnected && (
           <div className="flex gap-2">
             <Input
@@ -740,7 +730,6 @@ const Widget = () => {
           </div>
         )}
 
-        {/* Call button */}
         <button
           onClick={isConnected ? endCall : startCall}
           disabled={isConnecting}
