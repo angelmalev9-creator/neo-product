@@ -9,9 +9,10 @@ import {
 } from "@/components/ui/select";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Phone, Crown, Paintbrush, Save, Loader2 } from 'lucide-react';
+import { Phone, MessageSquare, Crown, Paintbrush, Save, Loader2 } from 'lucide-react';
 
 interface WidgetConfig {
+  assistantMode: 'voice' | 'chat';
   position: string;
   color: string;
   backgroundColor: string;
@@ -33,6 +34,7 @@ interface WidgetCustomizerProps {
 }
 
 const DEFAULT_CONFIG: WidgetConfig = {
+  assistantMode: 'voice',
   position: 'bottom-right',
   color: '#ea384c',
   backgroundColor: '#1a1a2e',
@@ -103,6 +105,25 @@ const WidgetCustomizer = ({
 
   return (
     <div className="space-y-3">
+      <div className="rounded-xl border border-primary/15 bg-primary/5 p-3 space-y-2">
+        <div>
+          <Label className="text-[11px] font-semibold">Режим на асистента</Label>
+          <p className="text-[9px] text-muted-foreground mt-0.5">Само чат не използва Gemini, глас или платен LLM API.</p>
+        </div>
+        <Select value={config.assistantMode} onValueChange={(value) => {
+          const assistantMode = value as 'voice' | 'chat';
+          const oldDefault = config.assistantMode === 'chat' ? 'Пиши с NEO' : 'Говори с NEO';
+          const nextButtonText = !config.buttonText || config.buttonText === oldDefault ? (assistantMode === 'chat' ? 'Пиши с NEO' : 'Говори с NEO') : config.buttonText;
+          setConfig({ ...config, assistantMode, buttonText: nextButtonText });
+        }}>
+          <SelectTrigger className="bg-background/60 h-9 text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="voice">Глас + чат</SelectItem>
+            <SelectItem value="chat">Само чат · без LLM разход</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Live Preview — compact */}
       <div>
         <Label className="text-[11px] text-muted-foreground mb-1.5 block">Преглед</Label>
@@ -115,7 +136,7 @@ const WidgetCustomizer = ({
                   <img src={logoUrl} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full rounded-lg flex items-center justify-center" style={{ backgroundColor: config.color }}>
-                    <Phone className="w-3 h-3 text-white" />
+                    {config.assistantMode === 'chat' ? <MessageSquare className="w-3 h-3 text-white" /> : <Phone className="w-3 h-3 text-white" />}
                   </div>
                 )}
               </div>
@@ -123,7 +144,7 @@ const WidgetCustomizer = ({
                 <p className="text-[10px] font-semibold" style={{ color: isLightBg ? '#1a1a2e' : '#ffffff' }}>{companyName || 'Вашата компания'}</p>
                 <div className="flex items-center gap-1">
                   <div className="w-1 h-1 rounded-full bg-green-500" />
-                  <span className="text-[8px]" style={{ color: isLightBg ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)' }}>AI Асистент</span>
+                  <span className="text-[8px]" style={{ color: isLightBg ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)' }}>{config.assistantMode === 'chat' ? 'Чат асистент' : 'AI Асистент'}</span>
                 </div>
               </div>
             </div>
@@ -131,7 +152,7 @@ const WidgetCustomizer = ({
             <div className="flex-1 px-3 py-2 space-y-1.5 overflow-hidden">
               <div className="flex gap-1.5">
                 <div className="w-4 h-4 rounded shrink-0 flex items-center justify-center" style={{ backgroundColor: `${config.color}20` }}>
-                  <Phone className="w-2 h-2" style={{ color: config.color }} />
+                  {config.assistantMode === 'chat' ? <MessageSquare className="w-2 h-2" style={{ color: config.color }} /> : <Phone className="w-2 h-2" style={{ color: config.color }} />}
                 </div>
                 <div className="rounded-xl rounded-tl-sm px-2.5 py-1.5 max-w-[75%]" style={{ backgroundColor: isLightBg ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)' }}>
                   <p className="text-[9px]" style={{ color: isLightBg ? '#333' : '#ddd' }}>{greetMsg}</p>
