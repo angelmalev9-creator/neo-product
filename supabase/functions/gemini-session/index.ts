@@ -526,8 +526,17 @@ function formatActionsFromFormSchemas(rowsInput: any[]): {
   }
 
   const lines: string[] = [];
-  const availabilityRows = rows.filter((r) => safeStr(r?.kind).trim().toLowerCase() === "availability");
-  const availabilityModes = availabilityRows.map((r) => inferAvailabilityMode(r?.schema));
+  const isAppointmentWizard = (r: any) => {
+    const kind = safeStr(r?.kind).trim().toLowerCase();
+    const marker = safeStr(r?.schema?.neo_booking_mode).trim().toLowerCase();
+    return kind === "wizard" && (marker === "appointment" || inferAvailabilityMode(r?.schema) === "appointment");
+  };
+  const availabilityRows = rows.filter(
+    (r) => safeStr(r?.kind).trim().toLowerCase() === "availability" || isAppointmentWizard(r),
+  );
+  const availabilityModes = availabilityRows.map((r) =>
+    isAppointmentWizard(r) ? ("appointment" as AvailabilityMode) : inferAvailabilityMode(r?.schema),
+  );
   const hasAvailability = availabilityRows.length > 0;
   const hasAccommodationAvailability = availabilityModes.includes("accommodation");
   const hasAppointmentAvailability = availabilityModes.includes("appointment");
@@ -552,9 +561,19 @@ function formatActionsFromFormSchemas(rowsInput: any[]): {
     const req = fields.filter((f) => f.required).map((f) => f.key);
     const opt = fields.filter((f) => !f.required).map((f) => f.key);
 
+    const appointmentWizard =
+      kind.toLowerCase() === "wizard" &&
+      (safeStr(schema?.neo_booking_mode).trim().toLowerCase() === "appointment" ||
+        inferAvailabilityMode(schema) === "appointment");
+
     lines.push(`- ${kind}${url ? ` @ ${url}` : ""}`);
     if (kind === "availability") {
       lines.push(`  availability_mode: ${inferAvailabilityMode(schema)}`);
+    }
+    if (appointmentWizard) {
+      lines.push("  booking_mode: appointment");
+      lines.push("  semantic_keys: service, date, daypart, time, name, phone, email, notes");
+      lines.push("  note: appointment wizard uses semantic_keys, not raw DOM labels.");
     }
     if (formId) lines.push(`  form_id: ${formId}`);
     if (fingerprint) lines.push(`  fingerprint: ${fingerprint}`);
@@ -605,6 +624,16 @@ function formatActionsFromFormSchemas(rowsInput: any[]): {
       "- kind=form (лесна форма): ако сайтът няма online booking, НЕ предлагай записване на час по подразбиране. Първо помогни, после предложи запитване/контактна форма.",
     );
     lines.push("- Събираш required_keys и чак на 'потвърждавам' връщаш submit_form action_request.");
+  }
+
+  if (hasAppointmentAvailability) {
+    lines.push("- booking_mode=appointment: това е реален календар за услуги/часове, не обикновена контактна форма.");
+    lines.push("- Използвай semantic_keys service/date/daypart/time/name/phone/email/notes. Worker-ът сам открива реалните DOM контроли и live часовете.");
+    lines.push("- Ако service липсва: попитай САМО коя услуга/процедура. Ако service+date са известни: пусни live check веднага с auto_submit=false.");
+    lines.push("- Ако клиентът е казал само morning/afternoon/evening, подай го като daypart; НЕ го превръщай в произволен точен час.");
+    lines.push("- Име и телефон се събират ЕДВА след като е избран реален свободен точен час, освен ако клиентът доброволно ги е дал по-рано.");
+    lines.push("- Преди финален submit обобщи service/date/time/name/phone и поискай едно ясно потвърждение. Само след потвърждение auto_submit=true.");
+    lines.push("- Никога не казвай 'записвам', 'submit-вам' или 'готово' преди worker success/submitted=true.");
   }
 
   if (hasWizard) {
@@ -1074,26 +1103,27 @@ FIELD LOCK RULE:
 - Locked fields are never requested again.
 - Never re-ask for name email phone already collected.`,
       `- Ако вече си поискал missing_required поле за form flow и клиентът отговори на него → връщаш пак submit_form JSON със същите form_id/fingerprint и новото поле в fields. НЕ правиш search.`,
-      `- fields ползва само exact keys от required_keys.`,
+      `- За normal form fields ползва exact keys от required_keys. За booking_mode=appointment fields ползва САМО semantic_keys: service,date,daypart,time,name,phone,email,notes.`,
       `- PROBE_MODE: само ако keys са unknown или е wizard.`,
       ``,
       `RESERVATION / AVAILABILITY RULES:`,
-      `- kind=availability се използва само ако такъв flow реално съществува в ACTIONS.`,
-      `- Никога не приемай автоматично, че availability означава хотел.`,
-      `- Гледай availability_mode на конкретния ACTION.`,
-      `- availability_mode=accommodation → престой/хотел. Само тук са валидни check_in/check_out/guests/rooms и make_reservation.`,
-      `- availability_mode=appointment или generic → час/услуга/booking UI. Използваш submit_form към точния availability form_id/fingerprint, НЕ make_reservation.`,
-      `- За appointment/generic live check връщаш САМО JSON:`,
-      `  {"type":"action_request","action":"submit_form","session_id":"${sessionId}","form_id":"<availability form_id>","fingerprint":"<availability fingerprint>","kind":"availability","fields":{},"auto_submit":false}`,
-      `- Ако exact keys вече са известни, fields съдържа САМО реално известните exact keys. Ако keys са unknown → fields:{} е PROBE_MODE.`,
-      `- Worker result next/missing_required/options е единственият източник за следващите полета и свободните опции.`,
-      `- След live result говориш САМО по върнатите данни. Забранено е да измисляш свободен ден, час, стая, цена или вариант.`,
-      `- За appointment/generic крайно записване/submit става само след всички нужни полета + потвърждение: същият submit_form с auto_submit=true.`,
-      `- За accommodation make_reservation е разрешен САМО ако ACTIONS изрично показва availability_mode=accommodation.`,
-      `  check JSON: {"type":"action_request","action":"make_reservation","session_id":"${sessionId}","phase":"check","check_in":"YYYY-MM-DD","check_out":"YYYY-MM-DD","guests":"N","rooms":"1"}`,
-      `- Ако системата върне needs_input / missing_required: искаш само следващото поле и използваш exact label/options от резултата.`,
+      `- Никога не приемай автоматично, че booking/availability означава хотел. Следвай booking_mode/availability_mode в ACTIONS.`,
+      `- booking_mode=appointment → реален календар за услуга + дата + час. Използвай submit_form към ТОЧНИЯ wizard form_id/fingerprint.`,
+      `- Appointment live check JSON (без друг текст): {"type":"action_request","action":"submit_form","session_id":"${sessionId}","form_id":"<appointment wizard form_id>","fingerprint":"<appointment wizard fingerprint>","kind":"wizard","fields":{"service":"<known service>","date":"YYYY-MM-DD","daypart":"morning|afternoon|evening"},"auto_submit":false}`,
+      `- fields може да съдържа само известните semantic_keys: service,date,daypart,time,name,phone,email,notes. Не измисляй неизвестни стойности.`,
+      `- Ако treatment/service още не е избрана, попитай САМО за услугата. Не питай едновременно service + time + name + phone.`,
+      `- Ако service + date са известни → направи live check веднага. Ако клиентът е казал afternoon/morning/evening, предай daypart и изчакай worker slots.`,
+      `- След APPOINTMENT_WORKER_RESULT със stage=slots: предложи САМО live available_slots и попитай за един точен час.`,
+      `- След точен live час: ако name или phone липсват, поискай само първото липсващо поле. Email/notes са optional.`,
+      `- Ако клиентът даде няколко полета наведнъж, запази точно всички коректно разпознати стойности; не превръщай time/daypart думи в част от името.`,
+      `- Преди финално записване обобщи service/date/time/name/phone и поискай едно ясно потвърждение.`,
+      `- Само след ясно потвърждение върни същия submit_form JSON с auto_submit=true.`,
+      `- Не казвай, че записваш/подаваш/потвърждаваш, докато worker-ът работи. Мълчиш до резултата.`,
+      `- Казваш, че часът е записан САМО ако worker върне submitted=true / stage=submitted.`,
+      `- availability_mode=accommodation → hotel/stay flow. Само тук са валидни check_in/check_out/guests/rooms и make_reservation.`,
+      `- Generic non-appointment availability → submit_form към exact availability target с auto_submit=false за live probe.`,
+      `- След live result никога не измисляй свободен ден, час, стая, цена или вариант.`,
       `- Ако липсва booking flow в ACTIONS → не връщаш booking action JSON.`,
-      `- Ако сайтът е contact / lead form → водиш submit_form flow, не booking flow.`,
       `- Ако системата стигне до плащане или външен booking_url → насочваш клиента натам. Никога не искаш данни за карта в чата.`,
     ].join("\n");
 

@@ -411,6 +411,532 @@ function mapWizardDataByLabels(schema: any, incoming: Record<string, unknown>) {
   return out;
 }
 
+
+// ═══════════════════════════════════════════════════════════════
+// UNIVERSAL APPOINTMENT WIZARD ORCHESTRATOR
+// Uses crawler-discovered schema + live worker DOM. No client/domain hardcoding.
+// ═══════════════════════════════════════════════════════════════
+function appointmentNorm(v: unknown) {
+  return safeStr(v).toLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function getWizardNext(result: any): any {
+  return result?.observation?.wizard_next || result?.wizard_next || result?.next_step || null;
+}
+
+function wizardOptionText(o: any): string {
+  return safeStr(o?.label || o?.text || o?.value).trim();
+}
+
+function getAppointmentSemanticFields(fields: Record<string, unknown>) {
+  const pick = (keys: string[]) => {
+    for (const k of keys) {
+      const v = fields?.[k];
+      if (v !== undefined && v !== null && String(v).trim()) return String(v).trim();
+    }
+    return "";
+  };
+  return {
+    service: pick(["service", "treatment", "procedure", "item", "booking-service"]),
+    date: pick(["date", "appointment_date", "booking-date"]),
+    daypart: pick(["daypart", "part_of_day", "period"]),
+    time: pick(["time", "appointment_time", "booking-time"]),
+    name: pick(["name", "full_name", "client_name", "booking-name"]),
+    phone: pick(["phone", "telephone", "mobile", "booking-phone"]),
+    email: pick(["email", "booking-email"]),
+    notes: pick(["notes", "note", "message", "booking-notes"]),
+  };
+}
+
+function findAppointmentServiceField(next: any, wanted: string) {
+  const fields = Array.isArray(next?.fields) ? next.fields : [];
+  const selects = fields.filter((f: any) => {
+    const type = appointmentNorm(f?.type);
+    return type.includes("select") && Array.isArray(f?.options) && f.options.length > 1;
+  });
+  let best: any = null;
+  for (const field of selects) {
+    const meta = appointmentNorm(
+      [field?.id, field?.name, field?.label, field?.placeholder, field?.aria_label].filter(Boolean).join(" "),
+    );
+    let score = 0;
+    if (/service|treatment|procedure|therapy|massage|appointment|услуг|процедур/.test(meta)) score += 30;
+    const options = (field.options || []).map((o: any) => ({
+      value: safeStr(o?.value).trim(),
+      label: safeStr(o?.label || o?.text || o?.value).trim(),
+    }));
+    if (wanted) {
+      const w = appointmentNorm(wanted);
+      for (const o of options) {
+        const n = appointmentNorm(o.label);
+        if (!n) continue;
+        if (n === w) score += 100;
+        else if (n.includes(w) || w.includes(n)) score += 70;
+        else {
+          const words = w.split(" ").filter((x) => x.length > 2);
+          score += words.reduce((acc, x) => acc + (n.includes(x) ? 8 : 0), 0);
+        }
+      }
+    }
+    if (!best || score > best.score) best = { field, options, score };
+  }
+  return best;
+}
+
+function matchAppointmentService(options: any[], wanted: string) {
+  if (!wanted) return null;
+  const w = appointmentNorm(wanted);
+  let best: any = null;
+  for (const o of options || []) {
+    if (!o?.label || !o?.value) continue;
+    const n = appointmentNorm(o.label);
+    let score = n === w ? 100 : n.includes(w) || w.includes(n) ? 80 : 0;
+    if (!score) {
+      const words = w.split(" ").filter((x) => x.length > 2);
+      score = words.reduce((acc, x) => acc + (n.includes(x) ? 10 : 0), 0);
+    }
+    if (!best || score > best.score) best = { ...o, score };
+  }
+  return best && best.score >= 10 ? best : null;
+}
+
+function appointmentChoiceGroups(next: any): any[] {
+  return Array.isArray(next?.choiceGroups) ? next.choiceGroups : [];
+}
+
+function findCalendarDayGroup(next: any) {
+  let best: any = null;
+  for (const group of appointmentChoiceGroups(next)) {
+    const opts = Array.isArray(group?.options) ? group.options : [];
+    const numeric = opts.filter((o: any) => /^\d{1,2}$/.test(wizardOptionText(o)));
+    if (numeric.length < 7) continue;
+    const score = numeric.length + (/mon|tue|wed|thu|fri|sat|sun|date|day|calendar/.test(appointmentNorm(group?.name + " " + group?.label)) ? 20 : 0);
+    if (!best || score > best.score) best = { group, score };
+  }
+  return best?.group || null;
+}
+
+function findCalendarNavGroup(next: any) {
+  for (const group of appointmentChoiceGroups(next)) {
+    const texts = (group?.options || []).map((o: any) => wizardOptionText(o));
+    if (texts.some((x: string) => x === "→" || x === "›") && texts.some((x: string) => x === "←" || x === "‹")) {
+      return group;
+    }
+  }
+  return null;
+}
+
+function getTimeGroups(next: any) {
+  return appointmentChoiceGroups(next)
+    .map((group: any) => {
+      const times = (group?.options || [])
+        .map((o: any) => wizardOptionText(o))
+        .map((x: string) => x.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/)?.[0] || "")
+        .filter(Boolean)
+        .map((x: string) => x.padStart(5, "0"));
+      return { group, times: Array.from(new Set(times)) };
+    })
+    .filter((x: any) => x.times.length > 0);
+}
+
+function filterAppointmentSlots(slots: string[], daypart: string) {
+  const d = appointmentNorm(daypart);
+  if (!d) return slots;
+  const mins = (t: string) => {
+    const m = t.match(/^(\d{1,2}):(\d{2})$/);
+    return m ? Number(m[1]) * 60 + Number(m[2]) : -1;
+  };
+  return slots.filter((t) => {
+    const m = mins(t);
+    if (m < 0) return false;
+    if (/morning|сутрин|sutrin/.test(d)) return m < 720;
+    if (/afternoon|следобед|sled obed/.test(d)) return m >= 720 && m < 1020;
+    if (/evening|вечер|vecher/.test(d)) return m >= 1020;
+    if (/noon|midday|обед|obed/.test(d)) return m >= 690 && m <= 810;
+    return true;
+  });
+}
+
+function normalizeAppointmentTime(raw: string) {
+  const t = appointmentNorm(raw);
+  if (/^(noon|midday|обед|obed)$/.test(t)) return "12:00";
+  const m = safeStr(raw).match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
+  return m ? m[0].padStart(5, "0") : "";
+}
+
+function findAppointmentContactField(next: any, semantic: "name" | "phone" | "email" | "notes", preferredPrefix: string) {
+  const fields = Array.isArray(next?.fields) ? next.fields : [];
+  const keywords: Record<string, RegExp> = {
+    name: /name|full.?name|client.?name|име/,
+    phone: /phone|telephone|mobile|tel|gsm|телефон|номер/,
+    email: /email|e.?mail|mail|имейл/,
+    notes: /notes?|comment|message|additional|бележ|съобщ/,
+  };
+  let best: any = null;
+  for (const field of fields) {
+    const key = safeStr(field?.id || field?.name || field?.label).trim();
+    if (!key) continue;
+    const meta = appointmentNorm(
+      [field?.id, field?.name, field?.label, field?.placeholder, field?.aria_label, field?.type].filter(Boolean).join(" "),
+    );
+    let score = keywords[semantic].test(meta) ? 30 : 0;
+    if (preferredPrefix && key.toLowerCase().startsWith(preferredPrefix.toLowerCase())) score += 25;
+    if (semantic === "phone" && appointmentNorm(field?.type).includes("tel")) score += 20;
+    if (semantic === "email" && appointmentNorm(field?.type).includes("email")) score += 20;
+    if (semantic === "name" && appointmentNorm(field?.type).includes("text")) score += 5;
+    if (!best || score > best.score) best = { field, key, score };
+  }
+  return best && best.score >= 20 ? best : null;
+}
+
+async function prepareAppointmentWorkerSession(
+  sessionId: string,
+  formId: string,
+  fingerprint: string,
+  payloadUrl: string,
+  workerUrl: string,
+  workerSecret: string,
+  prepareTimeout: number,
+) {
+  let siteMap = await loadSiteMapForSession(sessionId);
+  if (!siteMap) {
+    const u = await loadMinimalUrl(sessionId, formId || undefined, fingerprint || undefined);
+    const url = (u?.url || payloadUrl).trim();
+    if (!url) return { ok: false, error: "appointment_url_missing" };
+    siteMap = buildMinimalSiteMap(sessionId, url);
+  }
+  const prep = await callWorkerWithRetryOnAbort(
+    workerUrl,
+    workerSecret,
+    "/prepare-session",
+    { site_id: sessionId, session_id: sessionId, site_map: siteMap },
+    prepareTimeout,
+  );
+  return { ok: prep.ok && prep.result?.success === true, prep, siteMap };
+}
+
+async function handleAppointmentWizard(args: {
+  session_id: string;
+  form_id: string;
+  fingerprint: string;
+  fields: Record<string, unknown>;
+  auto_submit: boolean;
+  payloadUrl: string;
+  workerUrl: string;
+  workerSecret: string;
+  prepareTimeout: number;
+  fillTimeout: number;
+}) {
+  const semantic = getAppointmentSemanticFields(args.fields);
+  const prepared = await prepareAppointmentWorkerSession(
+    args.session_id,
+    args.form_id,
+    args.fingerprint,
+    args.payloadUrl,
+    args.workerUrl,
+    args.workerSecret,
+    args.prepareTimeout,
+  );
+  if (!prepared.ok) {
+    return {
+      success: false,
+      submitted: false,
+      booking_mode: "appointment",
+      stage: "prepare_failed",
+      error: "Could not initialize live booking page",
+      details: prepared.prep?.result || null,
+    };
+  }
+
+  const callWizard = async (data: Record<string, unknown>, autoSubmit = false) =>
+    await callWorkerWithRetryOnAbort(
+      args.workerUrl,
+      args.workerSecret,
+      "/fill-form",
+      {
+        session_id: args.session_id,
+        site_id: args.session_id,
+        form_id: args.form_id || undefined,
+        fingerprint: args.fingerprint || undefined,
+        kind: "wizard",
+        data,
+        auto_submit: autoSubmit,
+        strict_select: true,
+      },
+      args.fillTimeout,
+    );
+
+  let fill = await callWizard({ __neo_probe: "1" }, false);
+  let next = getWizardNext(fill.result);
+  if (!fill.ok || !next) {
+    return {
+      success: false,
+      submitted: false,
+      booking_mode: "appointment",
+      stage: "probe_failed",
+      error: safeStr(fill.result?.message || fill.raw_text || "appointment_probe_failed"),
+    };
+  }
+
+  const serviceField = findAppointmentServiceField(next, semantic.service);
+  if (!serviceField) {
+    return {
+      success: false,
+      submitted: false,
+      booking_mode: "appointment",
+      stage: "service_control_not_found",
+      error: "No service/treatment control discovered in live booking UI",
+    };
+  }
+
+  const serviceKey = safeStr(serviceField.field?.id || serviceField.field?.name || serviceField.field?.label).trim();
+  const serviceOptions = serviceField.options.filter((o: any) => o.value && o.label);
+  if (!semantic.service) {
+    return {
+      success: true,
+      submitted: false,
+      booking_mode: "appointment",
+      stage: "needs_service",
+      needs_input: true,
+      missing_required: ["service"],
+      service_options: serviceOptions.slice(0, 40),
+    };
+  }
+
+  const matchedService = matchAppointmentService(serviceOptions, semantic.service);
+  if (!matchedService) {
+    return {
+      success: true,
+      submitted: false,
+      booking_mode: "appointment",
+      stage: "service_not_matched",
+      needs_input: true,
+      missing_required: ["service"],
+      requested_service: semantic.service,
+      service_options: serviceOptions.slice(0, 40),
+    };
+  }
+
+  const stateData: Record<string, unknown> = { [serviceKey]: matchedService.label, __neo_probe: "1" };
+  fill = await callWizard(stateData, false);
+  next = getWizardNext(fill.result) || next;
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(semantic.date)) {
+    return {
+      success: true,
+      submitted: false,
+      booking_mode: "appointment",
+      stage: "needs_date",
+      needs_input: true,
+      missing_required: ["date"],
+      selected_service: matchedService.label,
+    };
+  }
+
+  const target = new Date(semantic.date + "T12:00:00Z");
+  if (Number.isNaN(target.getTime())) {
+    return {
+      success: true,
+      submitted: false,
+      booking_mode: "appointment",
+      stage: "needs_date",
+      needs_input: true,
+      missing_required: ["date"],
+      selected_service: matchedService.label,
+    };
+  }
+
+  const now = new Date();
+  const monthDiff =
+    (target.getUTCFullYear() - now.getUTCFullYear()) * 12 + (target.getUTCMonth() - now.getUTCMonth());
+  if (monthDiff < 0 || monthDiff > 18) {
+    return {
+      success: true,
+      submitted: false,
+      booking_mode: "appointment",
+      stage: "date_out_of_range",
+      needs_input: true,
+      missing_required: ["date"],
+      selected_service: matchedService.label,
+      requested_date: semantic.date,
+    };
+  }
+
+  for (let i = 0; i < monthDiff; i += 1) {
+    const nav = findCalendarNavGroup(next);
+    if (!nav) {
+      return {
+        success: false,
+        submitted: false,
+        booking_mode: "appointment",
+        stage: "calendar_navigation_unavailable",
+        error: "Could not navigate booking calendar to requested month",
+      };
+    }
+    const navKey = safeStr(nav?.name || nav?.label).trim();
+    if (!navKey) break;
+    const navTexts = (nav?.options || []).map((o: any) => wizardOptionText(o));
+    const forward = navTexts.find((x: string) => x === "→" || x === "›") || "→";
+    fill = await callWizard({ ...stateData, [navKey]: forward }, false);
+    next = getWizardNext(fill.result) || next;
+  }
+
+  const dayGroup = findCalendarDayGroup(next);
+  if (!dayGroup) {
+    return {
+      success: false,
+      submitted: false,
+      booking_mode: "appointment",
+      stage: "calendar_day_control_not_found",
+      error: "Could not discover date choices in live booking UI",
+    };
+  }
+  const dayKey = safeStr(dayGroup?.name || dayGroup?.label).trim();
+  const dayText = String(target.getUTCDate());
+  const availableDays = (dayGroup?.options || []).map((o: any) => wizardOptionText(o));
+  if (!availableDays.includes(dayText)) {
+    return {
+      success: true,
+      submitted: false,
+      booking_mode: "appointment",
+      stage: "date_unavailable",
+      needs_input: true,
+      missing_required: ["date"],
+      selected_service: matchedService.label,
+      requested_date: semantic.date,
+    };
+  }
+
+  stateData[dayKey] = dayText;
+  fill = await callWizard(stateData, false);
+  next = getWizardNext(fill.result) || next;
+
+  const timeGroups = getTimeGroups(next);
+  const allSlots = Array.from(new Set(timeGroups.flatMap((x: any) => x.times as string[]))).sort();
+  const matchingSlots = filterAppointmentSlots(allSlots, semantic.daypart);
+
+  if (!allSlots.length) {
+    return {
+      success: true,
+      submitted: false,
+      booking_mode: "appointment",
+      stage: "no_slots",
+      needs_input: true,
+      missing_required: ["date"],
+      selected_service: matchedService.label,
+      date: semantic.date,
+      available_slots: [],
+    };
+  }
+
+  const exactTime = normalizeAppointmentTime(semantic.time);
+  if (!exactTime) {
+    return {
+      success: true,
+      submitted: false,
+      booking_mode: "appointment",
+      stage: "slots",
+      needs_input: true,
+      missing_required: ["time"],
+      selected_service: matchedService.label,
+      date: semantic.date,
+      daypart: semantic.daypart || "",
+      available_slots: matchingSlots.length ? matchingSlots : allSlots,
+      all_slots: allSlots,
+    };
+  }
+
+  if (!allSlots.includes(exactTime)) {
+    return {
+      success: true,
+      submitted: false,
+      booking_mode: "appointment",
+      stage: "time_unavailable",
+      needs_input: true,
+      missing_required: ["time"],
+      selected_service: matchedService.label,
+      date: semantic.date,
+      requested_time: exactTime,
+      available_slots: matchingSlots.length ? matchingSlots : allSlots,
+      all_slots: allSlots,
+    };
+  }
+
+  const timeGroup = timeGroups.find((x: any) => x.times.includes(exactTime));
+  const timeKey = safeStr(timeGroup?.group?.name || timeGroup?.group?.label).trim();
+  if (!timeKey) {
+    return {
+      success: false,
+      submitted: false,
+      booking_mode: "appointment",
+      stage: "time_control_not_found",
+      error: "Live time was found but its control could not be targeted",
+    };
+  }
+  stateData[timeKey] = exactTime;
+
+  const servicePrefix = serviceKey.includes("-") ? serviceKey.split("-")[0] + "-" : "";
+  const nameField = findAppointmentContactField(next, "name", servicePrefix);
+  const phoneField = findAppointmentContactField(next, "phone", servicePrefix);
+  const emailField = findAppointmentContactField(next, "email", servicePrefix);
+  const notesField = findAppointmentContactField(next, "notes", servicePrefix);
+
+  const missing: string[] = [];
+  if (!semantic.name) missing.push("name");
+  if (!semantic.phone) missing.push("phone");
+  if (missing.length) {
+    return {
+      success: true,
+      submitted: false,
+      booking_mode: "appointment",
+      stage: "needs_contact",
+      needs_input: true,
+      missing_required: missing,
+      selected_service: matchedService.label,
+      date: semantic.date,
+      time: exactTime,
+      available_slots: allSlots,
+    };
+  }
+
+  if (nameField) stateData[nameField.key] = semantic.name;
+  if (phoneField) stateData[phoneField.key] = semantic.phone;
+  if (semantic.email && emailField) stateData[emailField.key] = semantic.email;
+  if (semantic.notes && notesField) stateData[notesField.key] = semantic.notes;
+
+  if (!args.auto_submit) {
+    return {
+      success: true,
+      submitted: false,
+      booking_mode: "appointment",
+      stage: "ready_to_submit",
+      needs_input: false,
+      missing_required: [],
+      selected_service: matchedService.label,
+      date: semantic.date,
+      time: exactTime,
+      name: semantic.name,
+      phone: semantic.phone,
+      email: semantic.email || undefined,
+    };
+  }
+
+  fill = await callWizard(stateData, true);
+  const submitted = fill.ok && fill.result?.success === true;
+  return {
+    success: submitted,
+    submitted,
+    booking_mode: "appointment",
+    stage: submitted ? "submitted" : "submit_failed",
+    selected_service: matchedService.label,
+    date: semantic.date,
+    time: exactTime,
+    worker_status: fill.status,
+    worker_result: fill.result,
+    error: submitted ? undefined : safeStr(fill.result?.message || fill.raw_text || "appointment_submit_failed"),
+  };
+}
+
 // ═══════════════════════════════════════════════════════════════
 // POST-SUBMIT EMAIL NOTIFICATIONS (unchanged from v1.11)
 // ═══════════════════════════════════════════════════════════════
@@ -1787,6 +2313,51 @@ serve(async (req) => {
 
     if (!session_id || (!form_id && !fingerprint)) {
       return json(400, { success: false, error: "Missing session_id/form_id-or-fingerprint", build_id: BUILD_ID });
+    }
+
+    const actionSchema = await loadFormSchema(
+      session_id,
+      form_id || undefined,
+      fingerprint || undefined,
+    );
+    const schemaBookingMode = safeStr(actionSchema?.neo_booking_mode).trim().toLowerCase();
+    const inferredActionMode = inferAvailabilityModeFromSchema(actionSchema);
+    const isAppointmentAction =
+      schemaBookingMode === "appointment" ||
+      ((kind === "wizard" || kind === "availability") && inferredActionMode === "appointment");
+
+    if (isAppointmentAction) {
+      console.log(
+        "[APPOINTMENT-ROUTER] session=" + session_id +
+          " form=" + (form_id || fingerprint) +
+          " kind=" + kind +
+          " auto_submit=" + String(body?.auto_submit === true),
+      );
+      const appointmentResult = await handleAppointmentWizard({
+        session_id,
+        form_id,
+        fingerprint,
+        fields,
+        auto_submit: body?.auto_submit === true,
+        payloadUrl,
+        workerUrl: WORKER_URL,
+        workerSecret: WORKER_SECRET,
+        prepareTimeout: PREPARE_TIMEOUT_MS,
+        fillTimeout: FILL_TIMEOUT_MS,
+      });
+
+      if (appointmentResult?.submitted === true) {
+        sendPostSubmitEmails(session_id, fields).catch((e) =>
+          console.error("[POST-SUBMIT-EMAIL] appointment bg error:", e),
+        );
+      }
+
+      return json(200, {
+        ...appointmentResult,
+        kind: "wizard",
+        timing_ms: Date.now() - t0,
+        build_id: BUILD_ID,
+      });
     }
 
     // ═══════════════════════════════════════════════════════════════
