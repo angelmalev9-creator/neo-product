@@ -355,16 +355,27 @@ async function loadSiteMapForSession(sessionId: string): Promise<any | null> {
   if (!url) return null;
 
   const forms = Array.isArray(rows)
-    ? rows.map((row: any) => ({
-        id: safeStr(row?.id),
-        form_id: safeStr(row?.id),
-        url: safeStr(row?.url) || url,
-        domain: safeStr(row?.domain),
-        kind: safeStr(row?.kind),
-        fingerprint: safeStr(row?.fingerprint),
-        schema: row?.schema || {},
-        dom_snapshot: row?.dom_snapshot || null,
-      }))
+    ? rows.map((row: any) => {
+        let schema: any = row?.schema || {};
+        if (typeof schema === "string") {
+          try { schema = JSON.parse(schema); } catch { schema = {}; }
+        }
+
+        // Worker versions in production have consumed both historical shapes:
+        // flattened capability objects and wrappers with a nested schema. Preserve
+        // both so restart recovery is backwards compatible.
+        return {
+          ...(schema && typeof schema === "object" ? schema : {}),
+          id: safeStr(row?.id),
+          form_id: safeStr(row?.id),
+          url: safeStr(row?.url) || url,
+          domain: safeStr(row?.domain),
+          kind: safeStr(row?.kind),
+          fingerprint: safeStr(row?.fingerprint),
+          schema,
+          dom_snapshot: row?.dom_snapshot || null,
+        };
+      })
     : [];
 
   if (formsErr) {
