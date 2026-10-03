@@ -539,6 +539,18 @@ function getTimeGroups(next: any) {
     .filter((x: any) => x.times.length > 0);
 }
 
+function inferCalendarAnchorDate(next: any): Date | null {
+  for (const item of getTimeGroups(next)) {
+    const label = safeStr(item?.group?.name || item?.group?.label).trim();
+    if (!label) continue;
+    const parsed = new Date(label);
+    if (!Number.isNaN(parsed.getTime()) && parsed.getUTCFullYear() >= 2020 && parsed.getUTCFullYear() <= 2100) {
+      return parsed;
+    }
+  }
+  return null;
+}
+
 function filterAppointmentSlots(slots: string[], daypart: string) {
   const d = appointmentNorm(daypart);
   if (!d) return slots;
@@ -746,10 +758,31 @@ async function handleAppointmentWizard(args: {
     };
   }
 
-  const now = new Date();
+  // Infer the calendar's ACTUAL displayed month from live choices instead of
+  // assuming the worker page is still on the current month. This also repairs
+  // stale browser sessions that were previously navigated to another month.
+  let anchorDate = inferCalendarAnchorDate(next);
+  if (!anchorDate) {
+    const probeDays = ["1", "5", "10", "15", "20", "25", "28"];
+    for (const probeDay of probeDays) {
+      const probeGroup = findCalendarDayGroup(next);
+      if (!probeGroup) break;
+      const probeKey = safeStr(probeGroup?.name || probeGroup?.label).trim();
+      const probeOptions = (probeGroup?.options || []).map((o: any) => wizardOptionText(o));
+      if (!probeKey || !probeOptions.includes(probeDay)) continue;
+      fill = await callWizard({ ...stateData, [probeKey]: probeDay }, false);
+      next = getWizardNext(fill.result) || next;
+      anchorDate = inferCalendarAnchorDate(next);
+      if (anchorDate) break;
+    }
+  }
+
+  const fallbackNow = new Date();
+  const calendarBase = anchorDate || fallbackNow;
   const monthDiff =
-    (target.getUTCFullYear() - now.getUTCFullYear()) * 12 + (target.getUTCMonth() - now.getUTCMonth());
-  if (monthDiff < 0 || monthDiff > 18) {
+    (target.getUTCFullYear() - calendarBase.getUTCFullYear()) * 12 +
+    (target.getUTCMonth() - calendarBase.getUTCMonth());
+  if (Math.abs(monthDiff) > 18) {
     return {
       success: true,
       submitted: false,
@@ -762,7 +795,8 @@ async function handleAppointmentWizard(args: {
     };
   }
 
-  for (let i = 0; i < monthDiff; i += 1) {
+  const navSteps = Math.abs(monthDiff);
+  for (let i = 0; i < navSteps; i += 1) {
     const nav = findCalendarNavGroup(next);
     if (!nav) {
       return {
@@ -776,8 +810,11 @@ async function handleAppointmentWizard(args: {
     const navKey = safeStr(nav?.name || nav?.label).trim();
     if (!navKey) break;
     const navTexts = (nav?.options || []).map((o: any) => wizardOptionText(o));
-    const forward = navTexts.find((x: string) => x === "→" || x === "›") || "→";
-    fill = await callWizard({ ...stateData, [navKey]: forward }, false);
+    const direction =
+      monthDiff >= 0
+        ? navTexts.find((x: string) => x === "→" || x === "›") || "→"
+        : navTexts.find((x: string) => x === "←" || x === "‹") || "←";
+    fill = await callWizard({ ...stateData, [navKey]: direction }, false);
     next = getWizardNext(fill.result) || next;
   }
 
