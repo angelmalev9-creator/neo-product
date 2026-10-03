@@ -1835,7 +1835,7 @@ serve(async (req) => {
       session_id, site_id: session_id,
       form_id: form_id || undefined,
       fingerprint: fingerprint || undefined,
-      kind, data: fields, confirmed,
+      kind: kind === "availability" ? "wizard" : kind, data: fields, confirmed,
       auto_submit: body?.auto_submit !== false,
       strict_select,
     };
