@@ -341,7 +341,7 @@ async function loadSiteMapForSession(sessionId: string): Promise<any | null> {
   // demo_sessions.url + form_schemas. This makes worker recovery deterministic
   // after process/browser restarts instead of depending on hot-memory state.
   const [{ data: session, error: sessionErr }, { data: rows, error: formsErr }] = await Promise.all([
-    supabase.from("demo_sessions").select("url").eq("id", sessionId).maybeSingle(),
+    supabase.from("demo_sessions").select("url, structured_data").eq("id", sessionId).maybeSingle(),
     supabase
       .from("form_schemas")
       .select("id, url, domain, kind, fingerprint, schema, dom_snapshot, updated_at")
@@ -353,6 +353,22 @@ async function loadSiteMapForSession(sessionId: string): Promise<any | null> {
   if (sessionErr || !session) return null;
   const url = safeStr((session as any)?.url).trim();
   if (!url) return null;
+
+  const persistedMap = (session as any)?.structured_data?.worker_site_map;
+  if (persistedMap && typeof persistedMap === "object") {
+    const recovered = {
+      ...persistedMap,
+      site_id: sessionId,
+      url: safeStr((persistedMap as any)?.url).trim() || url,
+      source: "demo_sessions.structured_data.worker_site_map",
+    };
+    console.log("[SITE-MAP] restored persisted runtime map", {
+      site_id: sessionId,
+      buttons: Array.isArray((recovered as any)?.buttons) ? (recovered as any).buttons.length : 0,
+      forms: Array.isArray((recovered as any)?.forms) ? (recovered as any).forms.length : 0,
+    });
+    return recovered;
+  }
 
   const forms = Array.isArray(rows)
     ? rows.map((row: any) => {
