@@ -929,6 +929,23 @@ async function handleAppointmentWizard(args: {
   let fill = await callWizard({ __neo_probe: "1" }, false);
   let next = getWizardNext(fill.result);
   console.log("[APPOINTMENT-DEBUG] stage=initial_probe next=" + safeJson(summarizeAppointmentWizardNext(next), 12000));
+
+  // prepare-session may report ready as soon as navigation completes while the
+  // booking widget is still hydrating/loading its controls. Treat "ready" as a
+  // transport signal, not DOM readiness, and re-probe the same fresh page.
+  if (!fill.ok || !next) {
+    const initialProbeDelaysMs = [350, 700, 1200];
+    for (let attempt = 0; attempt < initialProbeDelaysMs.length && (!fill.ok || !next); attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, initialProbeDelaysMs[attempt]));
+      fill = await callWizard({ __neo_probe: "1" }, false);
+      next = getWizardNext(fill.result);
+      console.log(
+        "[APPOINTMENT-DEBUG] stage=initial_settle_probe attempt=" + String(attempt + 1) +
+          " next=" + safeJson(summarizeAppointmentWizardNext(next), 10000),
+      );
+    }
+  }
+
   if (!fill.ok || !next) {
     return {
       success: false,
