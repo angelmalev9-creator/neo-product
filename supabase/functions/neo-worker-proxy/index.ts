@@ -491,6 +491,50 @@ function wizardOptionText(o: any): string {
   return safeStr(o?.label || o?.text || o?.value).trim();
 }
 
+function summarizeAppointmentWizardNext(next: any) {
+  if (!next || typeof next !== "object") return { present: false };
+  const fields = Array.isArray(next?.fields) ? next.fields : [];
+  const choiceGroups = Array.isArray(next?.choiceGroups) ? next.choiceGroups : [];
+  const buttons = Array.isArray(next?.buttons) ? next.buttons : [];
+  const controls = Array.isArray(next?.controls) ? next.controls : [];
+  const clickable = Array.isArray(next?.clickable) ? next.clickable : [];
+  return {
+    present: true,
+    keys: Object.keys(next).slice(0, 40),
+    fields: fields.slice(0, 20).map((x: any) => ({
+      id: safeStr(x?.id),
+      name: safeStr(x?.name),
+      label: safeStr(x?.label),
+      type: safeStr(x?.type),
+      options: Array.isArray(x?.options) ? x.options.slice(0, 12).map((o: any) => wizardOptionText(o)) : [],
+    })),
+    choiceGroups: choiceGroups.slice(0, 20).map((g: any) => ({
+      name: safeStr(g?.name),
+      label: safeStr(g?.label),
+      options: Array.isArray(g?.options) ? g.options.slice(0, 40).map((o: any) => wizardOptionText(o)) : [],
+    })),
+    buttons: buttons.slice(0, 30).map((x: any) => ({
+      id: safeStr(x?.id),
+      name: safeStr(x?.name),
+      label: safeStr(x?.label || x?.text),
+      value: safeStr(x?.value),
+    })),
+    controls: controls.slice(0, 30).map((x: any) => ({
+      id: safeStr(x?.id),
+      name: safeStr(x?.name),
+      label: safeStr(x?.label || x?.text),
+      type: safeStr(x?.type),
+      value: safeStr(x?.value),
+    })),
+    clickable: clickable.slice(0, 30).map((x: any) => ({
+      id: safeStr(x?.id),
+      name: safeStr(x?.name),
+      label: safeStr(x?.label || x?.text),
+      value: safeStr(x?.value),
+    })),
+  };
+}
+
 function getAppointmentSemanticFields(fields: Record<string, unknown>) {
   const pick = (keys: string[]) => {
     for (const k of keys) {
@@ -743,6 +787,7 @@ async function handleAppointmentWizard(args: {
 
   let fill = await callWizard({ __neo_probe: "1" }, false);
   let next = getWizardNext(fill.result);
+  console.log("[APPOINTMENT-DEBUG] stage=initial_probe next=" + safeJson(summarizeAppointmentWizardNext(next), 12000));
   if (!fill.ok || !next) {
     return {
       success: false,
@@ -795,6 +840,7 @@ async function handleAppointmentWizard(args: {
   const stateData: Record<string, unknown> = { [serviceKey]: matchedService.label, __neo_probe: "1" };
   fill = await callWizard(stateData, false);
   next = getWizardNext(fill.result) || next;
+  console.log("[APPOINTMENT-DEBUG] stage=service_selected next=" + safeJson(summarizeAppointmentWizardNext(next), 12000));
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(semantic.date)) {
     return {
@@ -910,6 +956,7 @@ async function handleAppointmentWizard(args: {
   stateData[dayKey] = dayText;
   fill = await callWizard(stateData, false);
   next = getWizardNext(fill.result) || next;
+  console.log("[APPOINTMENT-DEBUG] stage=date_selected day=" + dayText + " next=" + safeJson(summarizeAppointmentWizardNext(next), 16000));
 
   const timeGroups = getTimeGroups(next);
   const allSlots = Array.from(new Set(timeGroups.flatMap((x: any) => x.times as string[]))).sort();
