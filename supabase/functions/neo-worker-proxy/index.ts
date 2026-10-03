@@ -911,7 +911,30 @@ async function handleAppointmentWizard(args: {
   fill = await callWizard(stateData, false);
   next = getWizardNext(fill.result) || next;
 
-  const timeGroups = getTimeGroups(next);
+  // Compatibility with older workers: dynamic widgets can reveal time buttons after a
+  // date click while returning a stale wizard_next captured before that click.
+  // Re-probe the SAME hot browser session once, read-only, so newly revealed controls
+  // are captured without submitting or restarting the flow.
+  let timeGroups = getTimeGroups(next);
+  if (!timeGroups.length) {
+    console.log(
+      `[APPOINTMENT-REPROBE] no time groups after date interaction; refreshing live DOM session=${args.session_id} date=${semantic.date}`,
+    );
+    const refreshed = await callWizard({ ...stateData, __neo_probe: "1" }, false);
+    const refreshedNext = getWizardNext(refreshed.result);
+    if (refreshedNext) {
+      const refreshedGroups = getTimeGroups(refreshedNext);
+      console.log(
+        `[APPOINTMENT-REPROBE] refreshed groups=${refreshedGroups.length} choices=${Array.isArray(refreshedNext?.choices) ? refreshedNext.choices.length : 0}`,
+      );
+      if (refreshedGroups.length || !next) {
+        next = refreshedNext;
+        fill = refreshed;
+        timeGroups = refreshedGroups;
+      }
+    }
+  }
+
   const allSlots = Array.from(new Set(timeGroups.flatMap((x: any) => x.times as string[]))).sort();
   const matchingSlots = filterAppointmentSlots(allSlots, semantic.daypart);
 
