@@ -269,6 +269,69 @@ function inferAvailabilityModeFromSchema(schema: any): "accommodation" | "appoin
   return "generic";
 }
 
+type SessionBookingCapability = {
+  mode: "accommodation" | "appointment" | "generic" | "none";
+  form_id?: string;
+  fingerprint?: string;
+  kind?: string;
+};
+
+async function resolveSessionBookingCapability(sessionId: string): Promise<SessionBookingCapability> {
+  const supabase = createSupabaseServiceClient();
+  if (!supabase || !sessionId) return { mode: "none" };
+
+  const { data: rows, error } = await supabase
+    .from("form_schemas")
+    .select("id, fingerprint, kind, schema, updated_at")
+    .eq("session_id", sessionId)
+    .order("updated_at", { ascending: false })
+    .limit(40);
+
+  if (error || !Array.isArray(rows) || rows.length === 0) return { mode: "none" };
+
+  const mapped = rows.map((row: any) => ({
+    row,
+    mode: inferAvailabilityModeFromSchema(row?.schema),
+  }));
+
+  // make_reservation is allowed only for a positively identified accommodation flow.
+  const accommodation = mapped.find((entry) => entry.mode === "accommodation");
+  if (accommodation) {
+    return {
+      mode: "accommodation",
+      form_id: safeStr(accommodation.row?.id),
+      fingerprint: safeStr(accommodation.row?.fingerprint),
+      kind: safeStr(accommodation.row?.kind),
+    };
+  }
+
+  const appointment = mapped.find((entry) => {
+    const schema = entry.row?.schema;
+    const explicit = safeStr(schema?.neo_booking_mode).trim().toLowerCase();
+    return explicit === "appointment" || entry.mode === "appointment";
+  });
+  if (appointment) {
+    return {
+      mode: "appointment",
+      form_id: safeStr(appointment.row?.id),
+      fingerprint: safeStr(appointment.row?.fingerprint),
+      kind: safeStr(appointment.row?.kind),
+    };
+  }
+
+  const generic = mapped.find((entry) => entry.mode === "generic");
+  if (generic) {
+    return {
+      mode: "generic",
+      form_id: safeStr(generic.row?.id),
+      fingerprint: safeStr(generic.row?.fingerprint),
+      kind: safeStr(generic.row?.kind),
+    };
+  }
+
+  return { mode: "none" };
+}
+
 async function loadSiteMapForSession(sessionId: string): Promise<any | null> {
   const supabase = createSupabaseServiceClient();
   if (!supabase) return null;
@@ -2299,6 +2362,41 @@ serve(async (req) => {
           error: "Missing session_id or phase",
           trace_id,
           build_id: BUILD_ID
+        });
+      }
+
+      const sessionId = safeStr(body?.session_id);
+      const bookingCapability = await resolveSessionBookingCapability(sessionId);
+      console.log(
+        `[RESERVATION-CAPABILITY] trace=${trace_id} session=${sessionId} mode=${bookingCapability.mode} form_id=${bookingCapability.form_id || "-"} fingerprint=${bookingCapability.fingerprint || "-"}`,
+      );
+
+      if (bookingCapability.mode !== "accommodation") {
+        console.warn(
+          `[RESERVATION-CAPABILITY] trace=${trace_id} blocked make_reservation for mode=${bookingCapability.mode}`,
+        );
+        return json(200, {
+          success: false,
+          blocked: true,
+          stage: "booking_capability_mismatch",
+          booking_mode: bookingCapability.mode,
+          action_hint:
+            bookingCapability.mode === "appointment"
+              ? "submit_form"
+              : bookingCapability.mode === "generic"
+                ? "submit_form"
+                : "none",
+          target:
+            bookingCapability.form_id || bookingCapability.fingerprint
+              ? {
+                  form_id: bookingCapability.form_id || undefined,
+                  fingerprint: bookingCapability.fingerprint || undefined,
+                  kind: bookingCapability.kind || undefined,
+                }
+              : null,
+          error: "make_reservation is only valid for discovered accommodation booking flows",
+          trace_id,
+          build_id: BUILD_ID,
         });
       }
 
