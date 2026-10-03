@@ -914,25 +914,6 @@ async function handleAppointmentWizard(args: {
   fillTimeout: number;
 }) {
   const semantic = getAppointmentSemanticFields(args.fields);
-  const prepared = await prepareAppointmentWorkerSession(
-    args.session_id,
-    args.form_id,
-    args.fingerprint,
-    args.payloadUrl,
-    args.workerUrl,
-    args.workerSecret,
-    args.prepareTimeout,
-  );
-  if (!prepared.ok) {
-    return {
-      success: false,
-      submitted: false,
-      booking_mode: "appointment",
-      stage: "prepare_failed",
-      error: "Could not initialize live booking page",
-      details: prepared.prep?.result || null,
-    };
-  }
 
   const callWizard = async (data: Record<string, unknown>, autoSubmit = false) =>
     await callWorkerWithRetryOnAbort(
@@ -952,23 +933,51 @@ async function handleAppointmentWizard(args: {
       args.fillTimeout,
     );
 
+  // HOT SESSION FIRST. Do not call prepare-session on every conversational turn:
+  // prepare may recreate/reset browser state. The worker's current session is the
+  // canonical interaction context; accumulated fields below replay the requested state.
   let fill = await callWizard({ __neo_probe: "1" }, false);
   let next = getWizardNext(fill.result);
-  console.log("[APPOINTMENT-DEBUG] stage=initial_probe next=" + safeJson(summarizeAppointmentWizardNext(next), 12000));
+  console.log("[APPOINTMENT] initial_probe", {
+    ok: fill.ok,
+    has_next: !!next,
+    no_active_session: looksLikeNoActiveSession(fill.result),
+  });
 
-  // prepare-session may report ready as soon as navigation completes while the
-  // booking widget is still hydrating/loading its controls. Treat "ready" as a
-  // transport signal, not DOM readiness, and re-probe the same fresh page.
+  // Recover only when the hot session is missing/broken. Reconstruct its action map
+  // from persisted form_schemas, prepare once, then wait for dynamic UI hydration.
   if (!fill.ok || !next) {
-    const initialProbeDelaysMs = [350, 700, 1200];
+    const prepared = await prepareAppointmentWorkerSession(
+      args.session_id,
+      args.form_id,
+      args.fingerprint,
+      args.payloadUrl,
+      args.workerUrl,
+      args.workerSecret,
+      args.prepareTimeout,
+    );
+
+    if (!prepared.ok) {
+      return {
+        success: false,
+        submitted: false,
+        booking_mode: "appointment",
+        stage: "prepare_failed",
+        error: "Could not initialize live booking page",
+        details: prepared.prep?.result || null,
+      };
+    }
+
+    const initialProbeDelaysMs = [250, 500, 900, 1400];
     for (let attempt = 0; attempt < initialProbeDelaysMs.length && (!fill.ok || !next); attempt += 1) {
       await new Promise((resolve) => setTimeout(resolve, initialProbeDelaysMs[attempt]));
       fill = await callWizard({ __neo_probe: "1" }, false);
       next = getWizardNext(fill.result);
-      console.log(
-        "[APPOINTMENT-DEBUG] stage=initial_settle_probe attempt=" + String(attempt + 1) +
-          " next=" + safeJson(summarizeAppointmentWizardNext(next), 10000),
-      );
+      console.log("[APPOINTMENT] recovery_probe", {
+        attempt: attempt + 1,
+        ok: fill.ok,
+        has_next: !!next,
+      });
     }
   }
 
