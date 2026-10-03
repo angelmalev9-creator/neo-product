@@ -334,15 +334,52 @@ async function resolveSessionBookingCapability(sessionId: string): Promise<Sessi
 
 async function loadSiteMapForSession(sessionId: string): Promise<any | null> {
   const supabase = createSupabaseServiceClient();
-  if (!supabase) return null;
-  const { data, error } = await supabase.from("demo_sessions").select("site_map_info, site_map, url").eq("id", sessionId).single();
-  if (error || !data) return null;
-  const siteMap = (data as any).site_map_info ?? (data as any).site_map ?? null;
-  if (!siteMap) return null;
-  if (isObject(siteMap) && !(siteMap as any).url && safeStr((data as any).url)) {
-    (siteMap as any).url = safeStr((data as any).url);
+  if (!supabase || !sessionId) return null;
+
+  // Production demo_sessions does not persist site_map_info/site_map columns.
+  // Rebuild the worker's canonical action map from persisted sources of truth:
+  // demo_sessions.url + form_schemas. This makes worker recovery deterministic
+  // after process/browser restarts instead of depending on hot-memory state.
+  const [{ data: session, error: sessionErr }, { data: rows, error: formsErr }] = await Promise.all([
+    supabase.from("demo_sessions").select("url").eq("id", sessionId).maybeSingle(),
+    supabase
+      .from("form_schemas")
+      .select("id, url, domain, kind, fingerprint, schema, dom_snapshot, updated_at")
+      .eq("session_id", sessionId)
+      .order("updated_at", { ascending: false })
+      .limit(50),
+  ]);
+
+  if (sessionErr || !session) return null;
+  const url = safeStr((session as any)?.url).trim();
+  if (!url) return null;
+
+  const forms = Array.isArray(rows)
+    ? rows.map((row: any) => ({
+        id: safeStr(row?.id),
+        form_id: safeStr(row?.id),
+        url: safeStr(row?.url) || url,
+        domain: safeStr(row?.domain),
+        kind: safeStr(row?.kind),
+        fingerprint: safeStr(row?.fingerprint),
+        schema: row?.schema || {},
+        dom_snapshot: row?.dom_snapshot || null,
+      }))
+    : [];
+
+  if (formsErr) {
+    console.warn("[SITE-MAP] form_schemas recovery failed:", formsErr.message);
   }
-  return siteMap;
+
+  return {
+    site_id: sessionId,
+    url,
+    buttons: [],
+    forms,
+    prices: [],
+    capabilities: forms,
+    source: "db_reconstructed_form_schemas",
+  };
 }
 
 function buildMinimalSiteMap(sessionId: string, url: string) {
