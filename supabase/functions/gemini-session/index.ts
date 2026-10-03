@@ -364,6 +364,29 @@ function buildFullBusinessContext(session: any, actionsBlock: string): string {
 /* ─────────── Form schema extraction ─────────── */
 
 type FieldDescriptor = { key: string; required: boolean };
+type AvailabilityMode = "accommodation" | "appointment" | "generic";
+
+function inferAvailabilityMode(schema: any): AvailabilityMode {
+  let text = "";
+  try { text = JSON.stringify(schema || {}).toLowerCase(); } catch {}
+  if (!text) return "generic";
+
+  const accommodationSignals = [
+    /check[_ -]?in/, /check[_ -]?out/, /\bguests?\b/, /\badults?\b/, /\bchildren\b/,
+    /\brooms?\b/, /\bnights?\b/, /hotel/, /accommodation/, /stay\b/,
+  ];
+  const appointmentSignals = [
+    /\bappointment\b/, /\bservice\b/, /\btreatment\b/, /\btherapist\b/, /\bstaff\b/,
+    /\bslot\b/, /\btime\b/, /\bduration\b/, /procedure/, /calendar/,
+  ];
+
+  const accommodationScore = accommodationSignals.reduce((n, re) => n + (re.test(text) ? 1 : 0), 0);
+  const appointmentScore = appointmentSignals.reduce((n, re) => n + (re.test(text) ? 1 : 0), 0);
+
+  if (accommodationScore >= 2 && accommodationScore > appointmentScore) return "accommodation";
+  if (appointmentScore >= 2 && appointmentScore > accommodationScore) return "appointment";
+  return "generic";
+}
 
 function extractFieldDescriptors(schema: any): FieldDescriptor[] {
   const out: FieldDescriptor[] = [];
@@ -482,16 +505,33 @@ function formatActionsFromFormSchemas(rowsInput: any[]): {
   text: string;
   hasActions: boolean;
   hasAvailability: boolean;
+  hasAccommodationAvailability: boolean;
+  hasAppointmentAvailability: boolean;
+  hasGenericAvailability: boolean;
   hasLeadForm: boolean;
   hasWizard: boolean;
 } {
   const rows = Array.isArray(rowsInput) ? rowsInput : [];
   if (rows.length === 0) {
-    return { text: "", hasActions: false, hasAvailability: false, hasLeadForm: false, hasWizard: false };
+    return {
+      text: "",
+      hasActions: false,
+      hasAvailability: false,
+      hasAccommodationAvailability: false,
+      hasAppointmentAvailability: false,
+      hasGenericAvailability: false,
+      hasLeadForm: false,
+      hasWizard: false,
+    };
   }
 
   const lines: string[] = [];
-  const hasAvailability = rows.some((r) => safeStr(r?.kind).trim().toLowerCase() === "availability");
+  const availabilityRows = rows.filter((r) => safeStr(r?.kind).trim().toLowerCase() === "availability");
+  const availabilityModes = availabilityRows.map((r) => inferAvailabilityMode(r?.schema));
+  const hasAvailability = availabilityRows.length > 0;
+  const hasAccommodationAvailability = availabilityModes.includes("accommodation");
+  const hasAppointmentAvailability = availabilityModes.includes("appointment");
+  const hasGenericAvailability = availabilityModes.includes("generic");
   const hasLeadForm = rows.some((r) => safeStr(r?.kind).trim().toLowerCase() === "form");
   const hasWizard = rows.some((r) => safeStr(r?.kind).trim().toLowerCase() === "wizard");
 
@@ -513,6 +553,9 @@ function formatActionsFromFormSchemas(rowsInput: any[]): {
     const opt = fields.filter((f) => !f.required).map((f) => f.key);
 
     lines.push(`- ${kind}${url ? ` @ ${url}` : ""}`);
+    if (kind === "availability") {
+      lines.push(`  availability_mode: ${inferAvailabilityMode(schema)}`);
+    }
     if (formId) lines.push(`  form_id: ${formId}`);
     if (fingerprint) lines.push(`  fingerprint: ${fingerprint}`);
     if (req.length) lines.push(`  required_keys: ${req.join(", ")}`);
@@ -535,13 +578,25 @@ function formatActionsFromFormSchemas(rowsInput: any[]): {
 
   if (hasAvailability) {
     lines.push(
-      "- ПРИОРИТЕТ НА ФОРМИТЕ: Ако има kind=availability — използвай го САМО когато клиентът изрично иска резервация, час, дати, наличност или свободен слот.",
+      "- kind=availability се използва САМО при реален booking/availability intent. Не измисляй наличност от текста на сайта.",
     );
     lines.push(
-      "- kind=availability — workflow само за сайтове, които РЕАЛНО имат онлайн booking/availability. Ако такъв flow липсва в ACTIONS, не измисляй записване на час, резервация или calendar flow.",
+      "- availability_mode=accommodation означава престой/хотел (check-in/check-out/guests/rooms) и само тогава се използва make_reservation.",
     );
     lines.push(
-      "- Ако клиентът описва проблем, симптом, нужда от консултация или въпрос за услуга, това НЕ е booking intent по подразбиране. Първо помогни и насочи според сайта.",
+      "- availability_mode=appointment или generic означава час/услуга/друг booking UI. За тях използвай submit_form към ТОЧНИЯ availability form_id/fingerprint, а НЕ make_reservation.",
+    );
+    lines.push(
+      "- За appointment/generic availability: при първа live проверка изпрати submit_form с kind=availability и auto_submit=false. Ако keys са unknown, ползвай fields:{} като PROBE_MODE.",
+    );
+    lines.push(
+      "- След live резултат говориш САМО по него. Никога не казвай, че ден/час/вариант е свободен преди action result.",
+    );
+    lines.push(
+      "- Крайно записване/submit правиш само след като всички нужни полета са събрани и клиентът потвърди; тогава submit_form е с auto_submit=true.",
+    );
+    lines.push(
+      "- Ако клиентът описва проблем, симптом или пита за услуга, това НЕ е booking intent по подразбиране. Първо помогни; booking започва когато поиска час/дата/наличност/записване.",
     );
   }
 
@@ -559,7 +614,16 @@ function formatActionsFromFormSchemas(rowsInput: any[]): {
   lines.push("- PROBE_MODE се ползва само ако keys са (unknown) или е wizard/multi-step.");
   lines.push("- Не казваш, че е изпратено. Казваш: 'Готово — ако потвърдите, ще подам запитването през формата.'");
 
-  return { text: lines.join("\n").trim(), hasActions: true, hasAvailability, hasLeadForm, hasWizard };
+  return {
+    text: lines.join("\n").trim(),
+    hasActions: true,
+    hasAvailability,
+    hasAccommodationAvailability,
+    hasAppointmentAvailability,
+    hasGenericAvailability,
+    hasLeadForm,
+    hasWizard,
+  };
 }
 
 /* ─────────── Search Worker — Gemini function calling tool ─────────── */
@@ -927,6 +991,9 @@ serve(async (req) => {
     let businessContext = externalContext;
     let hasActions = false;
     let hasAvailability = false;
+    let hasAccommodationAvailability = false;
+    let hasAppointmentAvailability = false;
+    let hasGenericAvailability = false;
     let hasLeadForm = false;
     let hasWizard = false;
     let companyNameResolved = reqCompanyName || "компанията";
@@ -966,6 +1033,9 @@ serve(async (req) => {
         const actions = formatActionsFromFormSchemas(formRows || []);
         hasActions = actions.hasActions;
         hasAvailability = actions.hasAvailability;
+        hasAccommodationAvailability = actions.hasAccommodationAvailability;
+        hasAppointmentAvailability = actions.hasAppointmentAvailability;
+        hasGenericAvailability = actions.hasGenericAvailability;
         hasLeadForm = actions.hasLeadForm;
         hasWizard = actions.hasWizard;
 
@@ -979,7 +1049,7 @@ serve(async (req) => {
     }
 
     const ctaRule = hasActions
-      ? `4) Завършвате с ТОЧНО 1 конкретен въпрос или предложение за следваща стъпка — НО САМО ако НЕ трябва да върнете action_request JSON. Ако има kind=availability и вече имате check_in + check_out + guests, НЕ задавате CTA — връщате само JSON. Ако няма booking intent, НЕ предлагате резервация по подразбиране. За форми: "Искате ли да подам запитването вместо Вас? Само потвърдете и е готово." Никога не завършвайте с "Ако имате въпроси".`
+      ? `4) Завършвате с ТОЧНО 1 конкретен въпрос или предложение за следваща стъпка — НО САМО ако НЕ трябва да върнете action_request JSON. Ако текущият action flow вече има нужните данни за live check/submit, връщате action_request веднага вместо CTA. Ако няма booking intent, НЕ предлагате резервация по подразбиране. Никога не завършвайте с "Ако имате въпроси".`
       : `4) Завършвате с ТОЧНО 1 конкретен въпрос или следваща стъпка. Примери: "Имате ли вече парцел?", "Кога бихте искали да започнете?", "Да продължим ли с детайлите?" Никога не завършвайте с "Ако имате въпроси".`;
 
     const actionJsonRules = [
@@ -1009,21 +1079,20 @@ FIELD LOCK RULE:
       ``,
       `RESERVATION / AVAILABILITY RULES:`,
       `- kind=availability се използва само ако такъв flow реално съществува в ACTIONS.`,
-      `- Не превръщаш normal contact flow в booking flow.`,
-      `- Не предполагаш booking полета, ако системата не ги е върнала.`,
-      `- Ако клиентът иска availability / резервация / дати / час и има kind=availability:`,
-      `  1) събираш само минимално нужните данни едно по едно`,
-      `  2) щом имаш check_in + check_out + guests → връщаш само JSON:`,
-      `  {"type":"action_request","action":"make_reservation","session_id":"${sessionId}","phase":"check","check_in":"YYYY-MM-DD","check_out":"YYYY-MM-DD","guests":"N","rooms":"1"}`,
-      `- Ако клиентът току-що е дал последното липсващо поле → в същия отговор връщаш само JSON.`,
-      `- След availability result: представяш само това, което системата е върнала.`,
-      `- Ако клиентът избере вариант/стая/час и има booking flow → връщаш само JSON:`,
-      `  {"type":"action_request","action":"make_reservation","session_id":"${sessionId}","phase":"reserve","room_type":"<избраният вариант>"}`,
-      `- Ако системата върне needs_input / missing_required:`,
-      `  * искаш само следващото нужно поле`,
-      `  * използваш exact label-и от missing_required`,
-      `  * не добавяш свои полета`,
-      `- Ако липсва booking flow в ACTIONS → не връщаш make_reservation JSON.`,
+      `- Никога не приемай автоматично, че availability означава хотел.`,
+      `- Гледай availability_mode на конкретния ACTION.`,
+      `- availability_mode=accommodation → престой/хотел. Само тук са валидни check_in/check_out/guests/rooms и make_reservation.`,
+      `- availability_mode=appointment или generic → час/услуга/booking UI. Използваш submit_form към точния availability form_id/fingerprint, НЕ make_reservation.`,
+      `- За appointment/generic live check връщаш САМО JSON:`,
+      `  {"type":"action_request","action":"submit_form","session_id":"${sessionId}","form_id":"<availability form_id>","fingerprint":"<availability fingerprint>","kind":"availability","fields":{},"auto_submit":false}`,
+      `- Ако exact keys вече са известни, fields съдържа САМО реално известните exact keys. Ако keys са unknown → fields:{} е PROBE_MODE.`,
+      `- Worker result next/missing_required/options е единственият източник за следващите полета и свободните опции.`,
+      `- След live result говориш САМО по върнатите данни. Забранено е да измисляш свободен ден, час, стая, цена или вариант.`,
+      `- За appointment/generic крайно записване/submit става само след всички нужни полета + потвърждение: същият submit_form с auto_submit=true.`,
+      `- За accommodation make_reservation е разрешен САМО ако ACTIONS изрично показва availability_mode=accommodation.`,
+      `  check JSON: {"type":"action_request","action":"make_reservation","session_id":"${sessionId}","phase":"check","check_in":"YYYY-MM-DD","check_out":"YYYY-MM-DD","guests":"N","rooms":"1"}`,
+      `- Ако системата върне needs_input / missing_required: искаш само следващото поле и използваш exact label/options от резултата.`,
+      `- Ако липсва booking flow в ACTIONS → не връщаш booking action JSON.`,
       `- Ако сайтът е contact / lead form → водиш submit_form flow, не booking flow.`,
       `- Ако системата стигне до плащане или външен booking_url → насочваш клиента натам. Никога не искаш данни за карта в чата.`,
     ].join("\n");

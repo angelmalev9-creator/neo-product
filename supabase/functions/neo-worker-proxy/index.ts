@@ -247,6 +247,28 @@ async function loadFormSchema(sessionId: string, formId?: string, fingerprint?: 
   return (data as any).schema ?? null;
 }
 
+function inferAvailabilityModeFromSchema(schema: any): "accommodation" | "appointment" | "generic" {
+  let text = "";
+  try { text = JSON.stringify(schema || {}).toLowerCase(); } catch {}
+  if (!text) return "generic";
+
+  const accommodationSignals = [
+    /check[_ -]?in/, /check[_ -]?out/, /\bguests?\b/, /\badults?\b/, /\bchildren\b/,
+    /\brooms?\b/, /\bnights?\b/, /hotel/, /accommodation/, /stay\b/,
+  ];
+  const appointmentSignals = [
+    /\bappointment\b/, /\bservice\b/, /\btreatment\b/, /\btherapist\b/, /\bstaff\b/,
+    /\bslot\b/, /\btime\b/, /\bduration\b/, /procedure/, /calendar/,
+  ];
+
+  const accommodationScore = accommodationSignals.reduce((n, re) => n + (re.test(text) ? 1 : 0), 0);
+  const appointmentScore = appointmentSignals.reduce((n, re) => n + (re.test(text) ? 1 : 0), 0);
+
+  if (accommodationScore >= 2 && accommodationScore > appointmentScore) return "accommodation";
+  if (appointmentScore >= 2 && appointmentScore > accommodationScore) return "appointment";
+  return "generic";
+}
+
 async function loadSiteMapForSession(sessionId: string): Promise<any | null> {
   const supabase = createSupabaseServiceClient();
   if (!supabase) return null;
@@ -1768,13 +1790,38 @@ serve(async (req) => {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // AVAILABILITY BRANCH — kind=availability: check dates, screenshot, vision parse
+    // AVAILABILITY ROUTING
+    // Do NOT assume every availability UI is a hotel.
+    // Appointment/generic availability uses the same deterministic fill-form
+    // worker flow with auto_submit=false for live probing. Hotel/stay flows
+    // must use the dedicated make_reservation action.
     // ═══════════════════════════════════════════════════════════════
     if (kind === "availability") {
-      return await handleAvailabilityCheck({
-        t0, session_id, form_id, fingerprint, fields, payloadUrl,
-        WORKER_URL, WORKER_SECRET, PREPARE_TIMEOUT_MS, FILL_TIMEOUT_MS,
-      });
+      const availabilitySchema = await loadFormSchema(
+        session_id,
+        form_id || undefined,
+        fingerprint || undefined,
+      );
+      const availabilityMode = inferAvailabilityModeFromSchema(availabilitySchema);
+      console.log(`[AVAILABILITY-ROUTER] mode=${availabilityMode} session=${session_id} form=${form_id || fingerprint}`);
+
+      if (availabilityMode === "accommodation") {
+        return json(200, {
+          success: false,
+          submitted: false,
+          needs_input: true,
+          stage: "use_make_reservation",
+          kind,
+          availability_mode: availabilityMode,
+          error: "Accommodation availability must use make_reservation, not submit_form.",
+          action_hint: "make_reservation",
+          timing_ms: Date.now() - t0,
+          build_id: BUILD_ID,
+        });
+      }
+
+      // appointment/generic: continue into /fill-form below.
+      // The client controls probing vs final submit through auto_submit.
     }
     // ═══════════════════════════════════════════════════════════════
 
