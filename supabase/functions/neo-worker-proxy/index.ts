@@ -958,7 +958,28 @@ async function handleAppointmentWizard(args: {
   next = getWizardNext(fill.result) || next;
   console.log("[APPOINTMENT-DEBUG] stage=date_selected day=" + dayText + " next=" + safeJson(summarizeAppointmentWizardNext(next), 16000));
 
-  const timeGroups = getTimeGroups(next);
+  // Dynamic booking widgets commonly fetch availability asynchronously AFTER the
+  // date click. The first /fill-form response can therefore contain the old DOM.
+  // Re-probe the SAME live browser session until time controls settle.
+  let timeGroups = getTimeGroups(next);
+  if (!timeGroups.length) {
+    const settleDelaysMs = [350, 700, 1100];
+    for (let attempt = 0; attempt < settleDelaysMs.length && !timeGroups.length; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, settleDelaysMs[attempt]));
+      const settleProbe = await callWizard({ __neo_probe: "1" }, false);
+      const settleNext = getWizardNext(settleProbe.result);
+      if (settleProbe.ok && settleNext) {
+        next = settleNext;
+        timeGroups = getTimeGroups(next);
+        console.log(
+          "[APPOINTMENT-DEBUG] stage=date_settle_probe attempt=" + String(attempt + 1) +
+            " times=" + String(timeGroups.flatMap((x: any) => x.times as string[]).length) +
+            " next=" + safeJson(summarizeAppointmentWizardNext(next), 12000),
+        );
+      }
+    }
+  }
+
   const allSlots = Array.from(new Set(timeGroups.flatMap((x: any) => x.times as string[]))).sort();
   const matchingSlots = filterAppointmentSlots(allSlots, semantic.daypart);
 
