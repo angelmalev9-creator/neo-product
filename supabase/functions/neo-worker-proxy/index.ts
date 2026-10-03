@@ -506,6 +506,8 @@ function summarizeAppointmentWizardNext(next: any) {
       name: safeStr(x?.name),
       label: safeStr(x?.label),
       type: safeStr(x?.type),
+      required: x?.required === true || x?.required === "true",
+      aria_required: safeStr(x?.aria_required || x?.ariaRequired),
       options: Array.isArray(x?.options) ? x.options.slice(0, 12).map((o: any) => wizardOptionText(o)) : [],
     })),
     choiceGroups: choiceGroups.slice(0, 20).map((g: any) => ({
