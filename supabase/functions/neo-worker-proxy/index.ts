@@ -710,6 +710,123 @@ function findAppointmentContactField(next: any, semantic: "name" | "phone" | "em
   return best && best.score >= 20 ? best : null;
 }
 
+
+function appointmentFieldKey(field: any): string {
+  return safeStr(field?.id || field?.name || field?.label).trim();
+}
+
+function appointmentFieldSemantic(field: any): "name" | "phone" | "email" | "notes" | "" {
+  const meta = appointmentNorm(
+    [field?.id, field?.name, field?.label, field?.placeholder, field?.aria_label, field?.type]
+      .filter(Boolean)
+      .join(" "),
+  );
+  const type = appointmentNorm(field?.type);
+  if (/email|e mail|mail|imeil|imail/.test(meta) || type.includes("email")) return "email";
+  if (/phone|telephone|mobile|tel|gsm|telefon|nomer|number/.test(meta) || type.includes("tel")) return "phone";
+  if (/name|full name|client name|customer name|ime/.test(meta)) return "name";
+  if (/notes?|comment|message|additional|details?|belezh|suobsht/.test(meta) || type.includes("textarea")) return "notes";
+  return "";
+}
+
+function appointmentInputValue(
+  field: any,
+  fields: Record<string, unknown>,
+  semantic: ReturnType<typeof appointmentFieldSemantic>,
+): string {
+  const directKeys = [
+    safeStr(field?.id).trim(),
+    safeStr(field?.name).trim(),
+    safeStr(field?.label).trim(),
+  ].filter(Boolean);
+
+  for (const key of directKeys) {
+    const v = fields?.[key];
+    if (v !== undefined && v !== null && String(v).trim()) return String(v).trim();
+  }
+
+  const aliases: Record<string, string[]> = {
+    name: ["name", "full_name", "client_name", "customer_name", "booking-name"],
+    phone: ["phone", "telephone", "mobile", "booking-phone"],
+    email: ["email", "booking-email"],
+    notes: ["notes", "note", "message", "comment", "booking-notes"],
+  };
+  for (const key of semantic ? aliases[semantic] || [] : []) {
+    const v = fields?.[key];
+    if (v !== undefined && v !== null && String(v).trim()) return String(v).trim();
+  }
+
+  const wanted = directKeys.map((x) => appointmentNorm(x)).filter(Boolean);
+  for (const [key, value] of Object.entries(fields || {})) {
+    const nk = appointmentNorm(key);
+    if (!nk || !wanted.includes(nk)) continue;
+    if (value !== undefined && value !== null && String(value).trim()) return String(value).trim();
+  }
+
+  return "";
+}
+
+async function loadAppointmentRequirementMap(
+  sessionId: string,
+  liveFields: any[],
+): Promise<{ requiredByKey: Map<string, boolean>; source: string }> {
+  const supabase = createSupabaseServiceClient();
+  if (!supabase || !sessionId || !Array.isArray(liveFields) || !liveFields.length) {
+    return { requiredByKey: new Map(), source: "live_fallback" };
+  }
+
+  const liveKeys = new Set(
+    liveFields
+      .flatMap((f: any) => [safeStr(f?.id), safeStr(f?.name)])
+      .map((x: string) => appointmentNorm(x))
+      .filter(Boolean),
+  );
+
+  const { data: rows, error } = await supabase
+    .from("form_schemas")
+    .select("id, kind, schema")
+    .eq("session_id", sessionId)
+    .limit(50);
+
+  if (error || !Array.isArray(rows)) {
+    return { requiredByKey: new Map(), source: "live_fallback" };
+  }
+
+  let best: { score: number; fields: any[]; id: string } | null = null;
+  for (const row of rows) {
+    let schema: any = (row as any)?.schema || {};
+    if (typeof schema === "string") {
+      try { schema = JSON.parse(schema); } catch { schema = {}; }
+    }
+    const schemaFields = Array.isArray(schema?.fields) ? schema.fields : [];
+    if (!schemaFields.length) continue;
+
+    let score = 0;
+    for (const sf of schemaFields) {
+      const candidates = [safeStr(sf?.id), safeStr(sf?.name)]
+        .map((x) => appointmentNorm(x))
+        .filter(Boolean);
+      if (candidates.some((x) => liveKeys.has(x))) score += 10;
+    }
+    if (!best || score > best.score) best = { score, fields: schemaFields, id: safeStr((row as any)?.id) };
+  }
+
+  if (!best || best.score <= 0) {
+    return { requiredByKey: new Map(), source: "live_fallback" };
+  }
+
+  const requiredByKey = new Map<string, boolean>();
+  for (const sf of best.fields) {
+    const required = sf?.required === true || sf?.required === "true";
+    for (const rawKey of [safeStr(sf?.id), safeStr(sf?.name), safeStr(sf?.label)]) {
+      const key = appointmentNorm(rawKey);
+      if (key) requiredByKey.set(key, required);
+    }
+  }
+
+  return { requiredByKey, source: "crawler_schema:" + best.id };
+}
+
 async function prepareAppointmentWorkerSession(
   sessionId: string,
   formId: string,
@@ -1046,14 +1163,64 @@ async function handleAppointmentWizard(args: {
   stateData[timeKey] = exactTime;
 
   const servicePrefix = serviceKey.includes("-") ? serviceKey.split("-")[0] + "-" : "";
-  const nameField = findAppointmentContactField(next, "name", servicePrefix);
-  const phoneField = findAppointmentContactField(next, "phone", servicePrefix);
-  const emailField = findAppointmentContactField(next, "email", servicePrefix);
-  const notesField = findAppointmentContactField(next, "notes", servicePrefix);
+  const allLiveFields = Array.isArray(next?.fields) ? next.fields : [];
+  const prefixedFields = servicePrefix
+    ? allLiveFields.filter((field: any) =>
+        appointmentFieldKey(field).toLowerCase().startsWith(servicePrefix.toLowerCase()),
+      )
+    : [];
+  const scopedFields = prefixedFields.length ? prefixedFields : allLiveFields;
 
+  const fillableFields = scopedFields.filter((field: any) => {
+    const key = appointmentFieldKey(field);
+    if (!key || key === serviceKey) return false;
+    const type = appointmentNorm(field?.type);
+    if (/select|hidden|submit|button|checkbox|radio/.test(type)) return false;
+    return true;
+  });
+
+  const requirements = await loadAppointmentRequirementMap(args.session_id, scopedFields);
   const missing: string[] = [];
-  if (!semantic.name) missing.push("name");
-  if (!semantic.phone) missing.push("phone");
+  const missingSeen = new Set<string>();
+
+  for (const field of fillableFields) {
+    const key = appointmentFieldKey(field);
+    const semanticKey = appointmentFieldSemantic(field);
+    const value = appointmentInputValue(field, args.fields, semanticKey);
+    const normalizedCandidates = [safeStr(field?.id), safeStr(field?.name), safeStr(field?.label)]
+      .map((x) => appointmentNorm(x))
+      .filter(Boolean);
+
+    let requiredFromSchema: boolean | undefined;
+    for (const candidate of normalizedCandidates) {
+      if (requirements.requiredByKey.has(candidate)) {
+        requiredFromSchema = requirements.requiredByKey.get(candidate);
+        break;
+      }
+    }
+
+    const required =
+      requiredFromSchema !== undefined
+        ? requiredFromSchema
+        : field?.required === true || field?.required === "true" || field?.aria_required === "true";
+
+    if (value) {
+      stateData[key] = value;
+      continue;
+    }
+
+    if (required) {
+      const missingKey = semanticKey || safeStr(field?.id || field?.name || field?.label).trim();
+      const dedupeKey = appointmentNorm(missingKey);
+      if (missingKey && !missingSeen.has(dedupeKey)) {
+        missingSeen.add(dedupeKey);
+        missing.push(missingKey);
+      }
+    }
+  }
+
+  console.log("[APPOINTMENT-REQUIRED] source=" + requirements.source + " missing=" + safeJson(missing, 1200));
+
   if (missing.length) {
     return {
       success: true,
@@ -1066,13 +1233,9 @@ async function handleAppointmentWizard(args: {
       date: semantic.date,
       time: exactTime,
       available_slots: allSlots,
+      requirements_source: requirements.source,
     };
   }
-
-  if (nameField) stateData[nameField.key] = semantic.name;
-  if (phoneField) stateData[phoneField.key] = semantic.phone;
-  if (semantic.email && emailField) stateData[emailField.key] = semantic.email;
-  if (semantic.notes && notesField) stateData[notesField.key] = semantic.notes;
 
   if (!args.auto_submit) {
     return {
