@@ -844,22 +844,11 @@ async function prepareAppointmentWorkerSession(
     siteMap = buildMinimalSiteMap(sessionId, url);
   }
 
-  // Native booking actions must start from a canonical page state. Hot browser
-  // sessions are an optimization, never a correctness source. A previous probe,
-  // failed submit, or concurrent action may have moved the DOM to another step.
-  const close = await callWorkerWithRetryOnAbort(
-    workerUrl,
-    workerSecret,
-    "/close-session",
-    { site_id: sessionId, session_id: sessionId },
-    Math.min(prepareTimeout, 8000),
-  );
-  console.log(
-    "[APPOINTMENT-RESET] close ok=" + String(close.ok) +
-      " status=" + String(close.status) +
-      " result=" + safeJson(close.result, 1200),
-  );
-
+  // Keep an existing crawler-prepared hot session intact. Production demo_sessions
+  // does not persist the full rich site_map, so closing the session here would throw
+  // away worker-side discovery metadata and recreate it from URL-only fallback.
+  // prepare-session is still called as a liveness/prewarm step, but correctness is
+  // established by the settle probes below, not by blindly trusting session_ready.
   const prep = await callWorkerWithRetryOnAbort(
     workerUrl,
     workerSecret,
@@ -868,7 +857,7 @@ async function prepareAppointmentWorkerSession(
     prepareTimeout,
   );
   console.log(
-    "[APPOINTMENT-RESET] prepare ok=" + String(prep.ok) +
+    "[APPOINTMENT-PREPARE] ok=" + String(prep.ok) +
       " status=" + String(prep.status) +
       " result=" + safeJson(prep.result, 1800),
   );
