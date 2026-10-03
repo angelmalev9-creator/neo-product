@@ -843,12 +843,34 @@ async function prepareAppointmentWorkerSession(
     if (!url) return { ok: false, error: "appointment_url_missing" };
     siteMap = buildMinimalSiteMap(sessionId, url);
   }
+
+  // Native booking actions must start from a canonical page state. Hot browser
+  // sessions are an optimization, never a correctness source. A previous probe,
+  // failed submit, or concurrent action may have moved the DOM to another step.
+  const close = await callWorkerWithRetryOnAbort(
+    workerUrl,
+    workerSecret,
+    "/close-session",
+    { site_id: sessionId, session_id: sessionId },
+    Math.min(prepareTimeout, 8000),
+  );
+  console.log(
+    "[APPOINTMENT-RESET] close ok=" + String(close.ok) +
+      " status=" + String(close.status) +
+      " result=" + safeJson(close.result, 1200),
+  );
+
   const prep = await callWorkerWithRetryOnAbort(
     workerUrl,
     workerSecret,
     "/prepare-session",
     { site_id: sessionId, session_id: sessionId, site_map: siteMap },
     prepareTimeout,
+  );
+  console.log(
+    "[APPOINTMENT-RESET] prepare ok=" + String(prep.ok) +
+      " status=" + String(prep.status) +
+      " result=" + safeJson(prep.result, 1800),
   );
   return { ok: prep.ok && prep.result?.success === true, prep, siteMap };
 }
