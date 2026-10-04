@@ -951,6 +951,11 @@ async function handleAppointmentWizard(args: {
       console.log(
         `[APPOINTMENT-REPROBE] refreshed groups=${refreshedGroups.length} choices=${Array.isArray(refreshedNext?.choices) ? refreshedNext.choices.length : 0}`,
       );
+      if (!refreshedGroups.length && Array.isArray(refreshedNext?.choices)) {
+        console.log(
+          `[APPOINTMENT-REPROBE] flat_choice_sample=${safeJson(refreshedNext.choices.slice(0, 24), 7000)}`,
+        );
+      }
       if (refreshedGroups.length || !next) {
         next = refreshedNext;
         fill = refreshed;
