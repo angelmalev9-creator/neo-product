@@ -935,35 +935,32 @@ async function handleAppointmentWizard(args: {
   fill = await callWizard(stateData, false);
   next = getWizardNext(fill.result) || next;
 
-  // Compatibility with older workers: dynamic widgets can reveal time buttons after a
-  // date click while returning a stale wizard_next captured before that click.
-  // Re-probe the SAME hot browser session once, read-only, so newly revealed controls
-  // are captured without submitting or restarting the flow.
+  // Dynamic booking widgets often render time buttons asynchronously AFTER the
+  // date click. A single immediate DOM snapshot is racy and can falsely report
+  // "no slots". Poll the SAME hot browser session for a short bounded settle window.
   let timeGroups = getTimeGroups(next);
   if (!timeGroups.length) {
+    const settleDelaysMs = [220, 420, 720, 1050];
     console.log(
-      `[APPOINTMENT-REPROBE] no time groups after date interaction; refreshing live DOM session=${args.session_id} date=${semantic.date}`,
+      `[APPOINTMENT-DOM-SETTLE] waiting for dynamic time controls session=${args.session_id} date=${semantic.date}`,
     );
-    const refreshed = await callWizard({ ...stateData, __neo_probe: "1" }, false);
-    const refreshedNext = getWizardNext(refreshed.result);
-    if (refreshedNext) {
+
+    for (let attempt = 0; attempt < settleDelaysMs.length && !timeGroups.length; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, settleDelaysMs[attempt]));
+
+      const refreshed = await callWizard({ ...stateData, __neo_probe: "1" }, false);
+      const refreshedNext = getWizardNext(refreshed.result);
+      if (!refreshedNext) continue;
+
       const refreshedGroups = getTimeGroups(refreshedNext);
       console.log(
-        `[APPOINTMENT-REPROBE] refreshed groups=${refreshedGroups.length} choices=${Array.isArray(refreshedNext?.choices) ? refreshedNext.choices.length : 0}`,
+        `[APPOINTMENT-DOM-SETTLE] attempt=${attempt + 1} groups=${refreshedGroups.length} choices=${Array.isArray(refreshedNext?.choices) ? refreshedNext.choices.length : 0}`,
       );
-      if (!refreshedGroups.length && Array.isArray(refreshedNext?.choices)) {
-        console.log(
-          `[APPOINTMENT-REPROBE] flat_choice_sample=${safeJson(refreshedNext.choices.slice(0, 24), 7000)}`,
-        );
-        console.log(
-          `[APPOINTMENT-REPROBE] flat_choice_tail=${safeJson(refreshedNext.choices.slice(-32), 9000)}`,
-        );
-      }
-      if (refreshedGroups.length || !next) {
-        next = refreshedNext;
-        fill = refreshed;
-        timeGroups = refreshedGroups;
-      }
+
+      // Always keep the freshest live snapshot. If slots appear, stop immediately.
+      next = refreshedNext;
+      fill = refreshed;
+      timeGroups = refreshedGroups;
     }
   }
 
