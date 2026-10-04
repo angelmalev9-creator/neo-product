@@ -765,15 +765,41 @@ async function handleAppointmentWizard(args: {
       args.fillTimeout,
     );
 
-  let fill = await callWizard({ __neo_probe: "1" }, false);
-  let next = getWizardNext(fill.result);
-  if (!fill.ok || !next) {
+  // prepare-session may return before the dynamic booking DOM is fully settled.
+  // Probe read-only with a short bounded retry window instead of surfacing a
+  // transient "next button not found" error to the customer.
+  let fill: any = null;
+  let next: any = null;
+  const initialProbeDelaysMs = [0, 220, 420, 720, 1050];
+
+  for (let attempt = 0; attempt < initialProbeDelaysMs.length; attempt += 1) {
+    const delay = initialProbeDelaysMs[attempt];
+    if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
+
+    fill = await callWizard({ __neo_probe: "1" }, false);
+    next = getWizardNext(fill.result);
+
+    if (fill.ok && next) {
+      if (attempt > 0) {
+        console.log(
+          `[APPOINTMENT-INITIAL-PROBE] recovered attempt=${attempt + 1} session=${args.session_id}`,
+        );
+      }
+      break;
+    }
+
+    console.log(
+      `[APPOINTMENT-INITIAL-PROBE] attempt=${attempt + 1} not-ready message=${safeStr(fill?.result?.message || fill?.raw_text || "").slice(0, 180)}`,
+    );
+  }
+
+  if (!fill?.ok || !next) {
     return {
       success: false,
       submitted: false,
       booking_mode: "appointment",
       stage: "probe_failed",
-      error: safeStr(fill.result?.message || fill.raw_text || "appointment_probe_failed"),
+      error: safeStr(fill?.result?.message || fill?.raw_text || "appointment_probe_failed"),
     };
   }
 
