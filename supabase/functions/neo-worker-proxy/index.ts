@@ -335,13 +335,35 @@ async function resolveSessionBookingCapability(sessionId: string): Promise<Sessi
 async function loadSiteMapForSession(sessionId: string): Promise<any | null> {
   const supabase = createSupabaseServiceClient();
   if (!supabase) return null;
-  const { data, error } = await supabase.from("demo_sessions").select("site_map_info, site_map, url").eq("id", sessionId).single();
+
+  // demo_sessions stores crawler runtime state inside structured_data. Older
+  // code queried site_map_info/site_map columns that do not exist, so worker
+  // recovery silently failed after process restarts.
+  const { data, error } = await supabase
+    .from("demo_sessions")
+    .select("structured_data, url")
+    .eq("id", sessionId)
+    .single();
+
   if (error || !data) return null;
-  const siteMap = (data as any).site_map_info ?? (data as any).site_map ?? null;
+
+  const structured = (data as any).structured_data || {};
+  const siteMap =
+    structured?.worker_site_map ??
+    structured?.siteMap ??
+    structured?.site_map ??
+    structured?.site_map_info ??
+    null;
+
   if (!siteMap) return null;
-  if (isObject(siteMap) && !(siteMap as any).url && safeStr((data as any).url)) {
-    (siteMap as any).url = safeStr((data as any).url);
+
+  if (isObject(siteMap)) {
+    if (!(siteMap as any).site_id) (siteMap as any).site_id = sessionId;
+    if (!(siteMap as any).url && safeStr((data as any).url)) {
+      (siteMap as any).url = safeStr((data as any).url);
+    }
   }
+
   return siteMap;
 }
 
