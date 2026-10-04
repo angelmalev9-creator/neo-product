@@ -955,6 +955,9 @@ async function handleAppointmentWizard(args: {
         console.log(
           `[APPOINTMENT-REPROBE] flat_choice_sample=${safeJson(refreshedNext.choices.slice(0, 24), 7000)}`,
         );
+        console.log(
+          `[APPOINTMENT-REPROBE] flat_choice_tail=${safeJson(refreshedNext.choices.slice(-32), 9000)}`,
+        );
       }
       if (refreshedGroups.length || !next) {
         next = refreshedNext;
