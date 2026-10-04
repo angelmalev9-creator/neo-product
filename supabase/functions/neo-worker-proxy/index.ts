@@ -358,7 +358,9 @@ async function loadSiteMapForSession(sessionId: string): Promise<any | null> {
   if (!siteMap) return null;
 
   if (isObject(siteMap)) {
-    if (!(siteMap as any).site_id) (siteMap as any).site_id = sessionId;
+    // Runtime identity belongs to the current session, even if the persisted map
+    // was cloned/reused from an earlier analysis.
+    (siteMap as any).site_id = sessionId;
     if (!(siteMap as any).url && safeStr((data as any).url)) {
       (siteMap as any).url = safeStr((data as any).url);
     }
