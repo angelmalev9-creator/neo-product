@@ -704,6 +704,27 @@ async function prepareAppointmentWorkerSession(
     if (!url) return { ok: false, error: "appointment_url_missing" };
     siteMap = buildMinimalSiteMap(sessionId, url);
   }
+  // Browser worker sessions are stateful. A previous appointment check can leave
+  // the same site_id on a later wizard step, so every independent invocation starts
+  // by closing that runtime. The whole multi-step probe below then runs on one fresh
+  // browser session.
+  try {
+    const closed = await callWorkerOnce(
+      workerUrl,
+      workerSecret,
+      "/close-session",
+      { site_id: sessionId, session_id: sessionId },
+      Math.min(prepareTimeout, 8000),
+    );
+    console.log(
+      `[APPOINTMENT-SESSION-RESET] status=${closed.status} ok=${closed.ok} result=${safeJson(closed.result, 700)}`,
+    );
+  } catch (e) {
+    console.warn(
+      `[APPOINTMENT-SESSION-RESET] close failed session=${sessionId}: ${e instanceof Error ? e.message : String(e)}`,
+    );
+  }
+
   const prep = await callWorkerWithRetryOnAbort(
     workerUrl,
     workerSecret,
